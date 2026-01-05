@@ -28,9 +28,11 @@ body { margin:0; font-family:sans-serif; background:#f0f8ff; }
 const { useState, useEffect, useRef } = React;
 
 // SUPABASE CONFIG
+// SUPABASE CONFIG
 const SUPABASE_URL = "https://outubctwarknkajfprcr.supabase.co";
 const SUPABASE_KEY = "sb_publishable_7k1KOcW8SxSl_vREzU4KFw_iT8VmeVV";
-const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 
 // DEFAULT TREE
 const defaultTree = {
