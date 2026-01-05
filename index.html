@@ -3,195 +3,115 @@
 <head>
 <meta charset="UTF-8">
 <title>Interactive Airway AI Tree</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 <script src="https://d3js.org/d3.v7.min.js"></script>
+
 <style>
   body { margin:0; font-family:sans-serif; background:#f0f8ff; }
   #root { width:100vw; height:100vh; overflow:hidden; }
   .node circle { fill:#1A5F7A; cursor:pointer; }
   .node text { fill:#fff; font-size:12px; text-anchor:middle; pointer-events:none; }
   .link { fill:none; stroke:#2D9596; stroke-width:2px; }
-  .leaf-input { position:absolute; z-index:10; background:#fff; border:1px solid #ccc; padding:4px; border-radius:4px; }
   .leaf { font-size:10px; fill:#ffcc00; cursor:pointer; }
-  .leaf:hover { text-decoration:underline; }
-  .controls { position:absolute; top:10px; left:10px; z-index:20; background:#fff; border:1px solid #ccc; padding:6px; border-radius:6px; }
-  .controls button { margin-right:6px; }
+  .controls {
+    position:absolute;
+    top:10px;
+    left:10px;
+    background:#fff;
+    padding:8px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    z-index:10;
+  }
 </style>
 </head>
+
 <body>
 <div id="root"></div>
 
-<script type="text/babel">
+<script>
+const e = React.createElement;
 const { useState, useEffect, useRef } = React;
 
-// Read-only trunks and branches
 const defaultTree = {
   name: "Airway Diseases",
   children: [
     {
       name: "Inflammatory Traits",
       children: [
-        { name: "Eosinophilic", children: [{ name: "Predictive Analytics", leaves: [] }] },
-        { name: "Neutrophilic", children: [{ name: "Predictive Analytics", leaves: [] }] }
+        { name: "Eosinophilic", leaves: [] },
+        { name: "Neutrophilic", leaves: [] }
       ]
     },
     {
       name: "Airflow Limitation",
       children: [
-        { name: "Bronchoconstriction", children: [{ name: "Sensor Analysis", leaves: [] }] },
-        { name: "Fixed Obstruction", children: [{ name: "Treatment Optimization", leaves: [] }] }
-      ]
-    },
-    {
-      name: "Exacerbation-Prone Traits",
-      children: [
-        { name: "Frequent Exacerbations", children: [{ name: "Predictive Analytics", leaves: [] }] },
-        { name: "Infection Susceptibility", children: [{ name: "Sensor Analysis", leaves: [] }] }
+        { name: "Bronchoconstriction", leaves: [] },
+        { name: "Fixed Obstruction", leaves: [] }
       ]
     }
   ]
 };
 
 function Tree() {
-  const svgRef = useRef();
+  const svgRef = useRef(null);
   const [data, setData] = useState(() => {
-    const saved = localStorage.getItem('airwayTree');
+    const saved = localStorage.getItem("airwayTree");
     return saved ? JSON.parse(saved) : defaultTree;
   });
-  const [inputPos, setInputPos] = useState(null);
-  const [inputValue, setInputValue] = useState('');
-  const [currentNode, setCurrentNode] = useState(null);
 
-  // Save to localStorage on any data change
   useEffect(() => {
-    localStorage.setItem('airwayTree', JSON.stringify(data));
+    localStorage.setItem("airwayTree", JSON.stringify(data));
     renderTree();
   }, [data]);
 
-  const handleAddLeaf = (node, x, y) => {
-    setCurrentNode(node);
-    setInputPos({ x, y });
-    setInputValue('');
-  };
-
-  const handleSubmitLeaf = () => {
-    if (!inputValue.trim()) return;
-    const newData = JSON.parse(JSON.stringify(data));
-    const addLeaf = (node) => {
-      if (node === currentNode) {
-        node.leaves = node.leaves || [];
-        node.leaves.push(inputValue.trim());
-      } else if (node.children) node.children.forEach(addLeaf);
-    };
-    addLeaf(newData);
-    setData(newData);
-    setInputPos(null);
-    setCurrentNode(null);
-  };
-
-  const handleEditLeaf = (node, index) => {
-    const newText = prompt("Edit leaf:", node.leaves[index]);
-    if (newText !== null && newText.trim() !== "") {
-      const newData = JSON.parse(JSON.stringify(data));
-      const editLeaf = (n) => {
-        if (n === node) n.leaves[index] = newText.trim();
-        else if (n.children) n.children.forEach(editLeaf);
-      };
-      editLeaf(newData);
-      setData(newData);
-    }
-  };
-
-  const handleDeleteLeaf = (node, index) => {
-    if (!confirm("Delete this leaf?")) return;
-    const newData = JSON.parse(JSON.stringify(data));
-    const delLeaf = (n) => {
-      if (n === node) n.leaves.splice(index,1);
-      else if (n.children) n.children.forEach(delLeaf);
-    };
-    delLeaf(newData);
-    setData(newData);
-  };
-
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "airway_tree.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const renderTree = () => {
+  function renderTree() {
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
-    const width = svgRef.current.clientWidth;
-    const height = svgRef.current.clientHeight;
+
+    const width = window.innerWidth;
+    const height = window.innerHeight;
 
     const root = d3.hierarchy(data, d => d.children);
-    const treeLayout = d3.tree().size([height - 50, width - 200]);
-    treeLayout(root);
+    d3.tree().size([height - 50, width - 200])(root);
 
-    // Links
     svg.selectAll(".link")
       .data(root.links())
       .enter()
       .append("path")
       .attr("class","link")
-      .attr("d", d3.linkHorizontal().x(d=>d.y+100).y(d=>d.x));
+      .attr("d", d3.linkHorizontal()
+        .x(d => d.y + 100)
+        .y(d => d.x)
+      );
 
-    // Nodes
-    const nodeGroup = svg.selectAll(".node")
+    const node = svg.selectAll(".node")
       .data(root.descendants())
       .enter()
       .append("g")
       .attr("class","node")
-      .attr("transform", d=>`translate(${d.y+100},${d.x})`);
+      .attr("transform", d => `translate(${d.y+100},${d.x})`);
 
-    nodeGroup.append("circle")
-      .attr("r",18)
-      .on("click",(event,d)=>handleAddLeaf(d.data,d.y+100,d.x));
+    node.append("circle").attr("r",18);
+    node.append("text").attr("dy",4).text(d => d.data.name);
+  }
 
-    nodeGroup.append("text")
-      .attr("dy",4)
-      .text(d=>d.data.name);
-
-    // Leaves
-    nodeGroup.each(function(d){
-      if(d.data.leaves){
-        d3.select(this).selectAll(".leaf")
-          .data(d.data.leaves)
-          .enter()
-          .append("text")
-          .attr("class","leaf")
-          .attr("dy",(leaf,i)=>24 + i*16)
-          .attr("text-anchor","middle")
-          .text(leaf=>leaf)
-          .on("click",(event,leaf,i)=>handleEditLeaf(d.data,i))
-          .on("contextmenu",(event,leaf,i)=>{event.preventDefault(); handleDeleteLeaf(d.data,i);});
-      }
-    });
-  };
-
-  return <>
-    <div className="controls">
-      <button onClick={handleExport}>Export Tree JSON</button>
-      <button onClick={()=>{localStorage.removeItem('airwayTree'); setData(JSON.parse(JSON.stringify(defaultTree)));}}>Reset Tree</button>
-    </div>
-    <svg ref={svgRef} width="100%" height="100%"></svg>
-    {inputPos && <div className="leaf-input" style={{left: inputPos.x+"px", top: inputPos.y+"px"}}>
-      <input type="text" placeholder="Add leaf..." value={inputValue}
-        onChange={e=>setInputValue(e.target.value)}
-        onKeyDown={e=>e.key==="Enter" && handleSubmitLeaf()}/>
-      <button onClick={handleSubmitLeaf}>Add</button>
-    </div>}
-  </>;
+  return e(
+    React.Fragment,
+    null,
+    e("div", { className:"controls" },
+      e("strong", null, "Interactive Airway AI Tree")
+    ),
+    e("svg", { ref: svgRef, width:"100%", height:"100%" })
+  );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<Tree />);
+ReactDOM.createRoot(document.getElementById("root")).render(e(Tree));
 </script>
+
 </body>
 </html>
