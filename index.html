@@ -211,20 +211,24 @@ function Tree() {
   };
 
   // ----- CONTROLS -----
-  return <>
-    <div className="controls">
-      <button onClick={()=>setData(JSON.parse(JSON.stringify(defaultTree)))}>
-        Reset Tree
-      </button>
-    </div>
-    <svg ref={svgRef} width="100%" height="100%"></svg>
-    {inputPos && <div className="leaf-input" style={{left: inputPos.x+"px", top: inputPos.y+"px"}}>
-      <input type="text" placeholder="Add leaf..." value={inputValue}
-        onChange={e=>setInputValue(e.target.value)}
-        onKeyDown={e=>e.key==="Enter" && handleSubmitLeaf()}/>
-      <button onClick={handleSubmitLeaf}>Add</button>
-    </div>}
-  </>;
+  return (
+    <React.Fragment>
+      <div className="controls">
+        <button onClick={()=>setData(JSON.parse(JSON.stringify(defaultTree)))}>
+          Reset Tree
+        </button>
+      </div>
+      <svg ref={svgRef} width="100%" height="100%"></svg>
+      {inputPos && (
+        <div className="leaf-input" style={{left: inputPos.x+"px", top: inputPos.y+"px"}}>
+          <input type="text" placeholder="Add leaf..." value={inputValue}
+            onChange={e=>setInputValue(e.target.value)}
+            onKeyDown={e=>e.key==="Enter" && handleSubmitLeaf()}/>
+          <button onClick={handleSubmitLeaf}>Add</button>
+        </div>
+      )}
+    </React.Fragment>
+  );
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<Tree />);
