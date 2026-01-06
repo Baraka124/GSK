@@ -2,162 +2,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TRAITMAP 2.0 - Clinical Intelligence Platform</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAITMAP PRO - Clinical Intelligence Platform</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ==================== GLOBAL VARIABLES & RESET ==================== */
+        /* ==================== PROFESSIONAL COLOR SCHEME ==================== */
         :root {
-            /* Primary Colors */
-            --primary-blue: #0066ff;
-            --secondary-blue: #4d94ff;
-            --accent-blue: #80b3ff;
-            --dark-blue: #000814;
-            --panel-blue: #0a193c;
+            --primary-blue: #2563eb;
+            --secondary-blue: #3b82f6;
+            --accent-blue: #60a5fa;
+            --dark-bg: #0f172a;
+            --panel-bg: #1e293b;
+            --card-bg: #334155;
             
-            /* Clinical Status Colors */
-            --success-green: #00cc88;
-            --warning-orange: #ffaa00;
-            --danger-red: #ff3366;
-            --info-cyan: #00ccff;
-            --evidence-gold: #ffd700;
-            --evidence-silver: #c0c0c0;
-            --evidence-bronze: #cd7f32;
+            /* Clinical colors */
+            --immune: #ef4444;
+            --physiological: #10b981;
+            --clinical: #f59e0b;
+            --comorbid: #8b5cf6;
+            --biomarker: #06b6d4;
+            --treatment: #ec4899;
             
-            /* Category Colors */
-            --immune-color: #ff3366;
-            --physio-color: #00cc88;
-            --clinical-color: #ffaa00;
-            --comorbidity-color: #9966ff;
-            --biomarker-color: #00ccff;
-            --treatment-color: #ff66cc;
+            /* Evidence levels */
+            --evidence-1: #fbbf24;
+            --evidence-2: #a3a3a3;
+            --evidence-3: #92400e;
+            --evidence-4: #6b7280;
             
-            /* UI Colors */
-            --dark-bg: #000814;
-            --panel-bg: rgba(10, 25, 60, 0.98);
-            --hover-bg: rgba(255, 255, 255, 0.1);
-            --border-color: rgba(255, 255, 255, 0.15);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.8);
-            --text-tertiary: rgba(255, 255, 255, 0.6);
-            
-            /* Shadows */
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.3);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
-            --glow-primary: 0 0 30px rgba(0, 102, 255, 0.5);
-            --glow-success: 0 0 30px rgba(0, 204, 136, 0.5);
-            
-            /* Transitions */
-            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-medium: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+            /* UI */
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --border: #475569;
+            --hover: rgba(255, 255, 255, 0.05);
             
             /* Layout */
-            --header-height: 60px;
+            --header-height: 64px;
             --sidebar-width: 300px;
-            --properties-width: 320px;
-            --tools-size: 44px;
+            --properties-width: 340px;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, var(--dark-bg) 0%, #001428 100%);
+            background: var(--dark-bg);
             color: var(--text-primary);
-            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
             font-size: 14px;
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.5;
         }
         
-        /* ==================== LOADING SCREEN ==================== */
-        #loadingScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, var(--dark-bg) 0%, #001428 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 99999;
-            transition: opacity var(--transition-medium);
-        }
-        
-        .loading-content {
-            text-align: center;
-            padding: 2rem;
-            max-width: 90%;
-        }
-        
-        .loading-logo {
-            font-size: 4rem;
-            color: var(--primary-blue);
-            margin-bottom: 1.5rem;
-            animation: pulseGlow 2s infinite alternate;
-        }
-        
-        @keyframes pulseGlow {
-            0% { 
-                filter: drop-shadow(0 0 10px var(--primary-blue));
-                transform: scale(1);
-            }
-            100% { 
-                filter: drop-shadow(0 0 30px var(--evidence-gold));
-                transform: scale(1.05);
-            }
-        }
-        
-        .loading-title {
-            font-size: 2.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--primary-blue), var(--info-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 1rem;
-            letter-spacing: -1px;
-        }
-        
-        @media (max-width: 768px) {
-            .loading-title {
-                font-size: 2rem;
-            }
-            .loading-logo {
-                font-size: 3rem;
-            }
-        }
-        
-        /* ==================== HEADER ==================== */
+        /* ==================== PROFESSIONAL HEADER ==================== */
         .header {
             height: var(--header-height);
             background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 1rem;
+            padding: 0 1.5rem;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             z-index: 1000;
-            box-shadow: var(--shadow-md);
         }
         
         .logo {
@@ -167,118 +81,102 @@
         }
         
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--primary-blue), var(--comorbidity-color));
-            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--biomarker));
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.25rem;
-            box-shadow: var(--glow-primary);
-            flex-shrink: 0;
-        }
-        
-        .logo-text {
-            display: flex;
-            flex-direction: column;
+            font-size: 1rem;
         }
         
         .logo-text h1 {
             font-size: 1.25rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--primary-blue), white);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-blue), var(--accent-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            line-height: 1;
         }
         
-        .logo-text p {
-            font-size: 0.75rem;
-            color: var(--accent-blue);
-            font-weight: 500;
-        }
-        
-        .header-controls {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-        
-        /* ==================== MOBILE OPTIMIZATIONS ==================== */
-        @media (max-width: 768px) {
-            :root {
-                --header-height: 56px;
-                --tools-size: 40px;
-            }
-            
-            .header {
-                padding: 0 0.75rem;
-            }
-            
-            .logo-icon {
-                width: 36px;
-                height: 36px;
-                font-size: 1.1rem;
-            }
-            
-            .logo-text h1 {
-                font-size: 1.1rem;
-            }
-            
-            .logo-text p {
-                font-size: 0.7rem;
-            }
-            
-            .btn span {
-                display: none;
-            }
-            
-            .btn {
-                padding: 0.6rem;
-                min-width: 44px;
-                justify-content: center;
-            }
-        }
-        
-        /* ==================== MAIN LAYOUT ==================== */
+        /* ==================== MINIMALIST MAIN LAYOUT ==================== */
         .main-container {
             display: flex;
-            height: calc(100vh - var(--header-height));
-            margin-top: var(--header-height);
-            position: relative;
-            overflow: hidden;
+            height: 100vh;
+            padding-top: var(--header-height);
         }
         
-        /* ==================== SIDEBAR ==================== */
+        /* ==================== CLEAN SIDEBAR ==================== */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border-right: 1px solid var(--border-color);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            transition: transform var(--transition-medium);
-            overflow: hidden;
+        }
+        
+        .search-box {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+        
+        .search-box i {
             position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 900;
+            left: 1.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
         }
         
-        .sidebar.show {
-            transform: translateX(0);
+        .trait-category {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
         }
         
-        /* ==================== CANVAS AREA ==================== */
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .trait-item {
+            padding: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+        
+        .trait-item:hover {
+            background: var(--hover);
+            border-color: var(--primary-blue);
+            transform: translateX(4px);
+        }
+        
+        /* ==================== CANVAS ==================== */
         .canvas-area {
             flex: 1;
             position: relative;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(0, 102, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(0, 204, 136, 0.05) 0%, transparent 50%);
-            overflow: hidden;
+                radial-gradient(circle at 20% 30%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
         }
         
         #networkCanvas {
@@ -287,255 +185,41 @@
             left: 0;
             width: 100%;
             height: 100%;
-            touch-action: none;
+            cursor: default;
         }
         
-        /* ==================== TOOLS PANEL ==================== */
+        /* ==================== DISCREET TOOLS ==================== */
         .tools-panel {
             position: absolute;
             top: 1rem;
             left: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
             background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 0.75rem;
-            box-shadow: var(--shadow-lg);
-            z-index: 50;
-        }
-        
-        @media (max-width: 768px) {
-            .tools-panel {
-                flex-direction: row;
-                top: auto;
-                bottom: 1rem;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 0.5rem;
-                gap: 0.25rem;
-            }
-            
-            .tool-btn {
-                width: 40px;
-                height: 40px;
-                font-size: 1rem;
-            }
-            
-            .tool-btn::after {
-                display: none;
-            }
-        }
-        
-        /* ==================== AI SUGGESTIONS - OPTIMIZED ==================== */
-        .ai-suggestions {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem;
-            width: 280px;
-            max-width: 90vw;
-            max-height: 300px;
-            overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-            z-index: 50;
-            transform: translateY(20px);
-            opacity: 0;
-            transition: all var(--transition-medium);
-        }
-        
-        .ai-suggestions.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        
-        @media (max-width: 768px) {
-            .ai-suggestions {
-                width: calc(100% - 2rem);
-                max-height: 200px;
-                bottom: 5rem;
-                right: 1rem;
-                left: 1rem;
-            }
-        }
-        
-        /* ==================== PROPERTIES PANEL ==================== */
-        .properties-panel {
-            width: var(--properties-width);
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border-left: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            transition: transform var(--transition-medium);
-            overflow: hidden;
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 900;
-        }
-        
-        .properties-panel.show {
-            transform: translateX(0);
-        }
-        
-        /* ==================== MOBILE TOGGLE BUTTONS ==================== */
-        .mobile-toggle {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            background: var(--primary-blue);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-lg);
-            font-size: 1.25rem;
-        }
-        
-        .toggle-sidebar {
-            bottom: 6rem;
-            left: 1rem;
-        }
-        
-        .toggle-properties {
-            bottom: 6rem;
-            right: 1rem;
-        }
-        
-        .toggle-aisuggestions {
-            bottom: 12rem;
-            right: 1rem;
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar:not(.show) {
-                transform: translateX(-100%);
-            }
-            
-            .properties-panel:not(.show) {
-                transform: translateX(100%);
-            }
-            
-            .mobile-toggle {
-                display: flex;
-            }
-        }
-        
-        /* ==================== TOUCH OPTIMIZATIONS ==================== */
-        .trait-item {
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        
-        /* Prevent text selection on canvas */
-        .canvas-area {
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        
-        /* ==================== PERFORMANCE OPTIMIZATIONS ==================== */
-        .trait-node {
-            will-change: transform;
-            contain: layout style paint;
-        }
-        
-        #networkCanvas {
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
-        }
-        
-        /* ==================== UTILITY CLASSES ==================== */
-        .hidden {
-            display: none !important;
-        }
-        
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-        
-        /* ==================== SCROLLBAR ==================== */
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 2px;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 2px;
-        }
-        
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-        
-        /* ==================== REST OF STYLES (condensed for space) ==================== */
-        /* Button styles */
-        .btn {
-            padding: 0.6rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border);
             border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
+            padding: 0.5rem;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 0.5rem;
-            transition: all var(--transition-medium);
-            white-space: nowrap;
-            min-height: 40px;
-        }
-        
-        .btn:hover {
-            background: var(--hover-bg);
-            transform: translateY(-1px);
-            border-color: var(--primary-blue);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
-            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         
         .tool-btn {
-            width: var(--tools-size);
-            height: var(--tools-size);
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
             color: var(--text-primary);
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            transition: all var(--transition-medium);
+            transition: all 0.2s;
+        }
+        
+        .tool-btn:hover {
+            background: var(--hover);
+            border-color: var(--primary-blue);
         }
         
         .tool-btn.active {
@@ -543,149 +227,206 @@
             border-color: var(--primary-blue);
         }
         
-        /* Property sections */
-        .property-section {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
+        /* ==================== ELEGANT PROPERTIES PANEL ==================== */
+        .properties-panel {
+            width: var(--properties-width);
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
         }
         
-        /* Connection mode */
-        .connection-mode {
+        .property-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* ==================== SUBTLE AI PANEL (Non-intrusive) ==================== */
+        .ai-panel {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            width: 280px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+        
+        .ai-panel.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .ai-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .ai-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+        
+        .ai-content {
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .ai-suggestion {
+            padding: 0.75rem;
+            background: var(--card-bg);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            border-left: 3px solid var(--primary-blue);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .ai-suggestion:hover {
+            background: var(--hover);
+            transform: translateX(2px);
+        }
+        
+        /* ==================== CONNECTION VISUALS ==================== */
+        .connection-line {
+            stroke-linecap: round;
+            stroke-width: 2;
+            transition: all 0.2s;
+        }
+        
+        .connection-preview {
+            stroke: var(--primary-blue);
+            stroke-width: 2;
+            stroke-dasharray: 5, 3;
+            opacity: 0.7;
+        }
+        
+        /* ==================== STATISTICS OVERLAY ==================== */
+        .stats-overlay {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 200px;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        /* ==================== TOAST NOTIFICATIONS ==================== */
+        .toast {
             position: fixed;
             bottom: 1rem;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(100%);
             background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border: 2px solid var(--primary-blue);
-            border-radius: 10px;
-            padding: 0.75rem 1.5rem;
-            font-weight: 700;
-            box-shadow: 0 0 30px rgba(0, 102, 255, 0.4);
-            display: none;
-            align-items: center;
-            gap: 0.75rem;
-            z-index: 100;
-            font-size: 0.9rem;
-        }
-        
-        /* Toast notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 1rem;
-            left: 1rem;
-            right: 1rem;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .toast {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--primary-blue);
+            border: 1px solid var(--border);
             border-radius: 8px;
             padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            transform: translateY(20px);
             opacity: 0;
             transition: all 0.3s ease;
-            box-shadow: var(--shadow-md);
+            z-index: 1000;
         }
         
-        /* Modal adjustments */
-        .modal {
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
         
-        @media (max-width: 480px) {
-            .modal {
-                width: 95%;
-                margin: 1rem;
-            }
+        /* ==================== LOADING STATES ==================== */
+        .loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--dark-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
         }
         
-        /* Landscape orientation support */
-        @media (max-height: 600px) and (orientation: landscape) {
-            :root {
-                --header-height: 48px;
-            }
-            
-            .tools-panel {
-                flex-direction: row;
-                top: auto;
-                bottom: 0.5rem;
-            }
-            
-            .ai-suggestions {
-                max-height: 150px;
-            }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary-blue);
+            animation: spin 1s linear infinite;
         }
         
-        /* High-DPI optimization */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .header, .tools-panel, .ai-suggestions, .properties-panel {
-                backdrop-filter: blur(40px);
-            }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ==================== UTILITY CLASSES ==================== */
+        .hidden { display: none; }
+        .fade-in { animation: fadeIn 0.3s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <i class="fas fa-brain"></i>
-            </div>
-            <h1 class="loading-title">TRAITMAP 2.0</h1>
-            <p class="loading-tagline">Mobile-Optimized Clinical Intelligence</p>
-            
-            <div class="loading-progress-container">
-                <div class="loading-bar">
-                    <div class="loading-fill" id="loadingFill"></div>
-                </div>
-                <div class="loading-message" id="loadingMessage">
-                    Optimizing for mobile...
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Header -->
+    <!-- Minimal Header -->
     <header class="header">
         <div class="logo">
             <div class="logo-icon">
-                <i class="fas fa-network-wired"></i>
+                <i class="fas fa-dna"></i>
             </div>
             <div class="logo-text">
-                <h1>TRAITMAP 2.0</h1>
-                <p>Clinical Intelligence</p>
+                <h1>TRAITMAP PRO</h1>
             </div>
         </div>
         
-        <div class="header-controls">
-            <button class="btn" id="btnImport" title="Import Patient">
-                <i class="fas fa-user-md"></i>
-                <span>Import</span>
+        <div class="header-actions">
+            <button class="btn" id="btnAI">
+                <i class="fas fa-robot"></i>
+                <span>AI Analysis</span>
             </button>
-            
-            <button class="btn" id="btnSimulate" title="Run Simulation">
-                <i class="fas fa-rocket"></i>
-                <span>Simulate</span>
-            </button>
-            
-            <button class="btn btn-primary" id="btnShare" title="Share Analysis">
-                <i class="fas fa-share-alt"></i>
-                <span>Share</span>
+            <button class="btn btn-primary" id="btnAnalyze">
+                <i class="fas fa-chart-network"></i>
+                <span>Analyze</span>
             </button>
         </div>
     </header>
@@ -694,27 +435,13 @@
     <div class="main-container">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">
-                    <i class="fas fa-shapes"></i>
-                    Clinical Trait Library
-                </div>
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchTraits" placeholder="Search 50+ traits...">
-                </div>
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchTraits" placeholder="Search 150+ clinical traits...">
             </div>
             
-            <div class="category-tabs">
-                <div class="category-tab active" data-category="all">All</div>
-                <div class="category-tab" data-category="immune">Immune</div>
-                <div class="category-tab" data-category="physio">Physio</div>
-                <div class="category-tab" data-category="clinical">Clinical</div>
-                <div class="category-tab" data-category="comorbid">Comorbid</div>
-            </div>
-            
-            <div class="trait-library scrollbar-thin">
-                <!-- Traits will be loaded dynamically -->
+            <div class="trait-library">
+                <!-- Traits loaded dynamically -->
             </div>
         </aside>
         
@@ -722,1326 +449,1500 @@
         <main class="canvas-area">
             <canvas id="networkCanvas"></canvas>
             
-            <!-- Tools Panel -->
+            <!-- Tools -->
             <div class="tools-panel">
                 <button class="tool-btn active" data-tool="select" title="Select">
                     <i class="fas fa-mouse-pointer"></i>
                 </button>
-                <button class="tool-btn" data-tool="connect" title="Connect">
+                <button class="tool-btn" data-tool="connect" title="Connect (Shift+Click)">
                     <i class="fas fa-link"></i>
                 </button>
-                <button class="tool-btn" data-tool="hand" title="Move">
-                    <i class="fas fa-hand-paper"></i>
-                </button>
-                <button class="tool-btn" data-tool="layout" title="Arrange">
+                <button class="tool-btn" data-tool="auto" title="Auto-layout">
                     <i class="fas fa-sitemap"></i>
                 </button>
-                <button class="tool-btn" data-tool="delete" title="Delete">
-                    <i class="fas fa-trash"></i>
+                <button class="tool-btn" data-tool="clear" title="Clear selection">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
             
-            <!-- AI Suggestions Panel -->
-            <div class="ai-suggestions scrollbar-thin" id="aiSuggestions">
-                <!-- AI suggestions will be loaded here -->
+            <!-- Statistics -->
+            <div class="stats-overlay" id="statsPanel">
+                <div class="stat-item">
+                    <span>Traits:</span>
+                    <span id="traitCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Connections:</span>
+                    <span id="connectionCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span>Complexity:</span>
+                    <span id="complexityScore">0</span>
+                </div>
             </div>
             
-            <!-- Connection Mode Indicator -->
-            <div class="connection-mode" id="connectionMode">
-                <i class="fas fa-link"></i>
-                <span>Connection Mode Active</span>
+            <!-- AI Panel (Hidden by default) -->
+            <div class="ai-panel" id="aiPanel">
+                <div class="ai-header">
+                    <div class="ai-title">
+                        <i class="fas fa-robot"></i>
+                        <span>AI Clinical Insights</span>
+                    </div>
+                    <button class="btn-close" id="closeAIPanel">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="ai-content" id="aiContent">
+                    <!-- AI suggestions loaded here -->
+                </div>
             </div>
         </main>
         
         <!-- Properties Panel -->
         <aside class="properties-panel" id="propertiesPanel">
-            <div class="properties-tabs">
-                <div class="properties-tab active" data-tab="properties">Properties</div>
-                <div class="properties-tab" data-tab="evidence">Evidence</div>
-                <div class="properties-tab" data-tab="connections">Connections</div>
-            </div>
-            
-            <div class="properties-content scrollbar-thin">
-                <!-- Content will be loaded dynamically -->
+            <div class="property-section">
+                <h3>Selected Trait</h3>
+                <div id="selectedTraitInfo">
+                    Select a trait to view details
+                </div>
             </div>
         </aside>
-        
-        <!-- Mobile Toggle Buttons -->
-        <button class="mobile-toggle toggle-sidebar" id="toggleSidebar" title="Toggle Sidebar">
-            <i class="fas fa-bars"></i>
-        </button>
-        
-        <button class="mobile-toggle toggle-properties" id="toggleProperties" title="Toggle Properties">
-            <i class="fas fa-sliders-h"></i>
-        </button>
-        
-        <button class="mobile-toggle toggle-aisuggestions" id="toggleAISuggestions" title="Toggle AI Suggestions">
-            <i class="fas fa-robot"></i>
-        </button>
     </div>
     
     <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <div class="toast" id="toast"></div>
     
-    <script>
-        // ============================================
-        // TRAITMAP 2.0 - OPTIMIZED VERSION
-        // ============================================
+    <!-- Loading Screen -->
+    <div class="loading" id="loadingScreen">
+        <div class="spinner"></div>
+    </div>
+
+<script>
+// ============================================
+// TRAITMAP PRO - Professional Clinical Intelligence
+// ============================================
+
+// Global Application State
+const AppState = {
+    traits: new Map(),
+    connections: new Map(),
+    selectedTraits: new Set(),
+    connectingTrait: null,
+    currentTool: 'select',
+    
+    // Performance
+    renderQuality: 1,
+    lastRenderTime: 0,
+    
+    // AI State
+    aiActive: false,
+    aiModel: 'clinical-v1'
+};
+
+// ==================== EXPANDED TRAIT LIBRARY (150+ TRAITS) ====================
+
+const TRAIT_LIBRARY = {
+    immune: Array.from({length: 25}, (_, i) => ({
+        id: `immune-${i+1}`,
+        name: `Immune Trait ${i+1}`,
+        category: 'immune',
+        color: '#ef4444',
+        icon: 'fas fa-shield-virus',
+        evidence: Math.floor(Math.random() * 4) + 1,
+        severity: Math.floor(Math.random() * 100),
+        confidence: 70 + Math.floor(Math.random() * 30),
+        biomarkers: ['IL-6', 'TNF-α', 'CRP'],
+        treatments: ['Biologics', 'Immunomodulators']
+    })),
+    
+    physiological: Array.from({length: 25}, (_, i) => ({
+        id: `physio-${i+1}`,
+        name: `Physio Trait ${i+1}`,
+        category: 'physiological',
+        color: '#10b981',
+        icon: 'fas fa-lungs',
+        evidence: Math.floor(Math.random() * 4) + 1,
+        severity: Math.floor(Math.random() * 100),
+        confidence: 70 + Math.floor(Math.random() * 30),
+        biomarkers: ['FEV1', 'FVC', 'DLCO'],
+        treatments: ['Bronchodilators', 'Rehabilitation']
+    })),
+    
+    clinical: Array.from({length: 25}, (_, i) => ({
+        id: `clinical-${i+1}`,
+        name: `Clinical Trait ${i+1}`,
+        category: 'clinical',
+        color: '#f59e0b',
+        icon: 'fas fa-stethoscope',
+        evidence: Math.floor(Math.random() * 4) + 1,
+        severity: Math.floor(Math.random() * 100),
+        confidence: 70 + Math.floor(Math.random() * 30),
+        biomarkers: ['Symptoms', 'QoL Score'],
+        treatments: ['Symptom Management']
+    })),
+    
+    comorbid: Array.from({length: 25}, (_, i) => ({
+        id: `comorbid-${i+1}`,
+        name: `Comorbidity ${i+1}`,
+        category: 'comorbid',
+        color: '#8b5cf6',
+        icon: 'fas fa-heartbeat',
+        evidence: Math.floor(Math.random() * 4) + 1,
+        severity: Math.floor(Math.random() * 100),
+        confidence: 70 + Math.floor(Math.random() * 30),
+        biomarkers: ['Comorbidity Index'],
+        treatments: ['Integrated Care']
+    })),
+    
+    biomarker: Array.from({length: 25}, (_, i) => ({
+        id: `biomarker-${i+1}`,
+        name: `Biomarker ${i+1}`,
+        category: 'biomarker',
+        color: '#06b6d4',
+        icon: 'fas fa-vial',
+        evidence: Math.floor(Math.random() * 4) + 1,
+        severity: Math.floor(Math.random() * 100),
+        confidence: 70 + Math.floor(Math.random() * 30),
+        biomarkers: ['Specific Marker'],
+        treatments: ['Targeted Therapy']
+    })),
+    
+    treatment: Array.from({length: 25}, (_, i) => ({
+        id: `treatment-${i+1}`,
+        name: `Treatment ${i+1}`,
+        category: 'treatment',
+        color: '#ec4899',
+        icon: 'fas fa-pills',
+        evidence: Math.floor(Math.random() * 4) + 1,
+        severity: Math.floor(Math.random() * 100),
+        confidence: 70 + Math.floor(Math.random() * 30),
+        biomarkers: ['Response Marker'],
+        treatments: ['Therapeutic Intervention']
+    }))
+};
+
+// ==================== PROFESSIONAL APPLICATION ====================
+
+class TraitMapPro {
+    constructor() {
+        this.canvas = document.getElementById('networkCanvas');
+        this.ctx = this.canvas.getContext('2d');
         
-        // Performance optimizations
-        const PERFORMANCE = {
-            MAX_TRAITS: 100,
-            MAX_CONNECTIONS: 200,
-            FRAME_THROTTLE: 1000 / 30, // 30 FPS max for mobile
-            BATCH_RENDER: true,
-            USE_RAILING: true
+        this.init();
+    }
+    
+    init() {
+        this.setupCanvas();
+        this.loadTraitLibrary();
+        this.setupEventListeners();
+        this.createInitialNetwork();
+        this.startRenderLoop();
+        
+        this.showToast('TRAITMAP PRO Ready - 150+ clinical traits loaded', 'info');
+    }
+    
+    setupCanvas() {
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+    }
+    
+    resizeCanvas() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = rect.height * dpr;
+        this.canvas.style.width = rect.width + 'px';
+        this.canvas.style.height = rect.height + 'px';
+        
+        this.ctx.scale(dpr, dpr);
+    }
+    
+    loadTraitLibrary() {
+        const library = document.querySelector('.trait-library');
+        
+        // Combine all traits
+        const allTraits = [
+            ...TRAIT_LIBRARY.immune,
+            ...TRAIT_LIBRARY.physiological,
+            ...TRAIT_LIBRARY.clinical,
+            ...TRAIT_LIBRARY.comorbid,
+            ...TRAIT_LIBRARY.biomarker,
+            ...TRAIT_LIBRARY.treatment
+        ];
+        
+        allTraits.forEach(trait => {
+            const item = document.createElement('div');
+            item.className = 'trait-item';
+            item.dataset.traitId = trait.id;
+            item.draggable = true;
+            
+            item.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span style="width: 12px; height: 12px; background: ${trait.color}; border-radius: 50%;"></span>
+                    <span style="font-weight: 600; font-size: 0.875rem;">${trait.name}</span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-tertiary);">
+                    ${trait.category} • Evidence Level ${trait.evidence}
+                </div>
+            `;
+            
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('trait', JSON.stringify(trait));
+            });
+            
+            library.appendChild(item);
+        });
+    }
+    
+    setupEventListeners() {
+        // Canvas events
+        this.canvas.addEventListener('dragover', (e) => e.preventDefault());
+        this.canvas.addEventListener('drop', (e) => this.onCanvasDrop(e));
+        this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
+        this.canvas.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
+        
+        // Tool buttons
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tool = e.currentTarget.dataset.tool;
+                this.setTool(tool);
+            });
+        });
+        
+        // AI button
+        document.getElementById('btnAI').addEventListener('click', () => {
+            this.requestAIInsights();
+        });
+        
+        // Analyze button
+        document.getElementById('btnAnalyze').addEventListener('click', () => {
+            this.analyzeNetwork();
+        });
+        
+        // Close AI panel
+        document.getElementById('closeAIPanel').addEventListener('click', () => {
+            this.hideAIPanel();
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.clearSelection();
+                this.cancelConnection();
+            } else if (e.key === 'Delete') {
+                this.deleteSelected();
+            } else if (e.key === 'a' && e.ctrlKey) {
+                e.preventDefault();
+                this.selectAll();
+            } else if (e.key === 'l' && e.ctrlKey) {
+                e.preventDefault();
+                this.autoLayout();
+            }
+        });
+    }
+    
+    onCanvasDrop(e) {
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        try {
+            const traitData = JSON.parse(e.dataTransfer.getData('trait'));
+            this.createTrait(traitData, x, y);
+        } catch (err) {
+            console.warn('Invalid trait data');
+        }
+    }
+    
+    onCanvasMouseDown(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const trait = this.getTraitAt(x, y);
+        
+        if (trait) {
+            if (e.shiftKey) {
+                // Shift+Click for connection
+                if (!AppState.connectingTrait) {
+                    AppState.connectingTrait = trait;
+                    this.showToast(`Connecting from ${trait.name}. Click another trait.`, 'info');
+                } else {
+                    this.createConnection(AppState.connectingTrait, trait);
+                    AppState.connectingTrait = null;
+                }
+            } else {
+                // Select trait
+                this.selectTrait(trait);
+            }
+            
+            // Start dragging
+            AppState.draggingTrait = trait;
+            AppState.dragOffset = { x: trait.x - x, y: trait.y - y };
+        }
+    }
+    
+    onCanvasMouseMove(e) {
+        if (!AppState.draggingTrait) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        AppState.draggingTrait.x = x + AppState.dragOffset.x;
+        AppState.draggingTrait.y = y + AppState.dragOffset.y;
+    }
+    
+    onCanvasMouseUp() {
+        AppState.draggingTrait = null;
+    }
+    
+    createTrait(data, x, y) {
+        const trait = {
+            id: `${data.id}-${Date.now()}`,
+            name: data.name,
+            category: data.category,
+            color: data.color,
+            icon: data.icon,
+            evidence: data.evidence,
+            severity: data.severity,
+            confidence: data.confidence,
+            x: x,
+            y: y,
+            connections: new Set()
         };
         
-        // Application State
-        const AppState = {
-            traits: new Map(),
-            connections: new Map(),
-            selectedTraits: new Set(),
-            currentTool: 'select',
-            isConnecting: false,
-            connectionStart: null,
-            isDragging: false,
-            
-            // UI State
-            activeCategory: 'all',
-            activeTab: 'properties',
-            sidebarVisible: false,
-            propertiesVisible: false,
-            suggestionsVisible: false,
-            
-            // Performance
-            renderScale: 1,
-            lastRenderTime: 0,
-            renderScheduled: false,
-            fps: 0,
-            lastFpsUpdate: 0,
-            frameCount: 0,
-            
-            // Mobile detection
-            isMobile: false,
-            isTouchDevice: false
-        };
+        AppState.traits.set(trait.id, trait);
+        this.updateStats();
+        this.render();
         
-        // ==================== OPTIMIZED RENDERING ENGINE ====================
+        this.showToast(`Added ${trait.name}`, 'success');
+    }
+    
+    createConnection(source, target) {
+        if (source.id === target.id) return;
         
-        class OptimizedRenderer {
-            constructor(canvas) {
-                this.canvas = canvas;
-                this.ctx = canvas.getContext('2d', { alpha: true });
-                this.dpr = window.devicePixelRatio || 1;
-                
-                // Separate layer for connections
-                this.connectionsLayer = document.createElement('canvas');
-                this.connectionsCtx = this.connectionsLayer.getContext('2d');
-                
-                // Separate layer for traits
-                this.traitsLayer = document.createElement('canvas');
-                this.traitsCtx = this.traitsLayer.getContext('2d');
-                
-                // Interactive SVG layer
-                this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                this.svg.style.position = 'absolute';
-                this.svg.style.top = '0';
-                this.svg.style.left = '0';
-                this.svg.style.width = '100%';
-                this.svg.style.height = '100%';
-                this.svg.style.pointerEvents = 'none';
-                
-                this.canvas.parentElement.appendChild(this.svg);
-                this.resize();
-                
-                // Performance monitoring
-                this.renderStats = {
-                    lastFrameTime: 0,
-                    averageFrameTime: 0,
-                    framesThisSecond: 0,
-                    lastFpsUpdate: 0,
-                    fps: 60
-                };
-            }
-            
-            resize() {
-                const rect = this.canvas.parentElement.getBoundingClientRect();
-                const width = rect.width;
-                const height = rect.height;
-                
-                // Set canvas dimensions
-                [this.canvas, this.connectionsLayer, this.traitsLayer].forEach(canvas => {
-                    canvas.width = width * this.dpr;
-                    canvas.height = height * this.dpr;
-                    canvas.style.width = width + 'px';
-                    canvas.style.height = height + 'px';
-                });
-                
-                // Scale contexts
-                [this.ctx, this.connectionsCtx, this.traitsCtx].forEach(ctx => {
-                    ctx.scale(this.dpr, this.dpr);
-                });
-                
-                // Update SVG
-                this.svg.setAttribute('width', width);
-                this.svg.setAttribute('height', height);
-            }
-            
-            clear() {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.dpr, this.canvas.height / this.dpr);
-                this.connectionsCtx.clearRect(0, 0, this.connectionsLayer.width, this.connectionsLayer.height);
-                this.traitsCtx.clearRect(0, 0, this.traitsLayer.width, this.traitsLayer.height);
-                
-                // Clear SVG
-                while (this.svg.firstChild) {
-                    this.svg.removeChild(this.svg.firstChild);
-                }
-            }
-            
-            render(traits, connections, scale, selectedTraits) {
-                const now = performance.now();
-                const delta = now - this.renderStats.lastFrameTime;
-                
-                // Throttle rendering for performance
-                if (delta < PERFORMANCE.FRAME_THROTTLE && PERFORMANCE.USE_RAILING) {
-                    if (!this.renderScheduled) {
-                        this.renderScheduled = true;
-                        requestAnimationFrame(() => {
-                            this.renderScheduled = false;
-                            this._render(traits, connections, scale, selectedTraits);
-                        });
-                    }
-                    return;
-                }
-                
-                this.renderStats.lastFrameTime = now;
-                this._render(traits, connections, scale, selectedTraits);
-            }
-            
-            _render(traits, connections, scale, selectedTraits) {
-                this.clear();
-                
-                // Update FPS counter
-                this.updateFPS();
-                
-                // Batch render connections (less frequent updates)
-                if (this.shouldRedrawConnections()) {
-                    this.renderConnections(connections, scale);
-                }
-                
-                // Batch render traits
-                this.renderTraits(traits, scale, selectedTraits);
-                
-                // Composite layers
-                this.ctx.drawImage(this.connectionsLayer, 0, 0);
-                this.ctx.drawImage(this.traitsLayer, 0, 0);
-                
-                // Render connection mode line if active
-                if (AppState.isConnecting && AppState.connectionStart) {
-                    this.renderConnectionLine();
-                }
-            }
-            
-            renderConnections(connections, scale) {
-                this.connectionsCtx.clearRect(0, 0, 
-                    this.connectionsLayer.width / this.dpr, 
-                    this.connectionsLayer.height / this.dpr
-                );
-                
-                connections.forEach((connection, connId) => {
-                    const source = AppState.traits.get(connection.sourceId);
-                    const target = AppState.traits.get(connection.targetId);
-                    
-                    if (!source || !target) return;
-                    
-                    this.connectionsCtx.beginPath();
-                    this.connectionsCtx.moveTo(source.x, source.y);
-                    this.connectionsCtx.lineTo(target.x, target.y);
-                    this.connectionsCtx.strokeStyle = connection.getColor();
-                    this.connectionsCtx.lineWidth = 3 * scale;
-                    this.connectionsCtx.globalAlpha = 0.6;
-                    this.connectionsCtx.stroke();
-                    this.connectionsCtx.globalAlpha = 1;
-                });
-            }
-            
-            renderTraits(traits, scale, selectedTraits) {
-                this.traitsCtx.clearRect(0, 0, 
-                    this.traitsLayer.width / this.dpr, 
-                    this.traitsLayer.height / this.dpr
-                );
-                
-                traits.forEach((trait, traitId) => {
-                    this.renderTrait(trait, scale, selectedTraits.has(traitId));
-                });
-            }
-            
-            renderTrait(trait, scale, isSelected) {
-                const ctx = this.traitsCtx;
-                const x = trait.x;
-                const y = trait.y;
-                const radius = 25 * scale;
-                
-                // Draw selection glow
-                if (isSelected) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, radius + 8, 0, Math.PI * 2);
-                    ctx.fillStyle = trait.color + '40';
-                    ctx.fill();
-                }
-                
-                // Draw trait circle
-                ctx.beginPath();
-                ctx.arc(x, y, radius, 0, Math.PI * 2);
-                ctx.fillStyle = trait.color;
-                ctx.fill();
-                
-                // Draw selection border
-                if (isSelected) {
-                    ctx.beginPath();
-                    ctx.arc(x, y, radius, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'white';
-                    ctx.lineWidth = 2 * scale;
-                    ctx.stroke();
-                }
-                
-                // Draw icon (simplified for performance)
-                ctx.fillStyle = 'white';
-                ctx.font = `${Math.max(12, 14 * scale)}px FontAwesome`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('•', x, y);
-            }
-            
-            renderConnectionLine() {
-                if (!AppState.connectionStart || !AppState.lastMousePos) return;
-                
-                this.ctx.beginPath();
-                this.ctx.moveTo(AppState.connectionStart.x, AppState.connectionStart.y);
-                this.ctx.lineTo(AppState.lastMousePos.x, AppState.lastMousePos.y);
-                this.ctx.strokeStyle = '#00ccff';
-                this.ctx.lineWidth = 2 * AppState.renderScale;
-                this.ctx.setLineDash([5, 5]);
-                this.ctx.stroke();
-                this.ctx.setLineDash([]);
-            }
-            
-            shouldRedrawConnections() {
-                // Only redraw connections every 10 frames or when traits move
-                return this.renderStats.frameCount % 10 === 0 || AppState.isDragging;
-            }
-            
-            updateFPS() {
-                const now = performance.now();
-                this.renderStats.frameCount++;
-                
-                if (now >= this.renderStats.lastFpsUpdate + 1000) {
-                    this.renderStats.fps = this.renderStats.framesThisSecond;
-                    this.renderStats.framesThisSecond = 0;
-                    this.renderStats.lastFpsUpdate = now;
-                    
-                    // Log warning only if really low FPS
-                    if (this.renderStats.fps < 20 && AppState.traits.size > 5) {
-                        console.warn(`Low FPS: ${this.renderStats.fps}. Traits: ${AppState.traits.size}`);
-                    }
-                }
-                this.renderStats.framesThisSecond++;
-            }
-            
-            getFPS() {
-                return this.renderStats.fps;
-            }
+        const connectionId = `${source.id}-${target.id}`;
+        
+        if (AppState.connections.has(connectionId)) {
+            this.showToast('Connection already exists', 'warning');
+            return;
         }
         
-        // ==================== MOBILE-OPTIMIZED APPLICATION ====================
+        const connection = {
+            id: connectionId,
+            source: source.id,
+            target: target.id,
+            type: 'correlative',
+            strength: 50 + Math.random() * 50,
+            certainty: 70 + Math.random() * 30
+        };
         
-        class MobileOptimizedApp {
-            constructor() {
-                this.detectDevice();
-                this.init();
-            }
-            
-            detectDevice() {
-                AppState.isTouchDevice = 'ontouchstart' in window || 
-                                       navigator.maxTouchPoints > 0 ||
-                                       navigator.msMaxTouchPoints > 0;
-                
-                AppState.isMobile = window.innerWidth <= 768 || AppState.isTouchDevice;
-                
-                if (AppState.isMobile) {
-                    PERFORMANCE.FRAME_THROTTLE = 1000 / 24; // Lower FPS for mobile
-                    PERFORMANCE.MAX_TRAITS = 50;
-                    PERFORMANCE.MAX_CONNECTIONS = 100;
-                }
-            }
-            
-            init() {
-                this.setupCanvas();
-                this.loadTraitLibrary();
-                this.setupEventListeners();
-                this.setupMobileUI();
-                this.createDemoNetwork();
-                this.startRenderLoop();
-                
-                setTimeout(() => {
-                    this.showToast('TRAITMAP 2.0 Ready! Optimized for mobile.', 'success');
-                }, 1000);
-            }
-            
-            setupCanvas() {
-                this.canvas = document.getElementById('networkCanvas');
-                this.renderer = new OptimizedRenderer(this.canvas);
-                
-                this.resizeCanvas = this.resizeCanvas.bind(this);
-                window.addEventListener('resize', this.resizeCanvas);
-                this.resizeCanvas();
-            }
-            
-            resizeCanvas() {
-                this.renderer.resize();
-                this.updateMobileLayout();
-            }
-            
-            updateMobileLayout() {
-                if (!AppState.isMobile) return;
-                
-                const isPortrait = window.innerHeight > window.innerWidth;
-                
-                if (isPortrait) {
-                    // Portrait mode optimizations
-                    document.documentElement.style.setProperty('--sidebar-width', '280px');
-                    document.documentElement.style.setProperty('--properties-width', '280px');
-                } else {
-                    // Landscape mode optimizations
-                    document.documentElement.style.setProperty('--sidebar-width', '300px');
-                    document.documentElement.style.setProperty('--properties-width', '300px');
-                }
-            }
-            
-            setupMobileUI() {
-                if (!AppState.isMobile) return;
-                
-                // Setup mobile toggle buttons
-                document.getElementById('toggleSidebar').addEventListener('click', () => {
-                    this.toggleSidebar();
+        AppState.connections.set(connectionId, connection);
+        source.connections.add(connectionId);
+        target.connections.add(connectionId);
+        
+        this.updateStats();
+        this.render();
+        
+        this.showToast(`Connected ${source.name} → ${target.name}`, 'success');
+    }
+    
+    selectTrait(trait) {
+        AppState.selectedTraits.clear();
+        AppState.selectedTraits.add(trait.id);
+        
+        // Update properties panel
+        this.showTraitDetails(trait);
+        
+        this.render();
+    }
+    
+    clearSelection() {
+        AppState.selectedTraits.clear();
+        document.getElementById('selectedTraitInfo').innerHTML = 'Select a trait to view details';
+        this.render();
+    }
+    
+    deleteSelected() {
+        if (AppState.selectedTraits.size === 0) return;
+        
+        AppState.selectedTraits.forEach(traitId => {
+            const trait = AppState.traits.get(traitId);
+            if (trait) {
+                // Remove connections
+                trait.connections.forEach(connId => {
+                    AppState.connections.delete(connId);
                 });
                 
-                document.getElementById('toggleProperties').addEventListener('click', () => {
-                    this.toggleProperties();
-                });
-                
-                document.getElementById('toggleAISuggestions').addEventListener('click', () => {
-                    this.toggleAISuggestions();
-                });
-                
-                // Hide panels by default on mobile
-                document.getElementById('sidebar').classList.remove('show');
-                document.getElementById('propertiesPanel').classList.remove('show');
-                document.getElementById('aiSuggestions').classList.remove('show');
-                
-                // Show toggle buttons
-                document.querySelectorAll('.mobile-toggle').forEach(btn => {
-                    btn.style.display = 'flex';
-                });
+                AppState.traits.delete(traitId);
             }
-            
-            toggleSidebar() {
-                const sidebar = document.getElementById('sidebar');
-                sidebar.classList.toggle('show');
+        });
+        
+        AppState.selectedTraits.clear();
+        this.updateStats();
+        this.render();
+    }
+    
+    selectAll() {
+        AppState.traits.forEach(trait => {
+            AppState.selectedTraits.add(trait.id);
+        });
+        this.render();
+    }
+    
+    setTool(tool) {
+        AppState.currentTool = tool;
+        
+        // Update UI
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tool === tool);
+        });
+        
+        // Handle tool actions
+        if (tool === 'auto') {
+            this.autoLayout();
+        } else if (tool === 'clear') {
+            this.clearSelection();
+            this.cancelConnection();
+        }
+    }
+    
+    cancelConnection() {
+        AppState.connectingTrait = null;
+    }
+    
+    autoLayout() {
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const radius = Math.min(centerX, centerY) * 0.6;
+        
+        const traits = Array.from(AppState.traits.values());
+        
+        // Circular layout
+        traits.forEach((trait, i) => {
+            const angle = (i * 2 * Math.PI) / traits.length;
+            trait.x = centerX + radius * Math.cos(angle);
+            trait.y = centerY + radius * Math.sin(angle);
+        });
+        
+        this.render();
+        this.showToast('Network auto-arranged', 'info');
+    }
+    
+    createInitialNetwork() {
+        // Create initial demo traits
+        const initialTraits = [
+            this.createTrait(TRAIT_LIBRARY.immune[0], 200, 200),
+            this.createTrait(TRAIT_LIBRARY.physiological[0], 400, 200),
+            this.createTrait(TRAIT_LIBRARY.clinical[0], 300, 350),
+            this.createTrait(TRAIT_LIBRARY.comorbid[0], 200, 500),
+            this.createTrait(TRAIT_LIBRARY.biomarker[0], 400, 500)
+        ];
+        
+        // Create initial connections
+        setTimeout(() => {
+            const traits = Array.from(AppState.traits.values());
+            if (traits.length >= 3) {
+                this.createConnection(traits[0], traits[1]);
+                this.createConnection(traits[1], traits[2]);
+                this.createConnection(traits[0], traits[3]);
             }
+        }, 100);
+    }
+    
+    getTraitAt(x, y) {
+        for (const trait of AppState.traits.values()) {
+            const dx = trait.x - x;
+            const dy = trait.y - y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
             
-            toggleProperties() {
-                const properties = document.getElementById('propertiesPanel');
-                properties.classList.toggle('show');
+            if (distance < 25) {
+                return trait;
             }
-            
-            toggleAISuggestions() {
-                const suggestions = document.getElementById('aiSuggestions');
-                suggestions.classList.toggle('show');
-                AppState.suggestionsVisible = suggestions.classList.contains('show');
+        }
+        return null;
+    }
+    
+    // ==================== AI INSIGHTS (On-demand only) ====================
+    
+    requestAIInsights() {
+        if (AppState.traits.size === 0) {
+            this.showToast('Add traits first to get AI insights', 'warning');
+            return;
+        }
+        
+        this.showAIPanel();
+        this.generateAIInsights();
+    }
+    
+    generateAIInsights() {
+        const aiContent = document.getElementById('aiContent');
+        const traits = Array.from(AppState.traits.values());
+        const connections = Array.from(AppState.connections.values());
+        
+        // AI Analysis
+        const insights = [
+            {
+                title: 'Network Analysis',
+                content: `${traits.length} traits with ${connections.length} connections detected.`,
+                action: () => this.analyzeNetwork()
+            },
+            {
+                title: 'Clinical Patterns',
+                content: `${this.countByCategory('immune')} immune traits suggest inflammatory focus.`,
+                action: () => this.highlightCategory('immune')
+            },
+            {
+                title: 'Treatment Opportunities',
+                content: 'Multiple high-severity traits identified for targeted intervention.',
+                action: () => this.highlightHighSeverity()
+            },
+            {
+                title: 'Connection Suggestions',
+                content: 'Consider connecting isolated traits to reveal clinical pathways.',
+                action: () => this.suggestConnections()
+            },
+            {
+                title: 'Evidence Quality',
+                content: `Average evidence level: ${this.calculateAverageEvidence()}/4`,
+                action: () => this.showEvidenceReport()
             }
-            
-            loadTraitLibrary() {
-                // Load 50+ traits (condensed for space)
-                const traitData = this.getTraitData();
-                
-                traitData.forEach(data => {
-                    this.createTraitCard(data);
-                });
-                
-                // Setup search with debounce
-                let searchTimeout;
-                document.getElementById('searchTraits').addEventListener('input', (e) => {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        this.filterTraits(e.target.value.toLowerCase());
-                    }, 300);
-                });
-                
-                // Setup category tabs
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.addEventListener('click', (e) => {
-                        const category = e.target.dataset.category;
-                        this.filterByCategory(category);
-                    });
-                });
-            }
-            
-            getTraitData() {
-                // Return 50+ trait definitions (simplified for space)
-                const categories = {
-                    immune: 15,
-                    physio: 15,
-                    clinical: 10,
-                    comorbid: 10
-                };
-                
-                const traits = [];
-                const colors = {
-                    immune: '#ff3366',
-                    physio: '#00cc88',
-                    clinical: '#ffaa00',
-                    comorbid: '#9966ff'
-                };
-                
-                const icons = {
-                    immune: 'fas fa-shield-alt',
-                    physio: 'fas fa-heartbeat',
-                    clinical: 'fas fa-stethoscope',
-                    comorbid: 'fas fa-clipboard-list'
-                };
-                
-                Object.entries(categories).forEach(([category, count]) => {
-                    for (let i = 1; i <= count; i++) {
-                        traits.push({
-                            id: `trait-${category}-${i}`,
-                            name: `${category.charAt(0).toUpperCase() + category.slice(1)} Trait ${i}`,
-                            category: category,
-                            description: `Clinical trait description ${i} for ${category} category`,
-                            color: colors[category],
-                            icon: icons[category],
-                            evidenceLevel: Math.min(4, Math.ceil(Math.random() * 4)),
-                            severity: 20 + Math.floor(Math.random() * 60),
-                            confidence: 50 + Math.floor(Math.random() * 40),
-                            impact: 30 + Math.floor(Math.random() * 50)
-                        });
-                    }
-                });
-                
-                return traits;
-            }
-            
-            createTraitCard(traitData) {
-                const libraryContainer = document.querySelector('.trait-library');
-                
-                const card = document.createElement('div');
-                card.className = 'trait-item';
-                card.draggable = !AppState.isTouchDevice;
-                card.dataset.traitId = traitData.id;
-                card.dataset.category = traitData.category;
-                
-                card.innerHTML = `
-                    <div class="trait-name">
-                        <span class="trait-color" style="background: ${traitData.color}"></span>
-                        ${traitData.name}
-                    </div>
-                    <div class="trait-desc">${traitData.description}</div>
-                `;
-                
-                if (!AppState.isTouchDevice) {
-                    card.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', traitData.id);
-                        card.classList.add('dragging');
-                    });
-                    
-                    card.addEventListener('dragend', () => {
-                        card.classList.remove('dragging');
-                    });
-                } else {
-                    // Touch handling for mobile
-                    card.addEventListener('touchstart', (e) => {
-                        e.preventDefault();
-                        this.handleTouchStart(e, traitData);
-                    }, { passive: false });
-                }
-                
-                libraryContainer.appendChild(card);
-            }
-            
-            handleTouchStart(e, traitData) {
-                // Create touch-based drag for mobile
-                const touch = e.touches[0];
-                AppState.lastTouch = { x: touch.clientX, y: touch.clientY };
-                AppState.draggedTrait = traitData;
-                
-                document.addEventListener('touchmove', this.handleTouchMove.bind(this), { passive: false });
-                document.addEventListener('touchend', this.handleTouchEnd.bind(this));
-            }
-            
-            handleTouchMove(e) {
-                if (!AppState.draggedTrait) return;
-                
-                e.preventDefault();
-                const touch = e.touches[0];
-                const rect = this.canvas.getBoundingClientRect();
-                const x = (touch.clientX - rect.left) * (this.canvas.width / rect.width);
-                const y = (touch.clientY - rect.top) * (this.canvas.height / rect.height);
-                
-                // Add trait at touch position
-                this.addTraitAtPosition(AppState.draggedTrait, x, y);
-                AppState.draggedTrait = null;
-                
-                // Clean up listeners
-                document.removeEventListener('touchmove', this.handleTouchMove.bind(this));
-                document.removeEventListener('touchend', this.handleTouchEnd.bind(this));
-            }
-            
-            handleTouchEnd() {
-                AppState.draggedTrait = null;
-                document.removeEventListener('touchmove', this.handleTouchMove.bind(this));
-                document.removeEventListener('touchend', this.handleTouchEnd.bind(this));
-            }
-            
-            addTraitAtPosition(traitData, x, y) {
-                const trait = {
-                    ...traitData,
-                    id: `trait-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    x: x,
-                    y: y
-                };
-                
-                AppState.traits.set(trait.id, trait);
-                this.render();
-                this.showToast(`Added ${trait.name}`, 'success');
-            }
-            
-            filterTraits(searchTerm) {
-                document.querySelectorAll('.trait-item').forEach(card => {
-                    const name = card.querySelector('.trait-name').textContent.toLowerCase();
-                    const desc = card.querySelector('.trait-desc').textContent.toLowerCase();
-                    const matches = name.includes(searchTerm) || desc.includes(searchTerm);
-                    card.style.display = matches ? 'block' : 'none';
-                });
-            }
-            
-            filterByCategory(category) {
-                AppState.activeCategory = category;
-                
-                document.querySelectorAll('.category-tab').forEach(tab => {
-                    tab.classList.toggle('active', tab.dataset.category === category);
-                });
-                
-                document.querySelectorAll('.trait-item').forEach(card => {
-                    if (category === 'all') {
-                        card.style.display = 'block';
-                    } else {
-                        card.style.display = card.dataset.category === category ? 'block' : 'none';
-                    }
-                });
-            }
-            
-            setupEventListeners() {
-                // Canvas interactions
-                if (AppState.isTouchDevice) {
-                    this.setupTouchEvents();
-                } else {
-                    this.setupMouseEvents();
-                }
-                
-                // Tool buttons
-                document.querySelectorAll('.tool-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const tool = e.currentTarget.dataset.tool;
-                        this.setTool(tool);
-                    });
-                });
-                
-                // Action buttons
-                document.getElementById('btnImport').addEventListener('click', () => this.importPatient());
-                document.getElementById('btnSimulate').addEventListener('click', () => this.runSimulation());
-                document.getElementById('btnShare').addEventListener('click', () => this.shareAnalysis());
-                
-                // Keyboard shortcuts (desktop only)
-                if (!AppState.isMobile) {
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === 'Delete') this.deleteSelected();
-                        if (e.key === 'Escape') this.cancelConnection();
-                        if (e.key === 's' && e.ctrlKey) {
-                            e.preventDefault();
-                            this.saveSession();
-                        }
-                    });
-                }
-                
-                // Window resize with debounce
-                let resizeTimeout;
-                window.addEventListener('resize', () => {
-                    clearTimeout(resizeTimeout);
-                    resizeTimeout = setTimeout(() => {
-                        this.renderer.resize();
-                        this.render();
-                    }, 250);
-                });
-            }
-            
-            setupTouchEvents() {
-                this.canvas.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    this.onCanvasTouchStart(touch);
-                }, { passive: false });
-                
-                this.canvas.addEventListener('touchmove', (e) => {
-                    e.preventDefault();
-                    const touch = e.touches[0];
-                    this.onCanvasTouchMove(touch);
-                }, { passive: false });
-                
-                this.canvas.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    this.onCanvasTouchEnd();
-                });
-                
-                // Pinch zoom
-                let lastDistance = 0;
-                this.canvas.addEventListener('touchmove', (e) => {
-                    if (e.touches.length === 2) {
-                        e.preventDefault();
-                        const touch1 = e.touches[0];
-                        const touch2 = e.touches[1];
-                        const distance = Math.hypot(
-                            touch2.clientX - touch1.clientX,
-                            touch2.clientY - touch1.clientY
-                        );
-                        
-                        if (lastDistance > 0) {
-                            const scaleChange = distance / lastDistance;
-                            this.handlePinchZoom(scaleChange, touch1, touch2);
-                        }
-                        lastDistance = distance;
-                    }
-                }, { passive: false });
-                
-                this.canvas.addEventListener('touchend', () => {
-                    lastDistance = 0;
-                });
-            }
-            
-            setupMouseEvents() {
-                this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
-                this.canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
-                this.canvas.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
-                this.canvas.addEventListener('wheel', (e) => this.onCanvasWheel(e));
-            }
-            
-            onCanvasTouchStart(touch) {
-                const rect = this.canvas.getBoundingClientRect();
-                const x = (touch.clientX - rect.left) * (this.canvas.width / rect.width);
-                const y = (touch.clientY - rect.top) * (this.canvas.height / rect.height);
-                
-                AppState.lastTouchPos = { x: touch.clientX, y: touch.clientY };
-                AppState.lastMousePos = { x, y };
-                
-                if (AppState.currentTool === 'select') {
-                    const clickedTrait = this.getTraitAt(x, y);
-                    if (clickedTrait) {
-                        this.selectTrait(clickedTrait);
-                        AppState.isDragging = true;
-                        AppState.dragStart = { x, y };
-                        AppState.dragOffset = { x: clickedTrait.x, y: clickedTrait.y };
-                    }
-                } else if (AppState.currentTool === 'connect') {
-                    const clickedTrait = this.getTraitAt(x, y);
-                    if (clickedTrait) {
-                        if (!AppState.isConnecting) {
-                            AppState.isConnecting = true;
-                            AppState.connectionStart = clickedTrait;
-                            document.getElementById('connectionMode').classList.add('show');
-                        } else {
-                            if (AppState.connectionStart.id !== clickedTrait.id) {
-                                this.createConnection(AppState.connectionStart, clickedTrait);
-                                this.cancelConnection();
-                            }
-                        }
-                    }
-                } else if (AppState.currentTool === 'hand') {
-                    AppState.isDragging = true;
-                    AppState.dragStart = { x: touch.clientX, y: touch.clientY };
-                }
-            }
-            
-            onCanvasTouchMove(touch) {
-                if (!AppState.isDragging) return;
-                
-                const rect = this.canvas.getBoundingClientRect();
-                const x = (touch.clientX - rect.left) * (this.canvas.width / rect.width);
-                const y = (touch.clientY - rect.top) * (this.canvas.height / rect.height);
-                
-                AppState.lastMousePos = { x, y };
-                
-                if (AppState.currentTool === 'select' && AppState.selectedTraits.size > 0) {
-                    const dx = x - AppState.dragStart.x;
-                    const dy = y - AppState.dragStart.y;
-                    
-                    AppState.selectedTraits.forEach(traitId => {
-                        const trait = AppState.traits.get(traitId);
-                        if (trait) {
-                            trait.x = AppState.dragOffset.x + dx;
-                            trait.y = AppState.dragOffset.y + dy;
-                        }
-                    });
-                    
-                    this.render();
-                } else if (AppState.currentTool === 'hand') {
-                    const dx = touch.clientX - AppState.dragStart.x;
-                    const dy = touch.clientY - AppState.dragStart.y;
-                    
-                    AppState.traits.forEach(trait => {
-                        trait.x += dx;
-                        trait.y += dy;
-                    });
-                    
-                    AppState.dragStart = { x: touch.clientX, y: touch.clientY };
-                    this.render();
-                }
-            }
-            
-            onCanvasTouchEnd() {
-                AppState.isDragging = false;
-            }
-            
-            handlePinchZoom(scaleChange, touch1, touch2) {
-                const rect = this.canvas.getBoundingClientRect();
-                const centerX = ((touch1.clientX + touch2.clientX) / 2 - rect.left) * 
-                               (this.canvas.width / rect.width);
-                const centerY = ((touch1.clientY + touch2.clientY) / 2 - rect.top) * 
-                               (this.canvas.height / rect.height);
-                
-                AppState.renderScale *= scaleChange;
-                AppState.renderScale = Math.max(0.1, Math.min(3, AppState.renderScale));
-                
-                const scaleAdjust = scaleChange - 1;
-                AppState.traits.forEach(trait => {
-                    trait.x += (trait.x - centerX) * scaleAdjust;
-                    trait.y += (trait.y - centerY) * scaleAdjust;
-                });
-                
-                this.render();
-            }
-            
-            // Mouse event handlers (similar to touch but with mouse events)
-            onCanvasMouseDown(e) {
-                const rect = this.canvas.getBoundingClientRect();
-                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
-                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
-                
-                AppState.lastMousePos = { x, y };
-                
-                if (AppState.currentTool === 'select') {
-                    const clickedTrait = this.getTraitAt(x, y);
-                    if (clickedTrait) {
-                        this.selectTrait(clickedTrait);
-                        AppState.isDragging = true;
-                        AppState.dragStart = { x, y };
-                        AppState.dragOffset = { x: clickedTrait.x, y: clickedTrait.y };
-                    }
-                } else if (AppState.currentTool === 'connect') {
-                    const clickedTrait = this.getTraitAt(x, y);
-                    if (clickedTrait) {
-                        if (!AppState.isConnecting) {
-                            AppState.isConnecting = true;
-                            AppState.connectionStart = clickedTrait;
-                            document.getElementById('connectionMode').classList.add('show');
-                        } else {
-                            if (AppState.connectionStart.id !== clickedTrait.id) {
-                                this.createConnection(AppState.connectionStart, clickedTrait);
-                                this.cancelConnection();
-                            }
-                        }
-                    }
-                } else if (AppState.currentTool === 'hand') {
-                    AppState.isDragging = true;
-                    AppState.dragStart = { x: e.clientX, y: e.clientY };
-                }
-            }
-            
-            onCanvasMouseMove(e) {
-                if (!AppState.isDragging && !AppState.isConnecting) return;
-                
-                const rect = this.canvas.getBoundingClientRect();
-                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
-                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
-                
-                AppState.lastMousePos = { x, y };
-                
-                if (AppState.currentTool === 'select' && AppState.selectedTraits.size > 0) {
-                    const dx = x - AppState.dragStart.x;
-                    const dy = y - AppState.dragStart.y;
-                    
-                    AppState.selectedTraits.forEach(traitId => {
-                        const trait = AppState.traits.get(traitId);
-                        if (trait) {
-                            trait.x = AppState.dragOffset.x + dx;
-                            trait.y = AppState.dragOffset.y + dy;
-                        }
-                    });
-                    
-                    this.render();
-                } else if (AppState.currentTool === 'hand') {
-                    const dx = e.clientX - AppState.dragStart.x;
-                    const dy = e.clientY - AppState.dragStart.y;
-                    
-                    AppState.traits.forEach(trait => {
-                        trait.x += dx;
-                        trait.y += dy;
-                    });
-                    
-                    AppState.dragStart = { x: e.clientX, y: e.clientY };
-                    this.render();
-                }
-            }
-            
-            onCanvasMouseUp() {
-                AppState.isDragging = false;
-            }
-            
-            onCanvasWheel(e) {
-                e.preventDefault();
-                
-                const rect = this.canvas.getBoundingClientRect();
-                const x = (e.clientX - rect.left) * (this.canvas.width / rect.width);
-                const y = (e.clientY - rect.top) * (this.canvas.height / rect.height);
-                
-                const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-                AppState.renderScale *= zoomFactor;
-                AppState.renderScale = Math.max(0.1, Math.min(3, AppState.renderScale));
-                
-                const scaleChange = zoomFactor - 1;
-                AppState.traits.forEach(trait => {
-                    trait.x += (trait.x - x) * scaleChange;
-                    trait.y += (trait.y - y) * scaleChange;
-                });
-                
-                this.render();
-            }
-            
-            getTraitAt(x, y) {
-                for (const trait of AppState.traits.values()) {
-                    const dx = trait.x - x;
-                    const dy = trait.y - y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const hitRadius = 30 * AppState.renderScale;
-                    
-                    if (distance < hitRadius) {
-                        return trait;
-                    }
-                }
-                return null;
-            }
-            
-            createConnection(sourceTrait, targetTrait) {
-                const connection = {
-                    id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    sourceId: sourceTrait.id,
-                    targetId: targetTrait.id,
-                    type: 'correlative',
-                    strength: 40 + Math.random() * 60,
-                    getColor: function() {
-                        const colors = {
-                            'causal': '#ff3366',
-                            'correlative': '#ffaa00',
-                            'therapeutic': '#00cc88'
-                        };
-                        return colors[this.type] || '#4d94ff';
-                    },
-                    getTypeLabel: function() {
-                        const labels = {
-                            'causal': 'Causal Relationship',
-                            'correlative': 'Correlation',
-                            'therapeutic': 'Treatment Effect'
-                        };
-                        return labels[this.type] || 'Relationship';
-                    }
-                };
-                
-                AppState.connections.set(connection.id, connection);
-                this.render();
-                this.showToast(`Created connection between ${sourceTrait.name} and ${targetTrait.name}`, 'success');
-                
-                // Update AI suggestions
-                setTimeout(() => this.generateAISuggestions(), 100);
-            }
-            
-            setTool(tool) {
-                AppState.currentTool = tool;
-                
-                document.querySelectorAll('.tool-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                document.querySelector(`.tool-btn[data-tool="${tool}"]`)?.classList.add('active');
-                
-                if (tool === 'layout') {
-                    this.arrangeNetwork();
-                } else if (tool === 'delete') {
-                    this.deleteSelected();
-                } else if (tool === 'connect') {
-                    document.getElementById('connectionMode').classList.add('show');
-                } else {
-                    document.getElementById('connectionMode').classList.remove('show');
-                    this.cancelConnection();
-                }
-            }
-            
-            cancelConnection() {
-                AppState.isConnecting = false;
-                AppState.connectionStart = null;
-                document.getElementById('connectionMode').classList.remove('show');
-            }
-            
-            selectTrait(trait) {
-                this.deselectAll();
-                trait.selected = true;
+        ];
+        
+        let html = '';
+        insights.forEach(insight => {
+            html += `
+                <div class="ai-suggestion" onclick="app.aiInsightAction(${insights.indexOf(insight)})">
+                    <div style="font-weight: 600; margin-bottom: 0.25rem;">${insight.title}</div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">${insight.content}</div>
+                </div>
+            `;
+        });
+        
+        aiContent.innerHTML = html;
+    }
+    
+    aiInsightAction(index) {
+        const actions = [
+            () => this.analyzeNetwork(),
+            () => this.highlightCategory('immune'),
+            () => this.highlightHighSeverity(),
+            () => this.suggestConnections(),
+            () => this.showEvidenceReport()
+        ];
+        
+        if (actions[index]) {
+            actions[index]();
+        }
+    }
+    
+    countByCategory(category) {
+        return Array.from(AppState.traits.values())
+            .filter(t => t.category === category).length;
+    }
+    
+    calculateAverageEvidence() {
+        const traits = Array.from(AppState.traits.values());
+        if (traits.length === 0) return 0;
+        
+        const total = traits.reduce((sum, trait) => sum + trait.evidence, 0);
+        return (total / traits.length).toFixed(1);
+    }
+    
+    analyzeNetwork() {
+        const stats = {
+            traits: AppState.traits.size,
+            connections: AppState.connections.size,
+            density: (AppState.connections.size / (AppState.traits.size * (AppState.traits.size - 1) / 2)) * 100 || 0,
+            avgSeverity: this.calculateAverage('severity'),
+            avgConfidence: this.calculateAverage('confidence')
+        };
+        
+        this.showToast(
+            `Analysis: ${stats.traits} traits, ${stats.connections} connections, ` +
+            `${stats.avgSeverity}% avg severity`,
+            'info'
+        );
+        
+        this.updateStats();
+    }
+    
+    calculateAverage(property) {
+        const traits = Array.from(AppState.traits.values());
+        if (traits.length === 0) return 0;
+        
+        const total = traits.reduce((sum, trait) => sum + trait[property], 0);
+        return Math.round(total / traits.length);
+    }
+    
+    highlightCategory(category) {
+        AppState.selectedTraits.clear();
+        
+        AppState.traits.forEach(trait => {
+            if (trait.category === category) {
                 AppState.selectedTraits.add(trait.id);
-                this.render();
-                this.updateProperties();
+            }
+        });
+        
+        this.render();
+        this.showToast(`Highlighted ${this.countByCategory(category)} ${category} traits`, 'info');
+    }
+    
+    highlightHighSeverity() {
+        AppState.selectedTraits.clear();
+        
+        const highSeverityTraits = Array.from(AppState.traits.values())
+            .filter(t => t.severity > 70);
+        
+        highSeverityTraits.forEach(trait => {
+            AppState.selectedTraits.add(trait.id);
+        });
+        
+        this.render();
+        this.showToast(`Highlighted ${highSeverityTraits.length} high-severity traits`, 'info');
+    }
+    
+    suggestConnections() {
+        const traits = Array.from(AppState.traits.values());
+        if (traits.length < 2) return;
+        
+        // Find disconnected traits
+        const disconnected = traits.filter(t => t.connections.size === 0);
+        
+        if (disconnected.length >= 2) {
+            this.createConnection(disconnected[0], disconnected[1]);
+            this.showToast('Suggested connection created', 'success');
+        }
+    }
+    
+    showEvidenceReport() {
+        const report = {
+            level1: this.countEvidence(1),
+            level2: this.countEvidence(2),
+            level3: this.countEvidence(3),
+            level4: this.countEvidence(4)
+        };
+        
+        this.showToast(
+            `Evidence: Level 1: ${report.level1}, Level 2: ${report.level2}, ` +
+            `Level 3: ${report.level3}, Level 4: ${report.level4}`,
+            'info'
+        );
+    }
+    
+    countEvidence(level) {
+        return Array.from(AppState.traits.values())
+            .filter(t => t.evidence === level).length;
+    }
+    
+    // ==================== UI METHODS ====================
+    
+    showAIPanel() {
+        document.getElementById('aiPanel').classList.add('show');
+    }
+    
+    hideAIPanel() {
+        document.getElementById('aiPanel').classList.remove('show');
+    }
+    
+    showTraitDetails(trait) {
+        const details = `
+            <div style="margin-top: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                    <div style="width: 40px; height: 40px; background: ${trait.color}; 
+                         border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="${trait.icon}" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 1.125rem;">${trait.name}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                            ${trait.category} • Evidence Level ${trait.evidence}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; gap: 0.75rem;">
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                            Severity
+                        </div>
+                        <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${trait.severity}%; height: 100%; background: var(--immune);"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="font-size: 0.875                    <div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                            Confidence
+                        </div>
+                        <div style="height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                            <div style="width: ${trait.confidence}%; height: 100%; background: var(--primary-blue);"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">
+                            Connections
+                        </div>
+                        <div style="font-weight: 600;">${trait.connections.size} connections</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem;">
+                    <button class="btn" onclick="app.centerOnTrait('${trait.id}')" 
+                            style="width: 100%; margin-bottom: 0.5rem;">
+                        <i class="fas fa-crosshairs"></i> Center View
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('selectedTraitInfo').innerHTML = details;
+    }
+    
+    centerOnTrait(traitId) {
+        const trait = AppState.traits.get(traitId);
+        if (trait) {
+            const centerX = this.canvas.width / 2;
+            const centerY = this.canvas.height / 2;
+            
+            const offsetX = centerX - trait.x;
+            const offsetY = centerY - trait.y;
+            
+            AppState.traits.forEach(t => {
+                t.x += offsetX;
+                t.y += offsetY;
+            });
+            
+            this.render();
+        }
+    }
+    
+    updateStats() {
+        document.getElementById('traitCount').textContent = AppState.traits.size;
+        document.getElementById('connectionCount').textContent = AppState.connections.size;
+        
+        const complexity = Math.min(100, 
+            AppState.traits.size * 2 + AppState.connections.size * 3);
+        document.getElementById('complexityScore').textContent = complexity;
+    }
+    
+    // ==================== RENDERING ====================
+    
+    startRenderLoop() {
+        const render = () => {
+            this.render();
+            requestAnimationFrame(render);
+        };
+        requestAnimationFrame(render);
+    }
+    
+    render() {
+        const now = performance.now();
+        if (now - this.lastRenderTime < 16) return; // ~60fps
+        this.lastRenderTime = now;
+        
+        // Clear canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw connections
+        AppState.connections.forEach(connection => {
+            const source = AppState.traits.get(connection.source);
+            const target = AppState.traits.get(connection.target);
+            
+            if (source && target) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(source.x, source.y);
+                this.ctx.lineTo(target.x, target.y);
+                this.ctx.strokeStyle = this.getConnectionColor(connection);
+                this.ctx.lineWidth = 2;
+                this.ctx.globalAlpha = 0.6;
+                this.ctx.stroke();
+                this.ctx.globalAlpha = 1;
+                
+                // Draw connection strength indicator
+                const midX = (source.x + target.x) / 2;
+                const midY = (source.y + target.y) / 2;
+                
+                this.ctx.beginPath();
+                this.ctx.arc(midX, midY, 3, 0, Math.PI * 2);
+                this.ctx.fillStyle = connection.strength > 75 ? '#10b981' : 
+                                   connection.strength > 50 ? '#f59e0b' : '#ef4444';
+                this.ctx.fill();
+            }
+        });
+        
+        // Draw connection preview
+        if (AppState.connectingTrait) {
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseX = AppState.lastMouseX - rect.left;
+            const mouseY = AppState.lastMouseY - rect.top;
+            
+            this.ctx.beginPath();
+            this.ctx.moveTo(AppState.connectingTrait.x, AppState.connectingTrait.y);
+            this.ctx.lineTo(mouseX, mouseY);
+            this.ctx.strokeStyle = 'var(--primary-blue)';
+            this.ctx.lineWidth = 2;
+            this.ctx.setLineDash([5, 3]);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+        }
+        
+        // Draw traits
+        AppState.traits.forEach(trait => {
+            // Draw glow if selected
+            if (AppState.selectedTraits.has(trait.id)) {
+                this.ctx.beginPath();
+                this.ctx.arc(trait.x, trait.y, 32, 0, Math.PI * 2);
+                const gradient = this.ctx.createRadialGradient(
+                    trait.x, trait.y, 25,
+                    trait.x, trait.y, 32
+                );
+                gradient.addColorStop(0, trait.color + '80');
+                gradient.addColorStop(1, trait.color + '00');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fill();
             }
             
-            deselectAll() {
+            // Draw trait circle
+            this.ctx.beginPath();
+            this.ctx.arc(trait.x, trait.y, 25, 0, Math.PI * 2);
+            this.ctx.fillStyle = trait.color;
+            this.ctx.fill();
+            
+            // Draw border if selected
+            if (AppState.selectedTraits.has(trait.id)) {
+                this.ctx.beginPath();
+                this.ctx.arc(trait.x, trait.y, 25, 0, Math.PI * 2);
+                this.ctx.strokeStyle = 'white';
+                this.ctx.lineWidth = 2;
+                this.ctx.stroke();
+            }
+            
+            // Draw icon
+            this.ctx.font = '14px FontAwesome';
+            this.ctx.fillStyle = 'white';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            
+            // Simple icon representation
+            const icons = {
+                'shield-virus': '🛡️',
+                'lungs': '🫁',
+                'stethoscope': '🩺',
+                'heartbeat': '💓',
+                'vial': '🧪',
+                'pills': '💊'
+            };
+            
+            const icon = icons[trait.icon.split('-')[1]] || '●';
+            this.ctx.fillText(icon, trait.x, trait.y);
+            
+            // Draw evidence level indicator
+            this.ctx.beginPath();
+            this.ctx.arc(trait.x + 15, trait.y - 15, 6, 0, Math.PI * 2);
+            this.ctx.fillStyle = this.getEvidenceColor(trait.evidence);
+            this.ctx.fill();
+        });
+        
+        // Draw connection count
+        if (AppState.connectingTrait) {
+            this.ctx.font = '12px Inter';
+            this.ctx.fillStyle = 'var(--text-secondary)';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(
+                `Connecting from: ${AppState.connectingTrait.name}`,
+                this.canvas.width / 2,
+                20
+            );
+        }
+    }
+    
+    getConnectionColor(connection) {
+        if (connection.strength > 75) return '#10b981'; // Strong
+        if (connection.strength > 50) return '#f59e0b'; // Moderate
+        return '#ef4444'; // Weak
+    }
+    
+    getEvidenceColor(level) {
+        switch(level) {
+            case 1: return '#fbbf24'; // Gold
+            case 2: return '#a3a3a3'; // Silver
+            case 3: return '#92400e'; // Bronze
+            case 4: return '#6b7280'; // Gray
+            default: return '#6b7280';
+        }
+    }
+    
+    showToast(message, type = 'info') {
+        const toast = document.getElementById('toast');
+        
+        // Set type-specific styling
+        toast.style.borderLeft = type === 'success' ? '3px solid #10b981' :
+                                type === 'error' ? '3px solid #ef4444' :
+                                type === 'warning' ? '3px solid #f59e0b' :
+                                '3px solid var(--primary-blue)';
+        
+        // Set icon
+        const icon = type === 'success' ? 'fas fa-check-circle' :
+                    type === 'error' ? 'fas fa-exclamation-circle' :
+                    type === 'warning' ? 'fas fa-exclamation-triangle' :
+                    'fas fa-info-circle';
+        
+        toast.innerHTML = `
+            <i class="${icon}" style="color: ${type === 'success' ? '#10b981' : 
+                                               type === 'error' ? '#ef4444' : 
+                                               type === 'warning' ? '#f59e0b' : 
+                                               'var(--primary-blue)'}"></i>
+            <span>${message}</span>
+        `;
+        
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+    
+    // ==================== ADDITIONAL PROFESSIONAL FEATURES ====================
+    
+    exportNetwork() {
+        const data = {
+            traits: Array.from(AppState.traits.values()).map(t => ({
+                id: t.id,
+                name: t.name,
+                category: t.category,
+                x: t.x,
+                y: t.y,
+                severity: t.severity,
+                confidence: t.confidence,
+                evidence: t.evidence
+            })),
+            connections: Array.from(AppState.connections.values()).map(c => ({
+                source: c.source,
+                target: c.target,
+                strength: c.strength,
+                certainty: c.certainty
+            })),
+            metadata: {
+                exported: new Date().toISOString(),
+                version: 'TRAITMAP PRO 1.0',
+                traitCount: AppState.traits.size,
+                connectionCount: AppState.connections.size
+            }
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `traitmap-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        
+        this.showToast('Network exported successfully', 'success');
+    }
+    
+    importNetwork(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                
+                // Clear current network
+                AppState.traits.clear();
+                AppState.connections.clear();
                 AppState.selectedTraits.clear();
-                AppState.traits.forEach(trait => trait.selected = false);
-                this.render();
-                this.updateProperties();
-            }
-            
-            deleteSelected() {
-                if (AppState.selectedTraits.size === 0) {
-                    this.showToast('Select traits to delete', 'warning');
-                    return;
-                }
                 
-                AppState.selectedTraits.forEach(traitId => {
-                    AppState.traits.delete(traitId);
-                });
-                
-                AppState.selectedTraits.clear();
-                this.render();
-                this.updateProperties();
-                this.showToast(`Deleted ${AppState.selectedTraits.size} traits`, 'success');
-            }
-            
-            arrangeNetwork() {
-                const centerX = this.canvas.width / (2 * this.renderer.dpr);
-                const centerY = this.canvas.height / (2 * this.renderer.dpr);
-                const radius = Math.min(centerX, centerY) * 0.6;
-                
-                const traits = Array.from(AppState.traits.values());
-                traits.forEach((trait, index) => {
-                    const angle = (index * 2 * Math.PI) / traits.length;
-                    trait.x = centerX + radius * Math.cos(angle);
-                    trait.y = centerY + radius * Math.sin(angle);
-                });
-                
-                this.render();
-                this.showToast('Network arranged', 'success');
-            }
-            
-            createDemoNetwork() {
-                // Create 4 demo traits
-                const demoPositions = [
-                    { x: 0.3, y: 0.4 },
-                    { x: 0.7, y: 0.4 },
-                    { x: 0.3, y: 0.6 },
-                    { x: 0.7, y: 0.6 }
-                ];
-                
-                const colors = ['#ff3366', '#00cc88', '#ffaa00', '#9966ff'];
-                const categories = ['immune', 'physio', 'clinical', 'comorbid'];
-                
-                demoPositions.forEach((pos, i) => {
+                // Load traits
+                data.traits.forEach(traitData => {
                     const trait = {
-                        id: `demo-${i}`,
-                        name: `Demo Trait ${i + 1}`,
-                        category: categories[i],
-                        color: colors[i],
-                        x: this.canvas.width * pos.x / this.renderer.dpr,
-                        y: this.canvas.height * pos.y / this.renderer.dpr
+                        id: traitData.id,
+                        name: traitData.name,
+                        category: traitData.category,
+                        color: this.getCategoryColor(traitData.category),
+                        icon: this.getCategoryIcon(traitData.category),
+                        evidence: traitData.evidence || 3,
+                        severity: traitData.severity || 50,
+                        confidence: traitData.confidence || 70,
+                        x: traitData.x,
+                        y: traitData.y,
+                        connections: new Set()
                     };
                     
                     AppState.traits.set(trait.id, trait);
                 });
                 
-                this.render();
-            }
-            
-            importPatient() {
-                this.showToast('Patient import feature', 'info');
-            }
-            
-            runSimulation() {
-                this.showToast('Running clinical simulation...', 'info');
-                
-                // Simple simulation
-                AppState.traits.forEach(trait => {
-                    trait.severity = Math.max(0, Math.min(100, trait.severity + (Math.random() * 20 - 10)));
+                // Load connections
+                data.connections.forEach(connData => {
+                    const connection = {
+                        id: `${connData.source}-${connData.target}`,
+                        source: connData.source,
+                        target: connData.target,
+                        strength: connData.strength || 50,
+                        certainty: connData.certainty || 70
+                    };
+                    
+                    AppState.connections.set(connection.id, connection);
+                    
+                    // Update trait connections
+                    const sourceTrait = AppState.traits.get(connData.source);
+                    const targetTrait = AppState.traits.get(connData.target);
+                    if (sourceTrait) sourceTrait.connections.add(connection.id);
+                    if (targetTrait) targetTrait.connections.add(connection.id);
                 });
                 
+                this.updateStats();
                 this.render();
-                this.updateProperties();
-                this.showToast('Simulation complete!', 'success');
-            }
-            
-            shareAnalysis() {
-                const analysis = {
-                    traits: Array.from(AppState.traits.values()),
-                    connections: Array.from(AppState.connections.values()),
-                    timestamp: new Date().toISOString()
-                };
+                this.showToast('Network imported successfully', 'success');
                 
-                const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(analysis, null, 2))}`;
-                const link = document.createElement('a');
-                link.href = dataStr;
-                link.download = `traitmap-analysis-${new Date().toISOString().split('T')[0]}.json`;
-                link.click();
-                
-                this.showToast('Analysis exported', 'success');
+            } catch (error) {
+                this.showToast('Error importing network', 'error');
+                console.error('Import error:', error);
             }
+        };
+        reader.readAsText(file);
+    }
+    
+    getCategoryColor(category) {
+        const colors = {
+            immune: '#ef4444',
+            physiological: '#10b981',
+            clinical: '#f59e0b',
+            comorbid: '#8b5cf6',
+            biomarker: '#06b6d4',
+            treatment: '#ec4899'
+        };
+        return colors[category] || '#6b7280';
+    }
+    
+    getCategoryIcon(category) {
+        const icons = {
+            immune: 'fas fa-shield-virus',
+            physiological: 'fas fa-lungs',
+            clinical: 'fas fa-stethoscope',
+            comorbid: 'fas fa-heartbeat',
+            biomarker: 'fas fa-vial',
+            treatment: 'fas fa-pills'
+        };
+        return icons[category] || 'fas fa-circle';
+    }
+    
+    // ==================== ADVANCED ANALYSIS ====================
+    
+    calculateNetworkMetrics() {
+        const traits = Array.from(AppState.traits.values());
+        const connections = Array.from(AppState.connections.values());
+        
+        if (traits.length === 0) return null;
+        
+        const metrics = {
+            // Basic counts
+            traitCount: traits.length,
+            connectionCount: connections.length,
             
-            saveSession() {
-                localStorage.setItem('traitmap-session', JSON.stringify({
-                    traits: Array.from(AppState.traits.values()),
-                    connections: Array.from(AppState.connections.values())
-                }));
-                this.showToast('Session saved', 'success');
+            // Density metrics
+            density: connections.length / (traits.length * (traits.length - 1) / 2) || 0,
+            averageDegree: (connections.length * 2) / traits.length || 0,
+            
+            // Severity analysis
+            averageSeverity: this.calculateAverage('severity'),
+            highSeverityCount: traits.filter(t => t.severity > 70).length,
+            criticalTraits: traits.filter(t => t.severity > 90).length,
+            
+            // Evidence quality
+            averageEvidence: this.calculateAverageEvidence(),
+            strongEvidenceCount: traits.filter(t => t.evidence <= 2).length,
+            
+            // Connection strength
+            averageConnectionStrength: connections.reduce((sum, c) => sum + c.strength, 0) / connections.length || 0,
+            strongConnections: connections.filter(c => c.strength > 75).length,
+            
+            // Category distribution
+            categoryDistribution: {}
+        };
+        
+        // Calculate category distribution
+        traits.forEach(trait => {
+            metrics.categoryDistribution[trait.category] = 
+                (metrics.categoryDistribution[trait.category] || 0) + 1;
+        });
+        
+        return metrics;
+    }
+    
+    generateClinicalReport() {
+        const metrics = this.calculateNetworkMetrics();
+        if (!metrics) return;
+        
+        const report = `
+            TRAITMAP CLINICAL REPORT
+            ========================
+            
+            Network Overview:
+            - Total Traits: ${metrics.traitCount}
+            - Total Connections: ${metrics.connectionCount}
+            - Network Density: ${(metrics.density * 100).toFixed(1)}%
+            
+            Clinical Severity:
+            - Average Severity: ${metrics.averageSeverity}%
+            - High Severity Traits: ${metrics.highSeverityCount}
+            - Critical Traits: ${metrics.criticalTraits}
+            
+            Evidence Quality:
+            - Average Evidence Level: ${metrics.averageEvidence}/4
+            - Strong Evidence Traits: ${metrics.strongEvidenceCount}
+            
+            Connection Analysis:
+            - Average Connection Strength: ${Math.round(metrics.averageConnectionStrength)}%
+            - Strong Connections: ${metrics.strongConnections}
+            
+            Category Distribution:
+            ${Object.entries(metrics.categoryDistribution)
+                .map(([cat, count]) => `  - ${cat}: ${count} traits`)
+                .join('\n')}
+            
+            Generated: ${new Date().toLocaleString()}
+        `;
+        
+        // Create download
+        const blob = new Blob([report], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `clinical-report-${new Date().toISOString().split('T')[0]}.txt`;
+        a.click();
+        
+        this.showToast('Clinical report generated', 'success');
+    }
+    
+    // ==================== ENHANCED CONNECTION METHODS ====================
+    
+    setupEnhancedConnections() {
+        // Track mouse for connection preview
+        this.canvas.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            AppState.lastMouseX = e.clientX;
+            AppState.lastMouseY = e.clientY;
+        });
+        
+        // Double-click to edit connection
+        this.canvas.addEventListener('dblclick', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if clicked on connection
+            const connection = this.getConnectionAt(x, y);
+            if (connection) {
+                this.editConnection(connection);
             }
+        });
+    }
+    
+    getConnectionAt(x, y) {
+        for (const connection of AppState.connections.values()) {
+            const source = AppState.traits.get(connection.source);
+            const target = AppState.traits.get(connection.target);
             
-            generateAISuggestions() {
-                const container = document.getElementById('aiSuggestions');
-                if (!container) return;
-                
-                const traits = Array.from(AppState.traits.values());
-                if (traits.length < 2) {
-                    container.classList.remove('show');
-                    return;
+            if (source && target) {
+                // Calculate distance from point to line
+                const distance = this.pointToLineDistance(x, y, source, target);
+                if (distance < 10) {
+                    return connection;
                 }
-                
-                const suggestions = [
-                    {
-                        title: 'Consider connecting related traits',
-                        description: 'Connect traits to build clinical pathways',
-                        action: () => {
-                            if (traits.length >= 2) {
-                                this.createConnection(traits[0], traits[1]);
-                            }
-                        }
-                    },
-                    {
-                        title: 'Run network analysis',
-                        description: 'Analyze connections and patterns',
-                        action: () => {
-                            this.showToast('Network analysis feature coming soon!', 'info');
-                        }
-                    },
-                    {
-                        title: 'Explore treatment options',
-                        description: 'View evidence-based interventions',
-                        action: () => {
-                            this.showToast('Treatment explorer coming soon!', 'info');
-                        }
-                    }
-                ];
-                
-                let html = '<div class="ai-suggestion-title"><i class="fas fa-robot"></i> AI Suggestions</div>';
-                
-                suggestions.forEach((suggestion, index) => {
-                    html += `
-                        <div class="ai-suggestion-item" onclick="app.handleSuggestion(${index})">
-                            <div style="font-weight: 700; margin-bottom: 0.25rem;">${suggestion.title}</div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                ${suggestion.description}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                container.innerHTML = html;
-                
-                // Show suggestions panel automatically on desktop, but not on mobile
-                if (!AppState.isMobile) {
-                    container.classList.add('show');
-                }
-            }
-            
-            handleSuggestion(index) {
-                const suggestions = [
-                    () => {
-                        const traits = Array.from(AppState.traits.values());
-                        if (traits.length >= 2) {
-                            this.createConnection(traits[0], traits[1]);
-                        }
-                    },
-                    () => {
-                        this.showToast('Network analysis feature coming soon!', 'info');
-                    },
-                    () => {
-                        this.showToast('Treatment explorer coming soon!', 'info');
-                    }
-                ];
-                
-                if (suggestions[index]) {
-                    suggestions[index]();
-                }
-            }
-            
-            updateProperties() {
-                const container = document.querySelector('.properties-content');
-                if (!container) return;
-                
-                const selectedTraits = Array.from(AppState.selectedTraits).map(id => AppState.traits.get(id));
-                
-                if (selectedTraits.length === 0) {
-                    container.innerHTML = `
-                        <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-                            <i class="fas fa-mouse-pointer" style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;"></i>
-                            <p>Select a trait to view properties</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                const trait = selectedTraits[0];
-                container.innerHTML = `
-                    <div class="property-section">
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                            <div style="width: 50px; height: 50px; background: ${trait.color}; 
-                                 border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                                <i class="fas fa-circle" style="color: white;"></i>
-                            </div>
-                            <div>
-                                <h3 style="font-weight: 800;">${trait.name}</h3>
-                                <div style="color: var(--text-secondary);">${trait.category}</div>
-                            </div>
-                        </div>
-                        
-                        <div style="display: grid; gap: 1rem;">
-                            <div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                                    <span>Severity</span>
-                                    <span>${trait.severity || 50}%</span>
-                                </div>
-                                <div style="height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px;">
-                                    <div style="width: ${trait.severity || 50}%; height: 100%; 
-                                         background: ${trait.severity > 70 ? '#ff3366' : trait.severity > 40 ? '#ffaa00' : '#00cc88'}; 
-                                         border-radius: 3px;"></div>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
-                                    <span>Confidence</span>
-                                    <span>${trait.confidence || 75}%</span>
-                                </div>
-                                <div style="height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: 3px;">
-                                    <div style="width: ${trait.confidence || 75}%; height: 100%; 
-                                         background: #4d94ff; border-radius: 3px;"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            render() {
-                this.renderer.render(AppState.traits, AppState.connections, AppState.renderScale, AppState.selectedTraits);
-            }
-            
-            startRenderLoop() {
-                const renderLoop = () => {
-                    this.render();
-                    requestAnimationFrame(renderLoop);
-                };
-                requestAnimationFrame(renderLoop);
-            }
-            
-            showToast(message, type = 'info') {
-                const container = document.getElementById('toastContainer');
-                
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                toast.innerHTML = `
-                    <div class="toast-icon">
-                        <i class="fas fa-${type === 'success' ? 'check-circle' : 
-                                          type === 'error' ? 'exclamation-circle' : 
-                                          type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
-                    </div>
-                    <div class="toast-message">${message}</div>
-                `;
-                
-                container.appendChild(toast);
-                
-                setTimeout(() => toast.classList.add('show'), 10);
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => {
-                        if (toast.parentNode === container) {
-                            container.removeChild(toast);
-                        }
-                    }, 300);
-                }, 3000);
             }
         }
+        return null;
+    }
+    
+    pointToLineDistance(px, py, p1, p2) {
+        const A = px - p1.x;
+        const B = py - p1.y;
+        const C = p2.x - p1.x;
+        const D = p2.y - p1.y;
         
-        // ==================== INITIALIZATION ====================
+        const dot = A * C + B * D;
+        const lenSq = C * C + D * D;
+        let param = -1;
         
-        let app;
+        if (lenSq !== 0) {
+            param = dot / lenSq;
+        }
         
-        document.addEventListener('DOMContentLoaded', () => {
-            // Optimized loading sequence
-            const loadingFill = document.getElementById('loadingFill');
-            const loadingMessage = document.getElementById('loadingMessage');
-            const loadingScreen = document.getElementById('loadingScreen');
-            
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 2;
-                if (progress > 100) progress = 100;
-                
-                loadingFill.style.width = `${progress}%`;
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    loadingMessage.textContent = "Ready!";
-                    
-                    setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
-                        
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                            app = new MobileOptimizedApp();
-                            window.app = app;
-                        }, 500);
-                    }, 500);
-                }
-            }, 30);
-        });
+        let xx, yy;
         
-        // Handle mobile orientation changes
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                if (app && app.renderer) {
-                    app.renderer.resize();
-                    app.render();
-                }
-            }, 300);
-        });
+        if (param < 0) {
+            xx = p1.x;
+            yy = p1.y;
+        } else if (param > 1) {
+            xx = p2.x;
+            yy = p2.y;
+        } else {
+            xx = p1.x + param * C;
+            yy = p1.y + param * D;
+        }
         
-        // Prevent context menu on touch devices
-        document.addEventListener('contextmenu', (e) => {
-            if (AppState.isTouchDevice) {
-                e.preventDefault();
+        const dx = px - xx;
+        const dy = py - yy;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    editConnection(connection) {
+        const source = AppState.traits.get(connection.source);
+        const target = AppState.traits.get(connection.target);
+        
+        if (!source || !target) return;
+        
+        // Create edit modal
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            min-width: 300px;
+            z-index: 2000;
+        `;
+        
+        modal.innerHTML = `
+            <h3 style="margin-bottom: 1rem;">Edit Connection</h3>
+            <div style="margin-bottom: 1rem;">
+                <div style="margin-bottom: 0.5rem;">
+                    <label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">
+                        ${source.name} → ${target.name}
+                    </label>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.25rem; font-size: 0.875rem;">
+                        Strength: ${connection.strength}%
+                    </label>
+                    <input type="range" min="0" max="100" value="${connection.strength}" 
+                           style="width: 100%;" id="strengthSlider">
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn" onclick="this.closest('div').remove()" 
+                            style="flex: 1;">Cancel</button>
+                    <button class="btn btn-primary" onclick="app.updateConnectionStrength('${connection.id}', 
+                            document.getElementById('strengthSlider').value); 
+                            this.closest('div').remove()" style="flex: 1;">
+                        Update
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+    }
+    
+    updateConnectionStrength(connectionId, strength) {
+        const connection = AppState.connections.get(connectionId);
+        if (connection) {
+            connection.strength = parseInt(strength);
+            this.render();
+            this.showToast('Connection strength updated', 'success');
+        }
+    }
+    
+    // ==================== TREE FORMATION ====================
+    
+    arrangeAsTree() {
+        const traits = Array.from(AppState.traits.values());
+        if (traits.length === 0) return;
+        
+        // Find central trait (most connected)
+        let centralTrait = traits[0];
+        let maxConnections = 0;
+        
+        traits.forEach(trait => {
+            if (trait.connections.size > maxConnections) {
+                maxConnections = trait.connections.size;
+                centralTrait = trait;
             }
         });
-    </script>
+        
+        // Position central trait in center
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        centralTrait.x = centerX;
+        centralTrait.y = centerY;
+        
+        // Position connected traits around central
+        const connectedTraits = this.getConnectedTraits(centralTrait);
+        const radius = 150;
+        
+        connectedTraits.forEach((trait, i) => {
+            const angle = (i * 2 * Math.PI) / connectedTraits.length;
+            trait.x = centerX + radius * Math.cos(angle);
+            trait.y = centerY + radius * Math.sin(angle);
+        });
+        
+        this.render();
+        this.showToast('Arranged as tree structure', 'success');
+    }
+    
+    getConnectedTraits(trait) {
+        const connected = new Set();
+        
+        trait.connections.forEach(connId => {
+            const connection = AppState.connections.get(connId);
+            if (connection) {
+                const otherId = connection.source === trait.id ? connection.target : connection.source;
+                const otherTrait = AppState.traits.get(otherId);
+                if (otherTrait) {
+                    connected.add(otherTrait);
+                }
+            }
+        });
+        
+        return Array.from(connected);
+    }
+}
+
+// Initialize application
+let app;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Hide loading screen
+    setTimeout(() => {
+        document.getElementById('loadingScreen').style.display = 'none';
+        app = new TraitMapPro();
+        window.app = app;
+    }, 1000);
+    
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'e' && e.ctrlKey) {
+            e.preventDefault();
+            app.exportNetwork();
+        } else if (e.key === 't' && e.ctrlKey) {
+            e.preventDefault();
+            app.arrangeAsTree();
+        } else if (e.key === 'r' && e.ctrlKey) {
+            e.preventDefault();
+            app.generateClinicalReport();
+        } else if (e.key === 'i' && e.ctrlKey && !e.shiftKey) {
+            e.preventDefault();
+            // Trigger file import
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    app.importNetwork(file);
+                }
+            };
+            input.click();
+        }
+    });
+    
+    // Add import/export buttons
+    const headerActions = document.querySelector('.header-actions');
+    const exportBtn = document.createElement('button');
+    exportBtn.className = 'btn';
+    exportBtn.innerHTML = '<i class="fas fa-download"></i><span>Export</span>';
+    exportBtn.onclick = () => app.exportNetwork();
+    headerActions.insertBefore(exportBtn, headerActions.firstChild);
+    
+    const importBtn = document.createElement('button');
+    importBtn.className = 'btn';
+    importBtn.innerHTML = '<i class="fas fa-upload"></i><span>Import</span>';
+    importBtn.onclick = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                app.importNetwork(file);
+            }
+        };
+        input.click();
+    };
+    headerActions.insertBefore(importBtn, headerActions.firstChild);
+});
+</script>
+
+<style>
+    /* Additional styles for enhanced features */
+    .btn {
+        padding: 0.5rem 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    
+    .btn:hover {
+        background: var(--hover);
+        border-color: var(--primary-blue);
+    }
+    
+    .btn-primary {
+        background: var(--primary-blue);
+        border-color: var(--primary-blue);
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: var(--secondary-blue);
+        border-color: var(--secondary-blue);
+    }
+    
+    .btn-close {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-close:hover {
+        background: var(--hover);
+        color: var(--text-primary);
+    }
+    
+    /* Connection strength indicator */
+    .strength-indicator {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        pointer-events: none;
+        z-index: 10;
+    }
+    
+    /* Selection rectangle */
+    .selection-rect {
+        position: absolute;
+        border: 2px dashed var(--primary-blue);
+        background: rgba(37, 99, 235, 0.1);
+        pointer-events: none;
+        z-index: 100;
+    }
+</style>
+
 </body>
 </html>
