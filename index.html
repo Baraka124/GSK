@@ -1,234 +1,1569 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Interactive Airway Tree - Advanced</title>
-<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.26.0/dist/supabase.min.js"></script>
-<style>
-  body { margin:0; font-family:sans-serif; background:#f0f8ff; }
-  #root { width:100vw; height:100vh; overflow:hidden; }
-
-  /* Node circle */
-  .node circle { 
-    fill: #1A5F7A; 
-    stroke: #0D3B53; 
-    stroke-width: 2px; 
-    cursor: pointer; 
-  }
-
-  /* Node text */
-  .node text { 
-    fill: #0D1B2A; 
-    font-weight: bold; 
-    font-size: 14px; 
-    text-anchor: middle; 
-    pointer-events: none; 
-    text-shadow: 1px 1px 1px #ccc; 
-  }
-
-  /* Links */
-  .link { 
-    fill:none; 
-    stroke:#2D9596; 
-    stroke-width:2px; 
-  }
-
-  /* Leaves */
-  .leaf { 
-    font-size: 12px; 
-    fill: #006400; 
-    font-weight: bold; 
-    cursor: pointer; 
-    text-shadow: 1px 1px 1px #ccc;
-  }
-  .leaf:hover { 
-    text-decoration: underline; 
-    fill: #228B22; 
-  }
-
-  /* Input box */
-  .leaf-input { 
-    position:absolute; 
-    z-index:10; 
-    background:#fff; 
-    border:1px solid #ccc; 
-    padding:4px; 
-    border-radius:4px; 
-  }
-
-  /* Controls panel */
-  .controls { 
-    position:absolute; 
-    top:10px; 
-    left:10px; 
-    z-index:20; 
-    background:#fff; 
-    border:1px solid #ccc; 
-    padding:6px; 
-    border-radius:6px; 
-  }
-  .controls button { 
-    margin-right:6px; 
-    padding:4px 8px; 
-    font-weight:bold; 
-    cursor:pointer; 
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRAITMAP - EHR-Integrated Respiratory Trait Network</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        
+        body {
+            background: #0f172a;
+            color: #f1f5f9;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* EHR-like header */
+        .ehr-header {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .patient-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+        
+        .patient-badge {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(30, 64, 175, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #3b82f6;
+        }
+        
+        .patient-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .patient-details h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .patient-details p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        
+        .ehr-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .ehr-btn {
+            padding: 0.5rem 1rem;
+            background: #334155;
+            border: none;
+            border-radius: 6px;
+            color: #cbd5e1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+        }
+        
+        .ehr-btn:hover {
+            background: #475569;
+        }
+        
+        .ehr-btn.primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .ehr-btn.primary:hover {
+            background: #2563eb;
+        }
+        
+        /* Main clinical workspace */
+        .clinical-workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: calc(100vh - 70px);
+            gap: 0;
+        }
+        
+        /* Left: EHR Interface */
+        .ehr-panel {
+            background: #1e293b;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .ehr-tabs {
+            display: flex;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .ehr-tab {
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .ehr-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .ehr-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        /* EHR Sections */
+        .ehr-section {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid #334155;
+        }
+        
+        .section-header {
+            padding: 1rem 1.5rem;
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .section-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .section-content {
+            padding: 1.5rem;
+        }
+        
+        /* Vital signs grid */
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+        
+        .vital-item {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 8px;
+            border: 1px solid #475569;
+        }
+        
+        .vital-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 0.25rem;
+        }
+        
+        .vital-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .vital-trend {
+            font-size: 0.75rem;
+            color: #10b981;
+            margin-top: 0.25rem;
+        }
+        
+        .vital-trend.down {
+            color: #ef4444;
+        }
+        
+        /* Medications list */
+        .med-list {
+            list-style: none;
+        }
+        
+        .med-item {
+            padding: 0.75rem;
+            background: rgba(30, 41, 59, 0.8);
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .med-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .med-info p {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        
+        .med-status {
+            padding: 0.25rem 0.75rem;
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        /* Lab results */
+        .lab-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .lab-table th {
+            text-align: left;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .lab-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .lab-value {
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        
+        .lab-flag {
+            padding: 0.1rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+        
+        .lab-flag.normal {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+        
+        /* Right: TRAITMAP Interface */
+        .traitmap-panel {
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .traitmap-header {
+            padding: 1rem 1.5rem;
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .traitmap-title h2 {
+            font-size: 1.25rem;
+            color: #e2e8f0;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .traitmap-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .traitmap-btn {
+            padding: 0.5rem 1rem;
+            background: #334155;
+            border: none;
+            border-radius: 6px;
+            color: #cbd5e1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        
+        .traitmap-btn:hover {
+            background: #475569;
+        }
+        
+        .traitmap-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .traitmap-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            overflow: hidden;
+        }
+        
+        /* Trait sidebar */
+        .trait-sidebar {
+            background: rgba(30, 41, 59, 0.8);
+            border-right: 1px solid #334155;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .patient-traits {
+            margin-bottom: 2rem;
+        }
+        
+        .patient-traits h4 {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .active-trait-list {
+            list-style: none;
+        }
+        
+        .active-trait {
+            padding: 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .active-trait-icon {
+            width: 32px;
+            height: 32px;
+            background: #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        
+        .active-trait-info h5 {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .active-trait-info p {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        /* Network container */
+        .network-container {
+            position: relative;
+            background: rgba(15, 23, 42, 0.9);
+            overflow: hidden;
+        }
+        
+        #network {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .network-legend {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            backdrop-filter: blur(5px);
+        }
+        
+        .legend-title {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .legend-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .trait-stats {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(15, 23, 42, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            backdrop-filter: blur(5px);
+        }
+        
+        .stat-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+        
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        
+        /* Clinical insights panel */
+        .insights-panel {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 600px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #3b82f6;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            display: none;
+        }
+        
+        .insights-header {
+            padding: 1rem 1.5rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
+        }
+        
+        .insights-header h3 {
+            font-size: 1rem;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .insights-content {
+            padding: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .insight-item {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .insight-severity {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .insight-severity.low {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+        
+        .insight-severity.medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+        
+        .insight-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        .insight-btn {
+            padding: 0.4rem 0.75rem;
+            background: #334155;
+            border: none;
+            border-radius: 4px;
+            color: #cbd5e1;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .insight-btn:hover {
+            background: #475569;
+        }
+        
+        .insight-btn.primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .insight-btn.primary:hover {
+            background: #2563eb;
+        }
+        
+        /* Action buttons */
+        .action-buttons {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            background: #334155;
+            border: none;
+            border-radius: 8px;
+            color: #cbd5e1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #475569;
+            transform: scale(1.05);
+        }
+        
+        .action-btn.active {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+        
+        /* Modal for adding orders */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
+        }
+        
+        .modal-content {
+            background: #1e293b;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 12px;
+            border: 1px solid #334155;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-bottom: 1px solid #334155;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .clinical-workspace {
+                grid-template-columns: 1fr;
+            }
+            
+            .ehr-panel {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .traitmap-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .trait-sidebar {
+                display: none;
+            }
+        }
+    </style>
 </head>
 <body>
-<div id="root"></div>
-
-<script type="text/babel">
-const { useState, useEffect, useRef } = React;
-
-// --- Supabase Setup ---
-const SUPABASE_URL = "https://outubctwarknkajfprcr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_7k1KOcW8SxSl_vREzU4KFw_iT8VmeVV";
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// --- Default Tree ---
-const defaultTree = {
-  name: "Airway Diseases",
-  children: [
-    { name: "Inflammatory Traits", children:[
-        { name:"Eosinophilic", children:[{name:"Predictive Analytics", leaves:[]} ] },
-        { name:"Neutrophilic", children:[{name:"Predictive Analytics", leaves:[]} ] }
-      ]
-    },
-    { name:"Airflow Limitation", children:[
-        {name:"Bronchoconstriction", children:[{name:"Sensor Analysis", leaves:[]} ] },
-        {name:"Fixed Obstruction", children:[{name:"Treatment Optimization", leaves:[]} ] }
-      ]
-    },
-    { name:"Exacerbation-Prone Traits", children:[
-        {name:"Frequent Exacerbations", children:[{name:"Predictive Analytics", leaves:[]} ] },
-        {name:"Infection Susceptibility", children:[{name:"Sensor Analysis", leaves:[]} ] }
-      ]
-    }
-  ]
-};
-
-function Tree() {
-  const svgRef = useRef();
-  const gRef = useRef();
-  const [data, setData] = useState(defaultTree);
-  const [inputPos, setInputPos] = useState(null);
-  const [inputValue, setInputValue] = useState('');
-  const [currentNode, setCurrentNode] = useState(null);
-
-  // --- Collapsible flag
-  const toggleNode = (d) => { d._children = d.children; d.children = null; };
-  
-  // --- Load tree from Supabase ---
-  useEffect(() => {
-    async function fetchTree() {
-      const { data: rows } = await supabase.from('trees').select('*').limit(1);
-      if (rows.length) setData(rows[0].data);
-      else await supabase.from('trees').insert([{name:"default", data:defaultTree}]);
-    }
-    fetchTree();
-  }, []);
-
-  // --- Save tree to Supabase ---
-  useEffect(() => {
-    async function saveTree() { await supabase.from('trees').update({data}).eq('id',1); }
-    saveTree();
-    renderTree();
-  }, [data]);
-
-  const handleAddLeaf = (node,x,y) => { setCurrentNode(node); setInputPos({x,y}); setInputValue(''); };
-  const handleSubmitLeaf = () => {
-    if (!inputValue.trim()) return;
-    const newData = JSON.parse(JSON.stringify(data));
-    const addLeaf = (node) => { if(node===currentNode){node.leaves=node.leaves||[];node.leaves.push(inputValue.trim());} else if(node.children)node.children.forEach(addLeaf); };
-    addLeaf(newData); setData(newData); setInputPos(null); setCurrentNode(null);
-  };
-
-  const handleEditLeaf = (node,index) => {
-    const newText = prompt("Edit leaf:", node.leaves[index]);
-    if (newText && newText.trim()!==""){ const newData = JSON.parse(JSON.stringify(data)); const editLeaf = (n)=>{ if(n===node) n.leaves[index]=newText.trim(); else if(n.children)n.children.forEach(editLeaf); }; editLeaf(newData); setData(newData); }
-  };
-
-  const handleDeleteLeaf = (node,index) => {
-    if(!confirm("Delete this leaf?")) return;
-    const newData = JSON.parse(JSON.stringify(data));
-    const delLeaf = (n)=>{if(n===node)n.leaves.splice(index,1);else if(n.children)n.children.forEach(delLeaf);};
-    delLeaf(newData); setData(newData);
-  };
-
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-    const url = URL.createObjectURL(blob); const a = document.createElement("a");
-    a.href=url; a.download="airway_tree.json"; a.click(); URL.revokeObjectURL(url);
-  };
-
-  const renderTree = () => {
-    const svg = d3.select(svgRef.current);
-    svg.selectAll("*").remove();
-    const width = svgRef.current.clientWidth; const height = svgRef.current.clientHeight;
-
-    const g = d3.select(gRef.current);
-    const root = d3.hierarchy(data, d=>d.children);
-    const treeLayout = d3.tree().size([height-50,width-200]); treeLayout(root);
-
-    // Zoom & Pan
-    svg.call(d3.zoom().scaleExtent([0.5,3]).on("zoom", (event)=>{g.attr("transform",event.transform);}))
-
-    // Links
-    g.selectAll(".link").data(root.links())
-      .enter().append("path").attr("class","link")
-      .attr("d", d3.linkHorizontal().x(d=>d.y+100).y(d=>d.x));
-
-    // Nodes
-    const nodeGroup = g.selectAll(".node").data(root.descendants())
-      .enter().append("g").attr("class","node")
-      .attr("transform", d=>`translate(${d.y+100},${d.x})`)
-      .on("click", (event,d)=>{
-        if(d.children){d._children=d.children;d.children=null;} 
-        else{d.children=d._children;d._children=null;}
-        renderTree();
-      });
-
-    nodeGroup.append("circle").attr("r",18);
-
-    nodeGroup.append("text").attr("dy",4).text(d=>d.data.name);
-
-    // Leaves
-    nodeGroup.each(function(d){
-      if(d.data.leaves){
-        d3.select(this).selectAll(".leaf").data(d.data.leaves)
-          .enter().append("text").attr("class","leaf")
-          .attr("dy",(leaf,i)=>24+i*16)
-          .attr("text-anchor","middle")
-          .text(leaf=>leaf)
-          .on("click",(event,leaf,i)=>handleEditLeaf(d.data,i))
-          .on("contextmenu",(event,leaf,i)=>{event.preventDefault(); handleDeleteLeaf(d.data,i);});
-      }
-    });
-  };
-
-  return <>
-    <div className="controls">
-      <button onClick={()=>setData(JSON.parse(JSON.stringify(defaultTree)))}>Reset Tree</button>
-      <button onClick={handleExport}>Export JSON</button>
+    <!-- EHR Header -->
+    <div class="ehr-header">
+        <div class="patient-info">
+            <div class="patient-badge">
+                <div class="patient-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="patient-details">
+                    <h3>John Smith (62M)</h3>
+                    <p>MRN: 789456 | DOB: 05/12/1962 | Last Visit: 03/15/2024</p>
+                </div>
+            </div>
+            <div style="color: #94a3b8; font-size: 0.9rem;">
+                <i class="fas fa-stethoscope"></i> Severe Asthma with COPD Overlap
+            </div>
+        </div>
+        <div class="ehr-controls">
+            <button class="ehr-btn">
+                <i class="fas fa-print"></i> Print
+            </button>
+            <button class="ehr-btn">
+                <i class="fas fa-share-alt"></i> Share
+            </button>
+            <button class="ehr-btn primary">
+                <i class="fas fa-plus"></i> New Note
+            </button>
+        </div>
     </div>
-    <svg ref={svgRef} width="100%" height="100%">
-      <g ref={gRef}></g>
-    </svg>
-    {inputPos && <div className="leaf-input" style={{left:inputPos.x+"px",top:inputPos.y+"px"}}>
-      <input type="text" placeholder="Add leaf..." value={inputValue}
-        onChange={e=>setInputValue(e.target.value)}
-        onKeyDown={e=>e.key==="Enter" && handleSubmitLeaf()}/>
-      <button onClick={handleSubmitLeaf}>Add</button>
-    </div>}
-  </>;
-}
+    
+    <!-- Clinical Workspace -->
+    <div class="clinical-workspace">
+        <!-- Left: EHR Interface -->
+        <div class="ehr-panel">
+            <div class="ehr-tabs">
+                <button class="ehr-tab active" data-tab="overview">Overview</button>
+                <button class="ehr-tab" data-tab="medications">Medications</button>
+                <button class="ehr-tab" data-tab="labs">Labs</button>
+                <button class="ehr-tab" data-tab="imaging">Imaging</button>
+                <button class="ehr-tab" data-tab="notes">Notes</button>
+            </div>
+            <div class="ehr-content" id="ehrContent">
+                <!-- Overview Tab -->
+                <div class="ehr-section">
+                    <div class="section-header">
+                        <h3>Vital Signs</h3>
+                        <span style="color: #94a3b8; font-size: 0.85rem;">Today, 10:45 AM</span>
+                    </div>
+                    <div class="section-content">
+                        <div class="vitals-grid">
+                            <div class="vital-item">
+                                <div class="vital-value">98.6°F</div>
+                                <div class="vital-label">Temperature</div>
+                                <div class="vital-trend normal">Normal</div>
+                            </div>
+                            <div class="vital-item">
+                                <div class="vital-value">145/88</div>
+                                <div class="vital-label">Blood Pressure</div>
+                                <div class="vital-trend">+8 systolic</div>
+                            </div>
+                            <div class="vital-item">
+                                <div class="vital-value">92%</div>
+                                <div class="vital-label">SpO₂</div>
+                                <div class="vital-trend">Room air</div>
+                            </div>
+                            <div class="vital-item">
+                                <div class="vital-value">22</div>
+                                <div class="vital-label">Respiratory Rate</div>
+                                <div class="vital-trend down">-2 from baseline</div>
+                            </div>
+                            <div class="vital-item">
+                                <div class="vital-value">85</div>
+                                <div class="vital-label">Heart Rate</div>
+                                <div class="vital-trend normal">Normal</div>
+                            </div>
+                            <div class="vital-item">
+                                <div class="vital-value">92%</div>
+                                <div class="vital-label">FEV₁ Predicted</div>
+                                <div class="vital-trend down">↓ 12% from 2023</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ehr-section">
+                    <div class="section-header">
+                        <h3>Active Problems</h3>
+                        <button class="ehr-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                            <i class="fas fa-plus"></i> Add
+                        </button>
+                    </div>
+                    <div class="section-content">
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <span style="padding: 0.4rem 0.75rem; background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-radius: 20px; font-size: 0.85rem;">
+                                Severe Persistent Asthma
+                            </span>
+                            <span style="padding: 0.4rem 0.75rem; background: rgba(34, 197, 94, 0.2); color: #86efac; border-radius: 20px; font-size: 0.85rem;">
+                                COPD GOLD Stage 2
+                            </span>
+                            <span style="padding: 0.4rem 0.75rem; background: rgba(245, 158, 11, 0.2); color: #fcd34d; border-radius: 20px; font-size: 0.85rem;">
+                                Allergic Rhinitis
+                            </span>
+                            <span style="padding: 0.4rem 0.75rem; background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-radius: 20px; font-size: 0.85rem;">
+                                GERD
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right: TRAITMAP Interface -->
+        <div class="traitmap-panel">
+            <div class="traitmap-header">
+                <div class="traitmap-title">
+                    <h2>TRAITMAP: Patient-Specific Trait Network</h2>
+                </div>
+                <div class="traitmap-controls">
+                    <button class="traitmap-btn active" data-view="network">
+                        <i class="fas fa-project-diagram"></i> Network
+                    </button>
+                    <button class="traitmap-btn" data-view="timeline">
+                        <i class="fas fa-chart-line"></i> Timeline
+                    </button>
+                    <button class="traitmap-btn" id="exportBtn">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                </div>
+            </div>
+            
+            <div class="traitmap-content">
+                <!-- Trait Sidebar -->
+                <div class="trait-sidebar">
+                    <div class="patient-traits">
+                        <h4>Active Patient Traits</h4>
+                        <ul class="active-trait-list" id="activeTraits">
+                            <!-- Will be populated by JS -->
+                        </ul>
+                    </div>
+                    
+                    <div class="patient-traits">
+                        <h4>Recommended Assessments</h4>
+                        <div style="background: rgba(30, 41, 59, 0.8); padding: 1rem; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                                <div style="width: 32px; height: 32px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-vial" style="color: white; font-size: 0.9rem;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="font-size: 0.9rem; margin-bottom: 0.25rem;">Blood Eosinophil Count</h5>
+                                    <p style="font-size: 0.75rem; color: #94a3b8;">Due: Today</p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <div style="width: 32px; height: 32px; background: #8b5cf6; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-x-ray" style="color: white; font-size: 0.9rem;"></i>
+                                </div>
+                                <div>
+                                    <h5 style="font-size: 0.9rem; margin-bottom: 0.25rem;">Chest HRCT</h5>
+                                    <p style="font-size: 0.75rem; color: #94a3b8;">Due: Next month</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Network Visualization -->
+                <div class="network-container">
+                    <div class="network-legend">
+                        <div class="legend-title">Network Legend</div>
+                        <div class="legend-items">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #3b82f6;"></div>
+                                <span>Patient Traits</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #10b981;"></div>
+                                <span>Assessment Methods</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: #8b5cf6;"></div>
+                                <span>Treatment Options</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="action-btn" id="insightsBtn" title="Clinical Insights">
+                            <i class="fas fa-lightbulb"></i>
+                        </button>
+                        <button class="action-btn" id="filterBtn" title="Filter View">
+                            <i class="fas fa-filter"></i>
+                        </button>
+                        <button class="action-btn" id="refreshBtn" title="Refresh Network">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    
+                    <svg id="network"></svg>
+                    
+                    <div class="trait-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Active Traits</div>
+                            <div class="stat-value" id="activeTraitsCount">6</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Treatment Options</div>
+                            <div class="stat-value" id="treatmentOptions">14</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">AI Insights</div>
+                            <div class="stat-value" id="aiInsights">3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clinical Insights Panel -->
+    <div class="insights-panel" id="insightsPanel">
+        <div class="insights-header">
+            <h3><i class="fas fa-robot"></i> AI Clinical Insights</h3>
+            <button class="ehr-btn" style="padding: 0.25rem 0.5rem;" onclick="hideInsights()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="insights-content">
+            <div class="insight-item">
+                <div class="insight-severity high">High Priority</div>
+                <p><strong>Eosinophilic Inflammation Detected</strong></p>
+                <p>Patient shows persistent eosinophilia (>450 cells/μL) despite ICS therapy. Consider escalating to biologic therapy (anti-IL-5).</p>
+                <div class="insight-actions">
+                    <button class="insight-btn primary" onclick="orderBiologic()">
+                        <i class="fas fa-prescription"></i> Order Biologic
+                    </button>
+                    <button class="insight-btn" onclick="orderLabs()">
+                        <i class="fas fa-vial"></i> Order Labs
+                    </button>
+                </div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-severity medium">Medium Priority</div>
+                <p><strong>SABA Overuse Pattern</strong></p>
+                <p>Patient using SABA 4×/week. Controller adherence may be suboptimal. Consider smart inhaler monitoring.</p>
+                <div class="insight-actions">
+                    <button class="insight-btn" onclick="orderSmartInhaler()">
+                        <i class="fas fa-inhaler"></i> Smart Inhaler
+                    </button>
+                    <button class="insight-btn" onclick="showAdherenceEducation()">
+                        <i class="fas fa-graduation-cap"></i> Education
+                    </button>
+                </div>
+            </div>
+            <div class="insight-item">
+                <div class="insight-severity low">Low Priority</div>
+                <p><strong>Possible Early Bronchiectasis</strong></p>
+                <p>Minor bronchiectatic changes noted on last CT. Consider follow-up HRCT in 6 months.</p>
+                <div class="insight-actions">
+                    <button class="insight-btn" onclick="orderCT()">
+                        <i class="fas fa-calendar-plus"></i> Schedule CT
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Order Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="color: #e2e8f0;">Order New Medication</h3>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem;">Medication</label>
+                    <select style="width: 100%; padding: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 6px; color: #e2e8f0;">
+                        <option>Mepolizumab (Nucala) 100mg SC monthly</option>
+                        <option>Benralizumab (Fasenra) 30mg SC every 8 weeks</option>
+                        <option>Dupilumab (Dupixent) 200-300mg SC every 2 weeks</option>
+                        <option>Omalizumab (Xolair) 75-600mg SC every 2-4 weeks</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem;">Frequency</label>
+                    <input type="text" value="Monthly" style="width: 100%; padding: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 6px; color: #e2e8f0;">
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem;">Indication</label>
+                    <textarea rows="3" style="width: 100%; padding: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 6px; color: #e2e8f0;">Severe eosinophilic asthma with persistent eosinophilia despite high-dose ICS/LABA therapy.</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="ehr-btn" onclick="closeModal()">Cancel</button>
+                <button class="ehr-btn primary" onclick="submitOrder()">Submit Order</button>
+            </div>
+        </div>
+    </div>
 
-ReactDOM.createRoot(document.getElementById("root")).render(<Tree />);
-</script>
+    <script>
+        // Patient-specific trait data
+        const patientTraits = {
+            active: [
+                {
+                    id: "eosinophilic_inflammation",
+                    name: "Eosinophilic Inflammation",
+                    description: "Persistent eosinophilia >450 cells/μL",
+                    severity: "high",
+                    lastValue: "520 cells/μL",
+                    trend: "increasing"
+                },
+                {
+                    id: "airflow_limitation",
+                    name: "Airflow Limitation",
+                    description: "FEV₁ 62% predicted, BD response 15%",
+                    severity: "medium",
+                    lastValue: "FEV₁ 62%",
+                    trend: "stable"
+                },
+                {
+                    id: "saba_overuse",
+                    name: "SABA Overuse",
+                    description: "Using SABA 4×/week",
+                    severity: "medium",
+                    lastValue: "4 uses/week",
+                    trend: "increasing"
+                },
+                {
+                    id: "allergic_inflammation",
+                    name: "Allergic Inflammation",
+                    description: "Multiple aeroallergen sensitization",
+                    severity: "low",
+                    lastValue: "IgE 350 IU/mL",
+                    trend: "stable"
+                },
+                {
+                    id: "obesity",
+                    name: "Obesity",
+                    description: "BMI 34.2, affecting mechanics",
+                    severity: "medium",
+                    lastValue: "BMI 34.2",
+                    trend: "stable"
+                },
+                {
+                    id: "mucus_hypersecretion",
+                    name: "Mucus Hypersecretion",
+                    description: "Chronic productive cough",
+                    severity: "low",
+                    lastValue: "Moderate sputum",
+                    trend: "stable"
+                }
+            ],
+            potential: [
+                {
+                    id: "bronchiectasis_radio",
+                    name: "Bronchiectasis",
+                    description: "Possible early changes on CT",
+                    risk: "moderate"
+                },
+                {
+                    id: "hypercapnia",
+                    name: "Hypercapnia",
+                    description: "Borderline CO₂ retention",
+                    risk: "low"
+                }
+            ]
+        };
+
+        // Complete trait database (abbreviated for this demo)
+        const traitDatabase = {
+            eosinophilic_inflammation: {
+                name: "Eosinophilic Airway Inflammation",
+                methods: [
+                    { name: "Blood eosinophil count", device: "Hematology analyzer", frequency: "Monthly" },
+                    { name: "FeNO", device: "NIOX Vero®", frequency: "Every visit" }
+                ],
+                treatments: [
+                    { name: "Mepolizumab (Nucala)", type: "Biologic", level: "Severe" },
+                    { name: "High-dose ICS", type: "Pharmacological", level: "First line" }
+                ],
+                color: "#3b82f6"
+            },
+            airflow_limitation: {
+                name: "Airflow Limitation",
+                methods: [
+                    { name: "Spirometry", device: "Vitalograph", frequency: "Every 3 months" }
+                ],
+                treatments: [
+                    { name: "LABA/LAMA", type: "Bronchodilator", level: "Maintenance" },
+                    { name: "ICS/LABA combo", type: "Combination", level: "Moderate-severe" }
+                ],
+                color: "#ef4444"
+            },
+            saba_overuse: {
+                name: "SABA Overuse",
+                methods: [
+                    { name: "Smart inhaler data", device: "Propeller/Teva", frequency: "Continuous" },
+                    { name: "Prescription records", device: "EHR", frequency: "Monthly" }
+                ],
+                treatments: [
+                    { name: "Controller optimization", type: "Educational", level: "First line" },
+                    { name: "Action plan review", type: "Educational", level: "All" }
+                ],
+                color: "#f59e0b"
+            }
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load patient traits
+            loadPatientTraits();
+            
+            // Initialize network
+            initializeNetwork();
+            
+            // Set up EHR tabs
+            setupEHRTabs();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Show initial insights after a delay
+            setTimeout(showInsights, 1500);
+        });
+
+        function loadPatientTraits() {
+            const container = document.getElementById('activeTraits');
+            container.innerHTML = '';
+            
+            patientTraits.active.forEach(trait => {
+                const li = document.createElement('li');
+                li.className = 'active-trait';
+                li.setAttribute('data-trait-id', trait.id);
+                
+                let severityColor = '#10b981'; // low
+                if (trait.severity === 'medium') severityColor = '#f59e0b';
+                if (trait.severity === 'high') severityColor = '#ef4444';
+                
+                li.innerHTML = `
+                    <div class="active-trait-icon" style="background: ${severityColor};">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="active-trait-info">
+                        <h5>${trait.name}</h5>
+                        <p>${trait.description}</p>
+                    </div>
+                `;
+                
+                li.addEventListener('click', () => {
+                    highlightTraitInNetwork(trait.id);
+                });
+                
+                container.appendChild(li);
+            });
+            
+            // Update stats
+            document.getElementById('activeTraitsCount').textContent = patientTraits.active.length;
+        }
+
+        function initializeNetwork() {
+            const width = document.querySelector('.network-container').clientWidth;
+            const height = document.querySelector('.network-container').clientHeight;
+            
+            const svg = d3.select('#network')
+                .attr('width', width)
+                .attr('height', height);
+                
+            svg.selectAll('*').remove();
+            
+            // Create simulation
+            const simulation = d3.forceSimulation()
+                .force('link', d3.forceLink().id(d => d.id).distance(120))
+                .force('charge', d3.forceManyBody().strength(-250))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(35));
+            
+            const g = svg.append('g');
+            
+            // Enable zoom
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 3])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+                
+            svg.call(zoom);
+            
+            // Create network data
+            const { nodes, links } = createPatientNetworkData();
+            
+            // Draw links
+            const link = g.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('stroke', d => d.type === 'method' ? '#10b981' : '#8b5cf6')
+                .attr('stroke-width', 2)
+                .attr('stroke-opacity', 0.6);
+            
+            // Draw nodes
+            const node = g.append('g')
+                .selectAll('circle')
+                .data(nodes)
+                .enter()
+                .append('circle')
+                .attr('r', d => d.type === 'trait' ? 25 : 15)
+                .attr('fill', d => d.color || '#3b82f6')
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2)
+                .attr('stroke-opacity', 0.8)
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended))
+                .on('click', (event, d) => {
+                    if (d.type === 'trait') {
+                        highlightTraitInNetwork(d.originalId);
+                    }
+                })
+                .append('title')
+                .text(d => d.name);
+            
+            // Add labels for traits
+            const label = g.append('g')
+                .selectAll('text')
+                .data(nodes.filter(d => d.type === 'trait'))
+                .enter()
+                .append('text')
+                .text(d => d.shortName || d.name)
+                .attr('font-size', '11px')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '0.35em')
+                .attr('fill', '#e2e8f0')
+                .attr('font-weight', '500');
+            
+            // Update simulation
+            simulation.nodes(nodes).on('tick', ticked);
+            simulation.force('link').links(links);
+            
+            function ticked() {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                    
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+                    
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y + 35);
+            }
+            
+            function dragstarted(event) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                event.subject.fx = event.subject.x;
+                event.subject.fy = event.subject.y;
+            }
+            
+            function dragged(event) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+            }
+            
+            function dragended(event) {
+                if (!event.active) simulation.alphaTarget(0);
+                event.subject.fx = null;
+                event.subject.fy = null;
+            }
+            
+            window.networkSimulation = simulation;
+        }
+
+        function createPatientNetworkData() {
+            const nodes = [];
+            const links = [];
+            const nodeMap = new Map();
+            
+            // Add patient's active traits
+            patientTraits.active.forEach(trait => {
+                const traitData = traitDatabase[trait.id];
+                if (!traitData) return;
+                
+                const nodeId = `trait_${trait.id}`;
+                nodeMap.set(nodeId, {
+                    id: nodeId,
+                    name: traitData.name,
+                    shortName: trait.name,
+                    type: 'trait',
+                    color: traitData.color,
+                    originalId: trait.id
+                });
+                
+                // Add methods
+                traitData.methods.forEach((method, index) => {
+                    const methodId = `method_${trait.id}_${index}`;
+                    nodeMap.set(methodId, {
+                        id: methodId,
+                        name: method.name,
+                        type: 'method',
+                        color: '#10b981'
+                    });
+                    
+                    links.push({
+                        source: nodeId,
+                        target: methodId,
+                        type: 'method'
+                    });
+                });
+                
+                // Add treatments
+                traitData.treatments.forEach((treatment, index) => {
+                    const treatmentId = `treatment_${trait.id}_${index}`;
+                    nodeMap.set(treatmentId, {
+                        id: treatmentId,
+                        name: treatment.name,
+                        type: 'treatment',
+                        color: '#8b5cf6'
+                    });
+                    
+                    links.push({
+                        source: nodeId,
+                        target: treatmentId,
+                        type: 'treatment'
+                    });
+                });
+            });
+            
+            nodes.push(...nodeMap.values());
+            
+            // Add connections between related traits
+            addTraitConnections(nodes, links, nodeMap);
+            
+            return { nodes, links };
+        }
+
+        function addTraitConnections(nodes, links, nodeMap) {
+            // Connect eosinophilic inflammation to allergic inflammation
+            if (nodeMap.has('trait_eosinophilic_inflammation') && nodeMap.has('trait_allergic_inflammation')) {
+                links.push({
+                    source: 'trait_eosinophilic_inflammation',
+                    target: 'trait_allergic_inflammation',
+                    type: 'related',
+                    color: '#f59e0b'
+                });
+            }
+            
+            // Connect airflow limitation to SABA overuse
+            if (nodeMap.has('trait_airflow_limitation') && nodeMap.has('trait_saba_overuse')) {
+                links.push({
+                    source: 'trait_airflow_limitation',
+                    target: 'trait_saba_overuse',
+                    type: 'related',
+                    color: '#ef4444'
+                });
+            }
+        }
+
+        function highlightTraitInNetwork(traitId) {
+            // In a full implementation, this would highlight the trait node
+            // and its connections in the network
+            console.log(`Highlighting trait: ${traitId}`);
+            
+            // For now, just update the active trait in sidebar
+            document.querySelectorAll('.active-trait').forEach(item => {
+                item.style.background = 'rgba(30, 41, 59, 0.8)';
+            });
+            
+            document.querySelector(`.active-trait[data-trait-id="${traitId}"]`).style.background = 'rgba(59, 130, 246, 0.2)';
+        }
+
+        function setupEHRTabs() {
+            const tabs = document.querySelectorAll('.ehr-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update content (in full implementation, would load different content)
+                    updateEHRContent(tabName);
+                });
+            });
+        }
+
+        function updateEHRContent(tabName) {
+            const content = document.getElementById('ehrContent');
+            
+            // Simplified content switching for demo
+            if (tabName === 'medications') {
+                content.innerHTML = `
+                    <div class="ehr-section">
+                        <div class="section-header">
+                            <h3>Current Medications</h3>
+                            <button class="ehr-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                <i class="fas fa-plus"></i> New Order
+                            </button>
+                        </div>
+                        <div class="section-content">
+                            <ul class="med-list">
+                                <li class="med-item">
+                                    <div class="med-info">
+                                        <h4>Fluticasone/Salmeterol 250/50</h4>
+                                        <p>1 inhalation twice daily • Last filled: 02/15/2024</p>
+                                    </div>
+                                    <span class="med-status">Active</span>
+                                </li>
+                                <li class="med-item">
+                                    <div class="med-info">
+                                        <h4>Albuterol MDI</h4>
+                                        <p>2 puffs as needed • Smart inhaler: 4×/week average</p>
+                                    </div>
+                                    <span class="med-status" style="background: rgba(245,158,11,0.2); color: #fcd34d;">Overuse</span>
+                                </li>
+                                <li class="med-item">
+                                    <div class="med-info">
+                                        <h4>Montelukast 10mg</h4>
+                                        <p>1 tablet daily at bedtime • Adherence: 85%</p>
+                                    </div>
+                                    <span class="med-status">Active</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            } else if (tabName === 'labs') {
+                content.innerHTML = `
+                    <div class="ehr-section">
+                        <div class="section-header">
+                            <h3>Recent Lab Results</h3>
+                            <span style="color: #94a3b8; font-size: 0.85rem;">Last 30 days</span>
+                        </div>
+                        <div class="section-content">
+                            <table class="lab-table">
+                                <thead>
+                                    <tr>
+                                        <th>Test</th>
+                                        <th>Result</th>
+                                        <th>Reference</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Blood Eosinophils</td>
+                                        <td class="lab-value">520 cells/μL</td>
+                                        <td>0-500 cells/μL</td>
+                                        <td><span class="lab-flag">High</span></td>
+                                        <td>03/10/2024</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total IgE</td>
+                                        <td class="lab-value">350 IU/mL</td>
+                                        <td>0-100 IU/mL</td>
+                                        <td><span class="lab-flag">High</span></td>
+                                        <td>03/10/2024</td>
+                                    </tr>
+                                    <tr>
+                                        <td>FEV₁</td>
+                                        <td class="lab-value">62% predicted</td>
+                                        <td>>80% predicted</td>
+                                        <td><span class="lab-flag">Low</span></td>
+                                        <td>03/05/2024</td>
+                                    </tr>
+                                    <tr>
+                                        <td>FeNO</td>
+                                        <td class="lab-value">45 ppb</td>
+                                        <td><25 ppb</td>
+                                        <td><span class="lab-flag">High</span></td>
+                                        <td>03/05/2024</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function setupEventListeners() {
+            // Insights button
+            document.getElementById('insightsBtn').addEventListener('click', function() {
+                this.classList.toggle('active');
+                const insightsPanel = document.getElementById('insightsPanel');
+                if (insightsPanel.style.display === 'block') {
+                    insightsPanel.style.display = 'none';
+                } else {
+                    insightsPanel.style.display = 'block';
+                }
+            });
+            
+            // Filter button
+            document.getElementById('filterBtn').addEventListener('click', function() {
+                this.classList.toggle('active');
+                // In full implementation, would show filter panel
+                alert('Filter options would appear here in full implementation');
+            });
+            
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                this.classList.add('active');
+                setTimeout(() => {
+                    this.classList.remove('active');
+                }, 1000);
+                initializeNetwork();
+            });
+            
+            // Export button
+            document.getElementById('exportBtn').addEventListener('click', function() {
+                const exportData = {
+                    patient: "John Smith (62M)",
+                    date: new Date().toISOString().split('T')[0],
+                    activeTraits: patientTraits.active,
+                    networkData: createPatientNetworkData()
+                };
+                
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', `traitmap_${exportData.patient.replace(/[^a-z0-9]/gi, '_')}_${exportData.date}.json`);
+                linkElement.click();
+                
+                alert('Patient trait analysis exported as JSON');
+            });
+            
+            // View controls
+            document.querySelectorAll('.traitmap-btn[data-view]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.traitmap-btn[data-view]').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    // In full implementation, would switch views
+                });
+            });
+        }
+
+        function showInsights() {
+            document.getElementById('insightsPanel').style.display = 'block';
+            document.getElementById('insightsBtn').classList.add('active');
+        }
+
+        function hideInsights() {
+            document.getElementById('insightsPanel').style.display = 'none';
+            document.getElementById('insightsBtn').classList.remove('active');
+        }
+
+        function orderBiologic() {
+            document.getElementById('orderModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+        function submitOrder() {
+            alert('Biologic therapy ordered successfully!');
+            closeModal();
+        }
+
+        function orderLabs() {
+            alert('Lab orders for eosinophil count and FeNO have been placed.');
+        }
+
+        function orderSmartInhaler() {
+            alert('Smart inhaler has been ordered for delivery.');
+        }
+
+        function showAdherenceEducation() {
+            alert('Patient education module opened in new window.');
+        }
+
+        function orderCT() {
+            alert('HRCT chest has been scheduled for 6 months from now.');
+        }
+    </script>
 </body>
 </html>
