@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAITMAP - Complete Respiratory Trait Intelligence Platform</title>
+    <title>TRAITMAP - Interactive Respiratory Trait Network Builder</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -26,6 +26,7 @@
             --border-color: #334155;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
+            --network-bg: #0a0e17;
             --mobile-breakpoint: 768px;
         }
         
@@ -33,79 +34,165 @@
             background: var(--dark-bg);
             color: var(--text-primary);
             min-height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden;
         }
         
-        /* Mobile-first navigation */
-        .mobile-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-            z-index: 1000;
-            padding: 0.5rem;
-        }
-        
-        .nav-items {
+        /* Main Layout */
+        .main-container {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 0.25rem;
+            grid-template-columns: 320px 1fr;
+            height: 100vh;
+            position: relative;
         }
         
-        .nav-item {
+        /* Left Panel - Trait Library & Tools */
+        .left-panel {
+            background: var(--dark-bg);
+            border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(30, 41, 59, 0.8);
+        }
+        
+        .panel-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
             align-items: center;
-            padding: 0.5rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.7rem;
-            border-radius: 8px;
-            transition: all 0.2s;
+            gap: 0.75rem;
         }
         
-        .nav-item.active {
-            color: var(--primary-blue);
-            background: rgba(37, 99, 235, 0.1);
+        .panel-header h2 i {
+            color: var(--secondary-blue);
         }
         
-        .nav-item i {
-            font-size: 1.2rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        /* Main container with mobile-first design */
-        .app-container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding-bottom: 70px; /* Space for mobile nav */
-        }
-        
-        /* Header with responsive design */
-        .app-header {
-            background: linear-gradient(135deg, var(--dark-bg) 0%, #1e1b4b 100%);
-            padding: 1rem;
+        .panel-tabs {
+            display: flex;
+            background: rgba(15, 23, 42, 0.9);
             border-bottom: 1px solid var(--border-color);
         }
         
-        .header-content {
+        .panel-tab {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .panel-tab.active {
+            color: var(--secondary-blue);
+            border-bottom-color: var(--secondary-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+        }
+        
+        /* Trait Library */
+        .trait-category {
+            margin-bottom: 1.5rem;
+        }
+        
+        .category-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        .logo-section {
+        .category-title {
+            font-weight: 600;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.5rem;
         }
         
-        .logo-icon {
+        .trait-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .trait-item {
+            padding: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+        }
+        
+        .trait-item:hover {
+            border-color: var(--secondary-blue);
+            transform: translateX(4px);
+        }
+        
+        .trait-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+        
+        .trait-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .trait-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+        
+        /* Tools Panel */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .tool-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tool-card:hover {
+            border-color: var(--secondary-blue);
+            transform: translateY(-2px);
+        }
+        
+        .tool-card.active {
+            border-color: var(--secondary-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .tool-icon {
             width: 40px;
             height: 40px;
             background: linear-gradient(135deg, var(--secondary-blue), var(--accent-purple));
@@ -113,547 +200,332 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            margin: 0 auto 0.75rem;
             font-size: 1.2rem;
         }
         
-        .app-title h1 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        
-        .app-title .subtitle {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        .patient-selector {
-            flex: 1;
-            min-width: 200px;
-            max-width: 300px;
-        }
-        
-        .patient-select {
-            width: 100%;
-            padding: 0.75rem;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-        }
-        
-        /* Main views container */
-        .views-container {
-            display: none;
-            padding: 1rem;
-        }
-        
-        .view.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        /* TODAY VIEW - Current Trait Profile */
-        .today-header {
-            margin-bottom: 1.5rem;
-        }
-        
-        .today-header h2 {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .date-display {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .trait-cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        
-        .trait-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-        
-        .trait-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--secondary-blue);
-        }
-        
-        .trait-card.active {
-            border-color: var(--secondary-blue);
-            border-left: 4px solid var(--secondary-blue);
-        }
-        
-        .trait-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-        
-        .trait-name {
+        .tool-name {
             font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
         }
         
-        .trait-category {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            background: rgba(148, 163, 184, 0.1);
-            padding: 0.25rem 0.75rem;
-            border-radius: 12px;
-            display: inline-block;
-        }
-        
-        .trait-severity {
+        /* Connection Types */
+        .connection-types {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 0.5rem;
         }
         
-        .severity-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        
-        .severity-dot.low { background: var(--success-green); }
-        .severity-dot.medium { background: var(--warning-orange); }
-        .severity-dot.high { background: var(--danger-red); }
-        
-        .trait-metrics {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
+        .connection-type {
+            display: flex;
+            align-items: center;
             gap: 0.75rem;
-            margin: 1rem 0;
-        }
-        
-        .metric {
-            text-align: center;
             padding: 0.75rem;
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 8px;
-        }
-        
-        .metric-value {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--secondary-blue);
-            margin-bottom: 0.25rem;
-        }
-        
-        .metric-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-        }
-        
-        .data-sources {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-top: 1rem;
-        }
-        
-        .data-sources i {
-            margin-right: 0.5rem;
-        }
-        
-        /* TRENDS VIEW - Temporal Analysis */
-        .trends-controls {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-        
-        .time-range-selector {
-            display: flex;
-            gap: 0.5rem;
             background: var(--card-bg);
-            padding: 0.5rem;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .time-btn {
-            padding: 0.5rem 1rem;
-            background: transparent;
-            border: none;
-            border-radius: 6px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        
-        .time-btn.active {
-            background: var(--secondary-blue);
-            color: white;
-        }
-        
-        .trends-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-        
-        .trend-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-        }
-        
-        .trend-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .trend-chart {
-            height: 150px;
-            margin: 1rem 0;
-            position: relative;
-        }
-        
-        .trend-line {
-            fill: none;
-            stroke: var(--secondary-blue);
-            stroke-width: 2;
-        }
-        
-        .trend-point {
-            fill: var(--secondary-blue);
-            stroke: white;
-            stroke-width: 2;
-            cursor: pointer;
-        }
-        
-        .trend-info {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-        
-        .trend-direction {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .trend-direction.up { color: var(--danger-red); }
-        .trend-direction.down { color: var(--success-green); }
-        .trend-direction.stable { color: var(--warning-orange); }
-        
-        /* ACTIONS VIEW - Recommendations */
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-        
-        .action-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-        }
-        
-        .action-priority {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-        
-        .priority-high { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
-        .priority-medium { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
-        .priority-low { background: rgba(34, 197, 94, 0.2); color: #86efac; }
-        
-        .action-title {
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-            font-size: 1.1rem;
-        }
-        
-        .action-description {
-            color: var(--text-secondary);
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-            line-height: 1.5;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        
-        .action-btn {
-            flex: 1;
-            padding: 0.75rem;
-            background: var(--secondary-blue);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
-        .action-btn.secondary {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
-        
-        /* COMPARE VIEW - Cohort Analysis */
-        .compare-controls {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .cohort-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .cohort-option {
-            background: rgba(30, 41, 59, 0.5);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            padding: 1rem;
             cursor: pointer;
             transition: all 0.2s;
         }
         
-        .cohort-option:hover {
+        .connection-type:hover {
             border-color: var(--secondary-blue);
         }
         
-        .cohort-option.active {
+        .connection-type.active {
             border-color: var(--secondary-blue);
-            background: rgba(37, 99, 235, 0.1);
+            background: rgba(59, 130, 246, 0.1);
         }
         
-        .comparison-results {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1rem;
+        .connection-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
         }
         
-        .comparison-card {
-            background: var(--card-bg);
+        /* Center Panel - Network Canvas */
+        .center-panel {
+            background: var(--network-bg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #network-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: default;
+        }
+        
+        /* Network Controls Overlay */
+        .network-controls {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+        
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: var(--secondary-blue);
+            transform: scale(1.05);
+        }
+        
+        .control-btn.active {
+            background: var(--secondary-blue);
+            border-color: var(--secondary-blue);
+            color: white;
+        }
+        
+        /* Simulation Panel */
+        .simulation-panel {
+            position: absolute;
+            bottom: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            min-width: 300px;
+        }
+        
+        .simulation-status {
+            color: var(--text-primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .sim-status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--success-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .simulation-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .sim-btn {
+            padding: 0.5rem 0.75rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .sim-btn:hover {
+            background: rgba(51, 65, 85, 0.8);
+            border-color: var(--secondary-blue);
+        }
+        
+        .sim-btn.primary {
+            background: var(--secondary-blue);
+            border-color: var(--secondary-blue);
+            color: white;
+        }
+        
+        /* Property Panel */
+        .property-panel {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(15, 23, 42, 0.95);
             border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 1.25rem;
+            width: 280px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            display: none;
         }
         
-        .comparison-header {
+        .property-panel.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .property-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        .comparison-bar {
-            height: 20px;
-            background: var(--border-color);
-            border-radius: 10px;
-            margin: 1rem 0;
-            overflow: hidden;
-            position: relative;
+        .property-title {
+            font-weight: 600;
+            font-size: 1.1rem;
         }
         
-        .bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--secondary-blue), var(--accent-purple));
-            border-radius: 10px;
+        .property-content {
+            max-height: 400px;
+            overflow-y: auto;
         }
         
-        /* DATA VIEW - Manual Data Entry */
-        .data-entry-form {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+        .property-group {
+            margin-bottom: 1.25rem;
         }
         
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-label {
+        .property-label {
             display: block;
             margin-bottom: 0.5rem;
-            color: var(--text-primary);
-            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
         
-        .form-input {
+        .property-input {
             width: 100%;
             padding: 0.75rem;
-            background: rgba(30, 41, 59, 0.5);
+            background: rgba(30, 41, 59, 0.8);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
             font-size: 0.9rem;
         }
         
-        .form-input:focus {
+        .property-input:focus {
             outline: none;
             border-color: var(--secondary-blue);
         }
         
-        .form-select {
+        .property-slider {
             width: 100%;
-            padding: 0.75rem;
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1em;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
         }
         
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-primary {
+        .property-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
             background: var(--secondary-blue);
-            color: white;
+            border-radius: 50%;
+            cursor: pointer;
         }
         
-        .btn-primary:hover {
-            background: var(--primary-blue);
+        /* Connection Line Drawing */
+        .connection-line {
+            pointer-events: none;
+            stroke-width: 2;
+            stroke: var(--secondary-blue);
+            stroke-dasharray: 5,5;
+            opacity: 0.7;
         }
         
-        .btn-secondary {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
+        /* Selection Box */
+        .selection-box {
+            fill: rgba(59, 130, 246, 0.1);
+            stroke: var(--secondary-blue);
+            stroke-width: 1;
+            stroke-dasharray: 4,4;
+            pointer-events: none;
         }
         
-        .btn-secondary:hover {
-            border-color: var(--secondary-blue);
-        }
-        
-        /* Responsive Design */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-            .mobile-nav {
-                display: block;
-            }
-            
-            .app-header {
-                padding: 0.75rem;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .patient-selector {
-                max-width: 100%;
-            }
-            
-            .trait-cards-grid,
-            .trends-grid,
-            .actions-grid,
-            .comparison-results {
+            .main-container {
                 grid-template-columns: 1fr;
             }
             
-            .trait-card,
-            .trend-card,
-            .action-card,
-            .comparison-card {
-                padding: 1rem;
+            .left-panel {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 1000;
+                display: none;
             }
             
-            .trends-controls {
-                flex-direction: column;
+            .left-panel.show {
+                display: flex;
             }
             
-            .time-range-selector {
+            .mobile-toggle {
+                position: absolute;
+                top: 1rem;
+                left: 1rem;
+                width: 40px;
+                height: 40px;
+                background: rgba(15, 23, 42, 0.9);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                color: var(--text-primary);
+                display: flex;
+                align-items: center;
                 justify-content: center;
+                z-index: 1001;
+                cursor: pointer;
+            }
+            
+            .property-panel {
+                width: calc(100% - 3rem);
+                max-width: 280px;
+            }
+            
+            .simulation-panel {
+                flex-direction: column;
+                gap: 1rem;
+                width: calc(100% - 3rem);
             }
         }
         
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .trait-cards-grid,
-            .trends-grid,
-            .actions-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        
-        /* Offline indicator */
-        .offline-indicator {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background: var(--warning-orange);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            display: none;
-            z-index: 1001;
-        }
-        
-        .offline-indicator.show {
-            display: block;
-        }
-        
-        /* Loading overlay */
+        /* Loading Overlay */
         .loading-overlay {
             position: fixed;
             top: 0;
@@ -684,919 +556,1320 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 1002;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .toast-icon.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-green);
+        }
+        
+        .toast-icon.info {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--secondary-blue);
+        }
+        
+        .toast-icon.warning {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-orange);
+        }
     </style>
 </head>
 <body>
-    <!-- Offline Indicator -->
-    <div class="offline-indicator" id="offlineIndicator">
-        <i class="fas fa-wifi"></i> Working Offline
-    </div>
-    
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="spinner"></div>
     </div>
     
-    <!-- Main App Container -->
-    <div class="app-container">
-        <!-- Header -->
-        <div class="app-header">
-            <div class="header-content">
-                <div class="logo-section">
-                    <div class="logo-icon">
-                        <i class="fas fa-lungs"></i>
+    <!-- Mobile Toggle -->
+    <div class="mobile-toggle" id="mobileToggle">
+        <i class="fas fa-bars"></i>
+    </div>
+    
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Panel -->
+        <div class="left-panel" id="leftPanel">
+            <div class="panel-header">
+                <h2><i class="fas fa-toolbox"></i> TRAITMAP Builder</h2>
+            </div>
+            
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-tab="traits">
+                    <i class="fas fa-shapes"></i> Traits
+                </button>
+                <button class="panel-tab" data-tab="tools">
+                    <i class="fas fa-tools"></i> Tools
+                </button>
+                <button class="panel-tab" data-tab="connections">
+                    <i class="fas fa-link"></i> Connections
+                </button>
+            </div>
+            
+            <div class="panel-content" id="panelContent">
+                <!-- Traits Tab -->
+                <div class="panel-tab-content active" data-tab="traits">
+                    <div class="trait-category">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-shield-virus"></i>
+                                Immune Traits
+                            </div>
+                        </div>
+                        <div class="trait-items" id="immune-traits">
+                            <!-- Immune traits loaded here -->
+                        </div>
                     </div>
-                    <div class="app-title">
-                        <h1>TRAITMAP</h1>
-                        <div class="subtitle">Respiratory Trait Intelligence</div>
+                    
+                    <div class="trait-category">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-heartbeat"></i>
+                                Physiological
+                            </div>
+                        </div>
+                        <div class="trait-items" id="physio-traits">
+                            <!-- Physio traits loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="trait-category">
+                        <div class="category-header">
+                            <div class="category-title">
+                                <i class="fas fa-x-ray"></i>
+                                Clinical
+                            </div>
+                        </div>
+                        <div class="trait-items" id="clinical-traits">
+                            <!-- Clinical traits loaded here -->
+                        </div>
                     </div>
                 </div>
                 
-                <div class="patient-selector">
-                    <select class="patient-select" id="patientSelect">
-                        <option value="demo">Demo Patient (John Smith)</option>
-                        <option value="new">+ Add New Patient</option>
-                    </select>
+                <!-- Tools Tab -->
+                <div class="panel-tab-content" data-tab="tools">
+                    <div class="tools-grid">
+                        <div class="tool-card" data-tool="select">
+                            <div class="tool-icon">
+                                <i class="fas fa-mouse-pointer"></i>
+                            </div>
+                            <div class="tool-name">Select</div>
+                        </div>
+                        <div class="tool-card" data-tool="connect">
+                            <div class="tool-icon">
+                                <i class="fas fa-link"></i>
+                            </div>
+                            <div class="tool-name">Connect</div>
+                        </div>
+                        <div class="tool-card" data-tool="delete">
+                            <div class="tool-icon">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                            <div class="tool-name">Delete</div>
+                        </div>
+                        <div class="tool-card" data-tool="simulate">
+                            <div class="tool-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="tool-name">Simulate</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Connections Tab -->
+                <div class="panel-tab-content" data-tab="connections">
+                    <div class="connection-types">
+                        <div class="connection-type active" data-connection="causal">
+                            <div class="connection-color" style="background: var(--danger-red);"></div>
+                            <div>
+                                <div style="font-weight: 600;">Causal</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">A directly causes B</div>
+                            </div>
+                        </div>
+                        <div class="connection-type" data-connection="correlative">
+                            <div class="connection-color" style="background: var(--warning-orange);"></div>
+                            <div>
+                                <div style="font-weight: 600;">Correlative</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">A and B occur together</div>
+                            </div>
+                        </div>
+                        <div class="connection-type" data-connection="therapeutic">
+                            <div class="connection-color" style="background: var(--success-green);"></div>
+                            <div>
+                                <div style="font-weight: 600;">Therapeutic</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Treatment affects trait</div>
+                            </div>
+                        </div>
+                        <div class="connection-type" data-connection="inhibitory">
+                            <div class="connection-color" style="background: var(--secondary-blue);"></div>
+                            <div>
+                                <div style="font-weight: 600;">Inhibitory</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">A inhibits B</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <!-- Main Views -->
-        <div class="views-container">
-            <!-- Today View -->
-            <div class="view" id="todayView">
-                <div class="today-header">
-                    <h2>Current Trait Profile</h2>
-                    <div class="date-display" id="currentDate"></div>
+        <!-- Center Panel -->
+        <div class="center-panel">
+            <svg id="network-canvas"></svg>
+            
+            <!-- Network Controls -->
+            <div class="network-controls">
+                <button class="control-btn active" data-control="select" title="Select Mode">
+                    <i class="fas fa-mouse-pointer"></i>
+                </button>
+                <button class="control-btn" data-control="pan" title="Pan Mode">
+                    <i class="fas fa-hand-paper"></i>
+                </button>
+                <button class="control-btn" data-control="zoom-in" title="Zoom In">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button class="control-btn" data-control="zoom-out" title="Zoom Out">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <button class="control-btn" data-control="reset" title="Reset View">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="control-btn" data-control="clear" title="Clear All">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </div>
+            
+            <!-- Property Panel -->
+            <div class="property-panel" id="propertyPanel">
+                <div class="property-header">
+                    <div class="property-title" id="propertyTitle">Properties</div>
+                    <button class="control-btn" id="closeProperties" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
-                
-                <div class="trait-cards-grid" id="traitCards">
-                    <!-- Traits will be loaded here -->
-                </div>
-                
-                <div class="data-sources">
-                    <i class="fas fa-database"></i>
-                    Data sources: Spirometry, Lab results, FeNO, Patient questionnaires
+                <div class="property-content" id="propertyContent">
+                    <!-- Properties loaded here -->
                 </div>
             </div>
             
-            <!-- Trends View -->
-            <div class="view" id="trendsView">
-                <div class="today-header">
-                    <h2>Trait Evolution</h2>
-                    <div class="date-display">Track changes over time</div>
+            <!-- Simulation Panel -->
+            <div class="simulation-panel">
+                <div class="simulation-status">
+                    <div class="sim-status-indicator"></div>
+                    <span>Simulation Ready</span>
                 </div>
-                
-                <div class="trends-controls">
-                    <div class="time-range-selector">
-                        <button class="time-btn active" data-range="3m">3 Months</button>
-                        <button class="time-btn" data-range="6m">6 Months</button>
-                        <button class="time-btn" data-range="1y">1 Year</button>
-                        <button class="time-btn" data-range="all">All Time</button>
-                    </div>
-                </div>
-                
-                <div class="trends-grid" id="trendsGrid">
-                    <!-- Trend charts will be loaded here -->
-                </div>
-            </div>
-            
-            <!-- Actions View -->
-            <div class="view" id="actionsView">
-                <div class="today-header">
-                    <h2>Clinical Actions</h2>
-                    <div class="date-display">Personalized recommendations</div>
-                </div>
-                
-                <div class="actions-grid" id="actionsGrid">
-                    <!-- Action cards will be loaded here -->
-                </div>
-            </div>
-            
-            <!-- Compare View -->
-            <div class="view" id="compareView">
-                <div class="today-header">
-                    <h2>Cohort Comparison</h2>
-                    <div class="date-display">Benchmark against similar patients</div>
-                </div>
-                
-                <div class="compare-controls">
-                    <h3 style="margin-bottom: 1rem;">Select Comparison Cohort</h3>
-                    <div class="cohort-selector">
-                        <div class="cohort-option active" data-cohort="similar">
-                            <div style="font-weight: 600;">Similar Patients</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Age 60-70, Severe Asthma</div>
-                        </div>
-                        <div class="cohort-option" data-cohort="responders">
-                            <div style="font-weight: 600;">Biologic Responders</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Patients who responded to anti-IL-5</div>
-                        </div>
-                        <div class="cohort-option" data-cohort="institution">
-                            <div style="font-weight: 600;">Institution Average</div>
-                            <div style="font-size: 0.8rem; color: var(--text-secondary);">All asthma patients</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="comparison-results" id="comparisonResults">
-                    <!-- Comparison results will be loaded here -->
-                </div>
-            </div>
-            
-            <!-- Data View -->
-            <div class="view" id="dataView">
-                <div class="today-header">
-                    <h2>Data Management</h2>
-                    <div class="date-display">Add or update patient data</div>
-                </div>
-                
-                <div class="data-entry-form">
-                    <h3 style="margin-bottom: 1.5rem;">Add New Measurement</h3>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Measurement Type</label>
-                        <select class="form-select" id="measurementType">
-                            <option value="spirometry">Spirometry (FEV₁)</option>
-                            <option value="lab">Lab Test (Eosinophils)</option>
-                            <option value="feno">FeNO Measurement</option>
-                            <option value="symptoms">Symptom Score</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Value</label>
-                        <input type="text" class="form-input" id="measurementValue" placeholder="Enter value (e.g., 62%)">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Date</label>
-                        <input type="date" class="form-input" id="measurementDate" value="">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Notes</label>
-                        <textarea class="form-input" id="measurementNotes" rows="3" placeholder="Additional context..."></textarea>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
-                        <button class="btn btn-primary" id="saveMeasurementBtn">Save Measurement</button>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">Recent Measurements</h3>
-                    <div id="recentMeasurements">
-                        <!-- Recent measurements will be loaded here -->
-                    </div>
+                <div class="simulation-buttons">
+                    <button class="sim-btn" id="addIntervention">
+                        <i class="fas fa-plus"></i> Add Intervention
+                    </button>
+                    <button class="sim-btn primary" id="runSimulation">
+                        <i class="fas fa-play"></i> Run Simulation
+                    </button>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Mobile Navigation -->
-    <div class="mobile-nav">
-        <div class="nav-items">
-            <a href="#" class="nav-item active" data-view="today">
-                <i class="fas fa-home"></i>
-                <span>Today</span>
-            </a>
-            <a href="#" class="nav-item" data-view="trends">
-                <i class="fas fa-chart-line"></i>
-                <span>Trends</span>
-            </a>
-            <a href="#" class="nav-item" data-view="actions">
-                <i class="fas fa-bullseye"></i>
-                <span>Actions</span>
-            </a>
-            <a href="#" class="nav-item" data-view="compare">
-                <i class="fas fa-users"></i>
-                <span>Compare</span>
-            </a>
-            <a href="#" class="nav-item" data-view="data">
-                <i class="fas fa-database"></i>
-                <span>Data</span>
-            </a>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon info">
+            <i class="fas fa-info-circle"></i>
         </div>
+        <div class="toast-message" id="toastMessage"></div>
     </div>
 
     <script>
         // ================================
-        // CORE DATA MANAGEMENT
+        // CORE DATA MODELS
         // ================================
         
-        class TraitMapDatabase {
-            constructor() {
-                this.patients = {};
-                this.currentPatientId = 'demo';
-                this.initDemoData();
-                this.loadFromStorage();
-            }
-            
-            initDemoData() {
-                // Demo patient data
-                this.patients.demo = {
-                    id: 'demo',
-                    name: 'John Smith',
-                    age: 62,
-                    diagnosis: 'Severe Asthma with COPD Overlap',
-                    lastVisit: '2024-03-15',
-                    
-                    traits: [
-                        {
-                            id: 'eosinophilic_inflammation',
-                            name: 'Eosinophilic Inflammation',
-                            category: 'immune',
-                            severity: 'high',
-                            currentValue: '520 cells/μL',
-                            trend: 'increasing',
-                            lastUpdated: '2024-03-10',
-                            dataSources: ['Lab Results', 'FeNO'],
-                            confidence: 0.95
-                        },
-                        {
-                            id: 'airflow_limitation',
-                            name: 'Airflow Limitation',
-                            category: 'physio',
-                            severity: 'medium',
-                            currentValue: 'FEV₁ 62%',
-                            trend: 'stable',
-                            lastUpdated: '2024-03-05',
-                            dataSources: ['Spirometry'],
-                            confidence: 0.98
-                        },
-                        {
-                            id: 'saba_overuse',
-                            name: 'SABA Overuse',
-                            category: 'behavioral',
-                            severity: 'medium',
-                            currentValue: '4×/week',
-                            trend: 'increasing',
-                            lastUpdated: '2024-03-12',
-                            dataSources: ['Smart Inhaler', 'Prescription Records'],
-                            confidence: 0.85
-                        },
-                        {
-                            id: 'mucus_hypersecretion',
-                            name: 'Mucus Hypersecretion',
-                            category: 'clinical',
-                            severity: 'low',
-                            currentValue: 'Moderate sputum',
-                            trend: 'stable',
-                            lastUpdated: '2024-03-01',
-                            dataSources: ['Patient Report'],
-                            confidence: 0.75
-                        }
-                    ],
-                    
-                    measurements: [
-                        { date: '2024-01-15', type: 'spirometry', value: 68, unit: '% predicted', trait: 'airflow_limitation' },
-                        { date: '2024-02-01', type: 'lab', value: 480, unit: 'cells/μL', trait: 'eosinophilic_inflammation' },
-                        { date: '2024-02-15', type: 'spirometry', value: 65, unit: '% predicted', trait: 'airflow_limitation' },
-                        { date: '2024-03-01', type: 'lab', value: 520, unit: 'cells/μL', trait: 'eosinophilic_inflammation' },
-                        { date: '2024-03-05', type: 'spirometry', value: 62, unit: '% predicted', trait: 'airflow_limitation' },
-                        { date: '2024-03-10', type: 'feno', value: 45, unit: 'ppb', trait: 'eosinophilic_inflammation' },
-                        { date: '2024-03-12', type: 'behavioral', value: 4, unit: 'uses/week', trait: 'saba_overuse' }
-                    ],
-                    
-                    actions: [
-                        {
-                            id: 'biologic_consideration',
-                            title: 'Consider Biologic Therapy',
-                            description: 'Persistent eosinophilia (>450 cells/μL) despite ICS therapy suggests potential benefit from anti-IL-5 therapy.',
-                            priority: 'high',
-                            relatedTraits: ['eosinophilic_inflammation'],
-                            evidence: 'Based on blood eosinophil trends over 3 months'
-                        },
-                        {
-                            id: 'controller_optimization',
-                            title: 'Optimize Controller Therapy',
-                            description: 'SABA overuse indicates potential suboptimal controller therapy. Review ICS/LABA adherence and technique.',
-                            priority: 'medium',
-                            relatedTraits: ['saba_overuse', 'airflow_limitation'],
-                            evidence: 'SABA use 4×/week exceeds guideline recommendations'
-                        },
-                        {
-                            id: 'sputum_culture',
-                            title: 'Consider Sputum Culture',
-                            description: 'Persistent mucus hypersecretion may indicate infection or non-type 2 inflammation.',
-                            priority: 'low',
-                            relatedTraits: ['mucus_hypersecretion'],
-                            evidence: 'Chronic productive cough reported'
-                        }
-                    ],
-                    
-                    cohorts: {
-                        similar: {
-                            name: 'Similar Patients',
-                            description: 'Age 60-70, Severe Asthma',
-                            size: 142,
-                            metrics: {
-                                eosinophilic_inflammation: { avg: 380, patient: 520 },
-                                airflow_limitation: { avg: 58, patient: 62 },
-                                saba_overuse: { avg: 2.8, patient: 4 }
-                            }
-                        },
-                        responders: {
-                            name: 'Biologic Responders',
-                            description: 'Patients who responded to anti-IL-5',
-                            size: 85,
-                            metrics: {
-                                eosinophilic_inflammation: { avg: 510, patient: 520 },
-                                airflow_limitation: { avg: 61, patient: 62 },
-                                exacerbations: { avg: 1.2, patient: 2.5 }
-                            }
-                        }
-                    }
-                };
-            }
-            
-            saveToStorage() {
-                try {
-                    localStorage.setItem('traitmap_patients', JSON.stringify(this.patients));
-                    localStorage.setItem('traitmap_current_patient', this.currentPatientId);
-                } catch (e) {
-                    console.warn('LocalStorage save failed:', e);
-                }
-            }
-            
-            loadFromStorage() {
-                try {
-                    const savedPatients = localStorage.getItem('traitmap_patients');
-                    const savedCurrent = localStorage.getItem('traitmap_current_patient');
-                    
-                    if (savedPatients) {
-                        const parsed = JSON.parse(savedPatients);
-                        // Merge with demo data
-                        Object.assign(this.patients, parsed);
-                    }
-                    
-                    if (savedCurrent) {
-                        this.currentPatientId = savedCurrent;
-                    }
-                } catch (e) {
-                    console.warn('LocalStorage load failed:', e);
-                }
-            }
-            
-            getCurrentPatient() {
-                return this.patients[this.currentPatientId];
-            }
-            
-            addMeasurement(measurement) {
-                const patient = this.getCurrentPatient();
-                if (!patient.measurements) patient.measurements = [];
-                patient.measurements.push(measurement);
-                this.updateTraitsFromMeasurements();
-                this.saveToStorage();
-            }
-            
-            updateTraitsFromMeasurements() {
-                // In a full implementation, this would automatically update trait values
-                // based on new measurements
-                console.log('Traits updated from measurements');
+        class Trait {
+            constructor(id, name, category, description, color) {
+                this.id = id;
+                this.name = name;
+                this.category = category;
+                this.description = description;
+                this.color = color;
+                this.x = 0;
+                this.y = 0;
+                this.size = 40;
+                this.value = 50; // Default value 0-100
+                this.visible = true;
+                this.selected = false;
             }
         }
+        
+        class Connection {
+            constructor(source, target, type, strength = 50) {
+                this.id = `${source.id}-${target.id}-${type}`;
+                this.source = source;
+                this.target = target;
+                this.type = type; // causal, correlative, therapeutic, inhibitory
+                this.strength = strength; // 0-100
+                this.direction = 'forward'; // forward, backward, bidirectional
+                this.selected = false;
+            }
+            
+            getColor() {
+                const colors = {
+                    'causal': '#ef4444',
+                    'correlative': '#f59e0b',
+                    'therapeutic': '#10b981',
+                    'inhibitory': '#3b82f6'
+                };
+                return colors[this.type] || '#94a3b8';
+            }
+            
+            getDashArray() {
+                return this.type === 'inhibitory' ? '5,5' : 'none';
+            }
+        }
+        
+        class Intervention {
+            constructor(traitId, type, value) {
+                this.id = Date.now().toString();
+                this.traitId = traitId;
+                this.type = type; // 'increase', 'decrease', 'set'
+                this.value = value;
+                this.active = true;
+            }
+        }
+        
+        // ================================
+        // TRAIT LIBRARY DATABASE
+        // ================================
+        
+        const traitLibrary = {
+            immune: [
+                new Trait('eos_inflam', 'Eosinophilic Inflammation', 'immune', 
+                    'Type-2 inflammation with elevated eosinophils', '#ef4444'),
+                new Trait('neut_inflam', 'Neutrophilic Inflammation', 'immune',
+                    'Neutrophil-dominated airway inflammation', '#3b82f6'),
+                new Trait('allergic', 'Allergic Sensitization', 'immune',
+                    'IgE-mediated allergic response', '#f59e0b'),
+                new Trait('th2_cytokines', 'Th2 Cytokine Production', 'immune',
+                    'Elevated IL-4, IL-5, IL-13', '#8b5cf6')
+            ],
+            physio: [
+                new Trait('airflow_lim', 'Airflow Limitation', 'physio',
+                    'Obstructive pattern on spirometry', '#10b981'),
+                new Trait('hyperreactivity', 'Bronchial Hyperreactivity', 'physio',
+                    'Exaggerated response to stimuli', '#ec4899'),
+                new Trait('gas_trapping', 'Gas Trapping', 'physio',
+                    'Air trapping on expiration', '#06b6d4'),
+                new Trait('mucociliary', 'Mucociliary Dysfunction', 'physio',
+                    'Impaired mucus clearance', '#84cc16')
+            ],
+            clinical: [
+                new Trait('cough', 'Cough Hypersensitivity', 'clinical',
+                    'Heightened cough reflex', '#f97316'),
+                new Trait('dyspnea', 'Exertional Dyspnea', 'clinical',
+                    'Breathlessness on exertion', '#6366f1'),
+                new Trait('sputum', 'Sputum Production', 'clinical',
+                    'Chronic mucus hypersecretion', '#14b8a6'),
+                new Trait('wheeze', 'Wheeze', 'clinical',
+                    'Musical breath sounds', '#a855f7')
+            ]
+        };
         
         // ================================
         // APPLICATION STATE
         // ================================
         
         const appState = {
-            currentView: 'today',
-            currentPatient: null,
-            database: null,
-            isLoading: false
+            currentMode: 'select', // select, pan, connect, delete, simulate
+            currentConnectionType: 'causal',
+            selectedTraits: new Set(),
+            selectedConnections: new Set(),
+            isDragging: false,
+            isConnecting: false,
+            connectionStart: null,
+            traits: [],
+            connections: [],
+            interventions: [],
+            simulationRunning: false,
+            zoom: 1,
+            pan: { x: 0, y: 0 }
         };
         
         // ================================
-        // UI COMPONENTS
+        // D3 NETWORK VISUALIZATION
         // ================================
         
-        class UIComponents {
-            static showLoading() {
-                document.getElementById('loadingOverlay').classList.add('show');
-                appState.isLoading = true;
+        class NetworkVisualization {
+            constructor(containerId) {
+                this.container = d3.select(`#${containerId}`);
+                this.width = this.container.node().clientWidth;
+                this.height = this.container.node().clientHeight;
+                
+                this.initSVG();
+                this.initSimulation();
+                this.initEventHandlers();
+                
+                // Load initial traits
+                this.loadInitialTraits();
             }
             
-            static hideLoading() {
-                document.getElementById('loadingOverlay').classList.remove('show');
-                appState.isLoading = false;
-            }
-            
-            static showNotification(message, type = 'info') {
-                // Simple notification - could be enhanced with a proper notification system
-                alert(message); // For simplicity in this demo
-            }
-            
-            static formatDate(dateString) {
-                const date = new Date(dateString);
-                return date.toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
+            initSVG() {
+                this.svg = this.container
+                    .append('svg')
+                    .attr('width', this.width)
+                    .attr('height', this.height);
+                
+                // Define arrow markers for connections
+                this.defs = this.svg.append('defs');
+                
+                ['causal', 'therapeutic', 'inhibitory'].forEach(type => {
+                    const color = new Connection(null, null, type).getColor();
+                    this.defs.append('marker')
+                        .attr('id', `arrow-${type}`)
+                        .attr('viewBox', '0 -5 10 10')
+                        .attr('refX', 15)
+                        .attr('refY', 0)
+                        .attr('markerWidth', 6)
+                        .attr('markerHeight', 6)
+                        .attr('orient', 'auto')
+                        .append('path')
+                        .attr('d', 'M0,-5L10,0L0,5')
+                        .attr('fill', color);
                 });
+                
+                // Main group for zoom/pan
+                this.g = this.svg.append('g');
+                
+                // Groups for different elements
+                this.connectionsGroup = this.g.append('g').attr('class', 'connections');
+                this.traitsGroup = this.g.append('g').attr('class', 'traits');
+                this.selectionGroup = this.g.append('g').attr('class', 'selection');
+                
+                // Line for drawing new connections
+                this.connectionLine = this.g.append('line')
+                    .attr('class', 'connection-line')
+                    .attr('stroke', '#3b82f6')
+                    .style('display', 'none');
+                
+                // Selection box
+                this.selectionBox = this.selectionGroup.append('rect')
+                    .attr('class', 'selection-box')
+                    .style('display', 'none');
+                
+                // Setup zoom behavior
+                this.zoom = d3.zoom()
+                    .scaleExtent([0.1, 4])
+                    .on('zoom', (event) => {
+                        this.g.attr('transform', event.transform);
+                        appState.zoom = event.transform.k;
+                        appState.pan = { x: event.transform.x, y: event.transform.y };
+                    });
+                
+                this.svg.call(this.zoom);
             }
             
-            static renderTraitCard(trait) {
-                return `
-                    <div class="trait-card ${trait.severity === 'high' ? 'active' : ''}" data-trait-id="${trait.id}">
-                        <div class="trait-card-header">
-                            <div>
-                                <div class="trait-name">${trait.name}</div>
-                                <span class="trait-category">${this.getCategoryLabel(trait.category)}</span>
-                            </div>
-                            <div class="trait-severity">
-                                <div class="severity-dot ${trait.severity}"></div>
-                                <span style="font-size: 0.9rem; text-transform: capitalize;">${trait.severity}</span>
-                            </div>
-                        </div>
+            initSimulation() {
+                this.simulation = d3.forceSimulation()
+                    .force('link', d3.forceLink()
+                        .id(d => d.id)
+                        .distance(150)
+                        .strength(d => d.strength / 100))
+                    .force('charge', d3.forceManyBody()
+                        .strength(-300))
+                    .force('center', d3.forceCenter(this.width / 2, this.height / 2))
+                    .force('collision', d3.forceCollide().radius(50))
+                    .alphaDecay(0.02)
+                    .on('tick', () => this.tick());
+            }
+            
+            initEventHandlers() {
+                // Handle clicks on background
+                this.g.on('click', (event) => {
+                    if (event.defaultPrevented) return;
+                    
+                    // Clear selection if clicking on empty space
+                    if (!event.target.classList.contains('trait-node') && 
+                        !event.target.classList.contains('connection')) {
+                        this.clearSelection();
+                    }
+                });
+                
+                // Handle drag selection
+                let dragStart = null;
+                
+                this.g.on('mousedown', (event) => {
+                    if (event.defaultPrevented) return;
+                    
+                    if (appState.currentMode === 'select' && event.button === 0) {
+                        dragStart = [event.clientX - appState.pan.x, event.clientY - appState.pan.y];
+                        this.selectionBox
+                            .attr('x', dragStart[0])
+                            .attr('y', dragStart[1])
+                            .attr('width', 0)
+                            .attr('height', 0)
+                            .style('display', 'block');
+                    }
+                });
+                
+                this.g.on('mousemove', (event) => {
+                    if (dragStart) {
+                        const x = event.clientX - appState.pan.x;
+                        const y = event.clientY - appState.pan.y;
+                        const width = x - dragStart[0];
+                        const height = y - dragStart[1];
                         
-                        <div style="margin: 1rem 0; color: var(--text-secondary); font-size: 0.9rem;">
-                            ${trait.currentValue}
-                            <div style="font-size: 0.8rem; margin-top: 0.25rem;">
-                                Last updated: ${this.formatDate(trait.lastUpdated)}
-                            </div>
-                        </div>
+                        this.selectionBox
+                            .attr('width', Math.abs(width))
+                            .attr('height', Math.abs(height))
+                            .attr('x', width > 0 ? dragStart[0] : dragStart[0] + width)
+                            .attr('y', height > 0 ? dragStart[1] : dragStart[1] + height);
+                    }
+                    
+                    // Update connection line if connecting
+                    if (appState.isConnecting && appState.connectionStart) {
+                        const [x, y] = d3.pointer(event, this.g.node());
+                        this.connectionLine
+                            .attr('x2', x)
+                            .attr('y2', y)
+                            .style('display', 'block');
+                    }
+                });
+                
+                this.g.on('mouseup', (event) => {
+                    if (dragStart) {
+                        const x = event.clientX - appState.pan.x;
+                        const y = event.clientY - appState.pan.y;
                         
-                        <div class="trait-metrics">
-                            <div class="metric">
-                                <div class="metric-value">${(trait.confidence * 100).toFixed(0)}%</div>
-                                <div class="metric-label">Confidence</div>
-                            </div>
-                            <div class="metric">
-                                <div class="metric-value" style="color: ${trait.trend === 'increasing' ? 'var(--danger-red)' : trait.trend === 'decreasing' ? 'var(--success-green)' : 'var(--warning-orange)'}">
-                                    ${trait.trend === 'increasing' ? '↑' : trait.trend === 'decreasing' ? '↓' : '→'}
-                                </div>
-                                <div class="metric-label">Trend</div>
-                            </div>
-                        </div>
+                        // Select traits within selection box
+                        const minX = Math.min(dragStart[0], x);
+                        const maxX = Math.max(dragStart[0], x);
+                        const minY = Math.min(dragStart[1], y);
+                        const maxY = Math.max(dragStart[1], y);
                         
-                        <div class="data-sources">
-                            <i class="fas fa-clipboard-list"></i>
-                            Sources: ${trait.dataSources.join(', ')}
+                        appState.traits.forEach(trait => {
+                            if (trait.x >= minX && trait.x <= maxX && 
+                                trait.y >= minY && trait.y <= maxY) {
+                                this.selectTrait(trait);
+                            }
+                        });
+                        
+                        this.selectionBox.style('display', 'none');
+                        dragStart = null;
+                    }
+                });
+                
+                // Handle window resize
+                window.addEventListener('resize', () => this.handleResize());
+            }
+            
+            handleResize() {
+                this.width = this.container.node().clientWidth;
+                this.height = this.container.node().clientHeight;
+                
+                this.svg
+                    .attr('width', this.width)
+                    .attr('height', this.height);
+                
+                this.simulation.force('center', d3.forceCenter(this.width / 2, this.height / 2));
+                this.simulation.alpha(0.3).restart();
+            }
+            
+            loadInitialTraits() {
+                // Add some initial traits to the canvas
+                const initialTraits = [
+                    traitLibrary.immune[0],
+                    traitLibrary.physio[0],
+                    traitLibrary.clinical[0]
+                ];
+                
+                // Position them in a triangle
+                initialTraits.forEach((trait, i) => {
+                    const angle = (i / initialTraits.length) * 2 * Math.PI;
+                    trait.x = this.width / 2 + Math.cos(angle) * 200;
+                    trait.y = this.height / 2 + Math.sin(angle) * 200;
+                    this.addTrait(trait);
+                });
+                
+                // Add some initial connections
+                this.addConnection(appState.traits[0], appState.traits[1], 'causal', 75);
+                this.addConnection(appState.traits[1], appState.traits[2], 'correlative', 60);
+                
+                this.updateVisualization();
+            }
+            
+            addTrait(trait) {
+                appState.traits.push(trait);
+                this.updateVisualization();
+                this.simulation.nodes(appState.traits);
+                this.simulation.alpha(0.3).restart();
+                
+                showToast(`Added trait: ${trait.name}`, 'success');
+            }
+            
+            addConnection(source, target, type, strength = 50) {
+                // Check if connection already exists
+                const existing = appState.connections.find(c => 
+                    c.source.id === source.id && c.target.id === target.id && c.type === type);
+                
+                if (existing) {
+                    showToast('Connection already exists', 'warning');
+                    return;
+                }
+                
+                const connection = new Connection(source, target, type, strength);
+                appState.connections.push(connection);
+                this.updateVisualization();
+                this.simulation.force('link').links(appState.connections);
+                this.simulation.alpha(0.3).restart();
+                
+                showToast(`Added ${type} connection`, 'success');
+            }
+            
+            removeSelected() {
+                // Remove selected connections
+                appState.connections = appState.connections.filter(c => !c.selected);
+                
+                // Remove selected traits and their connections
+                const traitsToRemove = appState.traits.filter(t => t.selected);
+                traitsToRemove.forEach(trait => {
+                    appState.connections = appState.connections.filter(c => 
+                        c.source.id !== trait.id && c.target.id !== trait.id);
+                });
+                
+                appState.traits = appState.traits.filter(t => !t.selected);
+                
+                this.clearSelection();
+                this.updateVisualization();
+                this.simulation.nodes(appState.traits);
+                this.simulation.force('link').links(appState.connections);
+                this.simulation.alpha(0.3).restart();
+                
+                showToast(`Removed ${traitsToRemove.length} trait(s)`, 'info');
+            }
+            
+            clearSelection() {
+                appState.selectedTraits.clear();
+                appState.selectedConnections.clear();
+                appState.traits.forEach(t => t.selected = false);
+                appState.connections.forEach(c => c.selected = false);
+                this.updateVisualization();
+                hidePropertyPanel();
+            }
+            
+            selectTrait(trait) {
+                if (!event.ctrlKey && !event.metaKey) {
+                    this.clearSelection();
+                }
+                
+                trait.selected = !trait.selected;
+                if (trait.selected) {
+                    appState.selectedTraits.add(trait);
+                } else {
+                    appState.selectedTraits.delete(trait);
+                }
+                
+                this.showTraitProperties(trait);
+                this.updateVisualization();
+            }
+            
+            selectConnection(connection) {
+                if (!event.ctrlKey && !event.metaKey) {
+                    this.clearSelection();
+                }
+                
+                connection.selected = !connection.selected;
+                if (connection.selected) {
+                    appState.selectedConnections.add(connection);
+                } else {
+                    appState.selectedConnections.delete(connection);
+                }
+                
+                this.showConnectionProperties(connection);
+                this.updateVisualization();
+            }
+            
+            startConnection(trait) {
+                if (appState.currentMode !== 'connect') return;
+                
+                appState.isConnecting = true;
+                appState.connectionStart = trait;
+                
+                const [x, y] = [trait.x, trait.y];
+                this.connectionLine
+                    .attr('x1', x)
+                    .attr('y1', y)
+                    .attr('x2', x)
+                    .attr('y2', y)
+                    .style('display', 'block');
+            }
+            
+            completeConnection(trait) {
+                if (!appState.isConnecting || !appState.connectionStart) return;
+                
+                if (appState.connectionStart.id !== trait.id) {
+                    this.addConnection(appState.connectionStart, trait, appState.currentConnectionType);
+                }
+                
+                this.cancelConnection();
+            }
+            
+            cancelConnection() {
+                appState.isConnecting = false;
+                appState.connectionStart = null;
+                this.connectionLine.style('display', 'none');
+            }
+            
+            showTraitProperties(trait) {
+                const content = `
+                    <div class="property-group">
+                        <label class="property-label">Trait Name</label>
+                        <input type="text" class="property-input" value="${trait.name}" 
+                               onchange="network.updateTraitProperty('${trait.id}', 'name', this.value)">
+                    </div>
+                    
+                    <div class="property-group">
+                        <label class="property-label">Current Value</label>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <input type="range" class="property-slider" min="0" max="100" value="${trait.value}"
+                                   oninput="network.updateTraitProperty('${trait.id}', 'value', this.value)">
+                            <span style="font-weight: 600; min-width: 40px;">${trait.value}%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <label class="property-label">Size</label>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <input type="range" class="property-slider" min="20" max="80" value="${trait.size}"
+                                   oninput="network.updateTraitProperty('${trait.id}', 'size', this.value)">
+                            <span style="font-weight: 600; min-width: 40px;">${trait.size}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <label class="property-label">Color</label>
+                        <input type="color" class="property-input" value="${trait.color}" 
+                               onchange="network.updateTraitProperty('${trait.id}', 'color', this.value)">
+                    </div>
+                    
+                    <div class="property-group">
+                        <label class="property-label">Description</label>
+                        <textarea class="property-input" rows="3"
+                                  onchange="network.updateTraitProperty('${trait.id}', 'description', this.value)">${trait.description}</textarea>
+                    </div>
+                    
+                    <div class="property-group">
+                        <button class="sim-btn" style="width: 100%;" 
+                                onclick="network.addIntervention('${trait.id}', 'increase')">
+                            <i class="fas fa-arrow-up"></i> Increase in Simulation
+                        </button>
+                        <button class="sim-btn" style="width: 100%; margin-top: 0.5rem;"
+                                onclick="network.addIntervention('${trait.id}', 'decrease')">
+                            <i class="fas fa-arrow-down"></i> Decrease in Simulation
+                        </button>
+                    </div>
+                `;
+                
+                showPropertyPanel('Trait Properties', content);
+            }
+            
+            showConnectionProperties(connection) {
+                const content = `
+                    <div class="property-group">
+                        <label class="property-label">Connection Type</label>
+                        <select class="property-input" 
+                                onchange="network.updateConnectionProperty('${connection.id}', 'type', this.value)">
+                            <option value="causal" ${connection.type === 'causal' ? 'selected' : ''}>Causal</option>
+                            <option value="correlative" ${connection.type === 'correlative' ? 'selected' : ''}>Correlative</option>
+                            <option value="therapeutic" ${connection.type === 'therapeutic' ? 'selected' : ''}>Therapeutic</option>
+                            <option value="inhibitory" ${connection.type === 'inhibitory' ? 'selected' : ''}>Inhibitory</option>
+                        </select>
+                    </div>
+                    
+                    <div class="property-group">
+                        <label class="property-label">Strength</label>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <input type="range" class="property-slider" min="1" max="100" value="${connection.strength}"
+                                   oninput="network.updateConnectionProperty('${connection.id}', 'strength', this.value)">
+                            <span style="font-weight: 600; min-width: 40px;">${connection.strength}%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="property-group">
+                        <label class="property-label">Direction</label>
+                        <select class="property-input" 
+                                onchange="network.updateConnectionProperty('${connection.id}', 'direction', this.value)">
+                            <option value="forward" ${connection.direction === 'forward' ? 'selected' : ''}>${connection.source.name} → ${connection.target.name}</option>
+                            <option value="backward" ${connection.direction === 'backward' ? 'selected' : ''}>${connection.target.name} → ${connection.source.name}</option>
+                            <option value="bidirectional" ${connection.direction === 'bidirectional' ? 'selected' : ''}>Bidirectional</option>
+                        </select>
+                    </div>
+                    
+                    <div class="property-group">
+                        <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                            <div><strong>From:</strong> ${connection.source.name}</div>
+                            <div><strong>To:</strong> ${connection.target.name}</div>
                         </div>
                     </div>
                 `;
+                
+                showPropertyPanel('Connection Properties', content);
             }
             
-            static renderTrendChart(traitId, measurements) {
-                // Filter measurements for this trait
-                const traitMeasurements = measurements.filter(m => m.trait === traitId);
-                if (traitMeasurements.length < 2) return '';
+            updateTraitProperty(traitId, property, value) {
+                const trait = appState.traits.find(t => t.id === traitId);
+                if (!trait) return;
                 
-                // Sort by date
-                traitMeasurements.sort((a, b) => new Date(a.date) - new Date(b.date));
-                
-                // Calculate trend
-                const first = traitMeasurements[0].value;
-                const last = traitMeasurements[traitMeasurements.length - 1].value;
-                const trend = last > first ? 'up' : last < first ? 'down' : 'stable';
-                const percentChange = ((last - first) / first * 100).toFixed(1);
-                
-                // Get trait name
-                const trait = appState.database.getCurrentPatient().traits.find(t => t.id === traitId);
-                if (!trait) return '';
-                
-                return `
-                    <div class="trend-card">
-                        <div class="trend-header">
-                            <div style="font-weight: 600;">${trait.name}</div>
-                            <div class="trend-direction ${trend}">
-                                <i class="fas fa-${trend === 'up' ? 'arrow-up' : trend === 'down' ? 'arrow-down' : 'minus'}"></i>
-                                <span>${Math.abs(percentChange)}%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="trend-chart" id="chart-${traitId}">
-                            <!-- Simple inline SVG chart -->
-                            <svg width="100%" height="100%" viewBox="0 0 300 100">
-                                ${this.generateSimpleChart(traitMeasurements)}
-                            </svg>
-                        </div>
-                        
-                        <div class="trend-info">
-                            <div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Start</div>
-                                <div style="font-weight: 600;">${first}${traitMeasurements[0].unit}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Current</div>
-                                <div style="font-weight: 600;">${last}${traitMeasurements[traitMeasurements.length - 1].unit}</div>
-                            </div>
-                            <div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Time Span</div>
-                                <div style="font-weight: 600;">${traitMeasurements.length} readings</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                trait[property] = property === 'value' || property === 'size' ? parseInt(value) : value;
+                this.updateVisualization();
             }
             
-            static generateSimpleChart(measurements) {
-                if (measurements.length < 2) return '';
+            updateConnectionProperty(connectionId, property, value) {
+                const connection = appState.connections.find(c => c.id === connectionId);
+                if (!connection) return;
                 
-                // Simple line chart generation
-                const points = measurements.map((m, i) => {
-                    const x = (i / (measurements.length - 1)) * 280 + 10;
-                    // Normalize value for display (simplified)
-                    const normalizedValue = Math.min(90, Math.max(10, m.value));
-                    const y = 90 - (normalizedValue - 10) * 0.8;
-                    return `${x},${y}`;
-                }).join(' ');
-                
-                // Create circles for each point
-                const circles = measurements.map((m, i) => {
-                    const x = (i / (measurements.length - 1)) * 280 + 10;
-                    const normalizedValue = Math.min(90, Math.max(10, m.value));
-                    const y = 90 - (normalizedValue - 10) * 0.8;
-                    return `<circle cx="${x}" cy="${y}" r="3" fill="#3b82f6" stroke="white" stroke-width="1" />`;
-                }).join('');
-                
-                return `
-                    <polyline points="${points}" fill="none" stroke="#3b82f6" stroke-width="2" />
-                    ${circles}
-                `;
+                connection[property] = property === 'strength' ? parseInt(value) : value;
+                this.updateVisualization();
+                this.simulation.force('link').links(appState.connections);
+                this.simulation.alpha(0.3).restart();
             }
             
-            static renderActionCard(action) {
-                return `
-                    <div class="action-card">
-                        <div class="action-priority priority-${action.priority}">
-                            ${action.priority.toUpperCase()} PRIORITY
-                        </div>
-                        
-                        <div class="action-title">${action.title}</div>
-                        
-                        <div class="action-description">
-                            ${action.description}
-                        </div>
-                        
-                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem;">
-                            <i class="fas fa-clipboard-check"></i>
-                            ${action.evidence}
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button class="action-btn secondary" data-action="${action.id}" data-type="info">
-                                <i class="fas fa-info-circle"></i> More Info
-                            </button>
-                            <button class="action-btn" data-action="${action.id}" data-type="implement">
-                                <i class="fas fa-check"></i> Mark Done
-                            </button>
-                        </div>
-                    </div>
-                `;
+            addIntervention(traitId, type) {
+                const trait = appState.traits.find(t => t.id === traitId);
+                if (!trait) return;
+                
+                const value = type === 'increase' ? 25 : -25;
+                const intervention = new Intervention(traitId, type, value);
+                appState.interventions.push(intervention);
+                
+                showToast(`Added intervention: ${type} ${trait.name}`, 'success');
             }
             
-            static renderComparisonCard(traitId, patientValue, cohortAvg, cohortName) {
-                const trait = appState.database.getCurrentPatient().traits.find(t => t.id === traitId);
-                if (!trait) return '';
+            runSimulation() {
+                if (appState.interventions.length === 0) {
+                    showToast('Add interventions first to run simulation', 'warning');
+                    return;
+                }
                 
-                const percentage = Math.min(100, Math.max(0, (patientValue / cohortAvg) * 100));
+                appState.simulationRunning = true;
+                showToast('Running simulation...', 'info');
                 
-                return `
-                    <div class="comparison-card">
-                        <div class="comparison-header">
-                            <div style="font-weight: 600;">${trait.name}</div>
-                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                                ${percentage > 120 ? '↑ Above' : percentage < 80 ? '↓ Below' : '≈ Similar'} to average
-                            </div>
-                        </div>
-                        
-                        <div style="margin: 1rem 0;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                                <span style="font-size: 0.9rem;">Patient</span>
-                                <span style="font-weight: 600;">${patientValue}</span>
-                            </div>
-                            <div style="display: flex; justify-content: space-between;">
-                                <span style="font-size: 0.9rem;">Cohort Average</span>
-                                <span style="color: var(--text-secondary);">${cohortAvg.toFixed(1)}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="comparison-bar">
-                            <div class="bar-fill" style="width: ${Math.min(100, percentage)}%"></div>
-                        </div>
-                        
-                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem;">
-                            Compared to ${cohortName} (n=${appState.database.getCurrentPatient().cohorts[cohortName].size})
-                        </div>
-                    </div>
-                `;
+                // Apply interventions
+                appState.interventions.forEach(intervention => {
+                    const trait = appState.traits.find(t => t.id === intervention.traitId);
+                    if (trait) {
+                        trait.value = Math.max(0, Math.min(100, trait.value + intervention.value));
+                    }
+                });
+                
+                // Propagate effects through connections
+                appState.connections.forEach(connection => {
+                    if (connection.type === 'causal' || connection.type === 'therapeutic') {
+                        const effect = (connection.strength / 100) * (connection.source.value / 100) * 10;
+                        connection.target.value = Math.max(0, Math.min(100, 
+                            connection.target.value + (connection.direction === 'inhibitory' ? -effect : effect)));
+                    }
+                });
+                
+                this.updateVisualization();
+                
+                setTimeout(() => {
+                    appState.simulationRunning = false;
+                    showToast('Simulation complete!', 'success');
+                }, 1000);
             }
             
-            static getCategoryLabel(category) {
-                const labels = {
-                    'immune': 'Immune/Inflammatory',
-                    'physio': 'Physiological',
-                    'clinical': 'Clinical',
-                    'behavioral': 'Behavioral',
-                    'radio': 'Radiological'
-                };
-                return labels[category] || category;
+            updateVisualization() {
+                // Update traits
+                const traits = this.traitsGroup
+                    .selectAll('.trait-node')
+                    .data(appState.traits, d => d.id);
+                
+                const traitsEnter = traits.enter()
+                    .append('g')
+                    .attr('class', 'trait-node')
+                    .attr('transform', d => `translate(${d.x},${d.y})`)
+                    .style('cursor', 'pointer')
+                    .call(d3.drag()
+                        .on('start', (event, d) => this.dragStarted(event, d))
+                        .on('drag', (event, d) => this.dragged(event, d))
+                        .on('end', (event, d) => this.dragEnded(event, d)));
+                
+                // Trait circle
+                traitsEnter.append('circle')
+                    .attr('r', d => d.size)
+                    .attr('fill', d => d.color)
+                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
+                    .attr('stroke-width', d => d.selected ? 3 : 1);
+                
+                // Trait value indicator
+                traitsEnter.append('circle')
+                    .attr('r', d => d.size * 0.7)
+                    .attr('fill', 'none')
+                    .attr('stroke', '#ffffff')
+                    .attr('stroke-width', 3)
+                    .attr('stroke-dasharray', d => `${(d.value / 100) * 2 * Math.PI * d.size * 0.7}, 1000`)
+                    .style('stroke-linecap', 'round');
+                
+                // Trait label
+                traitsEnter.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', d => d.size + 20)
+                    .attr('fill', '#ffffff')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', '600')
+                    .attr('paint-order', 'stroke')
+                    .attr('stroke', 'rgba(15,23,42,0.8)')
+                    .attr('stroke-width', 3)
+                    .attr('stroke-linecap', 'round')
+                    .attr('stroke-linejoin', 'round')
+                    .text(d => d.name);
+                
+                // Update existing traits
+                traits.merge(traitsEnter)
+                    .attr('transform', d => `translate(${d.x},${d.y})`)
+                    .select('circle')
+                    .attr('r', d => d.size)
+                    .attr('fill', d => d.color)
+                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
+                    .attr('stroke-width', d => d.selected ? 3 : 1);
+                
+                traits.merge(traitsEnter)
+                    .select('text')
+                    .attr('dy', d => d.size + 20)
+                    .text(d => d.name);
+                
+                traits.merge(traitsEnter)
+                    .select('circle:nth-child(2)')
+                    .attr('stroke-dasharray', d => `${(d.value / 100) * 2 * Math.PI * d.size * 0.7}, 1000`);
+                
+                traits.exit().remove();
+                
+                // Event handlers for traits
+                this.traitsGroup.selectAll('.trait-node')
+                    .on('click', (event, d) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        if (appState.currentMode === 'connect') {
+                            if (appState.isConnecting) {
+                                this.completeConnection(d);
+                            } else {
+                                this.startConnection(d);
+                            }
+                        } else {
+                            this.selectTrait(d);
+                        }
+                    })
+                    .on('contextmenu', (event, d) => {
+                        event.preventDefault();
+                        this.showTraitProperties(d);
+                    });
+                
+                // Update connections
+                const connections = this.connectionsGroup
+                    .selectAll('.connection')
+                    .data(appState.connections, d => d.id);
+                
+                const connectionsEnter = connections.enter()
+                    .append('line')
+                    .attr('class', 'connection')
+                    .attr('stroke', d => d.getColor())
+                    .attr('stroke-width', d => d.selected ? 4 : 2)
+                    .attr('stroke-dasharray', d => d.getDashArray())
+                    .attr('marker-end', d => d.type !== 'correlative' ? `url(#arrow-${d.type})` : null);
+                
+                connections.merge(connectionsEnter)
+                    .attr('stroke', d => d.getColor())
+                    .attr('stroke-width', d => d.selected ? 4 : 2)
+                    .attr('stroke-dasharray', d => d.getDashArray())
+                    .attr('marker-end', d => d.type !== 'correlative' ? `url(#arrow-${d.type})` : null);
+                
+                connections.exit().remove();
+                
+                // Event handlers for connections
+                this.connectionsGroup.selectAll('.connection')
+                    .on('click', (event, d) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        this.selectConnection(d);
+                    })
+                    .on('contextmenu', (event, d) => {
+                        event.preventDefault();
+                        this.showConnectionProperties(d);
+                    });
+            }
+            
+            dragStarted(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            dragEnded(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            tick() {
+                // Update connection positions
+                this.connectionsGroup.selectAll('.connection')
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                // Update trait positions
+                this.traitsGroup.selectAll('.trait-node')
+                    .attr('transform', d => `translate(${d.x},${d.y})`);
+            }
+            
+            zoomIn() {
+                this.svg.transition().call(this.zoom.scaleBy, 1.2);
+            }
+            
+            zoomOut() {
+                this.svg.transition().call(this.zoom.scaleBy, 0.8);
+            }
+            
+            resetView() {
+                this.svg.transition()
+                    .duration(750)
+                    .call(this.zoom.transform, d3.zoomIdentity);
+            }
+            
+            clearAll() {
+                if (confirm('Clear all traits and connections?')) {
+                    appState.traits = [];
+                    appState.connections = [];
+                    appState.interventions = [];
+                    appState.selectedTraits.clear();
+                    appState.selectedConnections.clear();
+                    
+                    this.updateVisualization();
+                    this.simulation.nodes(appState.traits);
+                    this.simulation.force('link').links([]);
+                    
+                    showToast('Canvas cleared', 'info');
+                }
             }
         }
         
         // ================================
-        // VIEW CONTROLLERS
+        // UI UTILITIES
         // ================================
         
-        class ViewController {
-            static showView(viewName) {
-                // Hide all views
-                document.querySelectorAll('.view').forEach(view => {
-                    view.classList.remove('active');
-                });
-                
-                // Show selected view
-                document.getElementById(`${viewName}View`).classList.add('active');
-                
-                // Update navigation
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
-                
-                // Update app state
-                appState.currentView = viewName;
-                
-                // Load view-specific data
-                this.loadViewData(viewName);
-            }
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const messageEl = document.getElementById('toastMessage');
+            const icon = toast.querySelector('.toast-icon');
             
-            static loadViewData(viewName) {
-                switch(viewName) {
-                    case 'today':
-                        this.loadTodayView();
-                        break;
-                    case 'trends':
-                        this.loadTrendsView();
-                        break;
-                    case 'actions':
-                        this.loadActionsView();
-                        break;
-                    case 'compare':
-                        this.loadCompareView();
-                        break;
-                    case 'data':
-                        this.loadDataView();
-                        break;
-                }
-            }
+            messageEl.textContent = message;
             
-            static loadTodayView() {
-                const patient = appState.database.getCurrentPatient();
-                const container = document.getElementById('traitCards');
-                
-                // Update date
-                document.getElementById('currentDate').textContent = 
-                    `As of ${UIComponents.formatDate(new Date().toISOString().split('T')[0])}`;
-                
-                // Render trait cards
-                container.innerHTML = patient.traits.map(trait => 
-                    UIComponents.renderTraitCard(trait)
-                ).join('');
-            }
+            // Update icon
+            icon.className = 'toast-icon ' + type;
+            const iconClass = {
+                'success': 'fa-check-circle',
+                'info': 'fa-info-circle',
+                'warning': 'fa-exclamation-triangle',
+                'error': 'fa-exclamation-circle'
+            }[type] || 'fa-info-circle';
             
-            static loadTrendsView() {
-                const patient = appState.database.getCurrentPatient();
-                const container = document.getElementById('trendsGrid');
-                
-                // Get unique traits with measurements
-                const traitsWithData = patient.traits.filter(trait => 
-                    patient.measurements.some(m => m.trait === trait.id)
-                );
-                
-                // Render trend charts
-                container.innerHTML = traitsWithData.map(trait => 
-                    UIComponents.renderTrendChart(trait.id, patient.measurements)
-                ).join('');
-            }
+            icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
             
-            static loadActionsView() {
-                const patient = appState.database.getCurrentPatient();
-                const container = document.getElementById('actionsGrid');
-                
-                container.innerHTML = patient.actions.map(action => 
-                    UIComponents.renderActionCard(action)
-                ).join('');
-            }
+            // Show toast
+            toast.classList.add('show');
             
-            static loadCompareView() {
-                const patient = appState.database.getCurrentPatient();
-                const container = document.getElementById('comparisonResults');
-                const selectedCohort = document.querySelector('.cohort-option.active').dataset.cohort;
-                
-                const cohort = patient.cohorts[selectedCohort];
-                if (!cohort) return;
-                
-                container.innerHTML = Object.entries(cohort.metrics).map(([traitId, values]) => {
-                    // Extract numeric value from patient's current value string
-                    const patientValue = parseFloat(values.patient.toString().replace(/[^\d.]/g, ''));
-                    return UIComponents.renderComparisonCard(traitId, patientValue, values.avg, selectedCohort);
-                }).join('');
-            }
-            
-            static loadDataView() {
-                const patient = appState.database.getCurrentPatient();
-                const container = document.getElementById('recentMeasurements');
-                
-                // Sort measurements by date (newest first)
-                const sortedMeasurements = [...patient.measurements].sort((a, b) => 
-                    new Date(b.date) - new Date(a.date)
-                ).slice(0, 10); // Show last 10
-                
-                container.innerHTML = sortedMeasurements.map(measurement => `
-                    <div style="background: var(--card-bg); padding: 1rem; margin-bottom: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                            <div style="font-weight: 600;">${measurement.type.toUpperCase()}</div>
-                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                                ${UIComponents.formatDate(measurement.date)}
-                            </div>
-                        </div>
-                        <div style="font-size: 1.1rem; font-weight: 600; color: var(--secondary-blue);">
-                            ${measurement.value} ${measurement.unit}
-                        </div>
-                        ${measurement.notes ? `<div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">${measurement.notes}</div>` : ''}
-                    </div>
-                `).join('');
-                
-                // Set today's date as default
-                document.getElementById('measurementDate').value = new Date().toISOString().split('T')[0];
-            }
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        function showPropertyPanel(title, content) {
+            document.getElementById('propertyTitle').textContent = title;
+            document.getElementById('propertyContent').innerHTML = content;
+            document.getElementById('propertyPanel').classList.add('show');
+        }
+        
+        function hidePropertyPanel() {
+            document.getElementById('propertyPanel').classList.remove('show');
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('show');
         }
         
         // ================================
         // INITIALIZATION
         // ================================
         
+        let network;
+        
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialize database
-            appState.database = new TraitMapDatabase();
-            appState.currentPatient = appState.database.getCurrentPatient();
+            // Initialize network visualization
+            network = new NetworkVisualization('network-canvas');
+            
+            // Load trait library into left panel
+            loadTraitLibrary();
             
             // Set up event listeners
             setupEventListeners();
             
-            // Show initial view
-            ViewController.showView('today');
+            // Show welcome message
+            setTimeout(() => {
+                showToast('Welcome to TRAITMAP Builder! Drag traits from the left panel to start.', 'info');
+            }, 1000);
             
-            // Check online status
-            updateOnlineStatus();
-            window.addEventListener('online', updateOnlineStatus);
-            window.addEventListener('offline', updateOnlineStatus);
-            
-            console.log('TRAITMAP Platform Initialized');
-            console.log('Patient:', appState.currentPatient.name);
-            console.log('Traits:', appState.currentPatient.traits.length);
-            console.log('Measurements:', appState.currentPatient.measurements.length);
+            console.log('TRAITMAP Interactive Platform Initialized');
         });
         
+        function loadTraitLibrary() {
+            // Load immune traits
+            const immuneContainer = document.getElementById('immune-traits');
+            traitLibrary.immune.forEach(trait => {
+                const element = createTraitElement(trait);
+                immuneContainer.appendChild(element);
+            });
+            
+            // Load physiological traits
+            const physioContainer = document.getElementById('physio-traits');
+            traitLibrary.physio.forEach(trait => {
+                const element = createTraitElement(trait);
+                physioContainer.appendChild(element);
+            });
+            
+            // Load clinical traits
+            const clinicalContainer = document.getElementById('clinical-traits');
+            traitLibrary.clinical.forEach(trait => {
+                const element = createTraitElement(trait);
+                clinicalContainer.appendChild(element);
+            });
+        }
+        
+        function createTraitElement(trait) {
+            const div = document.createElement('div');
+            div.className = 'trait-item';
+            div.draggable = true;
+            div.dataset.traitId = trait.id;
+            
+            div.innerHTML = `
+                <div class="trait-name">${trait.name}</div>
+                <div class="trait-description">${trait.description}</div>
+            `;
+            
+            // Drag start
+            div.addEventListener('dragstart', function(event) {
+                this.classList.add('dragging');
+                event.dataTransfer.setData('text/plain', trait.id);
+                event.dataTransfer.effectAllowed = 'copy';
+            });
+            
+            // Drag end
+            div.addEventListener('dragend', function() {
+                this.classList.remove('dragging');
+            });
+            
+            return div;
+        }
+        
         function setupEventListeners() {
-            // Mobile navigation
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const viewName = this.dataset.view;
-                    ViewController.showView(viewName);
-                });
-            });
-            
-            // Patient selector
-            document.getElementById('patientSelect').addEventListener('change', function(e) {
-                if (this.value === 'new') {
-                    UIComponents.showNotification('Add New Patient feature would open here');
-                    this.value = 'demo';
-                } else {
-                    appState.database.currentPatientId = this.value;
-                    appState.currentPatient = appState.database.getCurrentPatient();
-                    ViewController.showView(appState.currentView);
-                }
-            });
-            
-            // Time range selector
-            document.querySelectorAll('.time-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    // In full implementation, would filter trends by time range
-                });
-            });
-            
-            // Cohort selector
-            document.querySelectorAll('.cohort-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    document.querySelectorAll('.cohort-option').forEach(o => o.classList.remove('active'));
-                    this.classList.add('active');
-                    ViewController.loadCompareView();
-                });
-            });
-            
-            // Action buttons
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.action-btn')) {
-                    const button = e.target.closest('.action-btn');
-                    const actionId = button.dataset.action;
-                    const actionType = button.dataset.type;
+            // Panel tabs
+            document.querySelectorAll('.panel-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
                     
-                    if (actionType === 'implement') {
-                        UIComponents.showNotification(`Action "${actionId}" marked as completed`);
-                        // In full implementation, would update database
-                    } else if (actionType === 'info') {
-                        UIComponents.showNotification(`More information about ${actionId}`);
-                    }
-                }
+                    // Update active tab
+                    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show corresponding content
+                    document.querySelectorAll('.panel-tab-content').forEach(content => {
+                        content.classList.remove('active');
+                        if (content.dataset.tab === tabName) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
             });
             
-            // Data entry form
-            document.getElementById('saveMeasurementBtn').addEventListener('click', function() {
-                const type = document.getElementById('measurementType').value;
-                const value = document.getElementById('measurementValue').value;
-                const date = document.getElementById('measurementDate').value;
-                const notes = document.getElementById('measurementNotes').value;
-                
-                if (!value || !date) {
-                    UIComponents.showNotification('Please fill in all required fields', 'error');
+            // Tool selection
+            document.querySelectorAll('.tool-card').forEach(tool => {
+                tool.addEventListener('click', function() {
+                    const toolName = this.dataset.tool;
+                    
+                    // Update active tool
+                    document.querySelectorAll('.tool-card').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update control mode
+                    document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
+                    document.querySelector(`.control-btn[data-control="${toolName}"]`).classList.add('active');
+                    
+                    appState.currentMode = toolName;
+                    
+                    if (toolName === 'connect') {
+                        showToast('Click on a trait to start connecting, then click on another trait', 'info');
+                    }
+                });
+            });
+            
+            // Connection type selection
+            document.querySelectorAll('.connection-type').forEach(type => {
+                type.addEventListener('click', function() {
+                    document.querySelectorAll('.connection-type').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    appState.currentConnectionType = this.dataset.connection;
+                });
+            });
+            
+            // Network controls
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const control = this.dataset.control;
+                    
+                    if (control === 'select' || control === 'pan') {
+                        document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        appState.currentMode = control;
+                    } else if (control === 'zoom-in') {
+                        network.zoomIn();
+                    } else if (control === 'zoom-out') {
+                        network.zoomOut();
+                    } else if (control === 'reset') {
+                        network.resetView();
+                    } else if (control === 'clear') {
+                        network.clearAll();
+                    }
+                });
+            });
+            
+            // Close property panel
+            document.getElementById('closeProperties').addEventListener('click', hidePropertyPanel);
+            
+            // Simulation buttons
+            document.getElementById('runSimulation').addEventListener('click', () => network.runSimulation());
+            
+            document.getElementById('addIntervention').addEventListener('click', () => {
+                if (appState.selectedTraits.size === 0) {
+                    showToast('Select a trait first to add intervention', 'warning');
                     return;
                 }
                 
-                // Determine which trait this measurement relates to
-                let trait = 'other';
-                if (type === 'spirometry') trait = 'airflow_limitation';
-                if (type === 'lab') trait = 'eosinophilic_inflammation';
-                if (type === 'feno') trait = 'eosinophilic_inflammation';
-                if (type === 'symptoms') trait = 'mucus_hypersecretion';
-                
-                const measurement = {
-                    date,
-                    type,
-                    value: parseFloat(value),
-                    unit: getUnitForType(type),
-                    trait,
-                    notes
-                };
-                
-                appState.database.addMeasurement(measurement);
-                UIComponents.showNotification('Measurement saved successfully!');
-                
-                // Clear form
-                document.getElementById('measurementValue').value = '';
-                document.getElementById('measurementNotes').value = '';
-                
-                // Reload data view
-                ViewController.loadDataView();
+                const trait = Array.from(appState.selectedTraits)[0];
+                network.addIntervention(trait.id, 'increase');
             });
             
-            document.getElementById('cancelBtn').addEventListener('click', function() {
-                document.getElementById('measurementValue').value = '';
-                document.getElementById('measurementNotes').value = '';
-                UIComponents.showNotification('Form cleared');
+            // Mobile toggle
+            document.getElementById('mobileToggle').addEventListener('click', function() {
+                document.getElementById('leftPanel').classList.toggle('show');
+                this.innerHTML = document.getElementById('leftPanel').classList.contains('show') ? 
+                    '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
             });
             
-            // Trait card clicks
-            document.addEventListener('click', function(e) {
-                if (e.target.closest('.trait-card')) {
-                    const card = e.target.closest('.trait-card');
-                    const traitId = card.dataset.traitId;
-                    const trait = appState.currentPatient.traits.find(t => t.id === traitId);
+            // Drop zone for traits
+            const canvas = document.getElementById('network-canvas');
+            
+            canvas.addEventListener('dragover', function(event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
+            });
+            
+            canvas.addEventListener('drop', function(event) {
+                event.preventDefault();
+                
+                const traitId = event.dataTransfer.getData('text/plain');
+                const trait = [...traitLibrary.immune, ...traitLibrary.physio, ...traitLibrary.clinical]
+                    .find(t => t.id === traitId);
+                
+                if (trait) {
+                    // Create a copy of the trait
+                    const newTrait = new Trait(
+                        trait.id + '-' + Date.now(),
+                        trait.name,
+                        trait.category,
+                        trait.description,
+                        trait.color
+                    );
                     
-                    if (trait) {
-                        UIComponents.showNotification(
-                            `Selected: ${trait.name}\nValue: ${trait.currentValue}\nTrend: ${trait.trend}`,
-                            'info'
-                        );
-                    }
+                    // Position at drop location
+                    const rect = canvas.getBoundingClientRect();
+                    const x = (event.clientX - rect.left - appState.pan.x) / appState.zoom;
+                    const y = (event.clientY - rect.top - appState.pan.y) / appState.zoom;
+                    
+                    newTrait.x = x;
+                    newTrait.y = y;
+                    
+                    network.addTrait(newTrait);
                 }
             });
-        }
-        
-        function getUnitForType(type) {
-            const units = {
-                'spirometry': '% predicted',
-                'lab': ' cells/μL',
-                'feno': ' ppb',
-                'symptoms': '/10 score',
-                'behavioral': ' uses/week',
-                'other': ''
-            };
-            return units[type] || '';
-        }
-        
-        function updateOnlineStatus() {
-            const indicator = document.getElementById('offlineIndicator');
-            if (!navigator.onLine) {
-                indicator.classList.add('show');
-            } else {
-                indicator.classList.remove('show');
-            }
-        }
-        
-        // Add service worker for offline capability (simplified)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(err => {
-                console.log('ServiceWorker registration failed: ', err);
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(event) {
+                // Delete key
+                if (event.key === 'Delete' || event.key === 'Backspace') {
+                    if (appState.selectedTraits.size > 0 || appState.selectedConnections.size > 0) {
+                        network.removeSelected();
+                    }
+                }
+                
+                // Escape key
+                if (event.key === 'Escape') {
+                    network.cancelConnection();
+                    hidePropertyPanel();
+                }
+                
+                // Ctrl+A to select all
+                if (event.ctrlKey && event.key === 'a') {
+                    event.preventDefault();
+                    appState.traits.forEach(t => network.selectTrait(t));
+                }
+            });
+            
+            // Close left panel when clicking on canvas (mobile)
+            canvas.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    document.getElementById('leftPanel').classList.remove('show');
+                    document.getElementById('mobileToggle').innerHTML = '<i class="fas fa-bars"></i>';
+                }
             });
         }
     </script>
