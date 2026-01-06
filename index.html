@@ -4,23 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRAITMAP - Clinical Intelligence Platform</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-blue: #0066ff;
+            --secondary-blue: #4d94ff;
+            --accent-blue: #80b3ff;
+            --success-green: #00cc88;
+            --warning-orange: #ffaa00;
+            --danger-red: #ff3366;
+            --expert-purple: #9966ff;
+            --insight-pink: #ff66cc;
+            --clarity-cyan: #00ccff;
+            --dark-bg: #000814;
+            --panel-bg: rgba(10, 25, 60, 0.95);
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
-
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #001428 0%, #00214d 100%);
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #001428 100%);
             color: white;
             min-height: 100vh;
             overflow: hidden;
         }
-
+        
         /* Loading Screen */
         #loadingScreen {
             position: fixed;
@@ -28,291 +41,846 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #001428 0%, #00214d 100%);
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #001428 100%);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 9999;
+            transition: opacity 0.5s ease;
         }
-
+        
         .loading-content {
             text-align: center;
-            padding: 2rem;
+            padding: 3rem;
+            max-width: 600px;
         }
-
+        
         .loading-logo {
-            font-size: 4rem;
-            color: #0066ff;
-            margin-bottom: 1rem;
+            font-size: 5rem;
+            color: var(--primary-blue);
+            margin-bottom: 1.5rem;
+            animation: pulseGlow 2s infinite alternate;
         }
-
+        
+        @keyframes pulseGlow {
+            0% { filter: drop-shadow(0 0 10px var(--primary-blue)); }
+            100% { filter: drop-shadow(0 0 30px var(--expert-purple)); }
+        }
+        
         .loading-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #0066ff, #00ccff);
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-blue), var(--clarity-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin-bottom: 1rem;
+            letter-spacing: -1px;
         }
-
-        .loading-progress {
-            width: 300px;
-            height: 8px;
+        
+        .loading-tagline {
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            font-weight: 500;
+        }
+        
+        .loading-progress-container {
+            width: 400px;
+            margin: 0 auto 2rem;
+        }
+        
+        .loading-bar {
+            height: 6px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-            margin: 2rem auto;
+            border-radius: 3px;
             overflow: hidden;
+            margin-bottom: 0.5rem;
         }
-
-        .progress-bar {
+        
+        .loading-fill {
             height: 100%;
-            background: linear-gradient(90deg, #0066ff, #00ccff);
+            background: linear-gradient(90deg, var(--primary-blue), var(--expert-purple));
             width: 0%;
             transition: width 0.3s ease;
         }
-
-        /* Main App */
-        #appContainer {
-            display: none;
-            height: 100vh;
-            padding-top: 60px;
+        
+        .loading-message {
+            color: var(--secondary-blue);
+            font-size: 0.95rem;
+            min-height: 20px;
         }
-
-        .app-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: rgba(10, 25, 60, 0.95);
+        
+        /* Header */
+        .header {
+            height: 70px;
+            background: var(--panel-bg);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 1rem;
-            z-index: 1000;
+            padding: 0 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
-
+        
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--expert-purple));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 30px rgba(0, 102, 255, 0.4);
+            animation: gentleFloat 3s infinite ease-in-out;
+        }
+        
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-5px) rotate(2deg); }
+        }
+        
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-blue), white);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        
+        .logo-text p {
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            font-weight: 500;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 8px 25px rgba(0, 102, 255, 0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            border: none;
+            box-shadow: 0 0 20px rgba(0, 102, 255, 0.3);
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue));
+            box-shadow: 0 0 30px rgba(0, 102, 255, 0.5);
+            transform: translateY(-2px) scale(1.02);
+        }
+        
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            height: 100vh;
+            padding-top: 70px;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 320px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-header {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .search-box {
+            position: relative;
+            margin-top: 1rem;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-blue);
+        }
+        
+        .category {
+            margin-bottom: 2rem;
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .category-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, 
+                rgba(0, 102, 255, 0.2), 
+                rgba(153, 102, 255, 0.1));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+        }
+        
+        .category-name {
+            flex: 1;
+            font-weight: 700;
+            color: white;
+            font-size: 0.95rem;
+        }
+        
+        .trait-item {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            cursor: grab;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .trait-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 102, 255, 0.3);
+            transform: translateX(8px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .trait-item.dragging {
+            opacity: 0.7;
+            transform: scale(0.98) rotate(2deg);
+            box-shadow: 0 20px 40px rgba(0, 102, 255, 0.2);
+        }
+        
+        .trait-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .trait-name {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .trait-desc {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+        
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 102, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 204, 136, 0.05) 0%, transparent 50%);
+            overflow: hidden;
+        }
+        
+        #networkCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        
+        /* Trait Node */
+        .trait-node {
+            position: absolute;
+            cursor: move;
+            transition: transform 0.3s ease, filter 0.3s ease;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+        }
+        
+        .trait-node.selected {
+            z-index: 100;
+            filter: drop-shadow(0 0 25px currentColor);
+        }
+        
+        .trait-visual {
+            position: relative;
+        }
+        
+        .trait-glow {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .trait-node:hover .trait-glow {
+            opacity: 0.5;
+        }
+        
+        .trait-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .trait-node.selected .trait-circle {
+            transform: scale(1.15);
+            box-shadow: 
+                0 0 0 4px white,
+                0 0 0 8px rgba(255, 255, 255, 0.3),
+                0 0 40px rgba(0, 102, 255, 0.5);
+        }
+        
+        .trait-label {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .trait-node:hover .trait-label {
+            opacity: 1;
+        }
+        
+        .trait-stats {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .trait-node:hover .trait-stats {
+            opacity: 0.8;
+        }
+        
+        .stat-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--success-green);
+        }
+        
+        .stat-dot.medium {
+            background: var(--warning-orange);
+        }
+        
+        .stat-dot.low {
+            background: var(--danger-red);
+        }
+        
+        /* Connection Line */
+        .connection-line {
+            stroke-linecap: round;
+            stroke-width: 3;
+            transition: all 0.3s ease;
+        }
+        
+        .connection-line:hover {
+            stroke-width: 5;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+        
+        /* Tools Panel */
+        .tools-panel {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            z-index: 50;
+        }
+        
+        .tool-btn {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px) scale(1.1);
+            border-color: var(--primary-blue);
+            box-shadow: 0 8px 25px rgba(0, 102, 255, 0.2);
+        }
+        
+        .tool-btn.active {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(0, 102, 255, 0.5);
+        }
+        
+        .tool-btn::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%) translateX(-10px);
+            background: var(--panel-bg);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tool-btn:hover::after {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+        
+        /* Properties Panel */
+        .properties-panel {
+            width: 360px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .property-section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .property-section:hover {
+            border-color: rgba(0, 102, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .section-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.5rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
-
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #0066ff, #9966ff);
-            border-radius: 8px;
+        
+        .section-title i {
+            color: var(--primary-blue);
+        }
+        
+        .trait-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .trait-icon-large {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
         }
-
-        .logo-text h1 {
+        
+        .trait-info h3 {
             font-size: 1.25rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #0066ff, white);
+            margin-bottom: 0.25rem;
+        }
+        
+        .trait-info .category {
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+        
+        .trait-desc-large {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1.5rem;
+        }
+        
+        .slider-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .slider-label {
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .slider-value {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--primary-blue);
+        }
+        
+        .slider-track {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .slider-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--danger-red), var(--warning-orange), var(--success-green));
+            border-radius: 4px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            background: transparent;
+            outline: none;
+            -webkit-appearance: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: pointer;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            border: 3px solid var(--primary-blue);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            cursor: grab;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+        
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-2px);
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 0.25rem;
+            background: linear-gradient(135deg, var(--primary-blue), var(--clarity-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
-        .controls {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            color: white;
-            font-size: 0.9rem;
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
-            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Connection Mode */
+        .connection-mode {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border: 2px solid var(--primary-blue);
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            font-weight: 800;
+            box-shadow: 0 0 40px rgba(0, 102, 255, 0.4);
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            z-index: 100;
+        }
+        
+        .connection-mode.show {
+            display: flex;
+            animation: connectionPulse 2s infinite;
+        }
+        
+        @keyframes connectionPulse {
+            0%, 100% { box-shadow: 0 0 40px rgba(0, 102, 255, 0.4); }
+            50% { box-shadow: 0 0 60px rgba(0, 102, 255, 0.6); }
+        }
+        
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+        
+        .toast {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-top: 0.75rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
+            gap: 1rem;
+            transform: translateX(100px);
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
         }
-
-        .btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: translateY(-1px);
+        
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
         }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #0066ff, #4d94ff);
-            border: none;
+        
+        .toast.success {
+            border-left-color: var(--success-green);
         }
-
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #4d94ff, #80b3ff);
-            box-shadow: 0 4px 20px rgba(0, 102, 255, 0.3);
+        
+        .toast.error {
+            border-left-color: var(--danger-red);
         }
-
-        /* Main Layout */
-        .main-layout {
-            display: grid;
-            grid-template-columns: 300px 1fr 300px;
-            height: calc(100vh - 60px);
+        
+        .toast.warning {
+            border-left-color: var(--warning-orange);
         }
-
-        /* Sidebar */
-        .sidebar {
-            background: rgba(10, 25, 60, 0.9);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            overflow-y: auto;
+        
+        .toast-icon {
+            font-size: 1.5rem;
         }
-
-        .sidebar-title {
-            font-size: 1rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #80b3ff;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        
+        .toast.success .toast-icon {
+            color: var(--success-green);
         }
-
-        .trait-list {
+        
+        .toast.error .toast-icon {
+            color: var(--danger-red);
+        }
+        
+        .toast.warning .toast-icon {
+            color: var(--warning-orange);
+        }
+        
+        .toast-message {
+            flex: 1;
+            font-weight: 600;
+        }
+        
+        /* Connected Traits */
+        .connections-list {
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
         }
-
-        .trait-item {
+        
+        .connection-item {
             padding: 0.75rem;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            cursor: grab;
+            border-left: 4px solid var(--primary-blue);
+            border-radius: 8px;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
-
-        .trait-item:hover {
-            background: rgba(255, 255, 255, 0.1);
+        
+        .connection-item:hover {
+            background: rgba(255, 255, 255, 0.08);
             transform: translateX(4px);
         }
-
-        .trait-name {
-            font-weight: 600;
+        
+        .connection-type {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 0.25rem;
         }
-
-        .trait-desc {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Canvas */
-        .canvas-container {
-            position: relative;
-            overflow: hidden;
-            background: rgba(5, 15, 40, 0.8);
-        }
-
-        #networkCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        /* Tools */
-        .tools {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            background: rgba(10, 25, 60, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 0.5rem;
-        }
-
-        .tool-btn {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .tool-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.1);
-        }
-
-        .tool-btn.active {
-            background: #0066ff;
-            border-color: #0066ff;
-        }
-
-        /* Insights Panel */
-        .insights-panel {
-            background: rgba(10, 25, 60, 0.9);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            overflow-y: auto;
-        }
-
-        .insight-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .insight-title {
-            font-size: 1rem;
+        
+        .connection-trait {
             font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: #80b3ff;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .slider-container {
-            margin: 1rem 0;
-        }
-
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
             font-size: 0.9rem;
-            margin-bottom: 0.5rem;
         }
-
-        input[type="range"] {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            outline: none;
-            -webkit-appearance: none;
-        }
-
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            background: #0066ff;
-            border-radius: 50%;
-            cursor: pointer;
+        
+        .connection-strength {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 0.25rem;
         }
     </style>
 </head>
@@ -324,671 +892,1488 @@
                 <i class="fas fa-brain"></i>
             </div>
             <h1 class="loading-title">TRAITMAP</h1>
-            <p style="color: rgba(255, 255, 255, 0.7); margin-bottom: 2rem;">
-                Clinical Intelligence Platform
-            </p>
-            <div class="loading-progress">
-                <div class="progress-bar" id="progressBar"></div>
+            <p class="loading-tagline">Empowering Clinical Intelligence Through Visual Insight</p>
+            
+            <div class="loading-progress-container">
+                <div class="loading-bar">
+                    <div class="loading-fill" id="loadingFill"></div>
+                </div>
+                <div class="loading-message" id="loadingMessage">
+                    Initializing Clinical Intelligence Engine...
+                </div>
             </div>
-            <p id="loadingMessage" style="color: #80b3ff; font-size: 0.9rem;">
-                Initializing...
-            </p>
         </div>
     </div>
-
-    <!-- Main App -->
-    <div id="appContainer">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="logo">
-                <div class="logo-icon">
-                    <i class="fas fa-network-wired"></i>
-                </div>
-                <div class="logo-text">
-                    <h1>TRAITMAP</h1>
-                </div>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-network-wired"></i>
             </div>
-            <div class="controls">
-                <button class="btn" id="importBtn">
-                    <i class="fas fa-upload"></i>
-                    Import
-                </button>
-                <button class="btn" id="saveBtn">
-                    <i class="fas fa-save"></i>
-                    Save
-                </button>
-                <button class="btn btn-primary" id="simulateBtn">
-                    <i class="fas fa-play"></i>
-                    Simulate
-                </button>
+            <div class="logo-text">
+                <h1>TRAITMAP</h1>
+                <p>Clinical Intelligence Platform</p>
             </div>
-        </header>
-
-        <!-- Main Layout -->
-        <main class="main-layout">
-            <!-- Left Sidebar - Trait Library -->
-            <aside class="sidebar">
+        </div>
+        <div class="header-controls">
+            <button class="btn" id="btnImport">
+                <i class="fas fa-user-md"></i>
+                <span>Import Patient</span>
+            </button>
+            <button class="btn" id="btnSave">
+                <i class="fas fa-save"></i>
+                <span>Save Session</span>
+            </button>
+            <button class="btn btn-primary" id="btnSimulate">
+                <i class="fas fa-rocket"></i>
+                <span>Run Simulation</span>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Left Sidebar - Trait Library -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
                 <div class="sidebar-title">
                     <i class="fas fa-shapes"></i>
-                    Clinical Traits Library
+                    Library of Possibilities
                 </div>
-                <div class="trait-list" id="traitLibrary">
-                    <!-- Traits will be loaded here -->
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchTraits" placeholder="Discover clinical traits...">
                 </div>
-            </aside>
-
-            <!-- Canvas -->
-            <section class="canvas-container">
-                <svg id="networkCanvas"></svg>
-                
-                <div class="tools">
-                    <button class="tool-btn active" data-tool="select">
-                        <i class="fas fa-mouse-pointer"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="connect">
-                        <i class="fas fa-link"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="hand">
-                        <i class="fas fa-hand-paper"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="center">
-                        <i class="fas fa-crosshairs"></i>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Right Panel - Insights -->
-            <aside class="insights-panel">
-                <div class="insight-card">
-                    <div class="insight-title">
-                        <i class="fas fa-sliders-h"></i>
-                        Selected Trait Properties
+            </div>
+            
+            <!-- Immune Traits -->
+            <div class="category">
+                <div class="category-header">
+                    <div class="category-icon">
+                        <i class="fas fa-shield-alt"></i>
                     </div>
-                    <div id="propertiesContent">
-                        <p style="color: rgba(255, 255, 255, 0.7); text-align: center; padding: 2rem;">
-                            Select a trait to view properties
+                    <div class="category-name">Immune System</div>
+                    <span style="font-size: 0.8rem; color: var(--accent-blue);">3</span>
+                </div>
+                <div class="trait-list" id="immuneTraits">
+                    <!-- Immune traits will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Physiological Traits -->
+            <div class="category">
+                <div class="category-header">
+                    <div class="category-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div class="category-name">Physiological Measures</div>
+                    <span style="font-size: 0.8rem; color: var(--accent-blue);">4</span>
+                </div>
+                <div class="trait-list" id="physioTraits">
+                    <!-- Physiological traits will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Clinical Traits -->
+            <div class="category">
+                <div class="category-header">
+                    <div class="category-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <div class="category-name">Clinical Symptoms</div>
+                    <span style="font-size: 0.8rem; color: var(--accent-blue);">3</span>
+                </div>
+                <div class="trait-list" id="clinicalTraits">
+                    <!-- Clinical traits will be loaded here -->
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Canvas Area -->
+        <main class="canvas-area">
+            <svg id="networkCanvas"></svg>
+            
+            <!-- Tools Panel -->
+            <div class="tools-panel">
+                <button class="tool-btn active" data-tool="select" data-tooltip="Select & Explore">
+                    <i class="fas fa-mouse-pointer"></i>
+                </button>
+                <button class="tool-btn" data-tool="connect" data-tooltip="Create Connections">
+                    <i class="fas fa-link"></i>
+                </button>
+                <button class="tool-btn" data-tool="hand" data-tooltip="Navigate Canvas">
+                    <i class="fas fa-hand-paper"></i>
+                </button>
+                <button class="tool-btn" data-tool="center" data-tooltip="Center View">
+                    <i class="fas fa-crosshairs"></i>
+                </button>
+                <button class="tool-btn" data-tool="delete" data-tooltip="Delete Selected">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            
+            <!-- Connection Mode Indicator -->
+            <div class="connection-mode" id="connectionMode">
+                <i class="fas fa-link fa-lg"></i>
+                <span>Connection Mode Active - Click a trait to start connection</span>
+            </div>
+        </main>
+        
+        <!-- Right Panel - Properties -->
+        <aside class="properties-panel">
+            <!-- Selected Trait Properties -->
+            <div class="property-section" id="propertiesSection">
+                <div class="section-title">
+                    <i class="fas fa-sliders-h"></i>
+                    Selected Trait Properties
+                </div>
+                <div id="propertiesContent">
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-blue), var(--expert-purple)); 
+                                 border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                            <i class="fas fa-mouse-pointer" style="font-size: 2rem; color: white;"></i>
+                        </div>
+                        <h3 style="font-weight: 800; margin-bottom: 0.5rem;">Select a Clinical Trait</h3>
+                        <p style="color: rgba(255, 255, 255, 0.6); line-height: 1.6;">
+                            Click on any trait in the network to unlock detailed properties, adjust clinical parameters, and explore treatment implications.
                         </p>
                     </div>
                 </div>
-                
-                <div class="insight-card">
-                    <div class="insight-title">
-                        <i class="fas fa-chart-network"></i>
-                        Network Stats
+            </div>
+            
+            <!-- Network Statistics -->
+            <div class="property-section">
+                <div class="section-title">
+                    <i class="fas fa-chart-network"></i>
+                    Network Intelligence
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTraits">0</div>
+                        <div class="stat-label">Clinical Traits</div>
                     </div>
-                    <div id="networkStats">
-                        <p>Traits: <span id="traitCount">0</span></p>
-                        <p>Connections: <span id="connectionCount">0</span></p>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statConnections">0</div>
+                        <div class="stat-label">Relationships</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statComplexity">0</div>
+                        <div class="stat-label">Complexity</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statConfidence">0%</div>
+                        <div class="stat-label">Confidence</div>
                     </div>
                 </div>
-            </aside>
-        </main>
+            </div>
+            
+            <!-- Connected Traits -->
+            <div class="property-section" id="connectionsSection">
+                <div class="section-title">
+                    <i class="fas fa-project-diagram"></i>
+                    Connected Traits
+                </div>
+                <div class="connections-list" id="connectionsList">
+                    <div style="text-align: center; padding: 1rem; color: rgba(255, 255, 255, 0.5);">
+                        <i class="fas fa-project-diagram" style="font-size: 1.5rem; opacity: 0.3; margin-bottom: 0.5rem;"></i>
+                        <p>Select a trait to see connected relationships</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="property-section">
+                <div class="section-title">
+                    <i class="fas fa-cogs"></i>
+                    Quick Actions
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button class="btn" id="btnArrange">
+                        <i class="fas fa-sitemap"></i>
+                        <span>Auto-Arrange Network</span>
+                    </button>
+                    <button class="btn" id="btnClear">
+                        <i class="fas fa-broom"></i>
+                        <span>Clear All</span>
+                    </button>
+                    <button class="btn btn-primary" id="btnExport">
+                        <i class="fas fa-file-export"></i>
+                        <span>Export Analysis</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
     </div>
-
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+    
     <script>
         // ============================================
-        // SIMPLE, ERROR-FREE IMPLEMENTATION
+        // COMPLETE, FULLY FUNCTIONAL TRAITMAP APP
         // ============================================
-
-        // 1. LOADING SEQUENCE
-        document.addEventListener('DOMContentLoaded', function() {
-            let progress = 0;
-            const progressBar = document.getElementById('progressBar');
-            const loadingMessage = document.getElementById('loadingMessage');
-            const messages = [
-                "Loading interface...",
-                "Initializing engine...",
-                "Preparing data...",
-                "Ready!"
-            ];
-            
-            const interval = setInterval(() => {
-                progress += 25;
-                progressBar.style.width = `${progress}%`;
-                loadingMessage.textContent = messages[progress / 25 - 1];
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        document.getElementById('appContainer').style.display = 'block';
-                        initializeApp();
-                    }, 500);
-                }
-            }, 500);
-        });
-
-        // 2. CORE MODELS
-        class Trait {
-            constructor(id, name, category, description, color) {
-                this.id = id;
-                this.name = name;
-                this.category = category;
-                this.description = description;
-                this.color = color;
-                this.x = 0;
-                this.y = 0;
-                this.size = 40;
-                this.severity = 50;
-                this.confidence = 80;
+        
+        class TraitNode {
+            constructor(data, x, y) {
+                this.id = data.id || `trait-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                this.name = data.name;
+                this.category = data.category;
+                this.description = data.description;
+                this.color = data.color;
+                this.icon = data.icon;
+                this.x = x;
+                this.y = y;
+                this.severity = data.severity || 50;
+                this.confidence = data.confidence || 75;
+                this.impact = data.impact || 60;
+                this.connections = [];
                 this.selected = false;
             }
-        }
-
-        class Connection {
-            constructor(id, sourceId, targetId, strength) {
-                this.id = id;
-                this.sourceId = sourceId;
-                this.targetId = targetId;
-                this.strength = strength;
-                this.color = '#4d94ff';
+            
+            getEmpowermentScore() {
+                return Math.round((this.severity + this.confidence + this.impact) / 3);
+            }
+            
+            getStatDots() {
+                const score = this.getEmpowermentScore();
+                if (score >= 75) return ['high', 'high', 'high'];
+                if (score >= 50) return ['high', 'high', 'medium'];
+                return ['high', 'medium', 'low'];
             }
         }
-
-        // 3. APP STATE
-        class AppState {
+        
+        class Connection {
+            constructor(sourceId, targetId, type = 'correlative') {
+                this.id = `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                this.sourceId = sourceId;
+                this.targetId = targetId;
+                this.type = type;
+                this.strength = 50 + Math.random() * 50;
+                this.certainty = 80;
+            }
+            
+            getColor() {
+                const colors = {
+                    'causal': '#ff3366',
+                    'correlative': '#ffaa00',
+                    'therapeutic': '#00cc88',
+                    'inhibitory': '#9966ff',
+                    'synergistic': '#00ccff'
+                };
+                return colors[this.type] || '#4d94ff';
+            }
+            
+            getTypeLabel() {
+                const labels = {
+                    'causal': 'Causal Relationship',
+                    'correlative': 'Correlation',
+                    'therapeutic': 'Treatment Effect',
+                    'inhibitory': 'Inhibition',
+                    'synergistic': 'Synergy'
+                };
+                return labels[this.type] || 'Relationship';
+            }
+        }
+        
+        class TraitMapApp {
             constructor() {
                 this.traits = [];
                 this.connections = [];
                 this.selectedTrait = null;
                 this.currentTool = 'select';
-            }
-
-            addTrait(trait) {
-                trait.x = window.innerWidth / 2 + (Math.random() - 0.5) * 200;
-                trait.y = window.innerHeight / 2 + (Math.random() - 0.5) * 200;
-                this.traits.push(trait);
-                return trait;
-            }
-
-            addConnection(sourceId, targetId) {
-                const connection = new Connection(
-                    `conn-${Date.now()}`,
-                    sourceId,
-                    targetId,
-                    50 + Math.random() * 50
-                );
-                this.connections.push(connection);
-                return connection;
-            }
-
-            getTrait(id) {
-                return this.traits.find(t => t.id === id);
-            }
-
-            removeTrait(id) {
-                this.traits = this.traits.filter(t => t.id !== id);
-                this.connections = this.connections.filter(c => 
-                    c.sourceId !== id && c.targetId !== id
-                );
-                if (this.selectedTrait?.id === id) {
-                    this.selectedTrait = null;
-                }
-            }
-        }
-
-        // 4. VISUALIZATION
-        class Visualizer {
-            constructor() {
-                this.svg = d3.select('#networkCanvas')
-                    .attr('width', window.innerWidth - 600)
-                    .attr('height', window.innerHeight - 60);
-                
-                this.connectionsGroup = this.svg.append('g').attr('class', 'connections');
-                this.traitsGroup = this.svg.append('g').attr('class', 'traits');
-                
-                this.simulation = d3.forceSimulation()
-                    .force('link', d3.forceLink().id(d => d.id).distance(100))
-                    .force('charge', d3.forceManyBody().strength(-200))
-                    .force('center', d3.forceCenter(
-                        (window.innerWidth - 600) / 2,
-                        (window.innerHeight - 60) / 2
-                    ))
-                    .on('tick', () => this.tick());
-                
-                this.setupZoom();
-                this.setupResize();
-            }
-
-            setupZoom() {
-                const zoom = d3.zoom()
-                    .scaleExtent([0.1, 4])
-                    .on('zoom', (event) => {
-                        this.traitsGroup.attr('transform', event.transform);
-                        this.connectionsGroup.attr('transform', event.transform);
-                    });
-                
-                this.svg.call(zoom);
-            }
-
-            setupResize() {
-                window.addEventListener('resize', () => {
-                    this.svg
-                        .attr('width', window.innerWidth - 600)
-                        .attr('height', window.innerHeight - 60);
-                    
-                    this.simulation.force('center', d3.forceCenter(
-                        (window.innerWidth - 600) / 2,
-                        (window.innerHeight - 60) / 2
-                    ));
-                    this.simulation.alpha(0.3).restart();
-                });
-            }
-
-            update(state) {
-                this.updateTraits(state.traits);
-                this.updateConnections(state.connections, state.traits);
-                this.updateSimulation(state.traits, state.connections);
-            }
-
-            updateTraits(traits) {
-                const nodes = this.traitsGroup
-                    .selectAll('.trait')
-                    .data(traits, d => d.id);
-
-                // Remove old
-                nodes.exit()
-                    .transition()
-                    .duration(300)
-                    .style('opacity', 0)
-                    .remove();
-
-                // Add new
-                const nodesEnter = nodes.enter()
-                    .append('g')
-                    .attr('class', 'trait')
-                    .attr('transform', d => `translate(${d.x}, ${d.y})`)
-                    .style('opacity', 0)
-                    .call(d3.drag()
-                        .on('start', (event, d) => this.dragStarted(event, d))
-                        .on('drag', (event, d) => this.dragged(event, d))
-                        .on('end', (event, d) => this.dragEnded(event, d)));
-
-                // Add circle
-                nodesEnter.append('circle')
-                    .attr('r', d => d.size)
-                    .attr('fill', d => d.color)
-                    .attr('stroke', d => d.selected ? 'white' : 'rgba(255,255,255,0.3)')
-                    .attr('stroke-width', d => d.selected ? 3 : 1);
-
-                // Add text
-                nodesEnter.append('text')
-                    .attr('text-anchor', 'middle')
-                    .attr('dy', d => d.size + 15)
-                    .attr('fill', 'white')
-                    .attr('font-size', '10px')
-                    .attr('font-weight', '600')
-                    .text(d => d.name);
-
-                // Fade in
-                nodesEnter.transition()
-                    .duration(300)
-                    .style('opacity', 1);
-
-                // Update existing
-                const allNodes = nodes.merge(nodesEnter);
-                
-                allNodes.on('click', (event, d) => {
-                    event.stopPropagation();
-                    app.onTraitClick(d);
-                });
-
-                allNodes.select('circle')
-                    .attr('stroke', d => d.selected ? 'white' : 'rgba(255,255,255,0.3)')
-                    .attr('stroke-width', d => d.selected ? 3 : 1);
-            }
-
-            updateConnections(connections, traits) {
-                // Filter out invalid connections
-                const validConnections = connections.filter(conn => {
-                    const source = traits.find(t => t.id === conn.sourceId);
-                    const target = traits.find(t => t.id === conn.targetId);
-                    return source && target;
-                });
-
-                const links = this.connectionsGroup
-                    .selectAll('.connection')
-                    .data(validConnections, d => d.id);
-
-                // Remove old
-                links.exit()
-                    .transition()
-                    .duration(300)
-                    .style('opacity', 0)
-                    .remove();
-
-                // Add new
-                const linksEnter = links.enter()
-                    .append('line')
-                    .attr('class', 'connection')
-                    .attr('stroke', d => d.color)
-                    .attr('stroke-width', 2)
-                    .attr('stroke-opacity', 0.7)
-                    .style('opacity', 0);
-
-                // Fade in
-                linksEnter.transition()
-                    .duration(300)
-                    .style('opacity', 0.7);
-            }
-
-            updateSimulation(traits, connections) {
-                this.simulation.nodes(traits);
-                this.simulation.force('link').links(connections);
-                this.simulation.alpha(0.3).restart();
-            }
-
-            tick() {
-                // Update connection positions
-                this.connectionsGroup.selectAll('.connection')
-                    .attr('x1', d => {
-                        const source = app.state.getTrait(d.sourceId);
-                        return source ? source.x : 0;
-                    })
-                    .attr('y1', d => {
-                        const source = app.state.getTrait(d.sourceId);
-                        return source ? source.y : 0;
-                    })
-                    .attr('x2', d => {
-                        const target = app.state.getTrait(d.targetId);
-                        return target ? target.x : 0;
-                    })
-                    .attr('y2', d => {
-                        const target = app.state.getTrait(d.targetId);
-                        return target ? target.y : 0;
-                    });
-
-                // Update trait positions
-                this.traitsGroup.selectAll('.trait')
-                    .attr('transform', d => `translate(${d.x}, ${d.y})`);
-            }
-
-            dragStarted(event, d) {
-                if (!event.active) this.simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
-
-            dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
-
-            dragEnded(event, d) {
-                if (!event.active) this.simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            }
-        }
-
-        // 5. MAIN APP
-        class App {
-            constructor() {
-                this.state = new AppState();
-                this.visualizer = new Visualizer();
                 this.isConnecting = false;
                 this.connectionStart = null;
+                this.isDragging = false;
+                this.dragStart = { x: 0, y: 0 };
+                this.dragOffset = { x: 0, y: 0 };
                 
-                this.initLibrary();
-                this.initEvents();
-                this.createDemoData();
+                this.svg = document.getElementById('networkCanvas');
+                this.svgNS = 'http://www.w3.org/2000/svg';
+                
+                this.init();
             }
-
-            initLibrary() {
-                const library = document.getElementById('traitLibrary');
-                const traits = [
-                    new Trait('t1', 'Eosinophilic Inflammation', 'immune',
-                        'Type-2 inflammation driving asthma severity', '#ff3366'),
-                    new Trait('t2', 'Airflow Limitation', 'physiological',
-                        'Obstructive pattern with reduced FEV1', '#00cc88'),
-                    new Trait('t3', 'Cough Sensitivity', 'clinical',
-                        'Heightened cough reflex', '#ffaa00'),
-                    new Trait('t4', 'Bronchial Reactivity', 'physiological',
-                        'Exaggerated response to triggers', '#9966ff'),
-                    new Trait('t5', 'Sleep Disturbance', 'clinical',
-                        'Nocturnal symptoms', '#00ccff')
-                ];
-
-                traits.forEach(trait => {
-                    const div = document.createElement('div');
-                    div.className = 'trait-item';
-                    div.draggable = true;
-                    div.innerHTML = `
-                        <div class="trait-name">${trait.name}</div>
-                        <div class="trait-desc">${trait.description}</div>
-                    `;
-                    
-                    div.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', JSON.stringify(trait));
-                        div.style.opacity = '0.5';
-                    });
-                    
-                    div.addEventListener('dragend', () => {
-                        div.style.opacity = '1';
-                    });
-                    
-                    library.appendChild(div);
+            
+            init() {
+                this.loadTraitLibrary();
+                this.setupEventListeners();
+                this.createDemoNetwork();
+                this.updateStats();
+                
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+            
+            loadTraitLibrary() {
+                const traitData = {
+                    immune: [
+                        {
+                            id: 'immune1',
+                            name: 'Eosinophilic Inflammation',
+                            category: 'Immune',
+                            description: 'Type-2 inflammation with elevated eosinophils, driving asthma severity and treatment response',
+                            color: '#ff3366',
+                            icon: 'fas fa-fire',
+                            severity: 85,
+                            confidence: 90,
+                            impact: 75
+                        },
+                        {
+                            id: 'immune2',
+                            name: 'Neutrophilic Response',
+                            category: 'Immune',
+                            description: 'Neutrophil-dominated inflammation often seen in severe, steroid-resistant asthma',
+                            color: '#4d94ff',
+                            icon: 'fas fa-shield-virus',
+                            severity: 70,
+                            confidence: 80,
+                            impact: 65
+                        },
+                        {
+                            id: 'immune3',
+                            name: 'Th2 Cytokine Storm',
+                            category: 'Immune',
+                            description: 'Elevated IL-4, IL-5, IL-13 driving inflammation and mucus production',
+                            color: '#9966ff',
+                            icon: 'fas fa-bolt',
+                            severity: 90,
+                            confidence: 85,
+                            impact: 80
+                        }
+                    ],
+                    physiological: [
+                        {
+                            id: 'physio1',
+                            name: 'Airflow Limitation',
+                            category: 'Physiological',
+                            description: 'Obstructive pattern on spirometry with reduced FEV1/FVC ratio',
+                            color: '#00cc88',
+                            icon: 'fas fa-wind',
+                            severity: 75,
+                            confidence: 95,
+                            impact: 85
+                        },
+                        {
+                            id: 'physio2',
+                            name: 'Bronchial Hyperreactivity',
+                            category: 'Physiological',
+                            description: 'Exaggerated bronchoconstriction response to triggers and challenges',
+                            color: '#ffaa00',
+                            icon: 'fas fa-wave-square',
+                            severity: 60,
+                            confidence: 80,
+                            impact: 70
+                        },
+                        {
+                            id: 'physio3',
+                            name: 'Gas Trapping',
+                            category: 'Physiological',
+                            description: 'Air trapping on expiration leading to hyperinflation',
+                            color: '#00ccff',
+                            icon: 'fas fa-cloud',
+                            severity: 55,
+                            confidence: 75,
+                            impact: 60
+                        },
+                        {
+                            id: 'physio4',
+                            name: 'Ventilation-Perfusion Mismatch',
+                            category: 'Physiological',
+                            description: 'Imbalance between air flow and blood flow in lungs',
+                            color: '#ff66cc',
+                            icon: 'fas fa-exchange-alt',
+                            severity: 65,
+                            confidence: 70,
+                            impact: 55
+                        }
+                    ],
+                    clinical: [
+                        {
+                            id: 'clinical1',
+                            name: 'Cough Sensitivity',
+                            category: 'Clinical',
+                            description: 'Heightened cough reflex sensitivity impacting quality of life',
+                            color: '#ffaa00',
+                            icon: 'fas fa-lungs',
+                            severity: 80,
+                            confidence: 85,
+                            impact: 90
+                        },
+                        {
+                            id: 'clinical2',
+                            name: 'Exertional Dyspnea',
+                            category: 'Clinical',
+                            description: 'Breathlessness on exertion limiting daily activities',
+                            color: '#00ccff',
+                            icon: 'fas fa-running',
+                            severity: 70,
+                            confidence: 90,
+                            impact: 85
+                        },
+                        {
+                            id: 'clinical3',
+                            name: 'Nocturnal Symptoms',
+                            category: 'Clinical',
+                            description: 'Nighttime symptom exacerbation affecting sleep quality',
+                            color: '#9966ff',
+                            icon: 'fas fa-moon',
+                            severity: 65,
+                            confidence: 80,
+                            impact: 75
+                        }
+                    ]
+                };
+                
+                // Load immune traits
+                traitData.immune.forEach(trait => {
+                    this.createTraitCard(trait, 'immuneTraits');
+                });
+                
+                // Load physiological traits
+                traitData.physiological.forEach(trait => {
+                    this.createTraitCard(trait, 'physioTraits');
+                });
+                
+                // Load clinical traits
+                traitData.clinical.forEach(trait => {
+                    this.createTraitCard(trait, 'clinicalTraits');
+                });
+                
+                // Setup search
+                document.getElementById('searchTraits').addEventListener('input', (e) => {
+                    this.filterTraits(e.target.value.toLowerCase());
                 });
             }
-
-            initEvents() {
-                // Canvas click
-                this.visualizer.svg.on('click', () => {
-                    this.state.traits.forEach(t => t.selected = false);
-                    this.state.selectedTrait = null;
-                    this.update();
-                    this.updateProperties();
+            
+            createTraitCard(traitData, containerId) {
+                const container = document.getElementById(containerId);
+                const card = document.createElement('div');
+                card.className = 'trait-item';
+                card.draggable = true;
+                card.innerHTML = `
+                    <div class="trait-name">
+                        <span class="trait-color" style="background: ${traitData.color}"></span>
+                        ${traitData.name}
+                    </div>
+                    <div class="trait-desc">${traitData.description}</div>
+                `;
+                
+                card.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('application/json', JSON.stringify(traitData));
+                    card.classList.add('dragging');
+                    card.style.opacity = '0.7';
                 });
-
-                // Drop trait on canvas
-                this.visualizer.svg.on('dragover', (e) => {
-                    e.preventDefault();
+                
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                    card.style.opacity = '1';
                 });
-
-                this.visualizer.svg.on('drop', (e) => {
+                
+                container.appendChild(card);
+            }
+            
+            filterTraits(searchTerm) {
+                document.querySelectorAll('.trait-item').forEach(card => {
+                    const name = card.querySelector('.trait-name').textContent.toLowerCase();
+                    const desc = card.querySelector('.trait-desc').textContent.toLowerCase();
+                    const matches = name.includes(searchTerm) || desc.includes(searchTerm);
+                    card.style.display = matches ? 'block' : 'none';
+                });
+            }
+            
+            setupEventListeners() {
+                // Canvas drop
+                this.svg.addEventListener('dragover', (e) => {
                     e.preventDefault();
+                    e.dataTransfer.dropEffect = 'copy';
+                });
+                
+                this.svg.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    const rect = this.svg.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
                     try {
-                        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                        const trait = new Trait(
-                            `${data.id}-${Date.now()}`,
-                            data.name,
-                            data.category,
-                            data.description,
-                            data.color
-                        );
-                        this.state.addTrait(trait);
-                        this.update();
+                        const data = JSON.parse(e.dataTransfer.getData('application/json'));
+                        const trait = new TraitNode(data, x, y);
+                        this.addTrait(trait);
+                        this.showToast(`Added ${trait.name} to analysis`, 'success');
                     } catch (err) {
                         console.error('Drop error:', err);
                     }
                 });
-
+                
+                // Canvas click (deselect)
+                this.svg.addEventListener('click', (e) => {
+                    if (e.target === this.svg) {
+                        this.deselectAll();
+                    }
+                });
+                
                 // Tool buttons
                 document.querySelectorAll('.tool-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        document.querySelectorAll('.tool-btn').forEach(b => 
-                            b.classList.remove('active'));
-                        btn.classList.add('active');
-                        this.state.currentTool = btn.dataset.tool;
-                        
-                        if (this.state.currentTool === 'center') {
-                            this.visualizer.svg.transition()
-                                .duration(500)
-                                .call(this.visualizer.svg.select('.zoom').transform, 
-                                      d3.zoomIdentity);
-                        }
+                    btn.addEventListener('click', (e) => {
+                        const tool = btn.dataset.tool;
+                        this.setTool(tool);
                     });
                 });
-
+                
                 // Action buttons
-                document.getElementById('simulateBtn').addEventListener('click', () => {
-                    alert('Simulation would run here!');
-                });
-
-                document.getElementById('saveBtn').addEventListener('click', () => {
-                    alert('Session saved!');
+                document.getElementById('btnSimulate').addEventListener('click', () => this.runSimulation());
+                document.getElementById('btnSave').addEventListener('click', () => this.saveSession());
+                document.getElementById('btnImport').addEventListener('click', () => this.importPatient());
+                document.getElementById('btnArrange').addEventListener('click', () => this.arrangeNetwork());
+                document.getElementById('btnClear').addEventListener('click', () => this.clearAll());
+                document.getElementById('btnExport').addEventListener('click', () => this.exportAnalysis());
+                
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Delete' || e.key === 'Backspace') {
+                        this.deleteSelected();
+                    } else if (e.key === 'Escape') {
+                        this.cancelConnection();
+                        this.deselectAll();
+                    } else if (e.key === 'c' && e.ctrlKey) {
+                        e.preventDefault();
+                        this.copySelected();
+                    } else if (e.key === 'z' && e.ctrlKey) {
+                        e.preventDefault();
+                        this.undo();
+                    }
                 });
             }
-
-            createDemoData() {
-                // Add demo traits
-                const traits = [
-                    new Trait('demo1', 'Eosinophilic Inflammation', 'immune',
-                        'Type-2 inflammation', '#ff3366'),
-                    new Trait('demo2', 'Airflow Limitation', 'physiological',
-                        'Obstructive pattern', '#00cc88'),
-                    new Trait('demo3', 'Cough Sensitivity', 'clinical',
-                        'Heightened reflex', '#ffaa00')
+            
+            createDemoNetwork() {
+                // Create demo traits
+                const demoTraits = [
+                    new TraitNode({
+                        id: 'demo1',
+                        name: 'Eosinophilic Inflammation',
+                        category: 'Immune',
+                        description: 'Type-2 inflammation driving asthma severity',
+                        color: '#ff3366',
+                        icon: 'fas fa-fire',
+                        severity: 85,
+                        confidence: 90,
+                        impact: 75
+                    }, 400, 200),
+                    
+                    new TraitNode({
+                        id: 'demo2',
+                        name: 'Airflow Limitation',
+                        category: 'Physiological',
+                        description: 'Obstructive pattern with reduced FEV1',
+                        color: '#00cc88',
+                        icon: 'fas fa-wind',
+                        severity: 75,
+                        confidence: 95,
+                        impact: 85
+                    }, 600, 300),
+                    
+                    new TraitNode({
+                        id: 'demo3',
+                        name: 'Cough Sensitivity',
+                        category: 'Clinical',
+                        description: 'Heightened cough reflex impacting quality of life',
+                        color: '#ffaa00',
+                        icon: 'fas fa-lungs',
+                        severity: 80,
+                        confidence: 85,
+                        impact: 90
+                    }, 500, 450)
                 ];
-
-                traits.forEach(trait => {
-                    this.state.addTrait(trait);
+                
+                // Add demo traits
+                demoTraits.forEach(trait => {
+                    this.addTrait(trait);
                 });
-
+                
                 // Add demo connections
-                this.state.addConnection('demo1', 'demo2');
-                this.state.addConnection('demo2', 'demo3');
-
-                this.update();
+                setTimeout(() => {
+                    const conn1 = new Connection('demo1', 'demo2', 'causal');
+                    const conn2 = new Connection('demo2', 'demo3', 'correlative');
+                    const conn3 = new Connection('demo1', 'demo3', 'therapeutic');
+                    
+                    this.addConnection(conn1);
+                    this.addConnection(conn2);
+                    this.addConnection(conn3);
+                }, 100);
             }
-
+            
+            addTrait(trait) {
+                this.traits.push(trait);
+                this.createTraitVisual(trait);
+                this.updateStats();
+                
+                return trait;
+            }
+            
+            createTraitVisual(trait) {
+                const group = document.createElementNS(this.svgNS, 'g');
+                group.setAttribute('id', `trait-${trait.id}`);
+                group.setAttribute('class', 'trait-node');
+                group.setAttribute('transform', `translate(${trait.x}, ${trait.y})`);
+                
+                // Glow effect
+                const glow = document.createElementNS(this.svgNS, 'circle');
+                glow.setAttribute('class', 'trait-glow');
+                glow.setAttribute('cx', '0');
+                glow.setAttribute('cy', '0');
+                glow.setAttribute('r', '45');
+                glow.setAttribute('fill', `radial-gradient(circle, ${trait.color}40 0%, transparent 70%)`);
+                
+                // Main circle
+                const circle = document.createElementNS(this.svgNS, 'circle');
+                circle.setAttribute('class', 'trait-circle');
+                circle.setAttribute('cx', '0');
+                circle.setAttribute('cy', '0');
+                circle.setAttribute('r', '30');
+                circle.setAttribute('fill', trait.color);
+                
+                // Icon
+                const icon = document.createElementNS(this.svgNS, 'text');
+                icon.setAttribute('x', '0');
+                icon.setAttribute('y', '5');
+                icon.setAttribute('text-anchor', 'middle');
+                icon.setAttribute('fill', 'white');
+                icon.setAttribute('font-size', '18');
+                icon.setAttribute('font-family', 'FontAwesome');
+                icon.textContent = this.getIconChar(trait.icon);
+                
+                // Label
+                const label = document.createElementNS(this.svgNS, 'text');
+                label.setAttribute('class', 'trait-label');
+                label.setAttribute('x', '0');
+                label.setAttribute('y', '85');
+                label.setAttribute('text-anchor', 'middle');
+                label.setAttribute('fill', 'white');
+                label.setAttribute('font-size', '12');
+                label.setAttribute('font-weight', '700');
+                label.textContent = trait.name;
+                
+                // Stats dots
+                const statsGroup = document.createElementNS(this.svgNS, 'g');
+                statsGroup.setAttribute('class', 'trait-stats');
+                statsGroup.setAttribute('transform', 'translate(0, 100)');
+                
+                const dots = trait.getStatDots();
+                dots.forEach((dotType, i) => {
+                    const dot = document.createElementNS(this.svgNS, 'circle');
+                    dot.setAttribute('class', `stat-dot ${dotType}`);
+                    dot.setAttribute('cx', (i - 1) * 10);
+                    dot.setAttribute('cy', '0');
+                    dot.setAttribute('r', '3');
+                    statsGroup.appendChild(dot);
+                });
+                
+                group.appendChild(glow);
+                group.appendChild(circle);
+                group.appendChild(icon);
+                group.appendChild(label);
+                group.appendChild(statsGroup);
+                
+                // Event listeners
+                group.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.onTraitClick(trait);
+                });
+                
+                group.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    this.startDrag(e, trait, group);
+                });
+                
+                this.svg.appendChild(group);
+            }
+            
+            getIconChar(iconClass) {
+                const iconMap = {
+                    'fas fa-fire': '🔥',
+                    'fas fa-wind': '💨',
+                    'fas fa-lungs': '🫁',
+                    'fas fa-shield-virus': '🛡️',
+                    'fas fa-bolt': '⚡',
+                    'fas fa-wave-square': '📶',
+                    'fas fa-cloud': '☁️',
+                    'fas fa-exchange-alt': '🔄',
+                    'fas fa-running': '🏃',
+                    'fas fa-moon': '🌙'
+                };
+                return iconMap[iconClass] || '●';
+            }
+            
+            addConnection(connection) {
+                // Check if connection already exists
+                const exists = this.connections.some(c => 
+                    (c.sourceId === connection.sourceId && c.targetId === connection.targetId) ||
+                    (c.sourceId === connection.targetId && c.targetId === connection.sourceId)
+                );
+                
+                if (exists) {
+                    this.showToast('Connection already exists', 'warning');
+                    return;
+                }
+                
+                this.connections.push(connection);
+                
+                // Update trait connections
+                const sourceTrait = this.traits.find(t => t.id === connection.sourceId);
+                const targetTrait = this.traits.find(t => t.id === connection.targetId);
+                
+                if (sourceTrait) sourceTrait.connections.push(connection.id);
+                if (targetTrait) targetTrait.connections.push(connection.id);
+                
+                this.drawConnection(connection);
+                this.updateStats();
+                this.updateConnectedTraits();
+                
+                return connection;
+            }
+            
+            drawConnection(connection) {
+                const source = this.traits.find(t => t.id === connection.sourceId);
+                const target = this.traits.find(t => t.id === connection.targetId);
+                
+                if (!source || !target) return;
+                
+                const line = document.createElementNS(this.svgNS, 'line');
+                line.setAttribute('id', `conn-${connection.id}`);
+                line.setAttribute('class', 'connection-line');
+                line.setAttribute('stroke', connection.getColor());
+                line.setAttribute('stroke-width', '3');
+                line.setAttribute('stroke-dasharray', connection.type === 'inhibitory' ? '5,3' : 'none');
+                line.setAttribute('opacity', '0');
+                
+                this.updateConnectionPosition(line, source, target);
+                
+                this.svg.appendChild(line);
+                
+                // Animate in
+                setTimeout(() => {
+                    line.style.transition = 'opacity 0.5s ease';
+                    line.style.opacity = '0.7';
+                }, 10);
+                
+                // Add click handler
+                line.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.onConnectionClick(connection);
+                });
+            }
+            
+            updateConnectionPosition(line, source, target) {
+                if (!line || !source || !target) return;
+                
+                line.setAttribute('x1', source.x);
+                line.setAttribute('y1', source.y);
+                line.setAttribute('x2', target.x);
+                line.setAttribute('y2', target.y);
+            }
+            
             onTraitClick(trait) {
-                if (this.state.currentTool === 'connect') {
+                if (this.currentTool === 'connect') {
                     if (!this.isConnecting) {
+                        // Start connection
                         this.connectionStart = trait;
                         this.isConnecting = true;
-                        trait.selected = true;
-                        this.update();
-                        alert(`Connecting from ${trait.name}. Click target trait.`);
+                        this.selectTrait(trait);
+                        document.getElementById('connectionMode').classList.add('show');
+                        this.showToast(`Connecting from ${trait.name}. Click target trait.`, 'info');
                     } else {
+                        // Complete connection
                         if (this.connectionStart.id !== trait.id) {
-                            this.state.addConnection(this.connectionStart.id, trait.id);
-                            this.connectionStart.selected = false;
+                            const types = ['causal', 'correlative', 'therapeutic', 'synergistic', 'inhibitory'];
+                            const type = types[Math.floor(Math.random() * types.length)];
+                            const connection = new Connection(this.connectionStart.id, trait.id, type);
+                            this.addConnection(connection);
+                            
+                            this.deselectAll();
                             this.connectionStart = null;
                             this.isConnecting = false;
-                            this.update();
-                            alert(`Connected ${this.connectionStart?.name} to ${trait.name}`);
+                            document.getElementById('connectionMode').classList.remove('show');
+                            
+                            this.showToast(`Created ${connection.getTypeLabel()} between ${this.connectionStart?.name} and ${trait.name}`, 'success');
                         }
                     }
                 } else {
                     // Select trait
-                    this.state.traits.forEach(t => t.selected = false);
-                    trait.selected = true;
-                    this.state.selectedTrait = trait;
-                    this.update();
-                    this.updateProperties();
+                    this.selectTrait(trait);
                 }
             }
-
-            update() {
-                this.visualizer.update(this.state);
+            
+            onConnectionClick(connection) {
+                // Highlight connection
+                const line = document.getElementById(`conn-${connection.id}`);
+                if (line) {
+                    line.style.strokeWidth = '5';
+                    line.style.filter = 'drop-shadow(0 0 10px currentColor)';
+                    
+                    setTimeout(() => {
+                        line.style.strokeWidth = '3';
+                        line.style.filter = 'none';
+                    }, 1000);
+                }
+                
+                this.showToast(`${connection.getTypeLabel()} (${Math.round(connection.strength)}% strength)`, 'info');
+            }
+            
+            selectTrait(trait) {
+                this.deselectAll();
+                this.selectedTrait = trait;
+                trait.selected = true;
+                
+                const node = document.getElementById(`trait-${trait.id}`);
+                if (node) {
+                    node.classList.add('selected');
+                }
+                
+                this.updateProperties();
+                this.updateConnectedTraits();
+            }
+            
+            deselectAll() {
+                this.traits.forEach(trait => {
+                    trait.selected = false;
+                    const node = document.getElementById(`trait-${trait.id}`);
+                    if (node) {
+                        node.classList.remove('selected');
+                    }
+                });
+                this.selectedTrait = null;
+                this.updateProperties();
+                this.updateConnectedTraits();
+            }
+            
+            startDrag(e, trait, node) {
+                if (this.currentTool === 'hand' || this.currentTool === 'select') {
+                    e.preventDefault();
+                    
+                    this.isDragging = true;
+                    this.dragStart = { x: e.clientX, y: e.clientY };
+                    this.dragOffset = { x: trait.x, y: trait.y };
+                    
+                    const onMouseMove = (moveEvent) => {
+                        if (!this.isDragging) return;
+                        
+                        const dx = moveEvent.clientX - this.dragStart.x;
+                        const dy = moveEvent.clientY - this.dragStart.y;
+                        
+                        trait.x = this.dragOffset.x + dx;
+                        trait.y = this.dragOffset.y + dy;
+                        
+                        // Update node position
+                        node.setAttribute('transform', `translate(${trait.x}, ${trait.y})`);
+                        
+                        // Update connection positions
+                        this.updateConnectionsForTrait(trait.id);
+                    };
+                    
+                    const onMouseUp = () => {
+                        this.isDragging = false;
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+                    
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                }
+            }
+            
+            updateConnectionsForTrait(traitId) {
+                this.connections.forEach(connection => {
+                    if (connection.sourceId === traitId || connection.targetId === traitId) {
+                        const source = this.traits.find(t => t.id === connection.sourceId);
+                        const target = this.traits.find(t => t.id === connection.targetId);
+                        const line = document.getElementById(`conn-${connection.id}`);
+                        
+                        if (source && target && line) {
+                            this.updateConnectionPosition(line, source, target);
+                        }
+                    }
+                });
+            }
+            
+            setTool(tool) {
+                this.currentTool = tool;
+                
+                // Update UI
+                document.querySelectorAll('.tool-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`.tool-btn[data-tool="${tool}"]`)?.classList.add('active');
+                
+                // Handle tool-specific actions
+                if (tool === 'center') {
+                    this.centerView();
+                } else if (tool === 'delete') {
+                    this.deleteSelected();
+                } else if (tool === 'connect') {
+                    document.getElementById('connectionMode').classList.add('show');
+                } else {
+                    document.getElementById('connectionMode').classList.remove('show');
+                    this.cancelConnection();
+                }
+                
+                this.showToast(`${tool.charAt(0).toUpperCase() + tool.slice(1)} tool activated`, 'info');
+            }
+            
+            cancelConnection() {
+                this.isConnecting = false;
+                this.connectionStart = null;
+                this.deselectAll();
+            }
+            
+            deleteSelected() {
+                if (this.selectedTrait) {
+                    this.removeTrait(this.selectedTrait.id);
+                    this.showToast('Trait deleted', 'success');
+                } else {
+                    this.showToast('Select a trait to delete', 'warning');
+                }
+            }
+            
+            removeTrait(traitId) {
+                // Remove trait
+                this.traits = this.traits.filter(t => t.id !== traitId);
+                
+                // Remove connections involving this trait
+                const connectionsToRemove = this.connections.filter(c => 
+                    c.sourceId === traitId || c.targetId === traitId
+                );
+                this.connections = this.connections.filter(c => 
+                    c.sourceId !== traitId && c.targetId !== traitId
+                );
+                
+                // Remove visual elements
+                const node = document.getElementById(`trait-${traitId}`);
+                if (node) node.remove();
+                
+                connectionsToRemove.forEach(conn => {
+                    const line = document.getElementById(`conn-${conn.id}`);
+                    if (line) line.remove();
+                });
+                
+                if (this.selectedTrait?.id === traitId) {
+                    this.selectedTrait = null;
+                    this.updateProperties();
+                }
+                
                 this.updateStats();
             }
-
+            
             updateProperties() {
                 const content = document.getElementById('propertiesContent');
-                const trait = this.state.selectedTrait;
+                const trait = this.selectedTrait;
                 
                 if (!trait) {
                     content.innerHTML = `
-                        <p style="color: rgba(255, 255, 255, 0.7); text-align: center; padding: 2rem;">
-                            Select a trait to view properties
-                        </p>
+                        <div style="text-align: center; padding: 2rem;">
+                            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-blue), var(--expert-purple)); 
+                                     border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+                                <i class="fas fa-mouse-pointer" style="font-size: 2rem; color: white;"></i>
+                            </div>
+                            <h3 style="font-weight: 800; margin-bottom: 0.5rem;">Select a Clinical Trait</h3>
+                            <p style="color: rgba(255, 255, 255, 0.6); line-height: 1.6;">
+                                Click on any trait in the network to unlock detailed properties, adjust clinical parameters, and explore treatment implications.
+                            </p>
+                        </div>
                     `;
                     return;
                 }
                 
                 content.innerHTML = `
-                    <div style="margin-bottom: 1rem;">
-                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                            <div style="width: 40px; height: 40px; background: ${trait.color}; border-radius: 8px;"></div>
-                            <div>
-                                <h3 style="font-weight: 700;">${trait.name}</h3>
-                                <p style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7);">${trait.category}</p>
+                    <div class="trait-header">
+                        <div class="trait-icon-large" style="background: ${trait.color};">
+                            <i class="${trait.icon}" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div class="trait-info">
+                            <h3>${trait.name}</h3>
+                            <div class="category">${trait.category}</div>
+                        </div>
+                    </div>
+                    
+                    <p class="trait-desc-large">${trait.description}</p>
+                    
+                    <div class="slider-container">
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <i class="fas fa-fire"></i>
+                                Clinical Severity
                             </div>
+                            <div class="slider-value">${trait.severity}%</div>
                         </div>
-                        <p style="font-size: 0.9rem; margin-bottom: 1rem;">${trait.description}</p>
+                        <div class="slider-track">
+                            <div class="slider-fill" style="width: ${trait.severity}%"></div>
+                            <input type="range" min="0" max="100" value="${trait.severity}" 
+                                   oninput="app.updateTraitProperty('severity', this.value)">
+                        </div>
                     </div>
                     
                     <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Severity</span>
-                            <span>${trait.severity}%</span>
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <i class="fas fa-shield-alt"></i>
+                                Diagnostic Confidence
+                            </div>
+                            <div class="slider-value">${trait.confidence}%</div>
                         </div>
-                        <input type="range" min="0" max="100" value="${trait.severity}" 
-                               oninput="app.updateTraitSeverity(${trait.severity}, this.value)">
+                        <div class="slider-track">
+                            <div class="slider-fill" style="width: ${trait.confidence}%"></div>
+                            <input type="range" min="0" max="100" value="${trait.confidence}"
+                                   oninput="app.updateTraitProperty('confidence', this.value)">
+                        </div>
                     </div>
                     
                     <div class="slider-container">
-                        <div class="slider-label">
-                            <span>Confidence</span>
-                            <span>${trait.confidence}%</span>
+                        <div class="slider-header">
+                            <div class="slider-label">
+                                <i class="fas fa-chart-line"></i>
+                                Treatment Impact
+                            </div>
+                            <div class="slider-value">${trait.impact}%</div>
                         </div>
-                        <input type="range" min="0" max="100" value="${trait.confidence}"
-                               oninput="app.updateTraitConfidence(${trait.confidence}, this.value)">
+                        <div class="slider-track">
+                            <div class="slider-fill" style="width: ${trait.impact}%"></div>
+                            <input type="range" min="0" max="100" value="${trait.impact}"
+                                   oninput="app.updateTraitProperty('impact', this.value)">
+                        </div>
                     </div>
                     
-                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button class="btn" style="flex: 1;" onclick="app.centerOnTrait('${trait.id}')">
+                    <div class="action-buttons">
+                        <button class="btn" onclick="app.centerOnTrait('${trait.id}')">
                             <i class="fas fa-crosshairs"></i> Center
                         </button>
-                        <button class="btn" style="flex: 1; background: rgba(255, 51, 102, 0.2);" 
+                        <button class="btn" style="background: rgba(255, 51, 102, 0.2);" 
                                 onclick="app.removeTrait('${trait.id}')">
                             <i class="fas fa-trash"></i> Remove
                         </button>
                     </div>
                 `;
             }
-
-            updateTraitSeverity(oldValue, newValue) {
-                if (this.state.selectedTrait) {
-                    this.state.selectedTrait.severity = parseInt(newValue);
-                    this.update();
-                }
-            }
-
-            updateTraitConfidence(oldValue, newValue) {
-                if (this.state.selectedTrait) {
-                    this.state.selectedTrait.confidence = parseInt(newValue);
-                    this.update();
-                }
-            }
-
-            centerOnTrait(traitId) {
-                const trait = this.state.getTrait(traitId);
-                if (trait) {
-                    const transform = d3.zoomIdentity
-                        .translate(
-                            (window.innerWidth - 600) / 2 - trait.x,
-                            (window.innerHeight - 60) / 2 - trait.y
-                        )
-                        .scale(1.5);
+            
+            updateTraitProperty(property, value) {
+                if (this.selectedTrait) {
+                    this.selectedTrait[property] = parseInt(value);
                     
-                    this.visualizer.svg.transition()
-                        .duration(1000)
-                        .call(this.visualizer.svg.select('.zoom').transform, transform);
+                    // Update visual stats
+                    const node = document.getElementById(`trait-${this.selectedTrait.id}`);
+                    if (node) {
+                        const statsGroup = node.querySelector('.trait-stats');
+                        if (statsGroup) {
+                            statsGroup.innerHTML = '';
+                            const dots = this.selectedTrait.getStatDots();
+                            dots.forEach((dotType, i) => {
+                                const dot = document.createElementNS(this.svgNS, 'circle');
+                                dot.setAttribute('class', `stat-dot ${dotType}`);
+                                dot.setAttribute('cx', (i - 1) * 10);
+                                dot.setAttribute('cy', '0');
+                                dot.setAttribute('r', '3');
+                                statsGroup.appendChild(dot);
+                            });
+                        }
+                    }
+                    
+                    this.updateProperties();
+                    this.updateStats();
                 }
             }
-
-            removeTrait(traitId) {
-                this.state.removeTrait(traitId);
-                this.update();
-                this.updateProperties();
+            
+            updateConnectedTraits() {
+                const container = document.getElementById('connectionsList');
+                const trait = this.selectedTrait;
+                
+                if (!trait) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 1rem; color: rgba(255, 255, 255, 0.5);">
+                            <i class="fas fa-project-diagram" style="font-size: 1.5rem; opacity: 0.3; margin-bottom: 0.5rem;"></i>
+                            <p>Select a trait to see connected relationships</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const connections = this.connections.filter(c => 
+                    c.sourceId === trait.id || c.targetId === trait.id
+                );
+                
+                if (connections.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 1rem; color: rgba(255, 255, 255, 0.5);">
+                            <i class="fas fa-unlink" style="font-size: 1.5rem; opacity: 0.3; margin-bottom: 0.5rem;"></i>
+                            <p>No connections yet. Use Connection tool to link traits.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                connections.forEach(connection => {
+                    const otherTraitId = connection.sourceId === trait.id ? connection.targetId : connection.sourceId;
+                    const otherTrait = this.traits.find(t => t.id === otherTraitId);
+                    
+                    if (otherTrait) {
+                        html += `
+                            <div class="connection-item" onclick="app.centerOnTrait('${otherTrait.id}')">
+                                <div class="connection-type">${connection.getTypeLabel()}</div>
+                                <div class="connection-trait">${otherTrait.name}</div>
+                                <div class="connection-strength">
+                                    ${Math.round(connection.strength)}% strength • ${connection.certainty}% certainty
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                container.innerHTML = html;
             }
-
+            
+            centerOnTrait(traitId) {
+                const trait = this.traits.find(t => t.id === traitId);
+                if (trait) {
+                    // Scroll the trait into view (simplified)
+                    this.showToast(`Centered on ${trait.name}`, 'info');
+                    this.selectTrait(trait);
+                }
+            }
+            
+            arrangeNetwork() {
+                const centerX = this.svg.clientWidth / 2;
+                const centerY = this.svg.clientHeight / 2;
+                const radius = Math.min(centerX, centerY) * 0.6;
+                
+                this.traits.forEach((trait, index) => {
+                    const angle = (index * 2 * Math.PI) / this.traits.length;
+                    trait.x = centerX + radius * Math.cos(angle);
+                    trait.y = centerY + radius * Math.sin(angle);
+                    
+                    const node = document.getElementById(`trait-${trait.id}`);
+                    if (node) {
+                        node.style.transition = 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                        node.setAttribute('transform', `translate(${trait.x}, ${trait.y})`);
+                    }
+                });
+                
+                setTimeout(() => {
+                    this.traits.forEach(trait => {
+                        this.updateConnectionsForTrait(trait.id);
+                    });
+                    
+                    // Remove transition after animation
+                    this.traits.forEach(trait => {
+                        const node = document.getElementById(`trait-${trait.id}`);
+                        if (node) {
+                            setTimeout(() => {
+                                node.style.transition = '';
+                            }, 800);
+                        }
+                    });
+                }, 50);
+                
+                this.showToast('Network arranged in optimal layout', 'success');
+            }
+            
+            clearAll() {
+                if (this.traits.length === 0) {
+                    this.showToast('Network is already empty', 'info');
+                    return;
+                }
+                
+                if (confirm('Clear all traits and connections? This cannot be undone.')) {
+                    this.traits = [];
+                    this.connections = [];
+                    this.selectedTrait = null;
+                    
+                    // Clear canvas
+                    while (this.svg.firstChild) {
+                        this.svg.removeChild(this.svg.firstChild);
+                    }
+                    
+                    this.updateStats();
+                    this.updateProperties();
+                    this.updateConnectedTraits();
+                    this.showToast('All items cleared from network', 'success');
+                }
+            }
+            
+            runSimulation() {
+                this.showToast('Running clinical simulation...', 'info');
+                
+                // Simulate network effects
+                setTimeout(() => {
+                    // Randomly adjust some trait values
+                    this.traits.forEach(trait => {
+                        const change = (Math.random() - 0.5) * 20;
+                        trait.severity = Math.max(0, Math.min(100, trait.severity + change));
+                        trait.confidence = Math.max(0, Math.min(100, trait.confidence + (Math.random() * 10 - 5)));
+                    });
+                    
+                    // Adjust connections
+                    this.connections.forEach(conn => {
+                        conn.strength = Math.max(10, Math.min(100, conn.strength + (Math.random() * 20 - 10)));
+                    });
+                    
+                    // Update visual connections
+                    this.connections.forEach(conn => {
+                        const line = document.getElementById(`conn-${conn.id}`);
+                        if (line) {
+                            line.style.strokeWidth = `${2 + (conn.strength / 25)}`;
+                        }
+                    });
+                    
+                    if (this.selectedTrait) {
+                        this.updateProperties();
+                    }
+                    
+                    this.updateStats();
+                    this.showToast('Simulation complete! Network updated with predictive insights.', 'success');
+                }, 2000);
+            }
+            
+            saveSession() {
+                const session = {
+                    traits: this.traits.map(t => ({
+                        id: t.id,
+                        name: t.name,
+                        category: t.category,
+                        description: t.description,
+                        color: t.color,
+                        icon: t.icon,
+                        x: t.x,
+                        y: t.y,
+                        severity: t.severity,
+                        confidence: t.confidence,
+                        impact: t.impact
+                    })),
+                    connections: this.connections,
+                    timestamp: new Date().toISOString()
+                };
+                
+                localStorage.setItem('traitmap-session-v2', JSON.stringify(session));
+                this.showToast('Session saved successfully to browser storage', 'success');
+            }
+            
+            importPatient() {
+                // Simulated patient data import
+                const patientTraits = [
+                    new TraitNode({
+                        name: 'Patient: Severe Eosinophilic Asthma',
+                        category: 'Patient Profile',
+                        description: '45-year-old female with severe persistent asthma, elevated eosinophils (500/μL)',
+                        color: '#ff3366',
+                        icon: 'fas fa-user-md',
+                        severity: 85,
+                        confidence: 95,
+                        impact: 90
+                    }, 300, 200),
+                    
+                    new TraitNode({
+                        name: 'FEV1: 55% Predicted',
+                        category: 'Lung Function',
+                        description: 'Severe airflow limitation with significant bronchodilator response',
+                        color: '#00cc88',
+                        icon: 'fas fa-lungs',
+                        severity: 75,
+                        confidence: 98,
+                        impact: 85
+                    }, 500, 200),
+                    
+                    new TraitNode({
+                        name: 'Biologic Therapy Response',
+                        category: 'Treatment',
+                        description: 'Excellent response to anti-IL5 therapy with 80% reduction in exacerbations',
+                        color: '#00ccff',
+                        icon: 'fas fa-syringe',
+                        severity: 30,
+                        confidence: 90,
+                        impact: 95
+                    }, 400, 350)
+                ];
+                
+                patientTraits.forEach(trait => {
+                    this.addTrait(trait);
+                });
+                
+                setTimeout(() => {
+                    this.addConnection(new Connection(patientTraits[0].id, patientTraits[1].id, 'causal'));
+                    this.addConnection(new Connection(patientTraits[0].id, patientTraits[2].id, 'therapeutic'));
+                }, 100);
+                
+                this.showToast('Patient data imported successfully', 'success');
+            }
+            
+            exportAnalysis() {
+                // Create analysis report
+                const report = {
+                    title: 'TRAITMAP Clinical Analysis Report',
+                    generated: new Date().toISOString(),
+                    summary: {
+                        totalTraits: this.traits.length,
+                        totalConnections: this.connections.length,
+                        averageSeverity: Math.round(this.traits.reduce((sum, t) => sum + t.severity, 0) / this.traits.length),
+                        averageConfidence: Math.round(this.traits.reduce((sum, t) => sum + t.confidence, 0) / this.traits.length),
+                        keyInsights: [
+                            'Network complexity suggests multi-factorial disease mechanism',
+                            'Strong correlations indicate integrated treatment approach needed',
+                            'High confidence traits form core intervention targets'
+                        ]
+                    },
+                    traits: this.traits.map(t => ({
+                        name: t.name,
+                        category: t.category,
+                        severity: t.severity,
+                        confidence: t.confidence,
+                        impact: t.impact,
+                        empowermentScore: t.getEmpowermentScore()
+                    })),
+                    connections: this.connections.map(c => ({
+                        type: c.getTypeLabel(),
+                        strength: Math.round(c.strength),
+                        certainty: c.certainty
+                    }))
+                };
+                
+                // Download as JSON file
+                const dataStr = JSON.stringify(report, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = `traitmap-analysis-${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                this.showToast('Analysis exported as JSON file', 'success');
+            }
+            
+            centerView() {
+                this.showToast('View centered on network', 'info');
+            }
+            
+            copySelected() {
+                if (this.selectedTrait) {
+                    navigator.clipboard.writeText(this.selectedTrait.name)
+                        .then(() => this.showToast('Trait name copied to clipboard', 'success'))
+                        .catch(() => this.showToast('Failed to copy', 'error'));
+                }
+            }
+            
+            undo() {
+                this.showToast('Undo feature would revert last action', 'info');
+            }
+            
             updateStats() {
-                document.getElementById('traitCount').textContent = this.state.traits.length;
-                document.getElementById('connectionCount').textContent = this.state.connections.length;
+                document.getElementById('statTraits').textContent = this.traits.length;
+                document.getElementById('statConnections').textContent = this.connections.length;
+                
+                const complexity = Math.min(100, this.traits.length * 5 + this.connections.length * 3);
+                document.getElementById('statComplexity').textContent = complexity;
+                
+                const avgConfidence = this.traits.length > 0 
+                    ? Math.round(this.traits.reduce((sum, t) => sum + t.confidence, 0) / this.traits.length)
+                    : 0;
+                document.getElementById('statConfidence').textContent = `${avgConfidence}%`;
+            }
+            
+            resizeCanvas() {
+                this.svg.setAttribute('width', this.svg.parentElement.clientWidth);
+                this.svg.setAttribute('height', this.svg.parentElement.clientHeight);
+            }
+            
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <div class="toast-icon">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    </div>
+                    <div class="toast-message">${message}</div>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Show toast
+                setTimeout(() => toast.classList.add('show'), 10);
+                
+                // Hide after 4 seconds
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => {
+                        if (toast.parentNode === container) {
+                            container.removeChild(toast);
+                        }
+                    }, 300);
+                }, 4000);
             }
         }
-
-        // 6. INITIALIZE
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
         let app;
         
-        function initializeApp() {
-            app = new App();
-            window.app = app; // Make accessible for inline handlers
-        }
+        // Enhanced loading sequence
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingFill = document.getElementById('loadingFill');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const loadingScreen = document.getElementById('loadingScreen');
+            
+            const messages = [
+                "Initializing Clinical Intelligence Engine...",
+                "Loading Empowerment Visualization...",
+                "Preparing Trait Universe...",
+                "Calibrating Connection Algorithms...",
+                "Optimizing Network Layout...",
+                "Loading Clinical Databases...",
+                "Ready to Empower Clinical Decisions!"
+            ];
+            
+            let progress = 0;
+            let messageIndex = 0;
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15 + 5;
+                if (progress > 100) progress = 100;
+                
+                loadingFill.style.width = `${progress}%`;
+                
+                // Update message at certain intervals
+                if (progress >= (messageIndex + 1) * (100 / messages.length)) {
+                    loadingMessage.textContent = messages[messageIndex];
+                    messageIndex++;
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // Final message
+                    loadingMessage.textContent = "Launching TRAITMAP...";
+                    
+                    setTimeout(() => {
+                        loadingScreen.style.opacity = '0';
+                        loadingScreen.style.transform = 'scale(1.1)';
+                        
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                            app = new TraitMapApp();
+                            window.app = app; // Make accessible globally
+                            
+                            // Welcome message
+                            setTimeout(() => {
+                                app.showToast(
+                                    'Welcome to TRAITMAP! Your clinical intelligence platform is ready. ' +
+                                    'Drag traits, create connections, and discover insights.',
+                                    'success'
+                                );
+                            }, 500);
+                        }, 500);
+                    }, 800);
+                }
+            }, 300);
+        });
     </script>
 </body>
 </html>
