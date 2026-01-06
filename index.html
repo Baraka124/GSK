@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAITMAP - EHR-Integrated Respiratory Trait Network</title>
+    <title>TRAITMAP - Advanced Respiratory Phenotyping Platform</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,119 +15,138 @@
         }
         
         body {
-            background: #0f172a;
-            color: #f1f5f9;
+            background: #0a0e17;
+            color: #e2e8f0;
             min-height: 100vh;
             overflow-x: hidden;
         }
         
-        /* EHR-like header */
-        .ehr-header {
-            background: #1e293b;
-            border-bottom: 1px solid #334155;
-            padding: 0.75rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Research Lab Header */
+        .lab-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border-bottom: 1px solid #312e81;
+            padding: 1rem 2rem;
             position: sticky;
             top: 0;
             z-index: 1000;
+            backdrop-filter: blur(10px);
         }
         
-        .patient-info {
-            display: flex;
+        .header-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
             gap: 2rem;
         }
         
-        .patient-badge {
+        .platform-brand {
             display: flex;
             align-items: center;
             gap: 1rem;
-            background: rgba(30, 64, 175, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: 1px solid #3b82f6;
         }
         
-        .patient-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-            border-radius: 50%;
+        .platform-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
         
-        .patient-details h3 {
-            font-size: 1rem;
-            font-weight: 600;
+        .platform-name h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #818cf8, #c4b5fd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+            letter-spacing: -0.5px;
         }
         
-        .patient-details p {
-            font-size: 0.85rem;
+        .platform-name .tagline {
+            font-size: 0.9rem;
             color: #94a3b8;
+            font-weight: 500;
         }
         
-        .ehr-controls {
+        .research-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
         
-        .ehr-btn {
-            padding: 0.5rem 1rem;
-            background: #334155;
-            border: none;
-            border-radius: 6px;
+        .research-btn {
+            padding: 0.75rem 1.5rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #475569;
+            border-radius: 10px;
             color: #cbd5e1;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.9rem;
-            transition: background 0.2s;
+            gap: 0.75rem;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .ehr-btn:hover {
-            background: #475569;
+        .research-btn:hover {
+            background: rgba(51, 65, 85, 0.8);
+            border-color: #6366f1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
         }
         
-        .ehr-btn.primary {
-            background: #3b82f6;
+        .research-btn.primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border: none;
             color: white;
         }
         
-        .ehr-btn.primary:hover {
-            background: #2563eb;
+        .lab-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
         }
         
-        /* Main clinical workspace */
-        .clinical-workspace {
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        /* Main Research Dashboard */
+        .research-dashboard {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            height: calc(100vh - 70px);
+            grid-template-columns: 300px 1fr 350px;
+            height: calc(100vh - 90px);
             gap: 0;
         }
         
-        /* Left: EHR Interface */
-        .ehr-panel {
-            background: #1e293b;
-            border-right: 1px solid #334155;
+        /* Left: Discovery Panel */
+        .discovery-panel {
+            background: rgba(15, 23, 42, 0.8);
+            border-right: 1px solid #1e293b;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
         
-        .ehr-tabs {
+        .discovery-tabs {
             display: flex;
-            background: #0f172a;
-            border-bottom: 1px solid #334155;
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid #1e293b;
         }
         
-        .ehr-tab {
-            padding: 1rem 1.5rem;
+        .discovery-tab {
+            flex: 1;
+            padding: 1rem;
             background: transparent;
             border: none;
             color: #94a3b8;
@@ -138,465 +157,381 @@
             transition: all 0.2s;
         }
         
-        .ehr-tab.active {
-            color: #3b82f6;
-            border-bottom-color: #3b82f6;
-            background: rgba(59, 130, 246, 0.1);
+        .discovery-tab.active {
+            color: #818cf8;
+            border-bottom-color: #818cf8;
+            background: rgba(99, 102, 241, 0.1);
         }
         
-        .ehr-content {
+        .discovery-content {
             flex: 1;
             overflow-y: auto;
             padding: 1.5rem;
         }
         
-        /* EHR Sections */
-        .ehr-section {
-            background: rgba(15, 23, 42, 0.5);
+        /* Algorithm Discovery */
+        .algorithm-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
             border-radius: 12px;
-            margin-bottom: 1.5rem;
-            border: 1px solid #334155;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
         }
         
-        .section-header {
-            padding: 1rem 1.5rem;
-            background: rgba(30, 41, 59, 0.8);
-            border-bottom: 1px solid #334155;
+        .algorithm-card:hover {
+            border-color: #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .algorithm-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            border-radius: 12px 12px 0 0;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
         }
         
-        .section-header h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #e2e8f0;
+        .algorithm-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
         }
         
-        .section-content {
-            padding: 1.5rem;
+        .algorithm-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.85rem;
         }
         
-        /* Vital signs grid */
-        .vitals-grid {
+        .stat-badge {
+            padding: 0.25rem 0.75rem;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 20px;
+            color: #cbd5e1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Biomarker Matrix */
+        .matrix-container {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        
+        .matrix-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 1rem;
         }
         
-        .vital-item {
-            text-align: center;
-            padding: 1rem;
+        .biomarker-cell {
             background: rgba(30, 41, 59, 0.8);
             border-radius: 8px;
+            padding: 1rem;
             border: 1px solid #475569;
+            transition: all 0.2s;
+            cursor: pointer;
         }
         
-        .vital-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #3b82f6;
-            margin-bottom: 0.25rem;
+        .biomarker-cell:hover {
+            border-color: #6366f1;
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
         }
         
-        .vital-label {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .biomarker-level {
+            width: 100%;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            margin: 0.5rem 0;
+            overflow: hidden;
         }
         
-        .vital-trend {
-            font-size: 0.75rem;
-            color: #10b981;
-            margin-top: 0.25rem;
+        .biomarker-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 3px;
         }
         
-        .vital-trend.down {
-            color: #ef4444;
+        /* Center: 3D Network Visualization */
+        .visualization-panel {
+            background: linear-gradient(135deg, #0a0e17 0%, #0f172a 100%);
+            position: relative;
+            overflow: hidden;
         }
         
-        /* Medications list */
-        .med-list {
-            list-style: none;
+        #network-3d {
+            width: 100%;
+            height: 100%;
         }
         
-        .med-item {
+        .visualization-controls {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+        
+        .viz-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #cbd5e1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .viz-btn:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: #6366f1;
+            transform: scale(1.05);
+        }
+        
+        .viz-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white;
+        }
+        
+        .data-overlay {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #312e81;
+            border-radius: 12px;
+            padding: 1.25rem;
+            width: 300px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .data-stream {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 1rem;
+        }
+        
+        .stream-item {
             padding: 0.75rem;
-            background: rgba(30, 41, 59, 0.8);
+            background: rgba(30, 41, 59, 0.6);
             margin-bottom: 0.5rem;
             border-radius: 8px;
-            border-left: 4px solid #3b82f6;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-left: 3px solid #6366f1;
+            font-size: 0.9rem;
         }
         
-        .med-info h4 {
-            font-size: 0.95rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        .med-info p {
-            font-size: 0.8rem;
-            color: #94a3b8;
-        }
-        
-        .med-status {
-            padding: 0.25rem 0.75rem;
-            background: rgba(34, 197, 94, 0.2);
-            color: #86efac;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        /* Lab results */
-        .lab-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .lab-table th {
-            text-align: left;
-            padding: 0.75rem;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #94a3b8;
-            border-bottom: 1px solid #334155;
-        }
-        
-        .lab-table td {
-            padding: 0.75rem;
-            border-bottom: 1px solid #334155;
-        }
-        
-        .lab-value {
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-        
-        .lab-flag {
-            padding: 0.1rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-        }
-        
-        .lab-flag.normal {
-            background: rgba(34, 197, 94, 0.2);
-            color: #86efac;
-        }
-        
-        /* Right: TRAITMAP Interface */
-        .traitmap-panel {
-            background: #0f172a;
+        /* Right: Analysis Panel */
+        .analysis-panel {
+            background: rgba(15, 23, 42, 0.8);
+            border-left: 1px solid #1e293b;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
         
-        .traitmap-header {
-            padding: 1rem 1.5rem;
+        .analysis-header {
+            padding: 1.5rem;
             background: rgba(30, 41, 59, 0.8);
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid #1e293b;
+        }
+        
+        .analysis-header h2 {
+            font-size: 1.3rem;
+            color: #e2e8f0;
+            margin-bottom: 0.5rem;
+        }
+        
+        .analysis-subtitle {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .analysis-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        /* Phenotype Cluster */
+        .phenotype-cluster {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .cluster-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-        }
-        
-        .traitmap-title h2 {
-            font-size: 1.25rem;
-            color: #e2e8f0;
-            background: linear-gradient(135deg, #60a5fa, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        
-        .traitmap-controls {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .traitmap-btn {
-            padding: 0.5rem 1rem;
-            background: #334155;
-            border: none;
-            border-radius: 6px;
-            color: #cbd5e1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-        
-        .traitmap-btn:hover {
-            background: #475569;
-        }
-        
-        .traitmap-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        .traitmap-content {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            overflow: hidden;
-        }
-        
-        /* Trait sidebar */
-        .trait-sidebar {
-            background: rgba(30, 41, 59, 0.8);
-            border-right: 1px solid #334155;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-        
-        .patient-traits {
-            margin-bottom: 2rem;
-        }
-        
-        .patient-traits h4 {
-            font-size: 0.9rem;
-            color: #94a3b8;
             margin-bottom: 1rem;
+        }
+        
+        .cluster-badge {
+            padding: 0.25rem 0.75rem;
+            background: rgba(99, 102, 241, 0.2);
+            color: #a5b4fc;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .cluster-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .metric-box {
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 8px;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #818cf8;
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
-        .active-trait-list {
-            list-style: none;
+        /* Prediction Engine */
+        .prediction-engine {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
         }
         
-        .active-trait {
-            padding: 0.75rem;
-            background: rgba(59, 130, 246, 0.1);
+        .prediction-slider {
+            margin: 1.5rem 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .slider-track {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .slider-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 4px;
+            width: 60%;
+        }
+        
+        .prediction-output {
+            background: rgba(15, 23, 42, 0.8);
             border-radius: 8px;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 1rem;
+            margin-top: 1rem;
+            border: 1px solid #312e81;
+        }
+        
+        /* Drug Discovery Panel */
+        .drug-discovery {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .molecule-preview {
+            width: 100%;
+            height: 150px;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .property-item {
+            padding: 0.75rem;
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 8px;
+        }
+        
+        /* Simulation Mode */
+        .simulation-mode {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #312e81;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+        }
+        
+        .simulation-controls {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
         
-        .active-trait-icon {
-            width: 32px;
-            height: 32px;
-            background: #3b82f6;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-        }
-        
-        .active-trait-info h5 {
-            font-size: 0.9rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        .active-trait-info p {
-            font-size: 0.75rem;
-            color: #94a3b8;
-        }
-        
-        /* Network container */
-        .network-container {
-            position: relative;
-            background: rgba(15, 23, 42, 0.9);
-            overflow: hidden;
-        }
-        
-        #network {
-            width: 100%;
-            height: 100%;
-        }
-        
-        .network-legend {
-            position: absolute;
-            top: 1rem;
-            left: 1rem;
-            background: rgba(15, 23, 42, 0.9);
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            backdrop-filter: blur(5px);
-        }
-        
-        .legend-title {
-            font-size: 0.85rem;
-            color: #94a3b8;
-            margin-bottom: 0.5rem;
-        }
-        
-        .legend-items {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.8rem;
-        }
-        
-        .legend-color {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        
-        .trait-stats {
-            position: absolute;
-            bottom: 1rem;
-            right: 1rem;
-            background: rgba(15, 23, 42, 0.9);
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            backdrop-filter: blur(5px);
-        }
-        
-        .stat-item {
-            margin-bottom: 0.5rem;
-        }
-        
-        .stat-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
-        }
-        
-        .stat-value {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #3b82f6;
-        }
-        
-        /* Clinical insights panel */
-        .insights-panel {
-            position: absolute;
-            bottom: 1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%;
-            max-width: 600px;
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid #3b82f6;
-            border-radius: 12px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            z-index: 100;
-            display: none;
-        }
-        
-        .insights-header {
-            padding: 1rem 1.5rem;
-            background: rgba(59, 130, 246, 0.1);
-            border-bottom: 1px solid #334155;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-radius: 12px 12px 0 0;
-        }
-        
-        .insights-header h3 {
-            font-size: 1rem;
-            color: #e2e8f0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .insights-content {
-            padding: 1.5rem;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .insight-item {
+        .sim-btn {
+            width: 36px;
+            height: 36px;
             background: rgba(30, 41, 59, 0.8);
-            padding: 1rem;
-            margin-bottom: 1rem;
-            border-radius: 8px;
-            border-left: 4px solid #3b82f6;
-        }
-        
-        .insight-severity {
-            display: inline-block;
-            padding: 0.2rem 0.5rem;
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-        
-        .insight-severity.low {
-            background: rgba(34, 197, 94, 0.2);
-            color: #86efac;
-        }
-        
-        .insight-severity.medium {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fcd34d;
-        }
-        
-        .insight-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
-        }
-        
-        .insight-btn {
-            padding: 0.4rem 0.75rem;
-            background: #334155;
-            border: none;
-            border-radius: 4px;
-            color: #cbd5e1;
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .insight-btn:hover {
-            background: #475569;
-        }
-        
-        .insight-btn.primary {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        .insight-btn.primary:hover {
-            background: #2563eb;
-        }
-        
-        /* Action buttons */
-        .action-buttons {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .action-btn {
-            width: 40px;
-            height: 40px;
-            background: #334155;
-            border: none;
+            border: 1px solid #475569;
             border-radius: 8px;
             color: #cbd5e1;
             cursor: pointer;
@@ -606,295 +541,362 @@
             transition: all 0.2s;
         }
         
-        .action-btn:hover {
-            background: #475569;
-            transform: scale(1.05);
+        .sim-btn:hover {
+            background: rgba(51, 65, 85, 0.8);
+            border-color: #6366f1;
         }
         
-        .action-btn.active {
-            background: #3b82f6;
+        .sim-btn.primary {
+            background: #6366f1;
+            border-color: #6366f1;
             color: white;
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
         }
         
-        /* Modal for adding orders */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
+        .simulation-progress {
+            flex: 1;
+        }
+        
+        .progress-bar {
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            display: none;
-        }
-        
-        .modal-content {
-            background: #1e293b;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 12px;
-            border: 1px solid #334155;
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
             overflow: hidden;
         }
         
-        .modal-header {
-            padding: 1.5rem;
-            background: rgba(59, 130, 246, 0.1);
-            border-bottom: 1px solid #334155;
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            width: 45%;
+            border-radius: 3px;
         }
         
-        .modal-body {
-            padding: 1.5rem;
-            max-height: 400px;
-            overflow-y: auto;
+        /* Animations */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
         
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            background: rgba(15, 23, 42, 0.5);
-            border-top: 1px solid #334155;
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
+        @keyframes glow {
+            0% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.5); }
+        }
+        
+        .glowing {
+            animation: glow 2s infinite;
         }
         
         /* Responsive */
-        @media (max-width: 1200px) {
-            .clinical-workspace {
-                grid-template-columns: 1fr;
+        @media (max-width: 1400px) {
+            .research-dashboard {
+                grid-template-columns: 280px 1fr;
             }
             
-            .ehr-panel {
+            .analysis-panel {
                 display: none;
             }
         }
         
-        @media (max-width: 768px) {
-            .traitmap-content {
+        @media (max-width: 1024px) {
+            .research-dashboard {
                 grid-template-columns: 1fr;
             }
             
-            .trait-sidebar {
+            .discovery-panel {
                 display: none;
             }
         }
     </style>
 </head>
 <body>
-    <!-- EHR Header -->
-    <div class="ehr-header">
-        <div class="patient-info">
-            <div class="patient-badge">
-                <div class="patient-avatar">
-                    <i class="fas fa-user"></i>
+    <!-- Research Lab Header -->
+    <div class="lab-header">
+        <div class="header-grid">
+            <div class="platform-brand">
+                <div class="platform-icon glowing">
+                    <i class="fas fa-atom"></i>
                 </div>
-                <div class="patient-details">
-                    <h3>John Smith (62M)</h3>
-                    <p>MRN: 789456 | DOB: 05/12/1962 | Last Visit: 03/15/2024</p>
+                <div class="platform-name">
+                    <h1>TRAITMAP v3.1</h1>
+                    <div class="tagline">Advanced Respiratory Phenotyping & Discovery Platform</div>
                 </div>
             </div>
-            <div style="color: #94a3b8; font-size: 0.9rem;">
-                <i class="fas fa-stethoscope"></i> Severe Asthma with COPD Overlap
+            
+            <div class="research-actions">
+                <button class="research-btn">
+                    <i class="fas fa-database"></i>
+                    <span>Load Cohort</span>
+                </button>
+                <button class="research-btn">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Run Analysis</span>
+                </button>
+                <button class="research-btn primary">
+                    <i class="fas fa-rocket"></i>
+                    <span>Start Simulation</span>
+                </button>
+                <button class="research-btn">
+                    <i class="fas fa-chart-network"></i>
+                    <span>Export Results</span>
+                </button>
             </div>
-        </div>
-        <div class="ehr-controls">
-            <button class="ehr-btn">
-                <i class="fas fa-print"></i> Print
-            </button>
-            <button class="ehr-btn">
-                <i class="fas fa-share-alt"></i> Share
-            </button>
-            <button class="ehr-btn primary">
-                <i class="fas fa-plus"></i> New Note
-            </button>
+            
+            <div class="lab-status">
+                <div class="status-indicator"></div>
+                <span>AI Engine: <strong>Active</strong></span>
+                <span>Data Stream: <strong>Live</strong></span>
+            </div>
         </div>
     </div>
     
-    <!-- Clinical Workspace -->
-    <div class="clinical-workspace">
-        <!-- Left: EHR Interface -->
-        <div class="ehr-panel">
-            <div class="ehr-tabs">
-                <button class="ehr-tab active" data-tab="overview">Overview</button>
-                <button class="ehr-tab" data-tab="medications">Medications</button>
-                <button class="ehr-tab" data-tab="labs">Labs</button>
-                <button class="ehr-tab" data-tab="imaging">Imaging</button>
-                <button class="ehr-tab" data-tab="notes">Notes</button>
+    <!-- Main Research Dashboard -->
+    <div class="research-dashboard">
+        <!-- Left: Discovery Panel -->
+        <div class="discovery-panel">
+            <div class="discovery-tabs">
+                <button class="discovery-tab active" data-tab="algorithms">
+                    <i class="fas fa-brain"></i> AI Algorithms
+                </button>
+                <button class="discovery-tab" data-tab="biomarkers">
+                    <i class="fas fa-dna"></i> Biomarkers
+                </button>
+                <button class="discovery-tab" data-tab="pathways">
+                    <i class="fas fa-project-diagram"></i> Pathways
+                </button>
             </div>
-            <div class="ehr-content" id="ehrContent">
-                <!-- Overview Tab -->
-                <div class="ehr-section">
-                    <div class="section-header">
-                        <h3>Vital Signs</h3>
-                        <span style="color: #94a3b8; font-size: 0.85rem;">Today, 10:45 AM</span>
-                    </div>
-                    <div class="section-content">
-                        <div class="vitals-grid">
-                            <div class="vital-item">
-                                <div class="vital-value">98.6°F</div>
-                                <div class="vital-label">Temperature</div>
-                                <div class="vital-trend normal">Normal</div>
+            
+            <div class="discovery-content" id="discoveryContent">
+                <!-- AI Algorithms Content -->
+                <div class="algorithm-discovery">
+                    <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
+                        Active Learning Algorithms
+                    </h3>
+                    
+                    <div class="algorithm-card">
+                        <div class="algorithm-header">
+                            <div class="algorithm-icon">
+                                <i class="fas fa-network-wired"></i>
                             </div>
-                            <div class="vital-item">
-                                <div class="vital-value">145/88</div>
-                                <div class="vital-label">Blood Pressure</div>
-                                <div class="vital-trend">+8 systolic</div>
+                            <div>
+                                <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Graph Neural Network</h4>
+                                <p style="color: #94a3b8; font-size: 0.85rem;">Trait relationship prediction</p>
                             </div>
-                            <div class="vital-item">
-                                <div class="vital-value">92%</div>
-                                <div class="vital-label">SpO₂</div>
-                                <div class="vital-trend">Room air</div>
+                        </div>
+                        <div class="algorithm-stats">
+                            <div class="stat-badge">
+                                <i class="fas fa-bolt" style="color: #fbbf24;"></i>
+                                <span>Accuracy: 94.2%</span>
                             </div>
-                            <div class="vital-item">
-                                <div class="vital-value">22</div>
-                                <div class="vital-label">Respiratory Rate</div>
-                                <div class="vital-trend down">-2 from baseline</div>
-                            </div>
-                            <div class="vital-item">
-                                <div class="vital-value">85</div>
-                                <div class="vital-label">Heart Rate</div>
-                                <div class="vital-trend normal">Normal</div>
-                            </div>
-                            <div class="vital-item">
-                                <div class="vital-value">92%</div>
-                                <div class="vital-label">FEV₁ Predicted</div>
-                                <div class="vital-trend down">↓ 12% from 2023</div>
+                            <div class="stat-badge">
+                                <i class="fas fa-clock" style="color: #60a5fa;"></i>
+                                <span>Last trained: 2h ago</span>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="ehr-section">
-                    <div class="section-header">
-                        <h3>Active Problems</h3>
-                        <button class="ehr-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                            <i class="fas fa-plus"></i> Add
-                        </button>
+                    
+                    <div class="algorithm-card">
+                        <div class="algorithm-header">
+                            <div class="algorithm-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Temporal Transformer</h4>
+                                <p style="color: #94a3b8; font-size: 0.85rem;">Disease progression modeling</p>
+                            </div>
+                        </div>
+                        <div class="algorithm-stats">
+                            <div class="stat-badge">
+                                <i class="fas fa-bolt" style="color: #fbbf24;"></i>
+                                <span>R²: 0.89</span>
+                            </div>
+                            <div class="stat-badge">
+                                <i class="fas fa-database" style="color: #8b5cf6;"></i>
+                                <span>45K sequences</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="section-content">
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            <span style="padding: 0.4rem 0.75rem; background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-radius: 20px; font-size: 0.85rem;">
-                                Severe Persistent Asthma
-                            </span>
-                            <span style="padding: 0.4rem 0.75rem; background: rgba(34, 197, 94, 0.2); color: #86efac; border-radius: 20px; font-size: 0.85rem;">
-                                COPD GOLD Stage 2
-                            </span>
-                            <span style="padding: 0.4rem 0.75rem; background: rgba(245, 158, 11, 0.2); color: #fcd34d; border-radius: 20px; font-size: 0.85rem;">
-                                Allergic Rhinitis
-                            </span>
-                            <span style="padding: 0.4rem 0.75rem; background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-radius: 20px; font-size: 0.85rem;">
-                                GERD
-                            </span>
+                    
+                    <div class="algorithm-card">
+                        <div class="algorithm-header">
+                            <div class="algorithm-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>
+                                <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Generative Adversarial Net</h4>
+                                <p style="color: #94a3b8; font-size: 0.85rem;">Synthetic phenotype generation</p>
+                            </div>
+                        </div>
+                        <div class="algorithm-stats">
+                            <div class="stat-badge">
+                                <i class="fas fa-sync-alt" style="color: #60a5fa;"></i>
+                                <span>Cycle: 1.2M</span>
+                            </div>
+                            <div class="stat-badge">
+                                <i class="fas fa-shield-alt" style="color: #10b981;"></i>
+                                <span>FID: 12.4</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Right: TRAITMAP Interface -->
-        <div class="traitmap-panel">
-            <div class="traitmap-header">
-                <div class="traitmap-title">
-                    <h2>TRAITMAP: Patient-Specific Trait Network</h2>
-                </div>
-                <div class="traitmap-controls">
-                    <button class="traitmap-btn active" data-view="network">
-                        <i class="fas fa-project-diagram"></i> Network
-                    </button>
-                    <button class="traitmap-btn" data-view="timeline">
-                        <i class="fas fa-chart-line"></i> Timeline
-                    </button>
-                    <button class="traitmap-btn" id="exportBtn">
-                        <i class="fas fa-download"></i> Export
-                    </button>
+        <!-- Center: Advanced Visualization -->
+        <div class="visualization-panel">
+            <div class="visualization-controls">
+                <button class="viz-btn active" title="3D View">
+                    <i class="fas fa-cube"></i>
+                </button>
+                <button class="viz-btn" title="Force Graph">
+                    <i class="fas fa-project-diagram"></i>
+                </button>
+                <button class="viz-btn" title="Heat Map">
+                    <i class="fas fa-fire"></i>
+                </button>
+                <button class="viz-btn" title="Timeline">
+                    <i class="fas fa-stream"></i>
+                </button>
+                <button class="viz-btn" title="Reset View">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <div class="data-overlay">
+                <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.5rem;">
+                    <i class="fas fa-satellite-dish"></i> Live Data Stream
+                </h3>
+                <div class="data-stream" id="dataStream">
+                    <!-- Data stream items will be added here -->
                 </div>
             </div>
             
-            <div class="traitmap-content">
-                <!-- Trait Sidebar -->
-                <div class="trait-sidebar">
-                    <div class="patient-traits">
-                        <h4>Active Patient Traits</h4>
-                        <ul class="active-trait-list" id="activeTraits">
-                            <!-- Will be populated by JS -->
-                        </ul>
+            <svg id="network-3d"></svg>
+        </div>
+        
+        <!-- Right: Analysis Panel -->
+        <div class="analysis-panel">
+            <div class="analysis-header">
+                <h2>Phenotype Analysis</h2>
+                <div class="analysis-subtitle">
+                    Cluster #7 - Eosinophilic Predominant
+                </div>
+            </div>
+            
+            <div class="analysis-content">
+                <div class="phenotype-cluster">
+                    <div class="cluster-header">
+                        <h3 style="color: #e2e8f0; font-size: 1.1rem;">
+                            <i class="fas fa-users"></i> Subphenotype Characteristics
+                        </h3>
+                        <div class="cluster-badge">N=428</div>
                     </div>
                     
-                    <div class="patient-traits">
-                        <h4>Recommended Assessments</h4>
-                        <div style="background: rgba(30, 41, 59, 0.8); padding: 1rem; border-radius: 8px;">
-                            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                                <div style="width: 32px; height: 32px; background: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-vial" style="color: white; font-size: 0.9rem;"></i>
-                                </div>
-                                <div>
-                                    <h5 style="font-size: 0.9rem; margin-bottom: 0.25rem;">Blood Eosinophil Count</h5>
-                                    <p style="font-size: 0.75rem; color: #94a3b8;">Due: Today</p>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <div style="width: 32px; height: 32px; background: #8b5cf6; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-x-ray" style="color: white; font-size: 0.9rem;"></i>
-                                </div>
-                                <div>
-                                    <h5 style="font-size: 0.9rem; margin-bottom: 0.25rem;">Chest HRCT</h5>
-                                    <p style="font-size: 0.75rem; color: #94a3b8;">Due: Next month</p>
-                                </div>
-                            </div>
+                    <div class="cluster-metrics">
+                        <div class="metric-box">
+                            <div class="metric-value">3.2×</div>
+                            <div class="metric-label">Exacerbation Risk</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-value">64%</div>
+                            <div class="metric-label">Biologic Response</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-value">2.8</div>
+                            <div class="metric-label">QoL Impact</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: #94a3b8; font-size: 0.9rem;">Key Biomarkers</span>
+                            <span style="color: #818cf8; font-size: 0.85rem;">↑ 42% from baseline</span>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <span style="padding: 0.25rem 0.75rem; background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-radius: 20px; font-size: 0.8rem;">
+                                IL-5
+                            </span>
+                            <span style="padding: 0.25rem 0.75rem; background: rgba(34, 197, 94, 0.2); color: #86efac; border-radius: 20px; font-size: 0.8rem;">
+                                Eotaxin-3
+                            </span>
+                            <span style="padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-radius: 20px; font-size: 0.8rem;">
+                                Periostin
+                            </span>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Network Visualization -->
-                <div class="network-container">
-                    <div class="network-legend">
-                        <div class="legend-title">Network Legend</div>
-                        <div class="legend-items">
-                            <div class="legend-item">
-                                <div class="legend-color" style="background: #3b82f6;"></div>
-                                <span>Patient Traits</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color" style="background: #10b981;"></div>
-                                <span>Assessment Methods</span>
-                            </div>
-                            <div class="legend-item">
-                                <div class="legend-color" style="background: #8b5cf6;"></div>
-                                <span>Treatment Options</span>
-                            </div>
+                <div class="prediction-engine">
+                    <h3 style="color: #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem;">
+                        <i class="fas fa-crystal-ball"></i> Treatment Response Predictor
+                    </h3>
+                    
+                    <div class="prediction-slider">
+                        <div class="slider-label">
+                            <span>IL-5 Inhibition Sensitivity</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="slider-track">
+                            <div class="slider-fill" id="sensitivitySlider"></div>
                         </div>
                     </div>
                     
-                    <div class="action-buttons">
-                        <button class="action-btn" id="insightsBtn" title="Clinical Insights">
-                            <i class="fas fa-lightbulb"></i>
-                        </button>
-                        <button class="action-btn" id="filterBtn" title="Filter View">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                        <button class="action-btn" id="refreshBtn" title="Refresh Network">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                    <div class="prediction-slider">
+                        <div class="slider-label">
+                            <span>Steroid Resistance Index</span>
+                            <span>32%</span>
+                        </div>
+                        <div class="slider-track">
+                            <div class="slider-fill" style="width: 32%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
+                        </div>
                     </div>
                     
-                    <svg id="network"></svg>
+                    <div class="prediction-output">
+                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">
+                            Recommended Intervention:
+                        </div>
+                        <div style="color: #e2e8f0; font-weight: 600;">
+                            <i class="fas fa-prescription-bottle-alt" style="color: #818cf8;"></i>
+                            Mepolizumab + ICS optimization
+                        </div>
+                        <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem;">
+                            Predicted exacerbation reduction: 68% (95% CI: 52-81%)
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="drug-discovery">
+                    <h3 style="color: #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem;">
+                        <i class="fas fa-flask"></i> Novel Target Discovery
+                    </h3>
                     
-                    <div class="trait-stats">
-                        <div class="stat-item">
-                            <div class="stat-label">Active Traits</div>
-                            <div class="stat-value" id="activeTraitsCount">6</div>
+                    <div class="molecule-preview">
+                        <div style="text-align: center;">
+                            <div style="font-size: 2rem; color: #818cf8; margin-bottom: 0.5rem;">
+                                <i class="fas fa-atom"></i>
+                            </div>
+                            <div>TSLP Receptor Antagonist</div>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">Binding affinity: 2.4 nM</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-label">Treatment Options</div>
-                            <div class="stat-value" id="treatmentOptions">14</div>
+                    </div>
+                    
+                    <div class="property-grid">
+                        <div class="property-item">
+                            <div style="color: #94a3b8; font-size: 0.8rem;">IC₅₀</div>
+                            <div style="color: #e2e8f0; font-weight: 600;">8.2 nM</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-label">AI Insights</div>
-                            <div class="stat-value" id="aiInsights">3</div>
+                        <div class="property-item">
+                            <div style="color: #94a3b8; font-size: 0.8rem;">Selectivity</div>
+                            <div style="color: #e2e8f0; font-weight: 600;">124×</div>
+                        </div>
+                        <div class="property-item">
+                            <div style="color: #94a3b8; font-size: 0.8rem;">LogP</div>
+                            <div style="color: #e2e8f0; font-weight: 600;">2.1</div>
+                        </div>
+                        <div class="property-item">
+                            <div style="color: #94a3b8; font-size: 0.8rem;">T₁/₂</div>
+                            <div style="color: #e2e8f0; font-weight: 600;">18h</div>
                         </div>
                     </div>
                 </div>
@@ -902,321 +904,291 @@
         </div>
     </div>
     
-    <!-- Clinical Insights Panel -->
-    <div class="insights-panel" id="insightsPanel">
-        <div class="insights-header">
-            <h3><i class="fas fa-robot"></i> AI Clinical Insights</h3>
-            <button class="ehr-btn" style="padding: 0.25rem 0.5rem;" onclick="hideInsights()">
-                <i class="fas fa-times"></i>
+    <!-- Simulation Mode Controls -->
+    <div class="simulation-mode">
+        <div style="color: #e2e8f0; font-weight: 600;">
+            <i class="fas fa-play-circle" style="color: #10b981;"></i>
+            Simulation Mode Active
+        </div>
+        
+        <div class="simulation-controls">
+            <button class="sim-btn">
+                <i class="fas fa-step-backward"></i>
+            </button>
+            <button class="sim-btn primary">
+                <i class="fas fa-pause"></i>
+            </button>
+            <button class="sim-btn">
+                <i class="fas fa-step-forward"></i>
+            </button>
+            <button class="sim-btn">
+                <i class="fas fa-redo"></i>
             </button>
         </div>
-        <div class="insights-content">
-            <div class="insight-item">
-                <div class="insight-severity high">High Priority</div>
-                <p><strong>Eosinophilic Inflammation Detected</strong></p>
-                <p>Patient shows persistent eosinophilia (>450 cells/μL) despite ICS therapy. Consider escalating to biologic therapy (anti-IL-5).</p>
-                <div class="insight-actions">
-                    <button class="insight-btn primary" onclick="orderBiologic()">
-                        <i class="fas fa-prescription"></i> Order Biologic
-                    </button>
-                    <button class="insight-btn" onclick="orderLabs()">
-                        <i class="fas fa-vial"></i> Order Labs
-                    </button>
-                </div>
+        
+        <div class="simulation-progress">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span style="color: #94a3b8; font-size: 0.85rem;">Epoch 42/100</span>
+                <span style="color: #818cf8; font-size: 0.85rem;">Loss: 0.042</span>
             </div>
-            <div class="insight-item">
-                <div class="insight-severity medium">Medium Priority</div>
-                <p><strong>SABA Overuse Pattern</strong></p>
-                <p>Patient using SABA 4×/week. Controller adherence may be suboptimal. Consider smart inhaler monitoring.</p>
-                <div class="insight-actions">
-                    <button class="insight-btn" onclick="orderSmartInhaler()">
-                        <i class="fas fa-inhaler"></i> Smart Inhaler
-                    </button>
-                    <button class="insight-btn" onclick="showAdherenceEducation()">
-                        <i class="fas fa-graduation-cap"></i> Education
-                    </button>
-                </div>
-            </div>
-            <div class="insight-item">
-                <div class="insight-severity low">Low Priority</div>
-                <p><strong>Possible Early Bronchiectasis</strong></p>
-                <p>Minor bronchiectatic changes noted on last CT. Consider follow-up HRCT in 6 months.</p>
-                <div class="insight-actions">
-                    <button class="insight-btn" onclick="orderCT()">
-                        <i class="fas fa-calendar-plus"></i> Schedule CT
-                    </button>
-                </div>
+            <div class="progress-bar">
+                <div class="progress-fill"></div>
             </div>
         </div>
-    </div>
-    
-    <!-- Order Modal -->
-    <div class="modal" id="orderModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 style="color: #e2e8f0;">Order New Medication</h3>
-            </div>
-            <div class="modal-body">
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem;">Medication</label>
-                    <select style="width: 100%; padding: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 6px; color: #e2e8f0;">
-                        <option>Mepolizumab (Nucala) 100mg SC monthly</option>
-                        <option>Benralizumab (Fasenra) 30mg SC every 8 weeks</option>
-                        <option>Dupilumab (Dupixent) 200-300mg SC every 2 weeks</option>
-                        <option>Omalizumab (Xolair) 75-600mg SC every 2-4 weeks</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem;">Frequency</label>
-                    <input type="text" value="Monthly" style="width: 100%; padding: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 6px; color: #e2e8f0;">
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: block; color: #94a3b8; margin-bottom: 0.5rem;">Indication</label>
-                    <textarea rows="3" style="width: 100%; padding: 0.75rem; background: #334155; border: 1px solid #475569; border-radius: 6px; color: #e2e8f0;">Severe eosinophilic asthma with persistent eosinophilia despite high-dose ICS/LABA therapy.</textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="ehr-btn" onclick="closeModal()">Cancel</button>
-                <button class="ehr-btn primary" onclick="submitOrder()">Submit Order</button>
-            </div>
+        
+        <div style="color: #94a3b8; font-size: 0.85rem;">
+            <i class="fas fa-microchip"></i>
+            4.2 TFLOPS | 16GB VRAM
         </div>
     </div>
 
     <script>
-        // Patient-specific trait data
-        const patientTraits = {
-            active: [
-                {
-                    id: "eosinophilic_inflammation",
-                    name: "Eosinophilic Inflammation",
-                    description: "Persistent eosinophilia >450 cells/μL",
-                    severity: "high",
-                    lastValue: "520 cells/μL",
-                    trend: "increasing"
+        // Advanced Research Data
+        const researchData = {
+            cohorts: [
+                { id: 1, name: "Severe Asthma Biomarker Study", n: 1250, status: "active" },
+                { id: 2, name: "COPD Progression Multi-omics", n: 842, status: "complete" },
+                { id: 3, name: "Bronchiectasis Microbiome", n: 312, status: "active" }
+            ],
+            algorithms: [
+                { 
+                    name: "Graph Neural Network", 
+                    accuracy: 94.2, 
+                    training: "2h ago",
+                    params: "4.2M",
+                    task: "Trait relationship prediction"
                 },
-                {
-                    id: "airflow_limitation",
-                    name: "Airflow Limitation",
-                    description: "FEV₁ 62% predicted, BD response 15%",
-                    severity: "medium",
-                    lastValue: "FEV₁ 62%",
-                    trend: "stable"
+                { 
+                    name: "Temporal Transformer", 
+                    accuracy: 89.0, 
+                    training: "1d ago",
+                    params: "12.8M",
+                    task: "Disease progression modeling"
                 },
-                {
-                    id: "saba_overuse",
-                    name: "SABA Overuse",
-                    description: "Using SABA 4×/week",
-                    severity: "medium",
-                    lastValue: "4 uses/week",
-                    trend: "increasing"
-                },
-                {
-                    id: "allergic_inflammation",
-                    name: "Allergic Inflammation",
-                    description: "Multiple aeroallergen sensitization",
-                    severity: "low",
-                    lastValue: "IgE 350 IU/mL",
-                    trend: "stable"
-                },
-                {
-                    id: "obesity",
-                    name: "Obesity",
-                    description: "BMI 34.2, affecting mechanics",
-                    severity: "medium",
-                    lastValue: "BMI 34.2",
-                    trend: "stable"
-                },
-                {
-                    id: "mucus_hypersecretion",
-                    name: "Mucus Hypersecretion",
-                    description: "Chronic productive cough",
-                    severity: "low",
-                    lastValue: "Moderate sputum",
-                    trend: "stable"
+                { 
+                    name: "Generative Adversarial Net", 
+                    accuracy: 92.1, 
+                    training: "3h ago",
+                    params: "8.4M",
+                    task: "Synthetic phenotype generation"
                 }
             ],
-            potential: [
+            biomarkers: [
+                { name: "IL-5", level: 85, type: "cytokine", trend: "increasing" },
+                { name: "Eotaxin-3", level: 72, type: "chemokine", trend: "stable" },
+                { name: "Periostin", level: 68, type: "matrix", trend: "increasing" },
+                { name: "FeNO", level: 91, type: "clinical", trend: "increasing" },
+                { name: "Blood Eosinophils", level: 88, type: "cellular", trend: "increasing" },
+                { name: "Sputum Neutrophils", level: 32, type: "cellular", trend: "decreasing" }
+            ],
+            phenotypes: [
                 {
-                    id: "bronchiectasis_radio",
-                    name: "Bronchiectasis",
-                    description: "Possible early changes on CT",
-                    risk: "moderate"
+                    id: 7,
+                    name: "Eosinophilic Predominant",
+                    size: 428,
+                    risk: 3.2,
+                    response: 64,
+                    biomarkers: ["IL-5", "Eotaxin-3", "Periostin", "FeNO"],
+                    treatments: ["Anti-IL-5", "Anti-IL-4Rα", "ICS Optimization"]
                 },
                 {
-                    id: "hypercapnia",
-                    name: "Hypercapnia",
-                    description: "Borderline CO₂ retention",
-                    risk: "low"
+                    id: 3,
+                    name: "Neutrophilic Inflammatory",
+                    size: 312,
+                    risk: 2.8,
+                    response: 42,
+                    biomarkers: ["IL-8", "Neutrophil Elastase", "MMP-9"],
+                    treatments: ["Macrolides", "PDE4 Inhibitors"]
+                },
+                {
+                    id: 12,
+                    name: "Mixed Granulocytic",
+                    size: 196,
+                    risk: 3.8,
+                    response: 38,
+                    biomarkers: ["IL-5", "IL-8", "TNF-α"],
+                    treatments: ["Combination Therapy", "Broad Anti-inflammatory"]
                 }
             ]
         };
 
-        // Complete trait database (abbreviated for this demo)
-        const traitDatabase = {
-            eosinophilic_inflammation: {
-                name: "Eosinophilic Airway Inflammation",
-                methods: [
-                    { name: "Blood eosinophil count", device: "Hematology analyzer", frequency: "Monthly" },
-                    { name: "FeNO", device: "NIOX Vero®", frequency: "Every visit" }
-                ],
-                treatments: [
-                    { name: "Mepolizumab (Nucala)", type: "Biologic", level: "Severe" },
-                    { name: "High-dose ICS", type: "Pharmacological", level: "First line" }
-                ],
-                color: "#3b82f6"
-            },
-            airflow_limitation: {
-                name: "Airflow Limitation",
-                methods: [
-                    { name: "Spirometry", device: "Vitalograph", frequency: "Every 3 months" }
-                ],
-                treatments: [
-                    { name: "LABA/LAMA", type: "Bronchodilator", level: "Maintenance" },
-                    { name: "ICS/LABA combo", type: "Combination", level: "Moderate-severe" }
-                ],
-                color: "#ef4444"
-            },
-            saba_overuse: {
-                name: "SABA Overuse",
-                methods: [
-                    { name: "Smart inhaler data", device: "Propeller/Teva", frequency: "Continuous" },
-                    { name: "Prescription records", device: "EHR", frequency: "Monthly" }
-                ],
-                treatments: [
-                    { name: "Controller optimization", type: "Educational", level: "First line" },
-                    { name: "Action plan review", type: "Educational", level: "All" }
-                ],
-                color: "#f59e0b"
-            }
-        };
-
-        // Initialize the application
+        // Initialize the platform
         document.addEventListener('DOMContentLoaded', function() {
-            // Load patient traits
-            loadPatientTraits();
+            // Initialize 3D network visualization
+            initializeAdvancedNetwork();
             
-            // Initialize network
-            initializeNetwork();
-            
-            // Set up EHR tabs
-            setupEHRTabs();
+            // Set up discovery tabs
+            setupDiscoveryTabs();
             
             // Set up event listeners
-            setupEventListeners();
+            setupResearchEventListeners();
             
-            // Show initial insights after a delay
-            setTimeout(showInsights, 1500);
+            // Start data stream simulation
+            simulateDataStream();
+            
+            // Initialize simulation controls
+            initializeSimulation();
+            
+            console.log("TRAITMAP Research Platform v3.1 Initialized");
+            console.log("Advanced phenotyping algorithms active");
+            console.log("Real-time data streaming enabled");
         });
 
-        function loadPatientTraits() {
-            const container = document.getElementById('activeTraits');
-            container.innerHTML = '';
+        function initializeAdvancedNetwork() {
+            const width = document.querySelector('.visualization-panel').clientWidth;
+            const height = document.querySelector('.visualization-panel').clientHeight;
             
-            patientTraits.active.forEach(trait => {
-                const li = document.createElement('li');
-                li.className = 'active-trait';
-                li.setAttribute('data-trait-id', trait.id);
-                
-                let severityColor = '#10b981'; // low
-                if (trait.severity === 'medium') severityColor = '#f59e0b';
-                if (trait.severity === 'high') severityColor = '#ef4444';
-                
-                li.innerHTML = `
-                    <div class="active-trait-icon" style="background: ${severityColor};">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="active-trait-info">
-                        <h5>${trait.name}</h5>
-                        <p>${trait.description}</p>
-                    </div>
-                `;
-                
-                li.addEventListener('click', () => {
-                    highlightTraitInNetwork(trait.id);
-                });
-                
-                container.appendChild(li);
-            });
-            
-            // Update stats
-            document.getElementById('activeTraitsCount').textContent = patientTraits.active.length;
-        }
-
-        function initializeNetwork() {
-            const width = document.querySelector('.network-container').clientWidth;
-            const height = document.querySelector('.network-container').clientHeight;
-            
-            const svg = d3.select('#network')
+            const svg = d3.select('#network-3d')
                 .attr('width', width)
                 .attr('height', height);
                 
             svg.selectAll('*').remove();
             
-            // Create simulation
+            // Create a more advanced network simulation
             const simulation = d3.forceSimulation()
-                .force('link', d3.forceLink().id(d => d.id).distance(120))
-                .force('charge', d3.forceManyBody().strength(-250))
+                .force('link', d3.forceLink().id(d => d.id).distance(150))
+                .force('charge', d3.forceManyBody().strength(-400))
                 .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('collision', d3.forceCollide().radius(35));
+                .force('x', d3.forceX(width / 2).strength(0.1))
+                .force('y', d3.forceY(height / 2).strength(0.1))
+                .force('collision', d3.forceCollide().radius(45))
+                .alphaDecay(0.01);
+            
+            // Create gradient definitions for 3D effect
+            const defs = svg.append('defs');
+            
+            // Create gradient for trait nodes
+            const traitGradient = defs.append('linearGradient')
+                .attr('id', 'trait-gradient')
+                .attr('x1', '0%').attr('y1', '0%')
+                .attr('x2', '100%').attr('y2', '100%');
+                
+            traitGradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', '#6366f1');
+                
+            traitGradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', '#8b5cf6');
+            
+            // Create gradient for biomarker nodes
+            const bioGradient = defs.append('linearGradient')
+                .attr('id', 'bio-gradient')
+                .attr('x1', '0%').attr('y1', '0%')
+                .attr('x2', '100%').attr('y2', '100%');
+                
+            bioGradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', '#10b981');
+                
+            bioGradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', '#34d399');
             
             const g = svg.append('g');
             
-            // Enable zoom
+            // Enable zoom and pan
             const zoom = d3.zoom()
-                .scaleExtent([0.1, 3])
+                .scaleExtent([0.1, 5])
                 .on('zoom', (event) => {
                     g.attr('transform', event.transform);
                 });
                 
             svg.call(zoom);
             
-            // Create network data
-            const { nodes, links } = createPatientNetworkData();
+            // Create complex network data
+            const { nodes, links } = createAdvancedNetworkData();
             
-            // Draw links
+            // Draw links with gradient effect
             const link = g.append('g')
                 .selectAll('line')
                 .data(links)
                 .enter()
                 .append('line')
-                .attr('stroke', d => d.type === 'method' ? '#10b981' : '#8b5cf6')
-                .attr('stroke-width', 2)
-                .attr('stroke-opacity', 0.6);
+                .attr('stroke', d => {
+                    if (d.type === 'biological') return 'url(#trait-gradient)';
+                    if (d.type === 'clinical') return '#f59e0b';
+                    return '#475569';
+                })
+                .attr('stroke-width', d => d.strength || 2)
+                .attr('stroke-opacity', 0.4)
+                .attr('stroke-dasharray', d => d.dashed ? '5,5' : null);
             
-            // Draw nodes
+            // Draw nodes with 3D effect
             const node = g.append('g')
                 .selectAll('circle')
                 .data(nodes)
                 .enter()
                 .append('circle')
-                .attr('r', d => d.type === 'trait' ? 25 : 15)
-                .attr('fill', d => d.color || '#3b82f6')
-                .attr('stroke', '#fff')
-                .attr('stroke-width', 2)
-                .attr('stroke-opacity', 0.8)
+                .attr('r', d => d.size || 25)
+                .attr('fill', d => {
+                    if (d.type === 'trait') return 'url(#trait-gradient)';
+                    if (d.type === 'biomarker') return 'url(#bio-gradient)';
+                    if (d.type === 'treatment') return '#8b5cf6';
+                    return '#475569';
+                })
+                .attr('stroke', '#ffffff')
+                .attr('stroke-width', 1.5)
+                .attr('stroke-opacity', 0.3)
                 .call(d3.drag()
                     .on('start', dragstarted)
                     .on('drag', dragged)
                     .on('end', dragended))
-                .on('click', (event, d) => {
-                    if (d.type === 'trait') {
-                        highlightTraitInNetwork(d.originalId);
-                    }
-                })
-                .append('title')
-                .text(d => d.name);
+                .on('mouseover', handleNodeHover)
+                .on('mouseout', handleNodeLeave)
+                .on('click', handleNodeClick);
             
-            // Add labels for traits
+            // Add glow effect to important nodes
+            node.filter(d => d.important)
+                .attr('filter', 'url(#glow)');
+            
+            // Create glow filter
+            const filter = defs.append('filter')
+                .attr('id', 'glow')
+                .attr('x', '-50%')
+                .attr('y', '-50%')
+                .attr('width', '200%')
+                .attr('height', '200%');
+                
+            filter.append('feGaussianBlur')
+                .attr('stdDeviation', '3.5')
+                .attr('result', 'coloredBlur');
+                
+            const feMerge = filter.append('feMerge');
+            feMerge.append('feMergeNode')
+                .attr('in', 'coloredBlur');
+            feMerge.append('feMergeNode')
+                .attr('in', 'SourceGraphic');
+            
+            // Add labels with halo effect
             const label = g.append('g')
                 .selectAll('text')
-                .data(nodes.filter(d => d.type === 'trait'))
+                .data(nodes.filter(d => d.type === 'trait' || d.type === 'biomarker'))
                 .enter()
                 .append('text')
-                .text(d => d.shortName || d.name)
-                .attr('font-size', '11px')
+                .text(d => d.name)
+                .attr('font-size', d => d.type === 'trait' ? '12px' : '10px')
                 .attr('text-anchor', 'middle')
                 .attr('dy', '0.35em')
-                .attr('fill', '#e2e8f0')
+                .attr('fill', '#ffffff')
+                .attr('font-weight', '600')
+                .attr('paint-order', 'stroke')
+                .attr('stroke', 'rgba(15, 23, 42, 0.8)')
+                .attr('stroke-width', 3)
+                .attr('stroke-linecap', 'round')
+                .attr('stroke-linejoin', 'round');
+            
+            // Add smaller text for treatments
+            const treatmentLabel = g.append('g')
+                .selectAll('text')
+                .data(nodes.filter(d => d.type === 'treatment'))
+                .enter()
+                .append('text')
+                .text(d => d.name)
+                .attr('font-size', '9px')
+                .attr('text-anchor', 'middle')
+                .attr('dy', '0.35em')
+                .attr('fill', '#cbd5e1')
                 .attr('font-weight', '500');
             
             // Update simulation
@@ -1236,7 +1208,11 @@
                     
                 label
                     .attr('x', d => d.x)
-                    .attr('y', d => d.y + 35);
+                    .attr('y', d => d.y + (d.type === 'trait' ? 40 : 30));
+                    
+                treatmentLabel
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y + 25);
             }
             
             function dragstarted(event) {
@@ -1256,109 +1232,129 @@
                 event.subject.fy = null;
             }
             
-            window.networkSimulation = simulation;
+            function handleNodeHover(event, d) {
+                // Highlight connected nodes
+                link.style('stroke-opacity', l => 
+                    (l.source === d || l.target === d) ? 0.8 : 0.1);
+                
+                node.style('opacity', n =>
+                    n === d || links.some(l => 
+                        (l.source === d && l.target === n) || 
+                        (l.target === d && l.source === n)
+                    ) ? 1 : 0.3);
+                    
+                // Show tooltip
+                showNodeTooltip(d, event.pageX, event.pageY);
+            }
+            
+            function handleNodeLeave() {
+                link.style('stroke-opacity', 0.4);
+                node.style('opacity', 1);
+                hideNodeTooltip();
+            }
+            
+            function handleNodeClick(event, d) {
+                if (d.type === 'trait') {
+                    showTraitDetails(d);
+                }
+            }
+            
+            window.researchNetwork = simulation;
         }
 
-        function createPatientNetworkData() {
+        function createAdvancedNetworkData() {
             const nodes = [];
             const links = [];
-            const nodeMap = new Map();
             
-            // Add patient's active traits
-            patientTraits.active.forEach(trait => {
-                const traitData = traitDatabase[trait.id];
-                if (!traitData) return;
-                
-                const nodeId = `trait_${trait.id}`;
-                nodeMap.set(nodeId, {
-                    id: nodeId,
-                    name: traitData.name,
-                    shortName: trait.name,
-                    type: 'trait',
-                    color: traitData.color,
-                    originalId: trait.id
-                });
-                
-                // Add methods
-                traitData.methods.forEach((method, index) => {
-                    const methodId = `method_${trait.id}_${index}`;
-                    nodeMap.set(methodId, {
-                        id: methodId,
-                        name: method.name,
-                        type: 'method',
-                        color: '#10b981'
-                    });
-                    
-                    links.push({
-                        source: nodeId,
-                        target: methodId,
-                        type: 'method'
-                    });
-                });
-                
-                // Add treatments
-                traitData.treatments.forEach((treatment, index) => {
-                    const treatmentId = `treatment_${trait.id}_${index}`;
-                    nodeMap.set(treatmentId, {
-                        id: treatmentId,
-                        name: treatment.name,
-                        type: 'treatment',
-                        color: '#8b5cf6'
-                    });
-                    
-                    links.push({
-                        source: nodeId,
-                        target: treatmentId,
-                        type: 'treatment'
-                    });
-                });
-            });
+            // Core traits
+            const coreTraits = [
+                { id: 'eosinophilic', name: 'Eosinophilic Inflammation', type: 'trait', size: 30, important: true },
+                { id: 'neutrophilic', name: 'Neutrophilic Inflammation', type: 'trait', size: 28 },
+                { id: 'airflow', name: 'Airflow Limitation', type: 'trait', size: 32, important: true },
+                { id: 'remodeling', name: 'Airway Remodeling', type: 'trait', size: 26 },
+                { id: 'hyperreactivity', name: 'Bronchial Hyperreactivity', type: 'trait', size: 24 }
+            ];
             
-            nodes.push(...nodeMap.values());
+            // Biomarkers
+            const biomarkers = [
+                { id: 'il5', name: 'IL-5', type: 'biomarker', size: 18 },
+                { id: 'feNO', name: 'FeNO', type: 'biomarker', size: 16 },
+                { id: 'eos', name: 'Blood Eos', type: 'biomarker', size: 16 },
+                { id: 'periostin', name: 'Periostin', type: 'biomarker', size: 14 },
+                { id: 'il8', name: 'IL-8', type: 'biomarker', size: 14 },
+                { id: 'neut_elastase', name: 'Neutrophil Elastase', type: 'biomarker', size: 14 }
+            ];
             
-            // Add connections between related traits
-            addTraitConnections(nodes, links, nodeMap);
+            // Treatments
+            const treatments = [
+                { id: 'mepolizumab', name: 'Mepolizumab', type: 'treatment', size: 12 },
+                { id: 'dupilumab', name: 'Dupilumab', type: 'treatment', size: 12 },
+                { id: 'roflumilast', name: 'Roflumilast', type: 'treatment', size: 12 },
+                { id: 'ics_laba', name: 'ICS/LABA', type: 'treatment', size: 14 },
+                { id: 'lama', name: 'LAMA', type: 'treatment', size: 12 }
+            ];
+            
+            nodes.push(...coreTraits, ...biomarkers, ...treatments);
+            
+            // Create complex connections
+            // Eosinophilic inflammation connections
+            links.push(
+                { source: 'eosinophilic', target: 'il5', type: 'biological', strength: 3 },
+                { source: 'eosinophilic', target: 'feNO', type: 'clinical', strength: 2 },
+                { source: 'eosinophilic', target: 'eos', type: 'biological', strength: 3 },
+                { source: 'eosinophilic', target: 'periostin', type: 'biological', strength: 2 },
+                { source: 'eosinophilic', target: 'mepolizumab', type: 'therapeutic', strength: 4 },
+                { source: 'eosinophilic', target: 'dupilumab', type: 'therapeutic', strength: 3 }
+            );
+            
+            // Airflow limitation connections
+            links.push(
+                { source: 'airflow', target: 'ics_laba', type: 'therapeutic', strength: 3 },
+                { source: 'airflow', target: 'lama', type: 'therapeutic', strength: 2 },
+                { source: 'airflow', target: 'eosinophilic', type: 'biological', strength: 2, dashed: true },
+                { source: 'airflow', target: 'remodeling', type: 'biological', strength: 2 }
+            );
+            
+            // Neutrophilic inflammation connections
+            links.push(
+                { source: 'neutrophilic', target: 'il8', type: 'biological', strength: 3 },
+                { source: 'neutrophilic', target: 'neut_elastase', type: 'biological', strength: 2 },
+                { source: 'neutrophilic', target: 'roflumilast', type: 'therapeutic', strength: 3 }
+            );
+            
+            // Inter-trait connections
+            links.push(
+                { source: 'eosinophilic', target: 'hyperreactivity', type: 'biological', strength: 1 },
+                { source: 'remodeling', target: 'airflow', type: 'biological', strength: 2 }
+            );
             
             return { nodes, links };
         }
 
-        function addTraitConnections(nodes, links, nodeMap) {
-            // Connect eosinophilic inflammation to allergic inflammation
-            if (nodeMap.has('trait_eosinophilic_inflammation') && nodeMap.has('trait_allergic_inflammation')) {
-                links.push({
-                    source: 'trait_eosinophilic_inflammation',
-                    target: 'trait_allergic_inflammation',
-                    type: 'related',
-                    color: '#f59e0b'
-                });
-            }
-            
-            // Connect airflow limitation to SABA overuse
-            if (nodeMap.has('trait_airflow_limitation') && nodeMap.has('trait_saba_overuse')) {
-                links.push({
-                    source: 'trait_airflow_limitation',
-                    target: 'trait_saba_overuse',
-                    type: 'related',
-                    color: '#ef4444'
-                });
-            }
+        function showNodeTooltip(node, x, y) {
+            // In a full implementation, this would show a detailed tooltip
+            // with node information
+            console.log(`Hovering over: ${node.name} (${node.type})`);
         }
 
-        function highlightTraitInNetwork(traitId) {
-            // In a full implementation, this would highlight the trait node
-            // and its connections in the network
-            console.log(`Highlighting trait: ${traitId}`);
-            
-            // For now, just update the active trait in sidebar
-            document.querySelectorAll('.active-trait').forEach(item => {
-                item.style.background = 'rgba(30, 41, 59, 0.8)';
-            });
-            
-            document.querySelector(`.active-trait[data-trait-id="${traitId}"]`).style.background = 'rgba(59, 130, 246, 0.2)';
+        function hideNodeTooltip() {
+            // Would hide tooltip
         }
 
-        function setupEHRTabs() {
-            const tabs = document.querySelectorAll('.ehr-tab');
+        function showTraitDetails(trait) {
+            // In a full implementation, this would open a detailed modal
+            // or update the analysis panel with trait-specific information
+            console.log(`Selected trait: ${trait.name}`);
+            
+            // Update the analysis panel header
+            document.querySelector('.analysis-subtitle').textContent = 
+                `Selected: ${trait.name}`;
+        }
+
+        function setupDiscoveryTabs() {
+            const tabs = document.querySelectorAll('.discovery-tab');
+            const content = document.getElementById('discoveryContent');
+            
             tabs.forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabName = this.getAttribute('data-tab');
@@ -1367,202 +1363,374 @@
                     tabs.forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
                     
-                    // Update content (in full implementation, would load different content)
-                    updateEHRContent(tabName);
+                    // Update content
+                    updateDiscoveryContent(tabName);
                 });
             });
         }
 
-        function updateEHRContent(tabName) {
-            const content = document.getElementById('ehrContent');
+        function updateDiscoveryContent(tabName) {
+            const content = document.getElementById('discoveryContent');
             
-            // Simplified content switching for demo
-            if (tabName === 'medications') {
+            if (tabName === 'algorithms') {
                 content.innerHTML = `
-                    <div class="ehr-section">
-                        <div class="section-header">
-                            <h3>Current Medications</h3>
-                            <button class="ehr-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                                <i class="fas fa-plus"></i> New Order
-                            </button>
+                    <div class="algorithm-discovery">
+                        <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
+                            Active Learning Algorithms
+                        </h3>
+                        
+                        <div class="algorithm-card">
+                            <div class="algorithm-header">
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-network-wired"></i>
+                                </div>
+                                <div>
+                                    <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Graph Neural Network</h4>
+                                    <p style="color: #94a3b8; font-size: 0.85rem;">Trait relationship prediction</p>
+                                </div>
+                            </div>
+                            <div class="algorithm-stats">
+                                <div class="stat-badge">
+                                    <i class="fas fa-bolt" style="color: #fbbf24;"></i>
+                                    <span>Accuracy: 94.2%</span>
+                                </div>
+                                <div class="stat-badge">
+                                    <i class="fas fa-clock" style="color: #60a5fa;"></i>
+                                    <span>Last trained: 2h ago</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="section-content">
-                            <ul class="med-list">
-                                <li class="med-item">
-                                    <div class="med-info">
-                                        <h4>Fluticasone/Salmeterol 250/50</h4>
-                                        <p>1 inhalation twice daily • Last filled: 02/15/2024</p>
-                                    </div>
-                                    <span class="med-status">Active</span>
-                                </li>
-                                <li class="med-item">
-                                    <div class="med-info">
-                                        <h4>Albuterol MDI</h4>
-                                        <p>2 puffs as needed • Smart inhaler: 4×/week average</p>
-                                    </div>
-                                    <span class="med-status" style="background: rgba(245,158,11,0.2); color: #fcd34d;">Overuse</span>
-                                </li>
-                                <li class="med-item">
-                                    <div class="med-info">
-                                        <h4>Montelukast 10mg</h4>
-                                        <p>1 tablet daily at bedtime • Adherence: 85%</p>
-                                    </div>
-                                    <span class="med-status">Active</span>
-                                </li>
-                            </ul>
+                        
+                        <div class="algorithm-card">
+                            <div class="algorithm-header">
+                                <div class="algorithm-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Temporal Transformer</h4>
+                                    <p style="color: #94a3b8; font-size: 0.85rem;">Disease progression modeling</p>
+                                </div>
+                            </div>
+                            <div class="algorithm-stats">
+                                <div class="stat-badge">
+                                    <i class="fas fa-bolt" style="color: #fbbf24;"></i>
+                                    <span>R²: 0.89</span>
+                                </div>
+                                <div class="stat-badge">
+                                    <i class="fas fa-database" style="color: #8b5cf6;"></i>
+                                    <span>45K sequences</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="algorithm-card">
+                            <div class="algorithm-header">
+                                <div class="algorithm-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div>
+                                    <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Generative Adversarial Net</h4>
+                                    <p style="color: #94a3b8; font-size: 0.85rem;">Synthetic phenotype generation</p>
+                                </div>
+                            </div>
+                            <div class="algorithm-stats">
+                                <div class="stat-badge">
+                                    <i class="fas fa-sync-alt" style="color: #60a5fa;"></i>
+                                    <span>Cycle: 1.2M</span>
+                                </div>
+                                <div class="stat-badge">
+                                    <i class="fas fa-shield-alt" style="color: #10b981;"></i>
+                                    <span>FID: 12.4</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
-            } else if (tabName === 'labs') {
+            } else if (tabName === 'biomarkers') {
                 content.innerHTML = `
-                    <div class="ehr-section">
-                        <div class="section-header">
-                            <h3>Recent Lab Results</h3>
-                            <span style="color: #94a3b8; font-size: 0.85rem;">Last 30 days</span>
+                    <div class="biomarker-explorer">
+                        <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
+                            Multi-omics Biomarker Matrix
+                        </h3>
+                        
+                        <div class="matrix-container">
+                            <div class="matrix-grid">
+                                ${researchData.biomarkers.map(biomarker => `
+                                    <div class="biomarker-cell">
+                                        <div style="color: #e2e8f0; font-weight: 600; font-size: 0.9rem;">
+                                            ${biomarker.name}
+                                        </div>
+                                        <div style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                                            ${biomarker.type}
+                                        </div>
+                                        <div class="biomarker-level">
+                                            <div class="biomarker-fill" style="width: ${biomarker.level}%"></div>
+                                        </div>
+                                        <div style="color: #94a3b8; font-size: 0.75rem; text-align: right;">
+                                            ${biomarker.level}% expression
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
-                        <div class="section-content">
-                            <table class="lab-table">
-                                <thead>
-                                    <tr>
-                                        <th>Test</th>
-                                        <th>Result</th>
-                                        <th>Reference</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Blood Eosinophils</td>
-                                        <td class="lab-value">520 cells/μL</td>
-                                        <td>0-500 cells/μL</td>
-                                        <td><span class="lab-flag">High</span></td>
-                                        <td>03/10/2024</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Total IgE</td>
-                                        <td class="lab-value">350 IU/mL</td>
-                                        <td>0-100 IU/mL</td>
-                                        <td><span class="lab-flag">High</span></td>
-                                        <td>03/10/2024</td>
-                                    </tr>
-                                    <tr>
-                                        <td>FEV₁</td>
-                                        <td class="lab-value">62% predicted</td>
-                                        <td>>80% predicted</td>
-                                        <td><span class="lab-flag">Low</span></td>
-                                        <td>03/05/2024</td>
-                                    </tr>
-                                    <tr>
-                                        <td>FeNO</td>
-                                        <td class="lab-value">45 ppb</td>
-                                        <td><25 ppb</td>
-                                        <td><span class="lab-flag">High</span></td>
-                                        <td>03/05/2024</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        
+                        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(30, 41, 59, 0.6); border-radius: 8px;">
+                            <h4 style="color: #e2e8f0; margin-bottom: 0.5rem; font-size: 1rem;">
+                                <i class="fas fa-chart-bar"></i> Biomarker Statistics
+                            </h4>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.5rem; color: #818cf8; font-weight: 600;">6</div>
+                                    <div style="color: #94a3b8; font-size: 0.8rem;">Active Biomarkers</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.5rem; color: #34d399; font-weight: 600;">3</div>
+                                    <div style="color: #94a3b8; font-size: 0.8rem;">Novel Discoveries</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 600;">82%</div>
+                                    <div style="color: #94a3b8; font-size: 0.8rem;">Predictive Power</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (tabName === 'pathways') {
+                content.innerHTML = `
+                    <div class="pathway-analysis">
+                        <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
+                            Biological Pathway Analysis
+                        </h3>
+                        
+                        <div style="background: rgba(30, 41, 59, 0.6); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
+                            <h4 style="color: #e2e8f0; margin-bottom: 1rem; font-size: 1rem;">
+                                <i class="fas fa-sitemap"></i> Type 2 Inflammation Pathway
+                            </h4>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                                <span style="color: #94a3b8; font-size: 0.9rem;">IL-4/IL-13 Signaling</span>
+                                <span style="color: #818cf8; font-size: 0.85rem; font-weight: 600;">Active</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                                <span style="color: #94a3b8; font-size: 0.9rem;">JAK-STAT Activation</span>
+                                <span style="color: #818cf8; font-size: 0.85rem; font-weight: 600;">Active</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="color: #94a3b8; font-size: 0.9rem;">Eosinophil Trafficking</span>
+                                <span style="color: #818cf8; font-size: 0.85rem; font-weight: 600;">Overactive</span>
+                            </div>
+                        </div>
+                        
+                        <div style="background: rgba(30, 41, 59, 0.6); border-radius: 12px; padding: 1.5rem;">
+                            <h4 style="color: #e2e8f0; margin-bottom: 1rem; font-size: 1rem;">
+                                <i class="fas fa-biohazard"></i> Oxidative Stress Pathway
+                            </h4>
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+                                <span style="color: #94a3b8; font-size: 0.9rem;">NADPH Oxidase</span>
+                                <span style="color: #f59e0b; font-size: 0.85rem; font-weight: 600;">Moderate</span>
+                            </div>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span style="color: #94a3b8; font-size: 0.9rem;">Antioxidant Defense</span>
+                                <span style="color: #ef4444; font-size: 0.85rem; font-weight: 600;">Compromised</span>
+                            </div>
                         </div>
                     </div>
                 `;
             }
         }
 
-        function setupEventListeners() {
-            // Insights button
-            document.getElementById('insightsBtn').addEventListener('click', function() {
-                this.classList.toggle('active');
-                const insightsPanel = document.getElementById('insightsPanel');
-                if (insightsPanel.style.display === 'block') {
-                    insightsPanel.style.display = 'none';
-                } else {
-                    insightsPanel.style.display = 'block';
+        function simulateDataStream() {
+            const streamContainer = document.getElementById('dataStream');
+            
+            // Initial data
+            const initialData = [
+                { type: 'biomarker', message: 'IL-5 levels detected: 3.2 pg/mL ↑', time: '2s ago' },
+                { type: 'clinical', message: 'FEV₁ measurement: 62% predicted', time: '5s ago' },
+                { type: 'genomic', message: 'Gene expression cluster identified: Type 2-high', time: '12s ago' },
+                { type: 'ai', message: 'GAN generated 142 synthetic phenotypes', time: '25s ago' },
+                { type: 'network', message: 'Graph embedding updated: 4.2M nodes processed', time: '38s ago' }
+            ];
+            
+            initialData.forEach(data => {
+                addDataStreamItem(data);
+            });
+            
+            // Simulate live updates
+            let updateCount = 0;
+            setInterval(() => {
+                updateCount++;
+                
+                const updates = [
+                    { type: 'biomarker', message: `Blood eosinophils: ${420 + Math.floor(Math.random() * 100)} cells/μL`, time: 'Just now' },
+                    { type: 'ai', message: `Prediction confidence: ${85 + Math.floor(Math.random() * 10)}%`, time: 'Just now' },
+                    { type: 'clinical', message: 'Sputum sample analysis complete', time: 'Just now' },
+                    { type: 'network', message: `Edge weight optimization: Epoch ${updateCount}`, time: 'Just now' },
+                    { type: 'genomic', message: 'Transcriptome batch processing: 98.2% complete', time: 'Just now' }
+                ];
+                
+                const randomUpdate = updates[Math.floor(Math.random() * updates.length)];
+                addDataStreamItem(randomUpdate);
+                
+                // Limit to 10 items
+                if (streamContainer.children.length > 10) {
+                    streamContainer.removeChild(streamContainer.firstChild);
                 }
-            });
+            }, 3000);
+        }
+
+        function addDataStreamItem(data) {
+            const streamContainer = document.getElementById('dataStream');
             
-            // Filter button
-            document.getElementById('filterBtn').addEventListener('click', function() {
-                this.classList.toggle('active');
-                // In full implementation, would show filter panel
-                alert('Filter options would appear here in full implementation');
-            });
+            const item = document.createElement('div');
+            item.className = 'stream-item';
             
-            // Refresh button
-            document.getElementById('refreshBtn').addEventListener('click', function() {
-                this.classList.add('active');
-                setTimeout(() => {
-                    this.classList.remove('active');
-                }, 1000);
-                initializeNetwork();
-            });
+            let icon = 'fas fa-circle';
+            let color = '#94a3b8';
             
-            // Export button
-            document.getElementById('exportBtn').addEventListener('click', function() {
-                const exportData = {
-                    patient: "John Smith (62M)",
-                    date: new Date().toISOString().split('T')[0],
-                    activeTraits: patientTraits.active,
-                    networkData: createPatientNetworkData()
-                };
-                
-                const dataStr = JSON.stringify(exportData, null, 2);
-                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', `traitmap_${exportData.patient.replace(/[^a-z0-9]/gi, '_')}_${exportData.date}.json`);
-                linkElement.click();
-                
-                alert('Patient trait analysis exported as JSON');
-            });
+            switch(data.type) {
+                case 'biomarker': 
+                    icon = 'fas fa-vial';
+                    color = '#10b981';
+                    break;
+                case 'clinical':
+                    icon = 'fas fa-stethoscope';
+                    color = '#3b82f6';
+                    break;
+                case 'ai':
+                    icon = 'fas fa-robot';
+                    color = '#8b5cf6';
+                    break;
+                case 'network':
+                    icon = 'fas fa-project-diagram';
+                    color = '#f59e0b';
+                    break;
+                case 'genomic':
+                    icon = 'fas fa-dna';
+                    color = '#ec4899';
+                    break;
+            }
             
-            // View controls
-            document.querySelectorAll('.traitmap-btn[data-view]').forEach(btn => {
+            item.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="${icon}" style="color: ${color};"></i>
+                    <div style="flex: 1;">
+                        <div style="color: #e2e8f0; font-size: 0.9rem;">${data.message}</div>
+                        <div style="color: #94a3b8; font-size: 0.75rem;">${data.time}</div>
+                    </div>
+                </div>
+            `;
+            
+            streamContainer.appendChild(item);
+            streamContainer.scrollTop = streamContainer.scrollHeight;
+        }
+
+        function setupResearchEventListeners() {
+            // Visualization controls
+            document.querySelectorAll('.viz-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    document.querySelectorAll('.traitmap-btn[data-view]').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    // In full implementation, would switch views
+                    if (!this.classList.contains('active')) {
+                        document.querySelectorAll('.viz-btn').forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                        
+                        const viewType = this.getAttribute('title');
+                        console.log(`Switching to ${viewType} view`);
+                    }
+                });
+            });
+            
+            // Research action buttons
+            document.querySelectorAll('.research-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.querySelector('span').textContent;
+                    console.log(`Research action: ${action}`);
+                    
+                    if (action === 'Start Simulation') {
+                        startSimulationMode();
+                    } else if (action === 'Run Analysis') {
+                        runAdvancedAnalysis();
+                    }
+                });
+            });
+            
+            // Sensitivity slider interaction
+            document.querySelectorAll('.slider-track').forEach(track => {
+                track.addEventListener('click', function(e) {
+                    const rect = this.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const percentage = Math.min(100, Math.max(0, (x / rect.width) * 100));
+                    
+                    const fill = this.querySelector('.slider-fill');
+                    fill.style.width = `${percentage}%`;
+                    
+                    const label = this.previousElementSibling.querySelector('span:last-child');
+                    label.textContent = `${Math.round(percentage)}%`;
                 });
             });
         }
 
-        function showInsights() {
-            document.getElementById('insightsPanel').style.display = 'block';
-            document.getElementById('insightsBtn').classList.add('active');
+        function initializeSimulation() {
+            const simControls = document.querySelectorAll('.sim-btn');
+            
+            simControls.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const icon = this.querySelector('i').className;
+                    
+                    if (icon.includes('play')) {
+                        this.querySelector('i').className = 'fas fa-pause';
+                        this.classList.add('primary');
+                        console.log('Simulation resumed');
+                    } else if (icon.includes('pause')) {
+                        this.querySelector('i').className = 'fas fa-play';
+                        this.classList.remove('primary');
+                        console.log('Simulation paused');
+                    } else if (icon.includes('redo')) {
+                        console.log('Simulation reset');
+                        document.querySelector('.progress-fill').style.width = '0%';
+                        setTimeout(() => {
+                            document.querySelector('.progress-fill').style.width = '45%';
+                        }, 100);
+                    }
+                });
+            });
         }
 
-        function hideInsights() {
-            document.getElementById('insightsPanel').style.display = 'none';
-            document.getElementById('insightsBtn').classList.remove('active');
+        function startSimulationMode() {
+            console.log('Starting advanced simulation mode');
+            
+            // Animate progress bar
+            const progressFill = document.querySelector('.progress-fill');
+            let width = 0;
+            const interval = setInterval(() => {
+                width += 0.5;
+                progressFill.style.width = `${width}%`;
+                
+                if (width >= 45) {
+                    clearInterval(interval);
+                }
+            }, 50);
+            
+            // Show simulation notification
+            showNotification('Simulation started: Phenotype evolution modeling active');
         }
 
-        function orderBiologic() {
-            document.getElementById('orderModal').style.display = 'flex';
+        function runAdvancedAnalysis() {
+            console.log('Running multi-omics analysis pipeline');
+            
+            // Update metrics in analysis panel
+            const metrics = document.querySelectorAll('.metric-value');
+            metrics[0].textContent = `${(3.2 + Math.random() * 0.5).toFixed(1)}×`;
+            metrics[1].textContent = `${Math.floor(64 + Math.random() * 10)}%`;
+            metrics[2].textContent = `${(2.8 + Math.random() * 0.3).toFixed(1)}`;
+            
+            // Show analysis notification
+            showNotification('Analysis complete: 3 new subphenotypes identified');
         }
 
-        function closeModal() {
-            document.getElementById('orderModal').style.display = 'none';
-        }
-
-        function submitOrder() {
-            alert('Biologic therapy ordered successfully!');
-            closeModal();
-        }
-
-        function orderLabs() {
-            alert('Lab orders for eosinophil count and FeNO have been placed.');
-        }
-
-        function orderSmartInhaler() {
-            alert('Smart inhaler has been ordered for delivery.');
-        }
-
-        function showAdherenceEducation() {
-            alert('Patient education module opened in new window.');
-        }
-
-        function orderCT() {
-            alert('HRCT chest has been scheduled for 6 months from now.');
+        function showNotification(message) {
+            // In a full implementation, this would show a toast notification
+            console.log(`Notification: ${message}`);
+            
+            // Simple alert for demo
+            alert(message);
         }
     </script>
 </body>
