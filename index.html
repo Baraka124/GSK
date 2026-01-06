@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAITMAP - Interactive Respiratory Trait Network Builder</title>
+    <title>TRAITMAP - Clinical Trait Intelligence Platform</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,112 +15,202 @@
         }
         
         :root {
-            --primary-blue: #2563eb;
+            --primary-blue: #1e40af;
             --secondary-blue: #3b82f6;
-            --accent-purple: #8b5cf6;
+            --accent-blue: #60a5fa;
+            --light-blue: #93c5fd;
+            --dark-blue: #0f172a;
             --success-green: #10b981;
             --warning-orange: #f59e0b;
             --danger-red: #ef4444;
-            --dark-bg: #0f172a;
             --card-bg: #1e293b;
-            --border-color: #334155;
+            --card-border: #334155;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
-            --network-bg: #0a0e17;
-            --mobile-breakpoint: 768px;
+            --panel-bg: #0f172a;
+            --modal-bg: rgba(15, 23, 42, 0.95);
         }
         
         body {
-            background: var(--dark-bg);
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #1e3a8a 100%);
             color: var(--text-primary);
             min-height: 100vh;
             overflow: hidden;
         }
         
-        /* Main Layout */
-        .main-container {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            height: 100vh;
-            position: relative;
+        /* Loading Screen */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--dark-blue) 0%, #1e3a8a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
         }
         
-        /* Left Panel - Trait Library & Tools */
+        .loading-logo {
+            font-size: 4rem;
+            color: var(--secondary-blue);
+            margin-bottom: 2rem;
+            animation: pulse 2s infinite;
+        }
+        
+        .loading-text {
+            font-size: 1.5rem;
+            color: var(--light-blue);
+            margin-bottom: 1rem;
+        }
+        
+        .loading-subtext {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        
+        .loading-progress {
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .loading-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-blue), var(--accent-blue));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Main App */
+        #appContainer {
+            display: none;
+            height: 100vh;
+        }
+        
+        /* Header */
+        .app-header {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .app-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+        
+        .app-title p {
+            font-size: 0.9rem;
+            color: var(--light-blue);
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 0.75rem;
+        }
+        
+        .header-btn {
+            padding: 0.75rem 1.25rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .header-btn:hover {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: var(--secondary-blue);
+        }
+        
+        .header-btn.primary {
+            background: var(--secondary-blue);
+            border-color: var(--secondary-blue);
+            color: white;
+        }
+        
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            height: calc(100vh - 80px);
+        }
+        
+        /* Left Panel - Library */
         .left-panel {
-            background: var(--dark-bg);
-            border-right: 1px solid var(--border-color);
+            background: var(--panel-bg);
+            border-right: 1px solid var(--card-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
         
         .panel-header {
-            padding: 1.25rem;
-            border-bottom: 1px solid var(--border-color);
-            background: rgba(30, 41, 59, 0.8);
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
         }
         
         .panel-header h2 {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--text-primary);
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
         
-        .panel-header h2 i {
-            color: var(--secondary-blue);
-        }
-        
-        .panel-tabs {
-            display: flex;
-            background: rgba(15, 23, 42, 0.9);
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .panel-tab {
-            flex: 1;
-            padding: 1rem;
-            background: transparent;
-            border: none;
-            color: var(--text-secondary);
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-        }
-        
-        .panel-tab.active {
-            color: var(--secondary-blue);
-            border-bottom-color: var(--secondary-blue);
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
-        .panel-content {
+        .trait-library {
             flex: 1;
             overflow-y: auto;
-            padding: 1.25rem;
+            padding: 1.5rem;
         }
         
-        /* Trait Library */
         .trait-category {
-            margin-bottom: 1.5rem;
-        }
-        
-        .category-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
         }
         
         .category-title {
-            font-weight: 600;
-            color: var(--text-primary);
+            font-size: 0.9rem;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--card-border);
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -129,18 +219,17 @@
         .trait-items {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
+            gap: 0.75rem;
         }
         
         .trait-item {
-            padding: 0.75rem;
+            padding: 1rem;
             background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--card-border);
             border-radius: 8px;
             cursor: grab;
             transition: all 0.2s;
             user-select: none;
-            position: relative;
         }
         
         .trait-item:hover {
@@ -155,110 +244,29 @@
         
         .trait-name {
             font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+            color: white;
         }
         
-        .trait-description {
+        .trait-desc {
             font-size: 0.85rem;
             color: var(--text-secondary);
-            line-height: 1.3;
-        }
-        
-        /* Tools Panel */
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-        }
-        
-        .tool-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .tool-card:hover {
-            border-color: var(--secondary-blue);
-            transform: translateY(-2px);
-        }
-        
-        .tool-card.active {
-            border-color: var(--secondary-blue);
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
-        .tool-icon {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-purple));
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 0.75rem;
-            font-size: 1.2rem;
-        }
-        
-        .tool-name {
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        
-        /* Connection Types */
-        .connection-types {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        
-        .connection-type {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .connection-type:hover {
-            border-color: var(--secondary-blue);
-        }
-        
-        .connection-type.active {
-            border-color: var(--secondary-blue);
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
-        .connection-color {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            flex-shrink: 0;
+            line-height: 1.4;
         }
         
         /* Center Panel - Network Canvas */
         .center-panel {
-            background: var(--network-bg);
+            background: var(--panel-bg);
             position: relative;
             overflow: hidden;
         }
         
-        #network-canvas {
+        #networkCanvas {
             width: 100%;
             height: 100%;
-            cursor: default;
         }
         
-        /* Network Controls Overlay */
-        .network-controls {
+        .canvas-overlay {
             position: absolute;
             top: 1.5rem;
             left: 1.5rem;
@@ -268,11 +276,11 @@
             z-index: 100;
         }
         
-        .control-btn {
+        .canvas-tool {
             width: 40px;
             height: 40px;
             background: rgba(15, 23, 42, 0.9);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--card-border);
             border-radius: 8px;
             color: var(--text-primary);
             cursor: pointer;
@@ -283,139 +291,87 @@
             transition: all 0.2s;
         }
         
-        .control-btn:hover {
-            background: rgba(30, 41, 59, 0.9);
+        .canvas-tool:hover {
+            background: rgba(59, 130, 246, 0.1);
             border-color: var(--secondary-blue);
-            transform: scale(1.05);
         }
         
-        .control-btn.active {
+        .canvas-tool.active {
             background: var(--secondary-blue);
             border-color: var(--secondary-blue);
             color: white;
         }
         
-        /* Simulation Panel */
-        .simulation-panel {
-            position: absolute;
-            bottom: 1.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
+        /* Right Panel - Properties & Simulation */
+        .right-panel {
+            background: var(--panel-bg);
+            border-left: 1px solid var(--card-border);
             display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            backdrop-filter: blur(10px);
-            z-index: 100;
-            min-width: 300px;
+            flex-direction: column;
+            overflow: hidden;
         }
         
-        .simulation-status {
-            color: var(--text-primary);
-            font-weight: 600;
+        .tab-header {
             display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.9);
+            border-bottom: 1px solid var(--card-border);
         }
         
-        .sim-status-indicator {
-            width: 8px;
-            height: 8px;
-            background: var(--success-green);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .simulation-buttons {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .sim-btn {
-            padding: 0.5rem 0.75rem;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-primary);
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
             font-size: 0.9rem;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
             transition: all 0.2s;
         }
         
-        .sim-btn:hover {
-            background: rgba(51, 65, 85, 0.8);
-            border-color: var(--secondary-blue);
+        .tab-btn:hover {
+            color: var(--text-primary);
         }
         
-        .sim-btn.primary {
-            background: var(--secondary-blue);
-            border-color: var(--secondary-blue);
-            color: white;
+        .tab-btn.active {
+            color: var(--secondary-blue);
+            border-bottom-color: var(--secondary-blue);
+            background: rgba(59, 130, 246, 0.1);
         }
         
-        /* Property Panel */
-        .property-panel {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.25rem;
-            width: 280px;
-            backdrop-filter: blur(10px);
-            z-index: 100;
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
             display: none;
         }
         
-        .property-panel.show {
+        .tab-content.active {
             display: block;
-            animation: slideIn 0.3s ease;
         }
         
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .property-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
+        /* Property Editor */
+        .property-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
         }
         
         .property-title {
+            font-size: 1rem;
             font-weight: 600;
-            font-size: 1.1rem;
-        }
-        
-        .property-content {
-            max-height: 400px;
-            overflow-y: auto;
+            color: white;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         
         .property-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
         }
         
         .property-label {
@@ -429,7 +385,7 @@
             width: 100%;
             padding: 0.75rem;
             background: rgba(30, 41, 59, 0.8);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--card-border);
             border-radius: 6px;
             color: var(--text-primary);
             font-size: 0.9rem;
@@ -443,7 +399,7 @@
         .property-slider {
             width: 100%;
             height: 6px;
-            background: var(--border-color);
+            background: var(--card-border);
             border-radius: 3px;
             outline: none;
             -webkit-appearance: none;
@@ -456,114 +412,226 @@
             background: var(--secondary-blue);
             border-radius: 50%;
             cursor: pointer;
+            border: 2px solid white;
         }
         
-        /* Connection Line Drawing */
-        .connection-line {
-            pointer-events: none;
-            stroke-width: 2;
-            stroke: var(--secondary-blue);
-            stroke-dasharray: 5,5;
-            opacity: 0.7;
+        /* Uncertainty Visualizer */
+        .uncertainty-bar {
+            height: 8px;
+            background: linear-gradient(90deg, 
+                var(--danger-red) 0%, 
+                var(--warning-orange) 33%, 
+                var(--secondary-blue) 66%, 
+                var(--success-green) 100%);
+            border-radius: 4px;
+            margin: 1rem 0;
+            position: relative;
         }
         
-        /* Selection Box */
-        .selection-box {
-            fill: rgba(59, 130, 246, 0.1);
-            stroke: var(--secondary-blue);
-            stroke-width: 1;
-            stroke-dasharray: 4,4;
-            pointer-events: none;
+        .uncertainty-marker {
+            position: absolute;
+            top: -4px;
+            width: 3px;
+            height: 16px;
+            background: white;
+            border-radius: 1.5px;
+            transform: translateX(-50%);
         }
         
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .main-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .left-panel {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                z-index: 1000;
-                display: none;
-            }
-            
-            .left-panel.show {
-                display: flex;
-            }
-            
-            .mobile-toggle {
-                position: absolute;
-                top: 1rem;
-                left: 1rem;
-                width: 40px;
-                height: 40px;
-                background: rgba(15, 23, 42, 0.9);
-                border: 1px solid var(--border-color);
-                border-radius: 8px;
-                color: var(--text-primary);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 1001;
-                cursor: pointer;
-            }
-            
-            .property-panel {
-                width: calc(100% - 3rem);
-                max-width: 280px;
-            }
-            
-            .simulation-panel {
-                flex-direction: column;
-                gap: 1rem;
-                width: calc(100% - 3rem);
-            }
+        .probability-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
         }
         
-        /* Loading Overlay */
-        .loading-overlay {
+        /* Treatment Simulator */
+        .treatment-option {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .treatment-option:hover {
+            border-color: var(--secondary-blue);
+            transform: translateY(-2px);
+        }
+        
+        .treatment-option.selected {
+            border-color: var(--secondary-blue);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .treatment-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        
+        .treatment-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+        
+        .treatment-properties {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .treatment-prop {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Simulation Results */
+        .simulation-result {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .result-title {
+            font-weight: 600;
+            color: white;
+        }
+        
+        .result-change {
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+        
+        .result-change.positive {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-green);
+        }
+        
+        .result-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger-red);
+        }
+        
+        .result-change.neutral {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-secondary);
+        }
+        
+        /* Modals */
+        .modal {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(15, 23, 42, 0.9);
-            display: flex;
+            width: 100%;
+            height: 100%;
+            background: var(--modal-bg);
+            backdrop-filter: blur(10px);
+            display: none;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
-            display: none;
+            z-index: 1000;
         }
         
-        .loading-overlay.show {
+        .modal.show {
             display: flex;
         }
         
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid var(--border-color);
-            border-top-color: var(--secondary-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .modal-content {
+            background: var(--panel-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: hidden;
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            max-height: calc(80vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+        
+        /* Import Wizard */
+        .import-step {
+            margin-bottom: 2rem;
+        }
+        
+        .step-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .data-option {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .data-option:hover {
+            border-color: var(--secondary-blue);
+        }
+        
+        .data-option.selected {
+            border-color: var(--secondary-blue);
+            background: rgba(59, 130, 246, 0.1);
         }
         
         /* Toast Notifications */
         .toast {
             position: fixed;
-            bottom: 1rem;
-            right: 1rem;
+            bottom: 2rem;
+            right: 2rem;
             background: var(--card-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--card-border);
             border-radius: 8px;
             padding: 1rem 1.25rem;
             color: var(--text-primary);
@@ -571,7 +639,7 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            z-index: 1002;
+            z-index: 1001;
             transform: translateY(100px);
             opacity: 0;
             transition: all 0.3s ease;
@@ -606,198 +674,297 @@
             background: rgba(245, 158, 11, 0.2);
             color: var(--warning-orange);
         }
+        
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-layout {
+                grid-template-columns: 280px 1fr;
+            }
+            
+            .right-panel {
+                display: none;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .left-panel {
+                display: none;
+            }
+            
+            .canvas-overlay {
+                flex-direction: row;
+                top: auto;
+                bottom: 1.5rem;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="spinner"></div>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="loading-logo">
+            <i class="fas fa-lungs"></i>
+        </div>
+        <div class="loading-text">TRAITMAP Clinical Platform</div>
+        <div class="loading-subtext">Loading trait intelligence system...</div>
+        <div class="loading-progress">
+            <div class="loading-bar" id="loadingBar"></div>
+        </div>
     </div>
     
-    <!-- Mobile Toggle -->
-    <div class="mobile-toggle" id="mobileToggle">
-        <i class="fas fa-bars"></i>
-    </div>
-    
-    <!-- Main Container -->
-    <div class="main-container">
-        <!-- Left Panel -->
-        <div class="left-panel" id="leftPanel">
-            <div class="panel-header">
-                <h2><i class="fas fa-toolbox"></i> TRAITMAP Builder</h2>
+    <!-- Main App Container -->
+    <div id="appContainer">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="logo-section">
+                <div class="logo-icon">
+                    <i class="fas fa-network-wired"></i>
+                </div>
+                <div class="app-title">
+                    <h1>TRAITMAP</h1>
+                    <p>Clinical Trait Intelligence Platform</p>
+                </div>
             </div>
             
-            <div class="panel-tabs">
-                <button class="panel-tab active" data-tab="traits">
-                    <i class="fas fa-shapes"></i> Traits
+            <div class="header-controls">
+                <button class="header-btn" id="importPatientBtn">
+                    <i class="fas fa-file-import"></i>
+                    Import Patient
                 </button>
-                <button class="panel-tab" data-tab="tools">
-                    <i class="fas fa-tools"></i> Tools
+                <button class="header-btn" id="saveSessionBtn">
+                    <i class="fas fa-save"></i>
+                    Save Session
                 </button>
-                <button class="panel-tab" data-tab="connections">
-                    <i class="fas fa-link"></i> Connections
+                <button class="header-btn primary" id="runSimBtn">
+                    <i class="fas fa-play"></i>
+                    Run Simulation
                 </button>
             </div>
+        </div>
+        
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Panel - Trait Library -->
+            <div class="left-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-shapes"></i> Trait Library</h2>
+                </div>
+                <div class="trait-library" id="traitLibrary">
+                    <!-- Traits loaded dynamically -->
+                </div>
+            </div>
             
-            <div class="panel-content" id="panelContent">
-                <!-- Traits Tab -->
-                <div class="panel-tab-content active" data-tab="traits">
-                    <div class="trait-category">
-                        <div class="category-header">
-                            <div class="category-title">
-                                <i class="fas fa-shield-virus"></i>
-                                Immune Traits
-                            </div>
+            <!-- Center Panel - Network Canvas -->
+            <div class="center-panel">
+                <svg id="networkCanvas"></svg>
+                
+                <div class="canvas-overlay">
+                    <button class="canvas-tool active" data-tool="select" title="Select">
+                        <i class="fas fa-mouse-pointer"></i>
+                    </button>
+                    <button class="canvas-tool" data-tool="connect" title="Connect">
+                        <i class="fas fa-link"></i>
+                    </button>
+                    <button class="canvas-tool" data-tool="pan" title="Pan">
+                        <i class="fas fa-hand-paper"></i>
+                    </button>
+                    <button class="canvas-tool" data-tool="zoom-in" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                    <button class="canvas-tool" data-tool="zoom-out" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Right Panel - Properties & Simulation -->
+            <div class="right-panel">
+                <div class="tab-header">
+                    <button class="tab-btn active" data-tab="properties">
+                        <i class="fas fa-sliders-h"></i> Properties
+                    </button>
+                    <button class="tab-btn" data-tab="treatment">
+                        <i class="fas fa-pills"></i> Treatment
+                    </button>
+                    <button class="tab-btn" data-tab="simulation">
+                        <i class="fas fa-chart-line"></i> Simulation
+                    </button>
+                </div>
+                
+                <!-- Properties Tab -->
+                <div class="tab-content active" id="propertiesTab">
+                    <div class="property-section">
+                        <div class="property-title">
+                            <i class="fas fa-object-group"></i>
+                            Selected Object
                         </div>
-                        <div class="trait-items" id="immune-traits">
-                            <!-- Immune traits loaded here -->
+                        <div id="propertyContent">
+                            <div style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                                Select a trait or connection to edit properties
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="trait-category">
-                        <div class="category-header">
-                            <div class="category-title">
-                                <i class="fas fa-heartbeat"></i>
-                                Physiological
-                            </div>
+                    <div class="property-section">
+                        <div class="property-title">
+                            <i class="fas fa-question-circle"></i>
+                            Diagnostic Uncertainty
                         </div>
-                        <div class="trait-items" id="physio-traits">
-                            <!-- Physio traits loaded here -->
+                        <div class="uncertainty-bar">
+                            <div class="uncertainty-marker" style="left: 65%;"></div>
                         </div>
-                    </div>
-                    
-                    <div class="trait-category">
-                        <div class="category-header">
-                            <div class="category-title">
-                                <i class="fas fa-x-ray"></i>
-                                Clinical
-                            </div>
+                        <div class="probability-labels">
+                            <span>Unlikely</span>
+                            <span>Possible</span>
+                            <span>Probable</span>
+                            <span>Definite</span>
                         </div>
-                        <div class="trait-items" id="clinical-traits">
-                            <!-- Clinical traits loaded here -->
+                        <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                            Adjust marker to indicate confidence in diagnosis
                         </div>
                     </div>
                 </div>
                 
-                <!-- Tools Tab -->
-                <div class="panel-tab-content" data-tab="tools">
-                    <div class="tools-grid">
-                        <div class="tool-card" data-tool="select">
-                            <div class="tool-icon">
-                                <i class="fas fa-mouse-pointer"></i>
-                            </div>
-                            <div class="tool-name">Select</div>
+                <!-- Treatment Tab -->
+                <div class="tab-content" id="treatmentTab">
+                    <div class="property-section">
+                        <div class="property-title">
+                            <i class="fas fa-prescription-bottle-alt"></i>
+                            Available Treatments
                         </div>
-                        <div class="tool-card" data-tool="connect">
-                            <div class="tool-icon">
-                                <i class="fas fa-link"></i>
-                            </div>
-                            <div class="tool-name">Connect</div>
+                        <div id="treatmentOptions">
+                            <!-- Treatments loaded dynamically -->
                         </div>
-                        <div class="tool-card" data-tool="delete">
-                            <div class="tool-icon">
-                                <i class="fas fa-trash"></i>
-                            </div>
-                            <div class="tool-name">Delete</div>
+                    </div>
+                    
+                    <div class="property-section">
+                        <div class="property-title">
+                            <i class="fas fa-clock"></i>
+                            Treatment Timeline
                         </div>
-                        <div class="tool-card" data-tool="simulate">
-                            <div class="tool-icon">
-                                <i class="fas fa-play"></i>
+                        <div class="property-group">
+                            <label class="property-label">Simulation Duration</label>
+                            <input type="range" class="property-slider" min="1" max="12" value="6" id="simDuration">
+                            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                                <span>1 month</span>
+                                <span id="durationValue">6 months</span>
+                                <span>12 months</span>
                             </div>
-                            <div class="tool-name">Simulate</div>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Connections Tab -->
-                <div class="panel-tab-content" data-tab="connections">
-                    <div class="connection-types">
-                        <div class="connection-type active" data-connection="causal">
-                            <div class="connection-color" style="background: var(--danger-red);"></div>
-                            <div>
-                                <div style="font-weight: 600;">Causal</div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">A directly causes B</div>
-                            </div>
+                <!-- Simulation Tab -->
+                <div class="tab-content" id="simulationTab">
+                    <div class="property-section">
+                        <div class="property-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Simulation Results
                         </div>
-                        <div class="connection-type" data-connection="correlative">
-                            <div class="connection-color" style="background: var(--warning-orange);"></div>
-                            <div>
-                                <div style="font-weight: 600;">Correlative</div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">A and B occur together</div>
-                            </div>
-                        </div>
-                        <div class="connection-type" data-connection="therapeutic">
-                            <div class="connection-color" style="background: var(--success-green);"></div>
-                            <div>
-                                <div style="font-weight: 600;">Therapeutic</div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Treatment affects trait</div>
-                            </div>
-                        </div>
-                        <div class="connection-type" data-connection="inhibitory">
-                            <div class="connection-color" style="background: var(--secondary-blue);"></div>
-                            <div>
-                                <div style="font-weight: 600;">Inhibitory</div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">A inhibits B</div>
+                        <div id="simulationResults">
+                            <div style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                                Run simulation to see results
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Center Panel -->
-        <div class="center-panel">
-            <svg id="network-canvas"></svg>
-            
-            <!-- Network Controls -->
-            <div class="network-controls">
-                <button class="control-btn active" data-control="select" title="Select Mode">
-                    <i class="fas fa-mouse-pointer"></i>
-                </button>
-                <button class="control-btn" data-control="pan" title="Pan Mode">
-                    <i class="fas fa-hand-paper"></i>
-                </button>
-                <button class="control-btn" data-control="zoom-in" title="Zoom In">
-                    <i class="fas fa-search-plus"></i>
-                </button>
-                <button class="control-btn" data-control="zoom-out" title="Zoom Out">
-                    <i class="fas fa-search-minus"></i>
-                </button>
-                <button class="control-btn" data-control="reset" title="Reset View">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-                <button class="control-btn" data-control="clear" title="Clear All">
-                    <i class="fas fa-trash-alt"></i>
+    </div>
+    
+    <!-- Import Patient Modal -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Import Patient Data</div>
+                <button class="canvas-tool" id="closeImportModal">
+                    <i class="fas fa-times"></i>
                 </button>
             </div>
-            
-            <!-- Property Panel -->
-            <div class="property-panel" id="propertyPanel">
-                <div class="property-header">
-                    <div class="property-title" id="propertyTitle">Properties</div>
-                    <button class="control-btn" id="closeProperties" style="width: 32px; height: 32px; font-size: 0.9rem;">
-                        <i class="fas fa-times"></i>
-                    </button>
+            <div class="modal-body">
+                <div class="import-step">
+                    <div class="step-title">
+                        <i class="fas fa-database"></i>
+                        Step 1: Select Data Type
+                    </div>
+                    <div class="data-option selected" data-type="spirometry">
+                        <div style="font-weight: 600;">Spirometry Data</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                            FEV₁, FVC, PEF values
+                        </div>
+                    </div>
+                    <div class="data-option" data-type="lab">
+                        <div style="font-weight: 600;">Lab Results</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                            Eosinophils, IgE, CRP
+                        </div>
+                    </div>
+                    <div class="data-option" data-type="clinical">
+                        <div style="font-weight: 600;">Clinical Measurements</div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                            FeNO, Oxygen saturation
+                        </div>
+                    </div>
                 </div>
-                <div class="property-content" id="propertyContent">
-                    <!-- Properties loaded here -->
+                
+                <div class="import-step">
+                    <div class="step-title">
+                        <i class="fas fa-file-upload"></i>
+                        Step 2: Upload File
+                    </div>
+                    <div style="border: 2px dashed var(--card-border); border-radius: 8px; padding: 3rem; text-align: center;">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
+                        <div style="color: var(--text-secondary); margin-bottom: 1rem;">
+                            Drag & drop CSV or Excel file here
+                        </div>
+                        <button class="header-btn" style="margin: 0 auto;">
+                            <i class="fas fa-folder-open"></i>
+                            Browse Files
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="import-step">
+                    <div class="step-title">
+                        <i class="fas fa-cogs"></i>
+                        Step 3: Auto-Detect Traits
+                    </div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                        System will automatically detect and map traits from your data
+                    </div>
                 </div>
             </div>
-            
-            <!-- Simulation Panel -->
-            <div class="simulation-panel">
-                <div class="simulation-status">
-                    <div class="sim-status-indicator"></div>
-                    <span>Simulation Ready</span>
-                </div>
-                <div class="simulation-buttons">
-                    <button class="sim-btn" id="addIntervention">
-                        <i class="fas fa-plus"></i> Add Intervention
-                    </button>
-                    <button class="sim-btn primary" id="runSimulation">
-                        <i class="fas fa-play"></i> Run Simulation
-                    </button>
-                </div>
+            <div class="modal-footer">
+                <button class="header-btn" id="cancelImport">
+                    Cancel
+                </button>
+                <button class="header-btn primary" id="confirmImport">
+                    <i class="fas fa-magic"></i>
+                    Auto-Generate Network
+                </button>
             </div>
         </div>
     </div>
@@ -812,7 +979,7 @@
 
     <script>
         // ================================
-        // CORE DATA MODELS
+        // FIXED CORE DATA MODELS
         // ================================
         
         class Trait {
@@ -822,23 +989,26 @@
                 this.category = category;
                 this.description = description;
                 this.color = color;
-                this.x = 0;
-                this.y = 0;
+                this.x = Math.random() * 600 + 100;
+                this.y = Math.random() * 400 + 100;
                 this.size = 40;
-                this.value = 50; // Default value 0-100
-                this.visible = true;
+                this.value = 50;
+                this.confidence = 75; // Diagnostic confidence 0-100
+                this.uncertainty = 25; // Uncertainty level 0-100
                 this.selected = false;
+                this.visible = true;
             }
         }
         
         class Connection {
-            constructor(source, target, type, strength = 50) {
-                this.id = `${source.id}-${target.id}-${type}`;
-                this.source = source;
-                this.target = target;
-                this.type = type; // causal, correlative, therapeutic, inhibitory
-                this.strength = strength; // 0-100
-                this.direction = 'forward'; // forward, backward, bidirectional
+            constructor(sourceId, targetId, type, strength) {
+                this.id = `${sourceId}-${targetId}-${type}-${Date.now()}`;
+                this.sourceId = sourceId;
+                this.targetId = targetId;
+                this.type = type;
+                this.strength = strength || 50;
+                this.direction = 'forward';
+                this.probability = 75; // Probability of relationship 0-100
                 this.selected = false;
             }
             
@@ -857,78 +1027,129 @@
             }
         }
         
-        class Intervention {
-            constructor(traitId, type, value) {
-                this.id = Date.now().toString();
-                this.traitId = traitId;
-                this.type = type; // 'increase', 'decrease', 'set'
-                this.value = value;
-                this.active = true;
+        class Treatment {
+            constructor(id, name, type, description) {
+                this.id = id;
+                this.name = name;
+                this.type = type;
+                this.description = description;
+                this.efficacy = {}; // traitId -> efficacy percentage
+                this.dosage = 'Standard';
+                this.duration = 'Chronic';
+                this.selected = false;
+            }
+        }
+        
+        class PatientData {
+            constructor() {
+                this.traits = [];
+                this.connections = [];
+                this.treatments = [];
+                this.interventions = [];
+                this.simulationResults = [];
+            }
+            
+            addTrait(trait) {
+                this.traits.push(trait);
+                return trait;
+            }
+            
+            addConnection(source, target, type, strength) {
+                // Ensure both traits exist
+                const sourceTrait = this.traits.find(t => t.id === source.id || t === source);
+                const targetTrait = this.traits.find(t => t.id === target.id || t === target);
+                
+                if (!sourceTrait || !targetTrait) {
+                    console.error('Cannot create connection: traits not found');
+                    return null;
+                }
+                
+                const connection = new Connection(sourceTrait.id, targetTrait.id, type, strength);
+                this.connections.push(connection);
+                return connection;
+            }
+            
+            removeSelected() {
+                this.traits = this.traits.filter(t => !t.selected);
+                this.connections = this.connections.filter(c => !c.selected);
+            }
+            
+            clearSelection() {
+                this.traits.forEach(t => t.selected = false);
+                this.connections.forEach(c => c.selected = false);
+            }
+            
+            getSelectedTrait() {
+                return this.traits.find(t => t.selected);
+            }
+            
+            getSelectedConnection() {
+                return this.connections.find(c => c.selected);
             }
         }
         
         // ================================
-        // TRAIT LIBRARY DATABASE
+        // DATA INITIALIZATION
         // ================================
         
-        const traitLibrary = {
+        const traitDatabase = {
             immune: [
-                new Trait('eos_inflam', 'Eosinophilic Inflammation', 'immune', 
+                new Trait('eos_inflam', 'Eosinophilic Inflammation', 'immune',
                     'Type-2 inflammation with elevated eosinophils', '#ef4444'),
                 new Trait('neut_inflam', 'Neutrophilic Inflammation', 'immune',
                     'Neutrophil-dominated airway inflammation', '#3b82f6'),
-                new Trait('allergic', 'Allergic Sensitization', 'immune',
-                    'IgE-mediated allergic response', '#f59e0b'),
-                new Trait('th2_cytokines', 'Th2 Cytokine Production', 'immune',
-                    'Elevated IL-4, IL-5, IL-13', '#8b5cf6')
+                new Trait('th2_response', 'Th2 Immune Response', 'immune',
+                    'Elevated IL-4, IL-5, IL-13 cytokines', '#8b5cf6')
             ],
-            physio: [
-                new Trait('airflow_lim', 'Airflow Limitation', 'physio',
+            physiological: [
+                new Trait('airflow_lim', 'Airflow Limitation', 'physiological',
                     'Obstructive pattern on spirometry', '#10b981'),
-                new Trait('hyperreactivity', 'Bronchial Hyperreactivity', 'physio',
-                    'Exaggerated response to stimuli', '#ec4899'),
-                new Trait('gas_trapping', 'Gas Trapping', 'physio',
-                    'Air trapping on expiration', '#06b6d4'),
-                new Trait('mucociliary', 'Mucociliary Dysfunction', 'physio',
-                    'Impaired mucus clearance', '#84cc16')
+                new Trait('bronch_hyper', 'Bronchial Hyperreactivity', 'physiological',
+                    'Exaggerated bronchoconstriction response', '#ec4899'),
+                new Trait('gas_trapping', 'Gas Trapping', 'physiological',
+                    'Air trapping on expiration', '#06b6d4')
             ],
             clinical: [
                 new Trait('cough', 'Cough Hypersensitivity', 'clinical',
-                    'Heightened cough reflex', '#f97316'),
+                    'Heightened cough reflex sensitivity', '#f97316'),
                 new Trait('dyspnea', 'Exertional Dyspnea', 'clinical',
                     'Breathlessness on exertion', '#6366f1'),
-                new Trait('sputum', 'Sputum Production', 'clinical',
-                    'Chronic mucus hypersecretion', '#14b8a6'),
                 new Trait('wheeze', 'Wheeze', 'clinical',
                     'Musical breath sounds', '#a855f7')
             ]
         };
+        
+        const treatmentDatabase = [
+            new Treatment('ics', 'Inhaled Corticosteroids', 'controller',
+                'First-line anti-inflammatory therapy for persistent asthma'),
+            new Treatment('laba', 'Long-acting Beta Agonists', 'bronchodilator',
+                'Maintenance bronchodilator for symptom control'),
+            new Treatment('anti_il5', 'Anti-IL-5 Biologics', 'biologic',
+                'Targeted therapy for eosinophilic asthma'),
+            new Treatment('macrolide', 'Macrolide Antibiotics', 'anti-inflammatory',
+                'Anti-inflammatory effects in neutrophilic inflammation')
+        ];
         
         // ================================
         // APPLICATION STATE
         // ================================
         
         const appState = {
-            currentMode: 'select', // select, pan, connect, delete, simulate
-            currentConnectionType: 'causal',
-            selectedTraits: new Set(),
-            selectedConnections: new Set(),
-            isDragging: false,
+            currentMode: 'select',
+            currentTool: 'select',
+            patientData: new PatientData(),
             isConnecting: false,
             connectionStart: null,
-            traits: [],
-            connections: [],
-            interventions: [],
-            simulationRunning: false,
-            zoom: 1,
-            pan: { x: 0, y: 0 }
+            simulationDuration: 6,
+            zoomLevel: 1,
+            panOffset: { x: 0, y: 0 }
         };
         
         // ================================
-        // D3 NETWORK VISUALIZATION
+        // NETWORK VISUALIZATION (FIXED)
         // ================================
         
-        class NetworkVisualization {
+        class NetworkVisualizer {
             constructor(containerId) {
                 this.container = d3.select(`#${containerId}`);
                 this.width = this.container.node().clientWidth;
@@ -938,8 +1159,8 @@
                 this.initSimulation();
                 this.initEventHandlers();
                 
-                // Load initial traits
-                this.loadInitialTraits();
+                // Initial demo network
+                this.createDemoNetwork();
             }
             
             initSVG() {
@@ -948,50 +1169,26 @@
                     .attr('width', this.width)
                     .attr('height', this.height);
                 
-                // Define arrow markers for connections
-                this.defs = this.svg.append('defs');
-                
-                ['causal', 'therapeutic', 'inhibitory'].forEach(type => {
-                    const color = new Connection(null, null, type).getColor();
-                    this.defs.append('marker')
-                        .attr('id', `arrow-${type}`)
-                        .attr('viewBox', '0 -5 10 10')
-                        .attr('refX', 15)
-                        .attr('refY', 0)
-                        .attr('markerWidth', 6)
-                        .attr('markerHeight', 6)
-                        .attr('orient', 'auto')
-                        .append('path')
-                        .attr('d', 'M0,-5L10,0L0,5')
-                        .attr('fill', color);
-                });
-                
                 // Main group for zoom/pan
                 this.g = this.svg.append('g');
                 
                 // Groups for different elements
                 this.connectionsGroup = this.g.append('g').attr('class', 'connections');
                 this.traitsGroup = this.g.append('g').attr('class', 'traits');
-                this.selectionGroup = this.g.append('g').attr('class', 'selection');
+                this.tempGroup = this.g.append('g').attr('class', 'temp');
                 
-                // Line for drawing new connections
-                this.connectionLine = this.g.append('line')
+                // Temporary connection line
+                this.tempConnection = this.tempGroup.append('line')
                     .attr('class', 'connection-line')
-                    .attr('stroke', '#3b82f6')
                     .style('display', 'none');
                 
-                // Selection box
-                this.selectionBox = this.selectionGroup.append('rect')
-                    .attr('class', 'selection-box')
-                    .style('display', 'none');
-                
-                // Setup zoom behavior
+                // Setup zoom
                 this.zoom = d3.zoom()
                     .scaleExtent([0.1, 4])
                     .on('zoom', (event) => {
                         this.g.attr('transform', event.transform);
-                        appState.zoom = event.transform.k;
-                        appState.pan = { x: event.transform.x, y: event.transform.y };
+                        appState.zoomLevel = event.transform.k;
+                        appState.panOffset = { x: event.transform.x, y: event.transform.y };
                     });
                 
                 this.svg.call(this.zoom);
@@ -1003,249 +1200,351 @@
                         .id(d => d.id)
                         .distance(150)
                         .strength(d => d.strength / 100))
-                    .force('charge', d3.forceManyBody()
-                        .strength(-300))
+                    .force('charge', d3.forceManyBody().strength(-300))
                     .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-                    .force('collision', d3.forceCollide().radius(50))
+                    .force('collision', d3.forceCollide().radius(60))
                     .alphaDecay(0.02)
-                    .on('tick', () => this.tick());
+                    .on('tick', () => this.updatePositions());
             }
             
             initEventHandlers() {
-                // Handle clicks on background
+                // Background click clears selection
                 this.g.on('click', (event) => {
                     if (event.defaultPrevented) return;
-                    
-                    // Clear selection if clicking on empty space
-                    if (!event.target.classList.contains('trait-node') && 
-                        !event.target.classList.contains('connection')) {
-                        this.clearSelection();
+                    if (event.target === this.g.node()) {
+                        appState.patientData.clearSelection();
+                        this.updateVisualization();
+                        this.updatePropertyPanel();
                     }
                 });
                 
                 // Handle drag selection
                 let dragStart = null;
+                let selectionRect = null;
                 
                 this.g.on('mousedown', (event) => {
-                    if (event.defaultPrevented) return;
+                    if (event.defaultPrevented || appState.currentMode !== 'select') return;
                     
-                    if (appState.currentMode === 'select' && event.button === 0) {
-                        dragStart = [event.clientX - appState.pan.x, event.clientY - appState.pan.y];
-                        this.selectionBox
-                            .attr('x', dragStart[0])
-                            .attr('y', dragStart[1])
-                            .attr('width', 0)
-                            .attr('height', 0)
-                            .style('display', 'block');
-                    }
+                    dragStart = [event.clientX, event.clientY];
+                    selectionRect = this.tempGroup.append('rect')
+                        .attr('class', 'selection-box')
+                        .attr('x', dragStart[0])
+                        .attr('y', dragStart[1])
+                        .attr('width', 0)
+                        .attr('height', 0)
+                        .attr('fill', 'rgba(59, 130, 246, 0.1)')
+                        .attr('stroke', '#3b82f6')
+                        .attr('stroke-width', 1)
+                        .attr('stroke-dasharray', '4,4');
                 });
                 
                 this.g.on('mousemove', (event) => {
-                    if (dragStart) {
-                        const x = event.clientX - appState.pan.x;
-                        const y = event.clientY - appState.pan.y;
+                    // Update temp connection line if connecting
+                    if (appState.isConnecting && appState.connectionStart) {
+                        const [x, y] = d3.pointer(event, this.g.node());
+                        this.tempConnection
+                            .attr('x2', x)
+                            .attr('y2', y)
+                            .style('display', 'block');
+                    }
+                    
+                    // Update selection rectangle
+                    if (dragStart && selectionRect) {
+                        const [x, y] = [event.clientX, event.clientY];
                         const width = x - dragStart[0];
                         const height = y - dragStart[1];
                         
-                        this.selectionBox
+                        selectionRect
                             .attr('width', Math.abs(width))
                             .attr('height', Math.abs(height))
                             .attr('x', width > 0 ? dragStart[0] : dragStart[0] + width)
                             .attr('y', height > 0 ? dragStart[1] : dragStart[1] + height);
                     }
-                    
-                    // Update connection line if connecting
-                    if (appState.isConnecting && appState.connectionStart) {
-                        const [x, y] = d3.pointer(event, this.g.node());
-                        this.connectionLine
-                            .attr('x2', x)
-                            .attr('y2', y)
-                            .style('display', 'block');
-                    }
                 });
                 
                 this.g.on('mouseup', (event) => {
-                    if (dragStart) {
-                        const x = event.clientX - appState.pan.x;
-                        const y = event.clientY - appState.pan.y;
+                    if (dragStart && selectionRect) {
+                        selectionRect.remove();
+                        
+                        const [x1, y1] = dragStart;
+                        const [x2, y2] = [event.clientX, event.clientY];
+                        const minX = Math.min(x1, x2);
+                        const maxX = Math.max(x1, x2);
+                        const minY = Math.min(y1, y2);
+                        const maxY = Math.max(y1, y2);
                         
                         // Select traits within selection box
-                        const minX = Math.min(dragStart[0], x);
-                        const maxX = Math.max(dragStart[0], x);
-                        const minY = Math.min(dragStart[1], y);
-                        const maxY = Math.max(dragStart[1], y);
-                        
-                        appState.traits.forEach(trait => {
+                        appState.patientData.traits.forEach(trait => {
                             if (trait.x >= minX && trait.x <= maxX && 
                                 trait.y >= minY && trait.y <= maxY) {
-                                this.selectTrait(trait);
+                                trait.selected = true;
                             }
                         });
                         
-                        this.selectionBox.style('display', 'none');
+                        this.updateVisualization();
+                        this.updatePropertyPanel();
                         dragStart = null;
+                        selectionRect = null;
                     }
                 });
-                
-                // Handle window resize
-                window.addEventListener('resize', () => this.handleResize());
             }
             
-            handleResize() {
-                this.width = this.container.node().clientWidth;
-                this.height = this.container.node().clientHeight;
+            createDemoNetwork() {
+                // Add some initial traits
+                const trait1 = appState.patientData.addTrait(traitDatabase.immune[0]);
+                const trait2 = appState.patientData.addTrait(traitDatabase.physiological[0]);
+                const trait3 = appState.patientData.addTrait(traitDatabase.clinical[0]);
                 
-                this.svg
-                    .attr('width', this.width)
-                    .attr('height', this.height);
+                // Position them
+                trait1.x = this.width / 2 - 200;
+                trait1.y = this.height / 2;
+                trait2.x = this.width / 2;
+                trait2.y = this.height / 2 - 150;
+                trait3.x = this.width / 2 + 200;
+                trait3.y = this.height / 2;
                 
-                this.simulation.force('center', d3.forceCenter(this.width / 2, this.height / 2));
+                // Add connections
+                appState.patientData.addConnection(trait1, trait2, 'causal', 75);
+                appState.patientData.addConnection(trait2, trait3, 'correlative', 60);
+                
+                this.updateVisualization();
+                this.simulation.nodes(appState.patientData.traits);
+                this.simulation.force('link').links(appState.patientData.connections);
                 this.simulation.alpha(0.3).restart();
             }
             
-            loadInitialTraits() {
-                // Add some initial traits to the canvas
-                const initialTraits = [
-                    traitLibrary.immune[0],
-                    traitLibrary.physio[0],
-                    traitLibrary.clinical[0]
-                ];
-                
-                // Position them in a triangle
-                initialTraits.forEach((trait, i) => {
-                    const angle = (i / initialTraits.length) * 2 * Math.PI;
-                    trait.x = this.width / 2 + Math.cos(angle) * 200;
-                    trait.y = this.height / 2 + Math.sin(angle) * 200;
-                    this.addTrait(trait);
-                });
-                
-                // Add some initial connections
-                this.addConnection(appState.traits[0], appState.traits[1], 'causal', 75);
-                this.addConnection(appState.traits[1], appState.traits[2], 'correlative', 60);
-                
-                this.updateVisualization();
+            updateVisualization() {
+                this.updateTraits();
+                this.updateConnections();
             }
             
-            addTrait(trait) {
-                appState.traits.push(trait);
-                this.updateVisualization();
-                this.simulation.nodes(appState.traits);
-                this.simulation.alpha(0.3).restart();
+            updateTraits() {
+                const traits = this.traitsGroup
+                    .selectAll('.trait')
+                    .data(appState.patientData.traits, d => d.id);
                 
-                showToast(`Added trait: ${trait.name}`, 'success');
+                // Enter new traits
+                const traitsEnter = traits.enter()
+                    .append('g')
+                    .attr('class', 'trait')
+                    .attr('transform', d => `translate(${d.x},${d.y})`)
+                    .style('cursor', 'pointer')
+                    .call(d3.drag()
+                        .on('start', (event, d) => this.dragTraitStart(event, d))
+                        .on('drag', (event, d) => this.dragTrait(event, d))
+                        .on('end', (event, d) => this.dragTraitEnd(event, d)));
+                
+                // Add trait circle
+                traitsEnter.append('circle')
+                    .attr('r', d => d.size)
+                    .attr('fill', d => d.color)
+                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
+                    .attr('stroke-width', d => d.selected ? 3 : 1);
+                
+                // Add uncertainty ring
+                traitsEnter.append('circle')
+                    .attr('r', d => d.size * 0.8)
+                    .attr('fill', 'none')
+                    .attr('stroke', '#ffffff')
+                    .attr('stroke-width', 2)
+                    .attr('stroke-opacity', 0.5)
+                    .attr('stroke-dasharray', d => `${(d.confidence / 100) * 2 * Math.PI * d.size * 0.8}, 1000`);
+                
+                // Add trait label
+                traitsEnter.append('text')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', d => d.size + 20)
+                    .attr('fill', '#ffffff')
+                    .attr('font-size', '12px')
+                    .attr('font-weight', '600')
+                    .text(d => d.name);
+                
+                // Update existing traits
+                traits.merge(traitsEnter)
+                    .attr('transform', d => `translate(${d.x},${d.y})`)
+                    .select('circle')
+                    .attr('r', d => d.size)
+                    .attr('fill', d => d.color)
+                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
+                    .attr('stroke-width', d => d.selected ? 3 : 1);
+                
+                traits.merge(traitsEnter)
+                    .select('circle:nth-child(2)')
+                    .attr('stroke-dasharray', d => `${(d.confidence / 100) * 2 * Math.PI * d.size * 0.8}, 1000`);
+                
+                // Remove old traits
+                traits.exit().remove();
+                
+                // Add event handlers
+                this.traitsGroup.selectAll('.trait')
+                    .on('click', (event, d) => this.handleTraitClick(event, d))
+                    .on('contextmenu', (event, d) => {
+                        event.preventDefault();
+                        this.showTraitContextMenu(event, d);
+                    });
             }
             
-            addConnection(source, target, type, strength = 50) {
-                // Check if connection already exists
-                const existing = appState.connections.find(c => 
-                    c.source.id === source.id && c.target.id === target.id && c.type === type);
+            updateConnections() {
+                const connections = this.connectionsGroup
+                    .selectAll('.connection')
+                    .data(appState.patientData.connections, d => d.id);
                 
-                if (existing) {
-                    showToast('Connection already exists', 'warning');
-                    return;
-                }
+                // Enter new connections
+                const connectionsEnter = connections.enter()
+                    .append('line')
+                    .attr('class', 'connection')
+                    .attr('stroke', d => this.getConnectionColor(d))
+                    .attr('stroke-width', d => d.selected ? 4 : 2)
+                    .attr('stroke-dasharray', d => d.type === 'inhibitory' ? '5,5' : 'none');
                 
-                const connection = new Connection(source, target, type, strength);
-                appState.connections.push(connection);
-                this.updateVisualization();
-                this.simulation.force('link').links(appState.connections);
-                this.simulation.alpha(0.3).restart();
+                // Update existing connections
+                connections.merge(connectionsEnter)
+                    .attr('stroke', d => this.getConnectionColor(d))
+                    .attr('stroke-width', d => d.selected ? 4 : 2)
+                    .attr('stroke-dasharray', d => d.type === 'inhibitory' ? '5,5' : 'none');
                 
-                showToast(`Added ${type} connection`, 'success');
+                // Remove old connections
+                connections.exit().remove();
+                
+                // Add event handlers
+                this.connectionsGroup.selectAll('.connection')
+                    .on('click', (event, d) => this.handleConnectionClick(event, d))
+                    .on('contextmenu', (event, d) => {
+                        event.preventDefault();
+                        this.showConnectionContextMenu(event, d);
+                    });
             }
             
-            removeSelected() {
-                // Remove selected connections
-                appState.connections = appState.connections.filter(c => !c.selected);
-                
-                // Remove selected traits and their connections
-                const traitsToRemove = appState.traits.filter(t => t.selected);
-                traitsToRemove.forEach(trait => {
-                    appState.connections = appState.connections.filter(c => 
-                        c.source.id !== trait.id && c.target.id !== trait.id);
-                });
-                
-                appState.traits = appState.traits.filter(t => !t.selected);
-                
-                this.clearSelection();
-                this.updateVisualization();
-                this.simulation.nodes(appState.traits);
-                this.simulation.force('link').links(appState.connections);
-                this.simulation.alpha(0.3).restart();
-                
-                showToast(`Removed ${traitsToRemove.length} trait(s)`, 'info');
+            getConnectionColor(connection) {
+                const colors = {
+                    'causal': '#ef4444',
+                    'correlative': '#f59e0b',
+                    'therapeutic': '#10b981',
+                    'inhibitory': '#3b82f6'
+                };
+                return colors[connection.type] || '#94a3b8';
             }
             
-            clearSelection() {
-                appState.selectedTraits.clear();
-                appState.selectedConnections.clear();
-                appState.traits.forEach(t => t.selected = false);
-                appState.connections.forEach(c => c.selected = false);
-                this.updateVisualization();
-                hidePropertyPanel();
+            updatePositions() {
+                // Update connection positions
+                this.connectionsGroup.selectAll('.connection')
+                    .attr('x1', d => {
+                        const source = appState.patientData.traits.find(t => t.id === d.sourceId);
+                        return source ? source.x : 0;
+                    })
+                    .attr('y1', d => {
+                        const source = appState.patientData.traits.find(t => t.id === d.sourceId);
+                        return source ? source.y : 0;
+                    })
+                    .attr('x2', d => {
+                        const target = appState.patientData.traits.find(t => t.id === d.targetId);
+                        return target ? target.x : 0;
+                    })
+                    .attr('y2', d => {
+                        const target = appState.patientData.traits.find(t => t.id === d.targetId);
+                        return target ? target.y : 0;
+                    });
+                
+                // Update trait positions
+                this.traitsGroup.selectAll('.trait')
+                    .attr('transform', d => `translate(${d.x},${d.y})`);
             }
             
-            selectTrait(trait) {
-                if (!event.ctrlKey && !event.metaKey) {
-                    this.clearSelection();
-                }
+            dragTraitStart(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            dragTrait(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            dragTraitEnd(event, d) {
+                if (!event.active) this.simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            
+            handleTraitClick(event, trait) {
+                event.stopPropagation();
                 
-                trait.selected = !trait.selected;
-                if (trait.selected) {
-                    appState.selectedTraits.add(trait);
+                if (appState.currentMode === 'connect') {
+                    if (appState.isConnecting) {
+                        this.completeConnection(trait);
+                    } else {
+                        this.startConnection(trait);
+                    }
                 } else {
-                    appState.selectedTraits.delete(trait);
+                    // Select trait
+                    if (!event.ctrlKey && !event.metaKey) {
+                        appState.patientData.clearSelection();
+                    }
+                    trait.selected = !trait.selected;
+                    this.updateVisualization();
+                    this.updatePropertyPanel();
                 }
-                
-                this.showTraitProperties(trait);
-                this.updateVisualization();
             }
             
-            selectConnection(connection) {
-                if (!event.ctrlKey && !event.metaKey) {
-                    this.clearSelection();
-                }
+            handleConnectionClick(event, connection) {
+                event.stopPropagation();
                 
+                if (!event.ctrlKey && !event.metaKey) {
+                    appState.patientData.clearSelection();
+                }
                 connection.selected = !connection.selected;
-                if (connection.selected) {
-                    appState.selectedConnections.add(connection);
-                } else {
-                    appState.selectedConnections.delete(connection);
-                }
-                
-                this.showConnectionProperties(connection);
                 this.updateVisualization();
+                this.updatePropertyPanel();
             }
             
             startConnection(trait) {
-                if (appState.currentMode !== 'connect') return;
-                
                 appState.isConnecting = true;
                 appState.connectionStart = trait;
                 
-                const [x, y] = [trait.x, trait.y];
-                this.connectionLine
-                    .attr('x1', x)
-                    .attr('y1', y)
-                    .attr('x2', x)
-                    .attr('y2', y)
+                this.tempConnection
+                    .attr('x1', trait.x)
+                    .attr('y1', trait.y)
+                    .attr('x2', trait.x)
+                    .attr('y2', trait.y)
                     .style('display', 'block');
             }
             
-            completeConnection(trait) {
-                if (!appState.isConnecting || !appState.connectionStart) return;
-                
-                if (appState.connectionStart.id !== trait.id) {
-                    this.addConnection(appState.connectionStart, trait, appState.currentConnectionType);
+            completeConnection(targetTrait) {
+                if (!appState.connectionStart || appState.connectionStart.id === targetTrait.id) {
+                    this.cancelConnection();
+                    return;
                 }
                 
+                // Add connection with current connection type
+                const connectionType = document.querySelector('.connection-type.selected')?.dataset.type || 'causal';
+                appState.patientData.addConnection(appState.connectionStart, targetTrait, connectionType, 50);
+                
+                this.updateVisualization();
+                this.simulation.force('link').links(appState.patientData.connections);
+                this.simulation.alpha(0.3).restart();
+                
+                showToast(`Connected ${appState.connectionStart.name} → ${targetTrait.name}`, 'success');
                 this.cancelConnection();
             }
             
             cancelConnection() {
                 appState.isConnecting = false;
                 appState.connectionStart = null;
-                this.connectionLine.style('display', 'none');
+                this.tempConnection.style('display', 'none');
+            }
+            
+            updatePropertyPanel() {
+                const selectedTrait = appState.patientData.getSelectedTrait();
+                const selectedConnection = appState.patientData.getSelectedConnection();
+                
+                if (selectedTrait) {
+                    this.showTraitProperties(selectedTrait);
+                } else if (selectedConnection) {
+                    this.showConnectionProperties(selectedConnection);
+                } else {
+                    this.showEmptyProperties();
+                }
             }
             
             showTraitProperties(trait) {
@@ -1257,7 +1556,7 @@
                     </div>
                     
                     <div class="property-group">
-                        <label class="property-label">Current Value</label>
+                        <label class="property-label">Severity Level</label>
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <input type="range" class="property-slider" min="0" max="100" value="${trait.value}"
                                    oninput="network.updateTraitProperty('${trait.id}', 'value', this.value)">
@@ -1266,11 +1565,11 @@
                     </div>
                     
                     <div class="property-group">
-                        <label class="property-label">Size</label>
+                        <label class="property-label">Diagnostic Confidence</label>
                         <div style="display: flex; align-items: center; gap: 1rem;">
-                            <input type="range" class="property-slider" min="20" max="80" value="${trait.size}"
-                                   oninput="network.updateTraitProperty('${trait.id}', 'size', this.value)">
-                            <span style="font-weight: 600; min-width: 40px;">${trait.size}</span>
+                            <input type="range" class="property-slider" min="0" max="100" value="${trait.confidence}"
+                                   oninput="network.updateTraitProperty('${trait.id}', 'confidence', this.value)">
+                            <span style="font-weight: 600; min-width: 40px;">${trait.confidence}%</span>
                         </div>
                     </div>
                     
@@ -1279,29 +1578,15 @@
                         <input type="color" class="property-input" value="${trait.color}" 
                                onchange="network.updateTraitProperty('${trait.id}', 'color', this.value)">
                     </div>
-                    
-                    <div class="property-group">
-                        <label class="property-label">Description</label>
-                        <textarea class="property-input" rows="3"
-                                  onchange="network.updateTraitProperty('${trait.id}', 'description', this.value)">${trait.description}</textarea>
-                    </div>
-                    
-                    <div class="property-group">
-                        <button class="sim-btn" style="width: 100%;" 
-                                onclick="network.addIntervention('${trait.id}', 'increase')">
-                            <i class="fas fa-arrow-up"></i> Increase in Simulation
-                        </button>
-                        <button class="sim-btn" style="width: 100%; margin-top: 0.5rem;"
-                                onclick="network.addIntervention('${trait.id}', 'decrease')">
-                            <i class="fas fa-arrow-down"></i> Decrease in Simulation
-                        </button>
-                    </div>
                 `;
                 
-                showPropertyPanel('Trait Properties', content);
+                document.getElementById('propertyContent').innerHTML = content;
             }
             
             showConnectionProperties(connection) {
+                const sourceTrait = appState.patientData.traits.find(t => t.id === connection.sourceId);
+                const targetTrait = appState.patientData.traits.find(t => t.id === connection.targetId);
+                
                 const content = `
                     <div class="property-group">
                         <label class="property-label">Connection Type</label>
@@ -1315,7 +1600,7 @@
                     </div>
                     
                     <div class="property-group">
-                        <label class="property-label">Strength</label>
+                        <label class="property-label">Relationship Strength</label>
                         <div style="display: flex; align-items: center; gap: 1rem;">
                             <input type="range" class="property-slider" min="1" max="100" value="${connection.strength}"
                                    oninput="network.updateConnectionProperty('${connection.id}', 'strength', this.value)">
@@ -1324,238 +1609,47 @@
                     </div>
                     
                     <div class="property-group">
-                        <label class="property-label">Direction</label>
-                        <select class="property-input" 
-                                onchange="network.updateConnectionProperty('${connection.id}', 'direction', this.value)">
-                            <option value="forward" ${connection.direction === 'forward' ? 'selected' : ''}>${connection.source.name} → ${connection.target.name}</option>
-                            <option value="backward" ${connection.direction === 'backward' ? 'selected' : ''}>${connection.target.name} → ${connection.source.name}</option>
-                            <option value="bidirectional" ${connection.direction === 'bidirectional' ? 'selected' : ''}>Bidirectional</option>
-                        </select>
+                        <label class="property-label">Probability</label>
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <input type="range" class="property-slider" min="0" max="100" value="${connection.probability}"
+                                   oninput="network.updateConnectionProperty('${connection.id}', 'probability', this.value)">
+                            <span style="font-weight: 600; min-width: 40px;">${connection.probability}%</span>
+                        </div>
                     </div>
                     
                     <div class="property-group">
                         <div style="color: var(--text-secondary); font-size: 0.9rem;">
-                            <div><strong>From:</strong> ${connection.source.name}</div>
-                            <div><strong>To:</strong> ${connection.target.name}</div>
+                            <div><strong>From:</strong> ${sourceTrait?.name || 'Unknown'}</div>
+                            <div><strong>To:</strong> ${targetTrait?.name || 'Unknown'}</div>
                         </div>
                     </div>
                 `;
                 
-                showPropertyPanel('Connection Properties', content);
+                document.getElementById('propertyContent').innerHTML = content;
+            }
+            
+            showEmptyProperties() {
+                document.getElementById('propertyContent').innerHTML = `
+                    <div style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                        Select a trait or connection to edit properties
+                    </div>
+                `;
             }
             
             updateTraitProperty(traitId, property, value) {
-                const trait = appState.traits.find(t => t.id === traitId);
-                if (!trait) return;
-                
-                trait[property] = property === 'value' || property === 'size' ? parseInt(value) : value;
-                this.updateVisualization();
+                const trait = appState.patientData.traits.find(t => t.id === traitId);
+                if (trait) {
+                    trait[property] = property === 'value' || property === 'confidence' ? parseInt(value) : value;
+                    this.updateVisualization();
+                }
             }
             
             updateConnectionProperty(connectionId, property, value) {
-                const connection = appState.connections.find(c => c.id === connectionId);
-                if (!connection) return;
-                
-                connection[property] = property === 'strength' ? parseInt(value) : value;
-                this.updateVisualization();
-                this.simulation.force('link').links(appState.connections);
-                this.simulation.alpha(0.3).restart();
-            }
-            
-            addIntervention(traitId, type) {
-                const trait = appState.traits.find(t => t.id === traitId);
-                if (!trait) return;
-                
-                const value = type === 'increase' ? 25 : -25;
-                const intervention = new Intervention(traitId, type, value);
-                appState.interventions.push(intervention);
-                
-                showToast(`Added intervention: ${type} ${trait.name}`, 'success');
-            }
-            
-            runSimulation() {
-                if (appState.interventions.length === 0) {
-                    showToast('Add interventions first to run simulation', 'warning');
-                    return;
+                const connection = appState.patientData.connections.find(c => c.id === connectionId);
+                if (connection) {
+                    connection[property] = property === 'strength' || property === 'probability' ? parseInt(value) : value;
+                    this.updateVisualization();
                 }
-                
-                appState.simulationRunning = true;
-                showToast('Running simulation...', 'info');
-                
-                // Apply interventions
-                appState.interventions.forEach(intervention => {
-                    const trait = appState.traits.find(t => t.id === intervention.traitId);
-                    if (trait) {
-                        trait.value = Math.max(0, Math.min(100, trait.value + intervention.value));
-                    }
-                });
-                
-                // Propagate effects through connections
-                appState.connections.forEach(connection => {
-                    if (connection.type === 'causal' || connection.type === 'therapeutic') {
-                        const effect = (connection.strength / 100) * (connection.source.value / 100) * 10;
-                        connection.target.value = Math.max(0, Math.min(100, 
-                            connection.target.value + (connection.direction === 'inhibitory' ? -effect : effect)));
-                    }
-                });
-                
-                this.updateVisualization();
-                
-                setTimeout(() => {
-                    appState.simulationRunning = false;
-                    showToast('Simulation complete!', 'success');
-                }, 1000);
-            }
-            
-            updateVisualization() {
-                // Update traits
-                const traits = this.traitsGroup
-                    .selectAll('.trait-node')
-                    .data(appState.traits, d => d.id);
-                
-                const traitsEnter = traits.enter()
-                    .append('g')
-                    .attr('class', 'trait-node')
-                    .attr('transform', d => `translate(${d.x},${d.y})`)
-                    .style('cursor', 'pointer')
-                    .call(d3.drag()
-                        .on('start', (event, d) => this.dragStarted(event, d))
-                        .on('drag', (event, d) => this.dragged(event, d))
-                        .on('end', (event, d) => this.dragEnded(event, d)));
-                
-                // Trait circle
-                traitsEnter.append('circle')
-                    .attr('r', d => d.size)
-                    .attr('fill', d => d.color)
-                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
-                    .attr('stroke-width', d => d.selected ? 3 : 1);
-                
-                // Trait value indicator
-                traitsEnter.append('circle')
-                    .attr('r', d => d.size * 0.7)
-                    .attr('fill', 'none')
-                    .attr('stroke', '#ffffff')
-                    .attr('stroke-width', 3)
-                    .attr('stroke-dasharray', d => `${(d.value / 100) * 2 * Math.PI * d.size * 0.7}, 1000`)
-                    .style('stroke-linecap', 'round');
-                
-                // Trait label
-                traitsEnter.append('text')
-                    .attr('text-anchor', 'middle')
-                    .attr('dy', d => d.size + 20)
-                    .attr('fill', '#ffffff')
-                    .attr('font-size', '12px')
-                    .attr('font-weight', '600')
-                    .attr('paint-order', 'stroke')
-                    .attr('stroke', 'rgba(15,23,42,0.8)')
-                    .attr('stroke-width', 3)
-                    .attr('stroke-linecap', 'round')
-                    .attr('stroke-linejoin', 'round')
-                    .text(d => d.name);
-                
-                // Update existing traits
-                traits.merge(traitsEnter)
-                    .attr('transform', d => `translate(${d.x},${d.y})`)
-                    .select('circle')
-                    .attr('r', d => d.size)
-                    .attr('fill', d => d.color)
-                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
-                    .attr('stroke-width', d => d.selected ? 3 : 1);
-                
-                traits.merge(traitsEnter)
-                    .select('text')
-                    .attr('dy', d => d.size + 20)
-                    .text(d => d.name);
-                
-                traits.merge(traitsEnter)
-                    .select('circle:nth-child(2)')
-                    .attr('stroke-dasharray', d => `${(d.value / 100) * 2 * Math.PI * d.size * 0.7}, 1000`);
-                
-                traits.exit().remove();
-                
-                // Event handlers for traits
-                this.traitsGroup.selectAll('.trait-node')
-                    .on('click', (event, d) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        
-                        if (appState.currentMode === 'connect') {
-                            if (appState.isConnecting) {
-                                this.completeConnection(d);
-                            } else {
-                                this.startConnection(d);
-                            }
-                        } else {
-                            this.selectTrait(d);
-                        }
-                    })
-                    .on('contextmenu', (event, d) => {
-                        event.preventDefault();
-                        this.showTraitProperties(d);
-                    });
-                
-                // Update connections
-                const connections = this.connectionsGroup
-                    .selectAll('.connection')
-                    .data(appState.connections, d => d.id);
-                
-                const connectionsEnter = connections.enter()
-                    .append('line')
-                    .attr('class', 'connection')
-                    .attr('stroke', d => d.getColor())
-                    .attr('stroke-width', d => d.selected ? 4 : 2)
-                    .attr('stroke-dasharray', d => d.getDashArray())
-                    .attr('marker-end', d => d.type !== 'correlative' ? `url(#arrow-${d.type})` : null);
-                
-                connections.merge(connectionsEnter)
-                    .attr('stroke', d => d.getColor())
-                    .attr('stroke-width', d => d.selected ? 4 : 2)
-                    .attr('stroke-dasharray', d => d.getDashArray())
-                    .attr('marker-end', d => d.type !== 'correlative' ? `url(#arrow-${d.type})` : null);
-                
-                connections.exit().remove();
-                
-                // Event handlers for connections
-                this.connectionsGroup.selectAll('.connection')
-                    .on('click', (event, d) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        this.selectConnection(d);
-                    })
-                    .on('contextmenu', (event, d) => {
-                        event.preventDefault();
-                        this.showConnectionProperties(d);
-                    });
-            }
-            
-            dragStarted(event, d) {
-                if (!event.active) this.simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
-            }
-            
-            dragged(event, d) {
-                d.fx = event.x;
-                d.fy = event.y;
-            }
-            
-            dragEnded(event, d) {
-                if (!event.active) this.simulation.alphaTarget(0);
-                d.fx = null;
-                d.fy = null;
-            }
-            
-            tick() {
-                // Update connection positions
-                this.connectionsGroup.selectAll('.connection')
-                    .attr('x1', d => d.source.x)
-                    .attr('y1', d => d.source.y)
-                    .attr('x2', d => d.target.x)
-                    .attr('y2', d => d.target.y);
-                
-                // Update trait positions
-                this.traitsGroup.selectAll('.trait-node')
-                    .attr('transform', d => `translate(${d.x},${d.y})`);
             }
             
             zoomIn() {
@@ -1572,26 +1666,28 @@
                     .call(this.zoom.transform, d3.zoomIdentity);
             }
             
-            clearAll() {
-                if (confirm('Clear all traits and connections?')) {
-                    appState.traits = [];
-                    appState.connections = [];
-                    appState.interventions = [];
-                    appState.selectedTraits.clear();
-                    appState.selectedConnections.clear();
-                    
-                    this.updateVisualization();
-                    this.simulation.nodes(appState.traits);
-                    this.simulation.force('link').links([]);
-                    
-                    showToast('Canvas cleared', 'info');
-                }
+            showTraitContextMenu(event, trait) {
+                // For now, just select the trait
+                appState.patientData.clearSelection();
+                trait.selected = true;
+                this.updateVisualization();
+                this.updatePropertyPanel();
+            }
+            
+            showConnectionContextMenu(event, connection) {
+                // For now, just select the connection
+                appState.patientData.clearSelection();
+                connection.selected = true;
+                this.updateVisualization();
+                this.updatePropertyPanel();
             }
         }
         
         // ================================
-        // UI UTILITIES
+        // UI MANAGEMENT
         // ================================
+        
+        let network;
         
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
@@ -1614,199 +1710,266 @@
             // Show toast
             toast.classList.add('show');
             
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            // Auto-hide
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
-        
-        function showPropertyPanel(title, content) {
-            document.getElementById('propertyTitle').textContent = title;
-            document.getElementById('propertyContent').innerHTML = content;
-            document.getElementById('propertyPanel').classList.add('show');
-        }
-        
-        function hidePropertyPanel() {
-            document.getElementById('propertyPanel').classList.remove('show');
-        }
-        
-        function showLoading() {
-            document.getElementById('loadingOverlay').classList.add('show');
-        }
-        
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('show');
-        }
-        
-        // ================================
-        // INITIALIZATION
-        // ================================
-        
-        let network;
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize network visualization
-            network = new NetworkVisualization('network-canvas');
-            
-            // Load trait library into left panel
-            loadTraitLibrary();
-            
-            // Set up event listeners
-            setupEventListeners();
-            
-            // Show welcome message
-            setTimeout(() => {
-                showToast('Welcome to TRAITMAP Builder! Drag traits from the left panel to start.', 'info');
-            }, 1000);
-            
-            console.log('TRAITMAP Interactive Platform Initialized');
-        });
         
         function loadTraitLibrary() {
-            // Load immune traits
-            const immuneContainer = document.getElementById('immune-traits');
-            traitLibrary.immune.forEach(trait => {
-                const element = createTraitElement(trait);
-                immuneContainer.appendChild(element);
-            });
+            const container = document.getElementById('traitLibrary');
+            container.innerHTML = '';
             
-            // Load physiological traits
-            const physioContainer = document.getElementById('physio-traits');
-            traitLibrary.physio.forEach(trait => {
-                const element = createTraitElement(trait);
-                physioContainer.appendChild(element);
-            });
-            
-            // Load clinical traits
-            const clinicalContainer = document.getElementById('clinical-traits');
-            traitLibrary.clinical.forEach(trait => {
-                const element = createTraitElement(trait);
-                clinicalContainer.appendChild(element);
+            // Load traits by category
+            Object.entries(traitDatabase).forEach(([category, traits]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'trait-category';
+                
+                let categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+                if (categoryName === 'Physiological') categoryName = 'Physiological Traits';
+                
+                categoryDiv.innerHTML = `
+                    <div class="category-title">
+                        <i class="fas fa-${category === 'immune' ? 'shield-virus' : category === 'physiological' ? 'heartbeat' : 'stethoscope'}"></i>
+                        ${categoryName}
+                    </div>
+                    <div class="trait-items" id="${category}-traits"></div>
+                `;
+                
+                container.appendChild(categoryDiv);
+                
+                const itemsContainer = categoryDiv.querySelector('.trait-items');
+                traits.forEach(trait => {
+                    const item = document.createElement('div');
+                    item.className = 'trait-item';
+                    item.draggable = true;
+                    item.dataset.traitId = trait.id;
+                    
+                    item.innerHTML = `
+                        <div class="trait-name">${trait.name}</div>
+                        <div class="trait-desc">${trait.description}</div>
+                    `;
+                    
+                    // Drag and drop
+                    item.addEventListener('dragstart', function(event) {
+                        this.classList.add('dragging');
+                        event.dataTransfer.setData('text/plain', JSON.stringify({
+                            id: trait.id,
+                            name: trait.name,
+                            category: trait.category,
+                            description: trait.description,
+                            color: trait.color
+                        }));
+                    });
+                    
+                    item.addEventListener('dragend', function() {
+                        this.classList.remove('dragging');
+                    });
+                    
+                    itemsContainer.appendChild(item);
+                });
             });
         }
         
-        function createTraitElement(trait) {
-            const div = document.createElement('div');
-            div.className = 'trait-item';
-            div.draggable = true;
-            div.dataset.traitId = trait.id;
+        function loadTreatmentOptions() {
+            const container = document.getElementById('treatmentOptions');
+            container.innerHTML = '';
             
-            div.innerHTML = `
-                <div class="trait-name">${trait.name}</div>
-                <div class="trait-description">${trait.description}</div>
+            treatmentDatabase.forEach(treatment => {
+                const option = document.createElement('div');
+                option.className = 'treatment-option';
+                option.dataset.treatmentId = treatment.id;
+                
+                option.innerHTML = `
+                    <div class="treatment-name">${treatment.name}</div>
+                    <div class="treatment-desc">${treatment.description}</div>
+                    <div class="treatment-properties">
+                        <div class="treatment-prop">
+                            <span>Type:</span>
+                            <span>${treatment.type}</span>
+                        </div>
+                        <div class="treatment-prop">
+                            <span>Dosage:</span>
+                            <span>${treatment.dosage}</span>
+                        </div>
+                    </div>
+                `;
+                
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.treatment-option').forEach(opt => 
+                        opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    // Add treatment to simulation
+                    addTreatmentToSimulation(treatment);
+                });
+                
+                container.appendChild(option);
+            });
+        }
+        
+        function addTreatmentToSimulation(treatment) {
+            showToast(`Added ${treatment.name} to simulation`, 'success');
+        }
+        
+        function runSimulation() {
+            // Show loading state
+            const resultsContainer = document.getElementById('simulationResults');
+            resultsContainer.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div class="loading-logo" style="font-size: 2rem; margin-bottom: 1rem;">
+                        <i class="fas fa-cogs fa-spin"></i>
+                    </div>
+                    <div style="color: var(--text-secondary);">
+                        Running simulation for ${appState.simulationDuration} months...
+                    </div>
+                </div>
             `;
             
-            // Drag start
-            div.addEventListener('dragstart', function(event) {
-                this.classList.add('dragging');
-                event.dataTransfer.setData('text/plain', trait.id);
-                event.dataTransfer.effectAllowed = 'copy';
-            });
+            // Switch to simulation tab
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-btn[data-tab="simulation"]').classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById('simulationTab').classList.add('active');
             
-            // Drag end
-            div.addEventListener('dragend', function() {
-                this.classList.remove('dragging');
-            });
-            
-            return div;
+            // Simulate results after delay
+            setTimeout(() => {
+                const simulatedResults = [
+                    { trait: 'Eosinophilic Inflammation', change: -65, unit: '% reduction' },
+                    { trait: 'Airflow Limitation', change: 22, unit: '% improvement' },
+                    { trait: 'Cough Hypersensitivity', change: -48, unit: '% reduction' }
+                ];
+                
+                resultsContainer.innerHTML = simulatedResults.map(result => `
+                    <div class="simulation-result">
+                        <div class="result-header">
+                            <div class="result-title">${result.trait}</div>
+                            <div class="result-change ${result.change > 0 ? 'positive' : result.change < 0 ? 'negative' : 'neutral'}">
+                                ${result.change > 0 ? '+' : ''}${result.change}${result.unit}
+                            </div>
+                        </div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                            After ${appState.simulationDuration} months of treatment
+                        </div>
+                    </div>
+                `).join('');
+                
+                showToast('Simulation complete! Results updated.', 'success');
+            }, 2000);
         }
         
         function setupEventListeners() {
-            // Panel tabs
-            document.querySelectorAll('.panel-tab').forEach(tab => {
+            // Tool buttons
+            document.querySelectorAll('.canvas-tool').forEach(tool => {
+                tool.addEventListener('click', function() {
+                    const toolName = this.dataset.tool;
+                    
+                    // Update active tool
+                    document.querySelectorAll('.canvas-tool').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    appState.currentMode = toolName;
+                    
+                    if (toolName === 'connect') {
+                        showToast('Click on a trait to start connecting, then click on another trait', 'info');
+                    } else if (toolName === 'zoom-in') {
+                        network.zoomIn();
+                    } else if (toolName === 'zoom-out') {
+                        network.zoomOut();
+                    }
+                });
+            });
+            
+            // Tab switching
+            document.querySelectorAll('.tab-btn').forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabName = this.dataset.tab;
                     
                     // Update active tab
-                    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
                     
                     // Show corresponding content
-                    document.querySelectorAll('.panel-tab-content').forEach(content => {
+                    document.querySelectorAll('.tab-content').forEach(content => {
                         content.classList.remove('active');
-                        if (content.dataset.tab === tabName) {
+                        if (content.id === tabName + 'Tab') {
                             content.classList.add('active');
                         }
                     });
                 });
             });
             
-            // Tool selection
-            document.querySelectorAll('.tool-card').forEach(tool => {
-                tool.addEventListener('click', function() {
-                    const toolName = this.dataset.tool;
-                    
-                    // Update active tool
-                    document.querySelectorAll('.tool-card').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // Update control mode
-                    document.querySelectorAll('.control-btn').forEach(btn => btn.classList.remove('active'));
-                    document.querySelector(`.control-btn[data-control="${toolName}"]`).classList.add('active');
-                    
-                    appState.currentMode = toolName;
-                    
-                    if (toolName === 'connect') {
-                        showToast('Click on a trait to start connecting, then click on another trait', 'info');
-                    }
-                });
+            // Simulation duration slider
+            document.getElementById('simDuration').addEventListener('input', function() {
+                appState.simulationDuration = parseInt(this.value);
+                document.getElementById('durationValue').textContent = `${this.value} months`;
             });
             
-            // Connection type selection
-            document.querySelectorAll('.connection-type').forEach(type => {
-                type.addEventListener('click', function() {
-                    document.querySelectorAll('.connection-type').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    appState.currentConnectionType = this.dataset.connection;
-                });
+            // Header buttons
+            document.getElementById('importPatientBtn').addEventListener('click', () => {
+                document.getElementById('importModal').classList.add('show');
             });
             
-            // Network controls
-            document.querySelectorAll('.control-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const control = this.dataset.control;
-                    
-                    if (control === 'select' || control === 'pan') {
-                        document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        appState.currentMode = control;
-                    } else if (control === 'zoom-in') {
-                        network.zoomIn();
-                    } else if (control === 'zoom-out') {
-                        network.zoomOut();
-                    } else if (control === 'reset') {
-                        network.resetView();
-                    } else if (control === 'clear') {
-                        network.clearAll();
-                    }
-                });
+            document.getElementById('saveSessionBtn').addEventListener('click', () => {
+                showToast('Session saved locally', 'success');
             });
             
-            // Close property panel
-            document.getElementById('closeProperties').addEventListener('click', hidePropertyPanel);
+            document.getElementById('runSimBtn').addEventListener('click', runSimulation);
             
-            // Simulation buttons
-            document.getElementById('runSimulation').addEventListener('click', () => network.runSimulation());
+            // Import modal
+            document.getElementById('closeImportModal').addEventListener('click', () => {
+                document.getElementById('importModal').classList.remove('show');
+            });
             
-            document.getElementById('addIntervention').addEventListener('click', () => {
-                if (appState.selectedTraits.size === 0) {
-                    showToast('Select a trait first to add intervention', 'warning');
-                    return;
-                }
+            document.getElementById('cancelImport').addEventListener('click', () => {
+                document.getElementById('importModal').classList.remove('show');
+            });
+            
+            document.getElementById('confirmImport').addEventListener('click', () => {
+                showToast('Patient data imported. Auto-generating trait network...', 'success');
+                document.getElementById('importModal').classList.remove('show');
                 
-                const trait = Array.from(appState.selectedTraits)[0];
-                network.addIntervention(trait.id, 'increase');
+                // Simulate auto-generated network
+                setTimeout(() => {
+                    // Add some traits based on "imported data"
+                    const newTraits = [
+                        traitDatabase.immune[1], // Neutrophilic inflammation
+                        traitDatabase.physiological[2], // Gas trapping
+                        traitDatabase.clinical[1] // Dyspnea
+                    ];
+                    
+                    newTraits.forEach(trait => {
+                        const newTrait = new Trait(
+                            trait.id + '-imported',
+                            trait.name,
+                            trait.category,
+                            trait.description,
+                            trait.color
+                        );
+                        
+                        // Position randomly
+                        newTrait.x = Math.random() * 800 + 100;
+                        newTrait.y = Math.random() * 500 + 100;
+                        
+                        appState.patientData.addTrait(newTrait);
+                    });
+                    
+                    network.updateVisualization();
+                    network.simulation.nodes(appState.patientData.traits);
+                    network.simulation.alpha(0.3).restart();
+                    
+                    showToast('Trait network auto-generated from patient data', 'success');
+                }, 1500);
             });
             
-            // Mobile toggle
-            document.getElementById('mobileToggle').addEventListener('click', function() {
-                document.getElementById('leftPanel').classList.toggle('show');
-                this.innerHTML = document.getElementById('leftPanel').classList.contains('show') ? 
-                    '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+            // Data type selection in import modal
+            document.querySelectorAll('.data-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
             });
             
-            // Drop zone for traits
-            const canvas = document.getElementById('network-canvas');
+            // Drop traits onto canvas
+            const canvas = document.getElementById('networkCanvas');
             
             canvas.addEventListener('dragover', function(event) {
                 event.preventDefault();
@@ -1816,29 +1979,34 @@
             canvas.addEventListener('drop', function(event) {
                 event.preventDefault();
                 
-                const traitId = event.dataTransfer.getData('text/plain');
-                const trait = [...traitLibrary.immune, ...traitLibrary.physio, ...traitLibrary.clinical]
-                    .find(t => t.id === traitId);
-                
-                if (trait) {
-                    // Create a copy of the trait
+                try {
+                    const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+                    
+                    // Create new trait
                     const newTrait = new Trait(
-                        trait.id + '-' + Date.now(),
-                        trait.name,
-                        trait.category,
-                        trait.description,
-                        trait.color
+                        data.id + '-' + Date.now(),
+                        data.name,
+                        data.category,
+                        data.description,
+                        data.color
                     );
                     
                     // Position at drop location
                     const rect = canvas.getBoundingClientRect();
-                    const x = (event.clientX - rect.left - appState.pan.x) / appState.zoom;
-                    const y = (event.clientY - rect.top - appState.pan.y) / appState.zoom;
+                    const x = (event.clientX - rect.left - appState.panOffset.x) / appState.zoomLevel;
+                    const y = (event.clientY - rect.top - appState.panOffset.y) / appState.zoomLevel;
                     
                     newTrait.x = x;
                     newTrait.y = y;
                     
-                    network.addTrait(newTrait);
+                    appState.patientData.addTrait(newTrait);
+                    network.updateVisualization();
+                    network.simulation.nodes(appState.patientData.traits);
+                    network.simulation.alpha(0.3).restart();
+                    
+                    showToast(`Added ${newTrait.name} to network`, 'success');
+                } catch (error) {
+                    console.error('Error dropping trait:', error);
                 }
             });
             
@@ -1846,32 +2014,58 @@
             document.addEventListener('keydown', function(event) {
                 // Delete key
                 if (event.key === 'Delete' || event.key === 'Backspace') {
-                    if (appState.selectedTraits.size > 0 || appState.selectedConnections.size > 0) {
-                        network.removeSelected();
-                    }
+                    appState.patientData.removeSelected();
+                    network.updateVisualization();
+                    network.simulation.nodes(appState.patientData.traits);
+                    network.simulation.force('link').links(appState.patientData.connections);
+                    network.updatePropertyPanel();
                 }
                 
                 // Escape key
                 if (event.key === 'Escape') {
                     network.cancelConnection();
-                    hidePropertyPanel();
-                }
-                
-                // Ctrl+A to select all
-                if (event.ctrlKey && event.key === 'a') {
-                    event.preventDefault();
-                    appState.traits.forEach(t => network.selectTrait(t));
-                }
-            });
-            
-            // Close left panel when clicking on canvas (mobile)
-            canvas.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
-                    document.getElementById('leftPanel').classList.remove('show');
-                    document.getElementById('mobileToggle').innerHTML = '<i class="fas fa-bars"></i>';
                 }
             });
         }
+        
+        // ================================
+        // INITIALIZATION
+        // ================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate loading progress
+            let progress = 0;
+            const loadingInterval = setInterval(() => {
+                progress += 10;
+                document.getElementById('loadingBar').style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(loadingInterval);
+                    
+                    // Show main app
+                    document.getElementById('loadingScreen').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loadingScreen').style.display = 'none';
+                        document.getElementById('appContainer').style.display = 'block';
+                        
+                        // Initialize network
+                        network = new NetworkVisualizer('networkCanvas');
+                        
+                        // Load UI components
+                        loadTraitLibrary();
+                        loadTreatmentOptions();
+                        
+                        // Setup event listeners
+                        setupEventListeners();
+                        
+                        // Show welcome message
+                        setTimeout(() => {
+                            showToast('Welcome to TRAITMAP Clinical Platform! Drag traits from the left panel to start.', 'info');
+                        }, 500);
+                    }, 500);
+                }
+            }, 150);
+        });
     </script>
 </body>
 </html>
