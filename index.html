@@ -6,424 +6,544 @@
     <title>TRAITMAP - Clinical Intelligence Platform</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        /* ===== EMPOWERING DESIGN SYSTEM ===== */
         :root {
-            --primary-blue: #2563eb;
-            --secondary-blue: #3b82f6;
-            --accent-blue: #60a5fa;
-            --light-blue: #93c5fd;
-            --dark-blue: #0f172a;
-            --success-green: #10b981;
-            --warning-orange: #f59e0b;
-            --danger-red: #ef4444;
-            --purple: #8b5cf6;
-            --pink: #ec4899;
-            --cyan: #06b6d4;
-            --card-bg: #1e293b;
-            --card-border: #334155;
-            --text-primary: #f8fafc;
-            --text-secondary: #cbd5e1;
-            --panel-bg: rgba(15, 23, 42, 0.95);
-            --sidebar-width: 320px;
-            --header-height: 64px;
-            --border-radius: 12px;
-            --transition-speed: 0.3s;
-            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 10px 20px rgba(0, 0, 0, 0.2);
+            /* Professional Medical Color Palette */
+            --primary-blue: #0066ff;
+            --secondary-blue: #4d94ff;
+            --accent-blue: #80b3ff;
+            --light-blue: #cce0ff;
+            --dark-blue: #001a4d;
+            --success-green: #00cc88;
+            --warning-orange: #ffaa00;
+            --danger-red: #ff3366;
+            --expert-purple: #9966ff;
+            --insight-pink: #ff66cc;
+            --clarity-cyan: #00ccff;
+            
+            /* UI Elements */
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --panel-bg: rgba(10, 25, 60, 0.95);
+            --modal-bg: rgba(5, 15, 40, 0.98);
+            --text-primary: #ffffff;
+            --text-secondary: #b3c6ff;
+            --text-tertiary: #809fff;
+            
+            /* Empowerment Metrics */
+            --sidebar-width: 360px;
+            --header-height: 72px;
+            --border-radius-xl: 20px;
+            --border-radius-lg: 16px;
+            --border-radius-md: 12px;
+            --border-radius-sm: 8px;
+            
+            /* Empowering Animations */
+            --transition-spring: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            
+            /* Empowering Shadows */
+            --shadow-empowered: 0 20px 60px rgba(0, 102, 255, 0.25);
+            --shadow-elevated: 0 10px 40px rgba(0, 0, 0, 0.3);
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.15);
+            --shadow-glow: 0 0 40px rgba(0, 102, 255, 0.4);
         }
         
+        /* ===== RESET & BASE ===== */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         
         html {
             font-size: 16px;
+            scroll-behavior: smooth;
         }
         
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            background: linear-gradient(135deg, 
+                #000814 0%, 
+                #001428 30%, 
+                #00214d 70%, 
+                #003366 100%);
             color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
             overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
+            position: relative;
         }
         
-        /* Loading Screen */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0, 102, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 204, 136, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(153, 102, 255, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        /* ===== EMPOWERING LOADING EXPERIENCE ===== */
         #loadingScreen {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            background: linear-gradient(135deg, #000814 0%, #001428 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            transition: opacity 0.5s ease;
+            transition: all 0.8s var(--transition-smooth);
         }
         
-        .loading-container {
+        .loading-empowerment {
             text-align: center;
+            max-width: 600px;
             padding: 2rem;
         }
         
         .loading-logo {
-            font-size: clamp(3rem, 8vw, 4.5rem);
-            color: var(--accent-blue);
-            margin-bottom: 1.5rem;
-            animation: pulse 2s infinite;
+            font-size: clamp(4rem, 10vw, 5rem);
+            color: var(--primary-blue);
+            margin-bottom: 2rem;
+            animation: empowerPulse 3s infinite var(--transition-bounce);
         }
         
-        .loading-text {
-            font-size: clamp(1.5rem, 4vw, 2rem);
-            font-weight: 700;
-            color: white;
-            margin-bottom: 0.75rem;
-            background: linear-gradient(90deg, var(--secondary-blue), var(--accent-blue));
+        .loading-title {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-blue), var(--clarity-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
         }
         
-        .loading-subtext {
+        .loading-tagline {
+            font-size: clamp(1rem, 3vw, 1.25rem);
             color: var(--text-secondary);
-            margin-bottom: 2.5rem;
-            font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-            max-width: 500px;
+            margin-bottom: 3rem;
+            font-weight: 500;
             line-height: 1.6;
         }
         
-        .loading-progress-container {
-            width: min(400px, 90vw);
+        .empowerment-progress {
+            width: min(500px, 90vw);
+            margin: 0 auto;
         }
         
         .progress-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
             color: var(--text-secondary);
             font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .progress-bar {
-            height: 6px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.2), 
+                transparent);
+            animation: shimmer 2s infinite;
         }
         
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--secondary-blue), var(--accent-blue));
+            background: linear-gradient(90deg, 
+                var(--primary-blue), 
+                var(--clarity-cyan),
+                var(--expert-purple));
             width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 3px;
+            transition: width 0.4s var(--transition-smooth);
+            border-radius: 4px;
+            position: relative;
+            z-index: 1;
         }
         
-        /* Main App Container */
-        #appContainer {
-            display: none;
-            height: 100vh;
-            overflow: hidden;
+        .empowerment-message {
+            margin-top: 2rem;
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+            font-style: italic;
+            min-height: 24px;
         }
         
-        /* Header - Responsive */
-        .app-header {
+        /* ===== EMPOWERING HEADER ===== */
+        .empowerment-header {
             height: var(--header-height);
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 0 clamp(1rem, 3vw, 2rem);
+            background: rgba(10, 25, 60, 0.9);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 0 2rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: relative;
-            z-index: 100;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 900;
+            transition: all 0.3s var(--transition-smooth);
         }
         
-        .logo-section {
+        .empowerment-header.scrolled {
+            height: 60px;
+            background: rgba(10, 25, 60, 0.98);
+            box-shadow: var(--shadow-elevated);
+        }
+        
+        .logo-empowerment {
             display: flex;
             align-items: center;
-            gap: clamp(0.75rem, 2vw, 1rem);
+            gap: 1rem;
         }
         
-        .logo-icon {
-            width: clamp(36px, 8vw, 42px);
-            height: clamp(36px, 8vw, 42px);
-            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue));
-            border-radius: 10px;
+        .logo-badge {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--expert-purple));
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(1rem, 3vw, 1.3rem);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-            flex-shrink: 0;
-        }
-        
-        .app-title h1 {
-            font-size: clamp(1.1rem, 3vw, 1.4rem);
-            font-weight: 700;
-            color: white;
-            white-space: nowrap;
-        }
-        
-        .app-title p {
-            font-size: clamp(0.7rem, 2vw, 0.85rem);
-            color: var(--light-blue);
-            opacity: 0.9;
-            white-space: nowrap;
-        }
-        
-        /* Mobile Menu Button */
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: var(--text-primary);
             font-size: 1.5rem;
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: all var(--transition-speed);
+            box-shadow: var(--shadow-glow);
+            animation: gentleFloat 6s infinite var(--transition-smooth);
         }
         
-        .mobile-menu-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .header-controls {
-            display: flex;
-            gap: clamp(0.5rem, 1.5vw, 0.75rem);
-            align-items: center;
-        }
-        
-        .header-btn {
-            padding: clamp(0.5rem, 2vw, 0.7rem) clamp(0.75rem, 2vw, 1.3rem);
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            color: var(--text-primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-weight: 500;
-            font-size: clamp(0.8rem, 2vw, 0.9rem);
-            transition: all var(--transition-speed);
-            white-space: nowrap;
-        }
-        
-        .header-btn i {
-            font-size: clamp(0.9rem, 2vw, 1rem);
-        }
-        
-        .header-btn:hover {
-            background: rgba(59, 130, 246, 0.15);
-            border-color: var(--secondary-blue);
-            transform: translateY(-1px);
-        }
-        
-        .header-btn.primary {
-            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue));
-            border: none;
-            color: white;
-            font-weight: 600;
-        }
-        
-        .header-btn.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-        }
-        
-        /* Mobile Header Actions */
-        .mobile-actions {
-            display: none;
-            gap: 0.5rem;
-        }
-        
-        /* Main Content Area - Responsive Grid */
-        .main-content {
-            display: grid;
-            grid-template-columns: var(--sidebar-width) 1fr 380px;
-            height: calc(100vh - var(--header-height));
-            position: relative;
-            transition: all var(--transition-speed);
-        }
-        
-        /* Sidebar - Responsive */
-        .sidebar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        .logo-text {
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            transition: transform var(--transition-speed);
         }
         
-        .sidebar-header {
-            padding: clamp(1rem, 2vw, 1.5rem);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-blue), white);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        
+        .logo-text p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .empowerment-controls {
             display: flex;
-            justify-content: space-between;
+            gap: 0.75rem;
             align-items: center;
         }
         
-        .sidebar-header h2 {
-            font-size: 1.1rem;
+        .control-btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, 
+                rgba(0, 102, 255, 0.2), 
+                rgba(77, 148, 255, 0.1));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--border-radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
             font-weight: 600;
-            color: white;
+            cursor: pointer;
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            transition: all 0.3s var(--transition-spring);
+            position: relative;
+            overflow: hidden;
         }
         
-        .sidebar-close {
-            display: none;
-            background: none;
+        .control-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.1), 
+                transparent);
+            transition: left 0.6s;
+        }
+        
+        .control-btn:hover::before {
+            left: 100%;
+        }
+        
+        .control-btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-blue);
+            box-shadow: var(--shadow-empowered);
+            background: linear-gradient(135deg, 
+                rgba(0, 102, 255, 0.3), 
+                rgba(77, 148, 255, 0.2));
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        
+        .control-btn.empowered {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
             border: none;
-            color: var(--text-secondary);
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 6px;
-            transition: all var(--transition-speed);
-        }
-        
-        .sidebar-close:hover {
             color: white;
-            background: rgba(255, 255, 255, 0.1);
+            font-weight: 700;
+            box-shadow: var(--shadow-glow);
         }
         
-        .search-box {
-            margin: 1rem clamp(1rem, 2vw, 1.5rem) 0;
+        .control-btn.empowered:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 15px 50px rgba(0, 102, 255, 0.4);
+        }
+        
+        .mobile-empower {
+            display: none;
+            gap: 0.5rem;
+        }
+        
+        /* ===== EMPOWERING MAIN LAYOUT ===== */
+        #appContainer {
+            display: none;
+            min-height: 100vh;
+            padding-top: var(--header-height);
+        }
+        
+        .empowerment-layout {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr 400px;
+            height: calc(100vh - var(--header-height));
             position: relative;
         }
         
-        .search-box input {
-            width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            transition: all var(--transition-speed);
-        }
-        
-        .search-box input:focus {
-            outline: none;
-            border-color: var(--secondary-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .search-box i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        /* Trait Library */
-        .trait-library {
-            flex: 1;
-            overflow-y: auto;
-            padding: clamp(1rem, 2vw, 1.5rem);
+        /* ===== LIBRARY OF POSSIBILITIES ===== */
+        .library-empowerment {
+            background: rgba(10, 25, 60, 0.9);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
-            -webkit-overflow-scrolling: touch;
+            overflow: hidden;
+            position: relative;
         }
         
-        .trait-category {
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: var(--border-radius);
-            padding: 1.25rem;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all var(--transition-speed);
+        .library-header {
+            padding: 1.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            position: relative;
         }
         
-        .trait-category:hover {
-            border-color: rgba(59, 130, 246, 0.3);
-            transform: translateY(-2px);
+        .library-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 2rem;
+            right: 2rem;
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--primary-blue), 
+                transparent);
+            border-radius: 1px;
         }
         
-        .category-header {
+        .library-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: white;
             display: flex;
             align-items: center;
             gap: 0.75rem;
             margin-bottom: 1rem;
         }
         
+        .library-search {
+            position: relative;
+        }
+        
+        .library-search input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--border-radius-md);
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s var(--transition-smooth);
+        }
+        
+        .library-search input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .library-search i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-tertiary);
+        }
+        
+        .trait-universe {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .universe-category {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            transition: all 0.3s var(--transition-smooth);
+        }
+        
+        .universe-category:hover {
+            border-color: rgba(0, 102, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .category-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
         .category-icon {
-            width: 36px;
-            height: 36px;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, 
+                rgba(0, 102, 255, 0.2), 
+                rgba(153, 102, 255, 0.1));
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--secondary-blue);
-            font-size: 1rem;
+            color: var(--primary-blue);
+            font-size: 1.1rem;
         }
         
-        .category-title {
+        .category-name {
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             color: white;
         }
         
-        .trait-items {
+        .category-count {
+            font-size: 0.85rem;
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+        
+        .trait-powers {
             display: grid;
             gap: 0.75rem;
         }
         
-        .trait-item {
+        .trait-power {
             padding: 1rem;
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--border-radius-md);
             cursor: grab;
-            transition: all var(--transition-speed);
+            transition: all 0.3s var(--transition-spring);
             user-select: none;
-            touch-action: none;
+            position: relative;
+            overflow: hidden;
         }
         
-        .trait-item:hover {
-            border-color: var(--secondary-blue);
-            transform: translateX(4px);
-            background: rgba(59, 130, 246, 0.05);
+        .trait-power::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-blue);
+            transform: scaleY(0);
+            transition: transform 0.3s var(--transition-smooth);
         }
         
-        .trait-item.dragging {
-            opacity: 0.5;
-            transform: scale(0.95);
+        .trait-power:hover::before {
+            transform: scaleY(1);
+        }
+        
+        .trait-power:hover {
+            transform: translateX(8px) scale(1.02);
+            border-color: rgba(0, 102, 255, 0.3);
+            background: rgba(0, 102, 255, 0.05);
+            box-shadow: var(--shadow-subtle);
+        }
+        
+        .trait-power.dragging {
+            opacity: 0.7;
+            transform: scale(0.98) rotate(2deg);
+            box-shadow: 0 20px 40px rgba(0, 102, 255, 0.2);
         }
         
         .trait-name {
-            font-weight: 600;
+            font-weight: 700;
             color: white;
             margin-bottom: 0.5rem;
             font-size: 0.95rem;
         }
         
-        .trait-desc {
+        .trait-description {
             font-size: 0.85rem;
             color: var(--text-secondary);
             line-height: 1.5;
         }
         
-        /* Canvas Area */
-        .canvas-area {
+        /* ===== CANVAS OF CREATION ===== */
+        .creation-canvas {
             position: relative;
-            background: rgba(15, 23, 42, 0.7);
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(0, 102, 255, 0.03) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(10, 25, 60, 0.9), rgba(5, 15, 40, 0.95));
             overflow: hidden;
         }
         
@@ -433,490 +553,401 @@
             display: block;
         }
         
-        .canvas-tools {
+        .empowerment-tools {
             position: absolute;
-            top: clamp(1rem, 2vw, 1.5rem);
-            left: clamp(1rem, 2vw, 1.5rem);
+            top: 2rem;
+            left: 2rem;
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
-            z-index: 10;
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 0.75rem;
-        }
-        
-        .canvas-tool {
-            width: 44px;
-            height: 44px;
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            color: var(--text-primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            transition: all var(--transition-speed);
-            touch-action: manipulation;
-        }
-        
-        .canvas-tool:hover {
-            background: rgba(59, 130, 246, 0.1);
-            border-color: var(--secondary-blue);
-        }
-        
-        .canvas-tool.active {
-            background: var(--secondary-blue);
-            border-color: var(--secondary-blue);
-            color: white;
-        }
-        
-        /* Mobile Bottom Toolbar */
-        .mobile-toolbar {
-            display: none;
-            position: fixed;
-            bottom: 1rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.95);
+            z-index: 100;
+            background: rgba(10, 25, 60, 0.9);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 0.75rem;
-            gap: 0.5rem;
-            z-index: 90;
-            box-shadow: var(--shadow-lg);
+            border-radius: var(--border-radius-lg);
+            padding: 1rem;
+            box-shadow: var(--shadow-elevated);
         }
         
-        .mobile-tool {
-            width: 48px;
-            height: 48px;
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 10px;
+        .tool-empowerment {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.1), 
+                rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--border-radius-md);
             color: var(--text-primary);
+            font-size: 1.25rem;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
-            transition: all var(--transition-speed);
+            transition: all 0.3s var(--transition-spring);
+            position: relative;
         }
         
-        /* Properties Panel */
-        .properties-panel {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
+        .tool-empowerment::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            left: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%) translateX(-10px);
+            background: rgba(10, 25, 60, 0.95);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s var(--transition-smooth);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .tool-empowerment:hover::after {
+            opacity: 1;
+            transform: translateY(-50%) translateX(0);
+        }
+        
+        .tool-empowerment:hover {
+            transform: translateY(-3px) scale(1.1);
+            border-color: var(--primary-blue);
+            background: linear-gradient(135deg, 
+                rgba(0, 102, 255, 0.2), 
+                rgba(77, 148, 255, 0.1));
+            box-shadow: var(--shadow-empowered);
+        }
+        
+        .tool-empowerment.active {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            border-color: transparent;
+            transform: scale(1.1);
+            box-shadow: var(--shadow-glow);
+        }
+        
+        .connection-creation {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(10, 25, 60, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            width: 280px;
+            box-shadow: var(--shadow-elevated);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.5s var(--transition-smooth);
+            pointer-events: none;
+        }
+        
+        .connection-creation.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        
+        /* ===== INSIGHTS PANEL ===== */
+        .insights-panel {
+            background: rgba(10, 25, 60, 0.9);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
         
-        .panel-tabs {
+        .insights-header {
             display: flex;
-            background: rgba(15, 23, 42, 0.9);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(10, 25, 60, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         
-        .panel-tab {
+        .insight-tab {
             flex: 1;
-            padding: 1rem;
+            padding: 1.25rem;
             background: transparent;
             border: none;
             color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-bottom: 2px solid transparent;
-            transition: all var(--transition-speed);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            white-space: nowrap;
+            gap: 0.75rem;
+            transition: all 0.3s var(--transition-smooth);
+            position: relative;
         }
         
-        .panel-tab:hover {
+        .insight-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 1rem;
+            right: 1rem;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--clarity-cyan));
+            border-radius: 3px 3px 0 0;
+            transform: scaleX(0);
+            transition: transform 0.3s var(--transition-smooth);
+        }
+        
+        .insight-tab:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .insight-tab.active {
             color: var(--text-primary);
         }
         
-        .panel-tab.active {
-            color: var(--secondary-blue);
-            border-bottom-color: var(--secondary-blue);
-            background: rgba(59, 130, 246, 0.1);
+        .insight-tab.active::after {
+            transform: scaleX(1);
         }
         
-        .panel-content {
+        .insight-content {
             flex: 1;
             overflow-y: auto;
-            padding: 1.5rem;
-            -webkit-overflow-scrolling: touch;
+            padding: 2rem;
+            display: none;
         }
         
-        .panel-content.active {
+        .insight-content.active {
             display: block;
+            animation: slideInUp 0.5s var(--transition-smooth);
         }
         
-        /* Property Sections */
-        .property-section {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--border-radius);
-            padding: 1.5rem;
+        .insight-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--border-radius-lg);
+            padding: 1.75rem;
             margin-bottom: 1.5rem;
+            transition: all 0.3s var(--transition-smooth);
         }
         
-        .property-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .property-group {
-            margin-bottom: 1.25rem;
-        }
-        
-        .property-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        
-        .property-input {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid rgba(148, 163, 184, 0.2);
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            transition: all var(--transition-speed);
-            -webkit-appearance: none;
-        }
-        
-        .property-input:focus {
-            outline: none;
-            border-color: var(--secondary-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .property-slider {
-            width: 100%;
-            height: 6px;
-            background: rgba(148, 163, 184, 0.2);
-            border-radius: 3px;
-            outline: none;
-            -webkit-appearance: none;
-            margin: 0.5rem 0;
-        }
-        
-        .property-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: var(--secondary-blue);
-            border-radius: 50%;
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        }
-        
-        /* Mobile Overlay for Panels */
-        .mobile-panel-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 95;
-            backdrop-filter: blur(5px);
-        }
-        
-        /* Toast Notifications */
-        .toast {
-            position: fixed;
-            bottom: clamp(1rem, 4vw, 2rem);
-            right: clamp(1rem, 4vw, 2rem);
-            background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--border-radius);
-            padding: 1rem 1.25rem;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            z-index: 1000;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
-            max-width: min(400px, 90vw);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        
-        .toast-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        
-        /* Modal */
-        .modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 1rem;
-        }
-        
-        .modal.show {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--border-radius);
-            width: 100%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .modal-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .modal-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: white;
-        }
-        
-        .modal-body {
-            padding: 1.5rem;
-            max-height: calc(90vh - 130px);
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.75rem;
-        }
-        
-        /* Data Option Cards */
-        .data-option {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--border-radius);
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-            cursor: pointer;
-            transition: all var(--transition-speed);
-        }
-        
-        .data-option:hover {
-            border-color: rgba(59, 130, 246, 0.3);
+        .insight-card:hover {
+            border-color: rgba(0, 102, 255, 0.3);
             transform: translateY(-2px);
+            box-shadow: var(--shadow-subtle);
         }
         
-        .data-option.selected {
-            border-color: var(--secondary-blue);
-            background: rgba(59, 130, 246, 0.1);
-        }
-        
-        /* Mobile Layout Classes */
-        .mobile-hidden {
+        .insight-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
             display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
         
-        .desktop-hidden {
-            display: none;
+        /* ===== EMPOWERING VISUAL ELEMENTS ===== */
+        .confidence-empowerment {
+            position: relative;
+            margin: 1.5rem 0;
         }
         
-        /* Responsive Breakpoints */
-        @media (max-width: 1200px) {
-            .main-content {
-                grid-template-columns: 280px 1fr 320px;
+        .confidence-track {
+            height: 10px;
+            background: linear-gradient(90deg, 
+                var(--danger-red) 0%, 
+                var(--warning-orange) 33%, 
+                var(--success-green) 66%, 
+                var(--expert-purple) 100%);
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .confidence-track::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent 100%);
+            animation: shimmer 3s infinite;
+        }
+        
+        .confidence-marker {
+            position: absolute;
+            top: -5px;
+            width: 4px;
+            height: 20px;
+            background: white;
+            border-radius: 2px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 20px white;
+            cursor: grab;
+            transition: all 0.2s var(--transition-smooth);
+        }
+        
+        .confidence-marker:active {
+            cursor: grabbing;
+            transform: translateX(-50%) scale(1.2);
+        }
+        
+        /* ===== EMPOWERING ANIMATIONS ===== */
+        @keyframes empowerPulse {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1) rotate(0deg); 
+            }
+            25% { 
+                opacity: 0.9; 
+                transform: scale(1.05) rotate(5deg); 
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1) rotate(0deg); 
+            }
+            75% { 
+                opacity: 0.9; 
+                transform: scale(1.05) rotate(-5deg); 
             }
         }
         
-        @media (max-width: 992px) {
-            .main-content {
-                grid-template-columns: var(--sidebar-width) 1fr;
+        @keyframes gentleFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        @keyframes slideInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        @keyframes connectionGlow {
+            0%, 100% { 
+                stroke-opacity: 0.7; 
+                filter: drop-shadow(0 0 5px currentColor); 
+            }
+            50% { 
+                stroke-opacity: 1; 
+                filter: drop-shadow(0 0 20px currentColor); 
+            }
+        }
+        
+        /* ===== RESPONSIVE EMPOWERMENT ===== */
+        @media (max-width: 1400px) {
+            .empowerment-layout {
+                grid-template-columns: 320px 1fr 360px;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .empowerment-layout {
+                grid-template-columns: 300px 1fr;
             }
             
-            .properties-panel {
+            .insights-panel {
                 position: fixed;
                 top: 0;
                 right: -100%;
-                width: min(400px, 90vw);
+                width: 400px;
                 height: 100%;
-                z-index: 96;
-                transition: right var(--transition-speed);
-                box-shadow: var(--shadow-lg);
+                z-index: 950;
+                transition: right 0.5s var(--transition-smooth);
+                box-shadow: var(--shadow-elevated);
             }
             
-            .properties-panel.active {
+            .insights-panel.empowered {
                 right: 0;
             }
             
-            .mobile-panel-overlay.active {
-                display: block;
-            }
-            
-            .mobile-hidden {
-                display: none;
-            }
-            
-            .desktop-hidden {
+            .mobile-empower {
                 display: flex;
             }
         }
         
         @media (max-width: 768px) {
-            .main-content {
+            .empowerment-layout {
                 grid-template-columns: 1fr;
             }
             
-            .sidebar {
+            .library-empowerment {
                 position: fixed;
                 top: 0;
                 left: -100%;
-                width: min(400px, 90vw);
+                width: 320px;
                 height: 100%;
-                z-index: 97;
-                box-shadow: var(--shadow-lg);
+                z-index: 950;
+                transition: left 0.5s var(--transition-smooth);
+                box-shadow: var(--shadow-elevated);
             }
             
-            .sidebar.active {
+            .library-empowerment.empowered {
                 left: 0;
             }
             
-            .mobile-menu-btn {
-                display: block;
+            .empowerment-header {
+                padding: 0 1rem;
             }
             
-            .mobile-actions {
-                display: flex;
-            }
-            
-            .header-controls {
+            .control-btn span {
                 display: none;
             }
             
-            .canvas-tools {
+            .control-btn {
+                padding: 0.75rem;
+            }
+            
+            .empowerment-tools {
                 flex-direction: row;
                 top: auto;
-                bottom: 1rem;
+                bottom: 2rem;
                 left: 50%;
                 transform: translateX(-50%);
-                padding: 0.5rem;
-            }
-            
-            .mobile-toolbar {
-                display: flex;
-            }
-            
-            .app-title p {
-                display: none;
             }
         }
         
-        @media (max-width: 480px) {
-            .header-btn span {
-                display: none;
-            }
-            
-            .header-btn {
-                padding: 0.6rem;
-            }
-            
-            .header-btn i {
-                margin: 0;
-            }
-            
-            .modal-content {
-                margin: 1rem;
-            }
-            
-            .modal-header, .modal-body, .modal-footer {
-                padding: 1rem;
-            }
-        }
-        
-        /* Touch Device Optimizations */
+        /* ===== TOUCH EMPOWERMENT ===== */
         @media (hover: none) and (pointer: coarse) {
-            .trait-item:hover {
+            .tool-empowerment:hover {
                 transform: none;
             }
             
-            .canvas-tool:hover, .header-btn:hover {
+            .trait-power:hover {
                 transform: none;
             }
             
-            .property-input, .search-box input {
-                font-size: 16px; /* Prevents iOS zoom on focus */
+            .control-btn:hover {
+                transform: none;
+            }
+            
+            /* Larger touch targets */
+            .tool-empowerment {
+                width: 56px;
+                height: 56px;
+            }
+            
+            .control-btn {
+                min-height: 48px;
+                min-width: 48px;
             }
         }
         
-        /* Animations */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.05); }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
-        }
-        
-        /* Custom Scrollbar */
+        /* ===== CUSTOM SCROLLBAR ===== */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -928,31 +959,56 @@
         }
         
         ::-webkit-scrollbar-thumb {
-            background: rgba(59, 130, 246, 0.5);
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
             border-radius: 4px;
         }
         
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(59, 130, 246, 0.7);
+            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-blue));
+        }
+        
+        /* ===== SELECTION EMPOWERMENT ===== */
+        ::selection {
+            background: rgba(0, 102, 255, 0.3);
+            color: white;
+        }
+        
+        /* ===== EMPOWERMENT UTILITIES ===== */
+        .empowerment-gradient {
+            background: linear-gradient(135deg, var(--primary-blue), var(--expert-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .empowerment-glow {
+            box-shadow: var(--shadow-glow);
+        }
+        
+        .empowerment-bounce {
+            animation: gentleFloat 3s infinite var(--transition-smooth);
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
+    <!-- Loading Empowerment -->
     <div id="loadingScreen">
-        <div class="loading-container">
+        <div class="loading-empowerment">
             <div class="loading-logo">
-                <i class="fas fa-lungs"></i>
+                <i class="fas fa-brain"></i>
             </div>
-            <div class="loading-text">TRAITMAP Clinical Platform</div>
-            <div class="loading-subtext">Loading advanced trait intelligence system...</div>
-            <div class="loading-progress-container">
+            <h1 class="loading-title">TRAITMAP</h1>
+            <p class="loading-tagline">Empowering Clinical Intelligence Through Visual Insight</p>
+            
+            <div class="empowerment-progress">
                 <div class="progress-label">
-                    <span>Initializing...</span>
+                    <span>Initializing Clinical Intelligence</span>
                     <span id="progressPercent">0%</span>
                 </div>
                 <div class="progress-bar">
                     <div class="progress-fill" id="loadingBar"></div>
+                </div>
+                <div class="empowerment-message" id="loadingMessage">
+                    Loading empowerment engine...
                 </div>
             </div>
         </div>
@@ -960,839 +1016,1606 @@
     
     <!-- Main App Container -->
     <div id="appContainer">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="logo-section">
-                <button class="mobile-menu-btn" id="mobileMenuBtn">
-                    <i class="fas fa-bars"></i>
+        <!-- Empowerment Header -->
+        <header class="empowerment-header">
+            <div class="logo-empowerment">
+                <button class="control-btn mobile-only" id="mobileLibraryBtn">
+                    <i class="fas fa-book-medical"></i>
                 </button>
-                <div class="logo-icon">
+                <div class="logo-badge">
                     <i class="fas fa-network-wired"></i>
                 </div>
-                <div class="app-title">
+                <div class="logo-text">
                     <h1>TRAITMAP</h1>
                     <p>Clinical Intelligence Platform</p>
                 </div>
             </div>
             
-            <div class="header-controls">
-                <button class="header-btn" id="importPatientBtn">
-                    <i class="fas fa-file-import"></i>
+            <div class="empowerment-controls">
+                <button class="control-btn" id="importPatientBtn">
+                    <i class="fas fa-user-md"></i>
                     <span>Import Patient</span>
                 </button>
-                <button class="header-btn" id="saveSessionBtn">
+                <button class="control-btn" id="saveSessionBtn">
                     <i class="fas fa-save"></i>
                     <span>Save Session</span>
                 </button>
-                <button class="header-btn primary" id="runSimBtn">
-                    <i class="fas fa-play"></i>
+                <button class="control-btn empowered" id="runSimulationBtn">
+                    <i class="fas fa-rocket"></i>
                     <span>Run Simulation</span>
                 </button>
-            </div>
-            
-            <div class="mobile-actions">
-                <button class="header-btn" id="mobilePropertiesBtn">
-                    <i class="fas fa-sliders-h"></i>
-                </button>
-                <button class="header-btn primary" id="mobileRunBtn">
-                    <i class="fas fa-play"></i>
-                </button>
+                
+                <div class="mobile-empower">
+                    <button class="control-btn" id="mobileInsightsBtn">
+                        <i class="fas fa-chart-line"></i>
+                    </button>
+                    <button class="control-btn empowered" id="mobileSimulateBtn">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
             </div>
         </header>
         
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Left Sidebar -->
-            <aside class="sidebar" id="leftSidebar">
-                <div class="sidebar-header">
-                    <h2><i class="fas fa-shapes"></i> Trait Library</h2>
-                    <button class="sidebar-close" id="sidebarClose">
-                        <i class="fas fa-times"></i>
-                    </button>
+        <!-- Empowerment Layout -->
+        <main class="empowerment-layout">
+            <!-- Library of Possibilities -->
+            <aside class="library-empowerment" id="libraryPanel">
+                <div class="library-header">
+                    <div class="library-title">
+                        <i class="fas fa-shapes"></i>
+                        <span>Library of Possibilities</span>
+                    </div>
+                    <div class="library-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Discover traits and patterns..." id="traitSearch">
+                    </div>
                 </div>
                 
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search traits..." id="traitSearch">
-                </div>
-                
-                <div class="trait-library" id="traitLibrary">
-                    <!-- Traits loaded dynamically -->
+                <div class="trait-universe" id="traitLibrary">
+                    <!-- Universe will be filled with possibilities -->
                 </div>
             </aside>
             
-            <!-- Canvas Area -->
-            <section class="canvas-area">
+            <!-- Canvas of Creation -->
+            <section class="creation-canvas">
                 <svg id="networkCanvas"></svg>
                 
-                <div class="canvas-tools">
-                    <button class="canvas-tool active" data-tool="select" title="Select">
+                <!-- Empowerment Tools -->
+                <div class="empowerment-tools">
+                    <button class="tool-empowerment active" data-tool="select" data-tooltip="Select & Explore">
                         <i class="fas fa-mouse-pointer"></i>
                     </button>
-                    <button class="canvas-tool" data-tool="connect" title="Connect">
+                    <button class="tool-empowerment" data-tool="connect" data-tooltip="Create Connections">
                         <i class="fas fa-link"></i>
                     </button>
-                    <button class="canvas-tool" data-tool="pan" title="Pan">
+                    <button class="tool-empowerment" data-tool="pan" data-tooltip="Navigate Canvas">
                         <i class="fas fa-hand-paper"></i>
                     </button>
-                    <button class="canvas-tool" data-tool="zoom-in" title="Zoom In">
+                    <button class="tool-empowerment" data-tool="zoom-in" data-tooltip="Zoom In">
                         <i class="fas fa-search-plus"></i>
                     </button>
-                    <button class="canvas-tool" data-tool="zoom-out" title="Zoom Out">
+                    <button class="tool-empowerment" data-tool="zoom-out" data-tooltip="Zoom Out">
                         <i class="fas fa-search-minus"></i>
+                    </button>
+                    <button class="tool-empowerment" data-tool="arrange" data-tooltip="Auto-Arrange">
+                        <i class="fas fa-sitemap"></i>
                     </button>
                 </div>
                 
-                <!-- Mobile Bottom Toolbar -->
-                <div class="mobile-toolbar">
-                    <button class="mobile-tool active" data-tool="select">
-                        <i class="fas fa-mouse-pointer"></i>
-                    </button>
-                    <button class="mobile-tool" data-tool="connect">
-                        <i class="fas fa-link"></i>
-                    </button>
-                    <button class="mobile-tool" data-tool="pan">
-                        <i class="fas fa-hand-paper"></i>
-                    </button>
-                    <button class="mobile-tool" data-tool="zoom-in">
-                        <i class="fas fa-search-plus"></i>
-                    </button>
-                    <button class="mobile-tool" data-tool="zoom-out">
-                        <i class="fas fa-search-minus"></i>
-                    </button>
+                <!-- Connection Creation Guide -->
+                <div class="connection-creation" id="connectionGuide">
+                    <div class="insight-title">
+                        <i class="fas fa-magic"></i>
+                        <span>Create Connection</span>
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 1rem 0; font-size: 0.9rem;">
+                        Click on a trait to start, then click another trait to create a powerful connection.
+                    </p>
+                    <div class="confidence-empowerment">
+                        <div class="confidence-track">
+                            <div class="confidence-marker" style="left: 75%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-tertiary);">
+                            <span>Weak</span>
+                            <span>Moderate</span>
+                            <span>Strong</span>
+                            <span>Powerful</span>
+                        </div>
+                    </div>
                 </div>
             </section>
             
-            <!-- Right Properties Panel -->
-            <aside class="properties-panel" id="propertiesPanel">
-                <div class="panel-tabs">
-                    <button class="panel-tab active" data-tab="properties">
+            <!-- Insights Panel -->
+            <aside class="insights-panel" id="insightsPanel">
+                <div class="insights-header">
+                    <button class="insight-tab active" data-tab="properties">
                         <i class="fas fa-sliders-h"></i>
-                        <span class="mobile-hidden">Properties</span>
+                        <span>Properties</span>
                     </button>
-                    <button class="panel-tab" data-tab="treatment">
-                        <i class="fas fa-pills"></i>
-                        <span class="mobile-hidden">Treatment</span>
+                    <button class="insight-tab" data-tab="treatment">
+                        <i class="fas fa-prescription-bottle"></i>
+                        <span>Treatment</span>
                     </button>
-                    <button class="panel-tab" data-tab="simulation">
-                        <i class="fas fa-chart-line"></i>
-                        <span class="mobile-hidden">Simulation</span>
+                    <button class="insight-tab" data-tab="simulation">
+                        <i class="fas fa-chart-network"></i>
+                        <span>Simulation</span>
                     </button>
                 </div>
                 
-                <div class="panel-content active" id="propertiesContent">
-                    <!-- Properties content loaded dynamically -->
+                <!-- Properties Insight -->
+                <div class="insight-content active" id="propertiesContent">
+                    <!-- Dynamic content - will show selected element properties -->
                 </div>
                 
-                <div class="panel-content" id="treatmentContent">
-                    <!-- Treatment content loaded dynamically -->
+                <!-- Treatment Insight -->
+                <div class="insight-content" id="treatmentContent">
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-prescription"></i>
+                            <span>Treatment Intelligence</span>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6;">
+                            Select traits to see targeted treatment options. Our AI analyzes patterns to suggest the most effective interventions.
+                        </p>
+                        <div style="text-align: center; padding: 2rem; color: var(--text-tertiary);">
+                            <i class="fas fa-pills" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>Select clinical traits to unlock treatment insights</p>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="panel-content" id="simulationContent">
-                    <!-- Simulation content loaded dynamically -->
+                <!-- Simulation Insight -->
+                <div class="insight-content" id="simulationContent">
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-cogs"></i>
+                            <span>Simulation Engine</span>
+                        </div>
+                        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6;">
+                            Run predictive simulations to understand treatment outcomes and disease progression. Visualize multiple scenarios side-by-side.
+                        </p>
+                        <button class="control-btn empowered" style="width: 100%;" id="runQuickSim">
+                            <i class="fas fa-play-circle"></i>
+                            <span>Run Quick Simulation</span>
+                        </button>
+                    </div>
                 </div>
             </aside>
-            
-            <!-- Mobile Panel Overlay -->
-            <div class="mobile-panel-overlay" id="panelOverlay"></div>
         </main>
     </div>
     
     <!-- Import Modal -->
-    <div class="modal" id="importModal">
-        <div class="modal-content">
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-empowerment">
             <div class="modal-header">
-                <div class="modal-title">Import Patient Data</div>
-                <button class="header-btn" id="closeImportModal">
+                <div class="modal-title">
+                    <i class="fas fa-user-md"></i>
+                    <span>Import Patient Data</span>
+                </div>
+                <button class="control-btn" id="closeModal">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
             <div class="modal-body">
-                <div style="margin-bottom: 2rem;">
-                    <div class="step-title">
-                        <i class="fas fa-database"></i>
-                        Step 1: Select Data Type
-                    </div>
-                    <div class="data-option selected" data-type="spirometry">
-                        <div style="font-weight: 600;">Spirometry Data</div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                            FEV₁, FVC, PEF values
-                        </div>
-                    </div>
-                    <div class="data-option" data-type="lab">
-                        <div style="font-weight: 600;">Lab Results</div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                            Eosinophils, IgE, CRP
-                        </div>
-                    </div>
-                    <div class="data-option" data-type="clinical">
-                        <div style="font-weight: 600;">Clinical Measurements</div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                            FeNO, Oxygen saturation
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 2rem;">
-                    <div class="step-title">
-                        <i class="fas fa-file-upload"></i>
-                        Step 2: Upload File
-                    </div>
-                    <div style="border: 2px dashed rgba(255, 255, 255, 0.1); border-radius: var(--border-radius); padding: 2.5rem 1rem; text-align: center;">
-                        <i class="fas fa-cloud-upload-alt" style="font-size: 2.5rem; color: var(--text-secondary); margin-bottom: 1rem;"></i>
-                        <div style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-                            Drag & drop CSV or Excel file here
-                        </div>
-                        <button class="header-btn" style="margin: 0 auto;">
-                            <i class="fas fa-folder-open"></i>
-                            Browse Files
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="header-btn" id="cancelImport">
-                    Cancel
-                </button>
-                <button class="header-btn primary" id="confirmImport">
-                    <i class="fas fa-magic"></i>
-                    Auto-Generate Network
-                </button>
+                <!-- Modal content here -->
             </div>
         </div>
     </div>
     
-    <!-- Toast Notification -->
-    <div class="toast" id="toast">
-        <div class="toast-icon info">
-            <i class="fas fa-info-circle"></i>
+    <!-- Success Toast -->
+    <div class="toast-empowerment" id="successToast">
+        <div class="toast-content">
+            <i class="fas fa-check-circle"></i>
+            <span class="toast-message">Action completed successfully!</span>
         </div>
-        <div class="toast-message" id="toastMessage"></div>
     </div>
 
     <script>
-        // ================================
-        // ENTERPRISE-GRADE RESPONSIVE APP
-        // ================================
+        // ============================================
+        // EMPOWERMENT ENGINE - TRAITMAP CORE
+        // ============================================
         
-        // Core Data Models
-        class Trait {
-            constructor(id, name, category, description, color) {
+        // Core Empowerment Models
+        class EmpoweredTrait {
+            constructor(id, name, category, description, color, icon) {
                 this.id = id;
                 this.name = name;
                 this.category = category;
                 this.description = description;
                 this.color = color;
+                this.icon = icon;
                 this.x = 0;
                 this.y = 0;
-                this.size = 40;
-                this.value = 50;
-                this.confidence = 75;
-                this.uncertainty = 25;
+                this.size = 45;
+                this.severity = 50;
+                this.confidence = 85;
+                this.impact = 75;
                 this.selected = false;
-                this.visible = true;
+                this.connections = [];
+                this.animation = 'pulse';
+            }
+            
+            getEmpowermentLevel() {
+                return Math.min(100, Math.round((this.severity + this.confidence + this.impact) / 3));
+            }
+            
+            getGlowIntensity() {
+                return this.getEmpowermentLevel() / 100;
             }
         }
         
-        class Connection {
+        class EmpoweredConnection {
             constructor(sourceId, targetId, type, strength) {
-                this.id = `${sourceId}-${targetId}-${type}-${Date.now()}`;
+                this.id = `empowered-${sourceId}-${targetId}-${Date.now()}`;
                 this.sourceId = sourceId;
                 this.targetId = targetId;
                 this.type = type;
-                this.strength = strength || 50;
-                this.probability = 75;
+                this.strength = strength;
+                this.certainty = 80;
                 this.selected = false;
+                this.animation = 'flow';
+                this.direction = 'bidirectional';
+            }
+            
+            getTypeColor() {
+                const colors = {
+                    'causal': '#ff3366',
+                    'correlative': '#ffaa00',
+                    'therapeutic': '#00cc88',
+                    'inhibitory': '#9966ff',
+                    'synergistic': '#00ccff'
+                };
+                return colors[this.type] || '#4d94ff';
+            }
+            
+            getStrokeWidth() {
+                return 2 + (this.strength / 25);
             }
         }
         
-        class PatientData {
+        // Empowerment State Management
+        class EmpowermentState {
             constructor() {
                 this.traits = [];
                 this.connections = [];
+                this.selectedElement = null;
+                this.currentTool = 'select';
+                this.isConnecting = false;
+                this.connectionStart = null;
+                this.zoomLevel = 1;
+                this.panOffset = { x: 0, y: 0 };
+                this.empowermentScore = 0;
+                this.lastAction = null;
+                this.history = [];
             }
             
             addTrait(trait) {
                 this.traits.push(trait);
+                this.recordAction('add_trait', trait);
+                this.updateEmpowermentScore();
                 return trait;
             }
             
-            removeTrait(traitId) {
-                this.traits = this.traits.filter(t => t.id !== traitId);
-                this.connections = this.connections.filter(
-                    c => c.sourceId !== traitId && c.targetId !== traitId
-                );
+            addConnection(source, target, type = 'correlative', strength = 50) {
+                // Validate both traits exist
+                const sourceTrait = this.traits.find(t => t.id === source.id);
+                const targetTrait = this.traits.find(t => t.id === target.id);
+                
+                if (!sourceTrait || !targetTrait) {
+                    console.error('Cannot create connection: traits not found');
+                    return null;
+                }
+                
+                const connection = new EmpoweredConnection(source.id, target.id, type, strength);
+                this.connections.push(connection);
+                
+                // Update trait connections
+                sourceTrait.connections.push(connection.id);
+                targetTrait.connections.push(connection.id);
+                
+                this.recordAction('add_connection', connection);
+                this.updateEmpowermentScore();
+                
+                // Play connection sound/effect
+                this.playEmpowermentEffect('connection_created');
+                
+                return connection;
+            }
+            
+            removeSelected() {
+                const selectedTraits = this.traits.filter(t => t.selected);
+                const selectedConnections = this.connections.filter(c => c.selected);
+                
+                // Remove selected traits
+                selectedTraits.forEach(trait => {
+                    this.traits = this.traits.filter(t => t.id !== trait.id);
+                    // Remove connections involving this trait
+                    this.connections = this.connections.filter(c => 
+                        c.sourceId !== trait.id && c.targetId !== trait.id
+                    );
+                });
+                
+                // Remove selected connections
+                selectedConnections.forEach(connection => {
+                    this.connections = this.connections.filter(c => c.id !== connection.id);
+                });
+                
+                this.recordAction('remove_selected', { traits: selectedTraits, connections: selectedConnections });
+                this.updateEmpowermentScore();
+                
+                if (selectedTraits.length > 0 || selectedConnections.length > 0) {
+                    this.playEmpowermentEffect('elements_removed');
+                }
             }
             
             clearSelection() {
                 this.traits.forEach(t => t.selected = false);
                 this.connections.forEach(c => c.selected = false);
+                this.selectedElement = null;
             }
             
             getSelectedTrait() {
                 return this.traits.find(t => t.selected);
             }
+            
+            recordAction(type, data) {
+                this.history.push({
+                    timestamp: Date.now(),
+                    type,
+                    data: JSON.parse(JSON.stringify(data)),
+                    state: {
+                        traits: this.traits.length,
+                        connections: this.connections.length
+                    }
+                });
+                
+                // Keep last 50 actions
+                if (this.history.length > 50) {
+                    this.history.shift();
+                }
+            }
+            
+            updateEmpowermentScore() {
+                const traitScore = this.traits.length * 10;
+                const connectionScore = this.connections.length * 15;
+                const complexityScore = this.traits.length * this.connections.length * 0.5;
+                
+                this.empowermentScore = Math.min(100, 
+                    Math.round(traitScore + connectionScore + complexityScore)
+                );
+                
+                // Update UI if needed
+                if (window.updateEmpowermentUI) {
+                    window.updateEmpowermentUI(this.empowermentScore);
+                }
+            }
+            
+            playEmpowermentEffect(effectType) {
+                // Visual feedback for user actions
+                switch(effectType) {
+                    case 'connection_created':
+                        showEmpowermentToast('Connection created! Relationship strength visualized.', 'success');
+                        break;
+                    case 'trait_added':
+                        showEmpowermentToast('Trait added to canvas! Explore its properties.', 'info');
+                        break;
+                    case 'elements_removed':
+                        showEmpowermentToast('Elements removed. Canvas updated.', 'warning');
+                        break;
+                }
+            }
         }
         
-        // App State
-        const appState = {
-            currentMode: 'select',
-            patientData: new PatientData(),
-            isConnecting: false,
-            connectionStart: null,
-            zoomLevel: 1,
-            panOffset: { x: 0, y: 0 },
-            isMobile: false,
-            sidebarOpen: false,
-            panelOpen: false
-        };
+        // ============================================
+        // EMPOWERMENT VISUALIZATION ENGINE
+        // ============================================
         
-        // Detect mobile
-        function detectMobile() {
-            appState.isMobile = window.innerWidth <= 768;
-            return appState.isMobile;
-        }
-        
-        // Network Visualizer
-        class NetworkVisualizer {
+        class EmpowermentVisualizer {
             constructor(containerId) {
                 this.container = d3.select(`#${containerId}`);
                 this.width = this.container.node().clientWidth;
                 this.height = this.container.node().clientHeight;
                 
-                this.initSVG();
-                this.initSimulation();
-                this.initEventHandlers();
-                this.createDemoNetwork();
+                this.initEmpowermentCanvas();
+                this.initEmpowermentSimulation();
+                this.setupEmpowermentInteractions();
+                
+                // Create initial empowered network
+                this.createEmpowermentDemo();
             }
             
-            initSVG() {
+            initEmpowermentCanvas() {
+                // Create SVG with empowering styling
                 this.svg = this.container
                     .append('svg')
                     .attr('width', this.width)
-                    .attr('height', this.height);
+                    .attr('height', this.height)
+                    .attr('class', 'empowerment-canvas');
                 
+                // Add gradient definitions for empowering effects
+                const defs = this.svg.append('defs');
+                
+                // Glow gradient for selected elements
+                const glowGradient = defs.append('radialGradient')
+                    .attr('id', 'empowerment-glow')
+                    .attr('cx', '50%')
+                    .attr('cy', '50%')
+                    .attr('r', '50%');
+                
+                glowGradient.append('stop')
+                    .attr('offset', '0%')
+                    .attr('stop-color', 'white')
+                    .attr('stop-opacity', '0.8');
+                
+                glowGradient.append('stop')
+                    .attr('offset', '100%')
+                    .attr('stop-color', 'white')
+                    .attr('stop-opacity', '0');
+                
+                // Connection gradient
+                const connectionGradient = defs.append('linearGradient')
+                    .attr('id', 'connection-glow')
+                    .attr('x1', '0%')
+                    .attr('y1', '0%')
+                    .attr('x2', '100%')
+                    .attr('y2', '0%');
+                
+                connectionGradient.append('stop')
+                    .attr('offset', '0%')
+                    .attr('stop-color', 'rgba(255, 255, 255, 0.8)');
+                
+                connectionGradient.append('stop')
+                    .attr('offset', '50%')
+                    .attr('stop-color', 'currentColor');
+                
+                connectionGradient.append('stop')
+                    .attr('offset', '100%')
+                    .attr('stop-color', 'rgba(255, 255, 255, 0.8)');
+                
+                // Main group for transformations
                 this.g = this.svg.append('g');
-                this.connectionsGroup = this.g.append('g').attr('class', 'connections');
-                this.traitsGroup = this.g.append('g').attr('class', 'traits');
-                this.tempGroup = this.g.append('g').attr('class', 'temp');
                 
-                // Zoom behavior
+                // Groups for different elements
+                this.connectionsGroup = this.g.append('g').attr('class', 'empowered-connections');
+                this.traitsGroup = this.g.append('g').attr('class', 'empowered-traits');
+                this.effectsGroup = this.g.append('g').attr('class', 'empowerment-effects');
+                
+                // Setup empowering zoom
                 this.zoom = d3.zoom()
-                    .scaleExtent([0.1, 4])
+                    .scaleExtent([0.1, 5])
+                    .on('start', () => {
+                        this.svg.style('cursor', 'grabbing');
+                    })
                     .on('zoom', (event) => {
-                        this.g.attr('transform', event.transform);
-                        appState.zoomLevel = event.transform.k;
-                        appState.panOffset = { x: event.transform.x, y: event.transform.y };
+                        const transform = event.transform;
+                        this.g.attr('transform', transform);
+                        empowermentState.zoomLevel = transform.k;
+                        empowermentState.panOffset = { x: transform.x, y: transform.y };
+                        
+                        // Update element sizes based on zoom
+                        this.updateVisualEmpowerment();
+                    })
+                    .on('end', () => {
+                        this.svg.style('cursor', 'default');
                     });
                 
                 this.svg.call(this.zoom);
+                
+                // Add empowering grid pattern
+                this.addEmpowermentGrid();
             }
             
-            initSimulation() {
+            addEmpowermentGrid() {
+                const gridSize = 50;
+                const grid = this.g.append('g').attr('class', 'empowerment-grid');
+                
+                // Horizontal lines
+                for (let y = 0; y < this.height; y += gridSize) {
+                    grid.append('line')
+                        .attr('x1', 0)
+                        .attr('y1', y)
+                        .attr('x2', this.width)
+                        .attr('y2', y)
+                        .attr('stroke', 'rgba(255, 255, 255, 0.03)')
+                        .attr('stroke-width', 1);
+                }
+                
+                // Vertical lines
+                for (let x = 0; x < this.width; x += gridSize) {
+                    grid.append('line')
+                        .attr('x1', x)
+                        .attr('y1', 0)
+                        .attr('x2', x)
+                        .attr('y2', this.height)
+                        .attr('stroke', 'rgba(255, 255, 255, 0.03)')
+                        .attr('stroke-width', 1);
+                }
+            }
+            
+            initEmpowermentSimulation() {
                 this.simulation = d3.forceSimulation()
                     .force('link', d3.forceLink()
                         .id(d => d.id)
-                        .distance(200)
+                        .distance(d => 100 + (d.strength || 50))
                         .strength(d => (d.strength || 50) / 100))
-                    .force('charge', d3.forceManyBody().strength(-400))
+                    .force('charge', d3.forceManyBody()
+                        .strength(d => -200 - (d.getEmpowermentLevel ? d.getEmpowermentLevel() * 2 : 0)))
                     .force('center', d3.forceCenter(this.width / 2, this.height / 2))
-                    .force('collision', d3.forceCollide().radius(70))
+                    .force('collision', d3.forceCollide().radius(d => (d.size || 45) + 20))
                     .alphaDecay(0.05)
-                    .on('tick', () => this.ticked());
+                    .velocityDecay(0.4)
+                    .on('tick', () => this.empowermentTick());
             }
             
-            initEventHandlers() {
-                // Background click clears selection
+            setupEmpowermentInteractions() {
+                // Canvas click clears selection
                 this.g.on('click', (event) => {
                     if (event.defaultPrevented || event.target !== this.g.node()) return;
-                    appState.patientData.clearSelection();
-                    this.updateVisualization();
-                    this.updatePropertyPanel();
+                    
+                    empowermentState.clearSelection();
+                    this.updateEmpowermentVisualization();
+                    this.updateEmpowermentInsights();
+                    
+                    // Hide connection guide if not connecting
+                    if (empowermentState.currentTool !== 'connect') {
+                        this.hideConnectionGuide();
+                    }
+                });
+                
+                // Handle drag to select
+                let selectionStart = null;
+                let selectionBox = null;
+                
+                this.g.on('mousedown', (event) => {
+                    if (event.defaultPrevented || empowermentState.currentTool !== 'select') return;
+                    
+                    selectionStart = [event.clientX, event.clientY];
+                    selectionBox = this.effectsGroup.append('rect')
+                        .attr('class', 'empowerment-selection')
+                        .attr('x', selectionStart[0])
+                        .attr('y', selectionStart[1])
+                        .attr('width', 0)
+                        .attr('height', 0)
+                        .attr('fill', 'rgba(0, 102, 255, 0.1)')
+                        .attr('stroke', '#0066ff')
+                        .attr('stroke-width', 2)
+                        .attr('stroke-dasharray', '5,5')
+                        .attr('rx', 4);
+                });
+                
+                this.g.on('mousemove', (event) => {
+                    // Update selection box
+                    if (selectionStart && selectionBox) {
+                        const [x, y] = [event.clientX, event.clientY];
+                        const width = x - selectionStart[0];
+                        const height = y - selectionStart[1];
+                        
+                        selectionBox
+                            .attr('width', Math.abs(width))
+                            .attr('height', Math.abs(height))
+                            .attr('x', width > 0 ? selectionStart[0] : selectionStart[0] + width)
+                            .attr('y', height > 0 ? selectionStart[1] : selectionStart[1] + height);
+                    }
+                    
+                    // Update connection guide if connecting
+                    if (empowermentState.isConnecting && empowermentState.connectionStart) {
+                        this.showConnectionGuide();
+                    }
+                });
+                
+                this.g.on('mouseup', (event) => {
+                    if (selectionStart && selectionBox) {
+                        // Select traits within box
+                        const [x1, y1] = selectionStart;
+                        const [x2, y2] = [event.clientX, event.clientY];
+                        const minX = Math.min(x1, x2);
+                        const maxX = Math.max(x1, x2);
+                        const minY = Math.min(y1, y2);
+                        const maxY = Math.max(y1, y2);
+                        
+                        // Adjust for zoom/pan
+                        const scale = empowermentState.zoomLevel;
+                        const offsetX = empowermentState.panOffset.x;
+                        const offsetY = empowermentState.panOffset.y;
+                        
+                        empowermentState.traits.forEach(trait => {
+                            const screenX = (trait.x * scale) + offsetX;
+                            const screenY = (trait.y * scale) + offsetY;
+                            
+                            if (screenX >= minX && screenX <= maxX && 
+                                screenY >= minY && screenY <= maxY) {
+                                trait.selected = true;
+                            }
+                        });
+                        
+                        selectionBox.remove();
+                        selectionStart = null;
+                        selectionBox = null;
+                        
+                        this.updateEmpowermentVisualization();
+                        this.updateEmpowermentInsights();
+                    }
                 });
             }
             
-            createDemoNetwork() {
-                // Clear existing
-                appState.patientData.traits = [];
-                appState.patientData.connections = [];
+            createEmpowermentDemo() {
+                // Clear any existing data
+                empowermentState.traits = [];
+                empowermentState.connections = [];
                 
-                // Create demo traits
+                // Create empowered demo traits
                 const traits = [
-                    new Trait('t1', 'Eosinophilic Inflammation', 'immune', 'Type-2 inflammation', '#ef4444'),
-                    new Trait('t2', 'Airflow Limitation', 'physiological', 'Obstructive pattern', '#10b981'),
-                    new Trait('t3', 'Cough Hypersensitivity', 'clinical', 'Heightened reflex', '#f97316')
+                    new EmpoweredTrait('t1', 'Eosinophilic Inflammation', 'immune', 
+                        'Type-2 inflammation driving asthma severity', '#ff3366', 'fas fa-fire'),
+                    new EmpoweredTrait('t2', 'Airflow Limitation', 'physiological', 
+                        'Obstructive pattern with reduced FEV1', '#00cc88', 'fas fa-wind'),
+                    new EmpoweredTrait('t3', 'Cough Sensitivity', 'clinical', 
+                        'Heightened cough reflex impacting quality of life', '#ffaa00', 'fas fa-lungs'),
+                    new EmpoweredTrait('t4', 'Bronchial Reactivity', 'physiological', 
+                        'Exaggerated response to triggers', '#9966ff', 'fas fa-wave-square'),
+                    new EmpoweredTrait('t5', 'Sleep Disturbance', 'clinical', 
+                        'Nocturnal symptoms affecting rest', '#00ccff', 'fas fa-moon')
                 ];
                 
-                // Position them
-                traits[0].x = this.width * 0.3;
-                traits[0].y = this.height * 0.5;
-                traits[1].x = this.width * 0.5;
-                traits[1].y = this.height * 0.3;
-                traits[2].x = this.width * 0.7;
-                traits[2].y = this.height * 0.5;
+                // Position in an empowering arrangement
+                const centerX = this.width / 2;
+                const centerY = this.height / 2;
+                const radius = 200;
                 
-                appState.patientData.traits = traits;
+                traits.forEach((trait, i) => {
+                    const angle = (i * 2 * Math.PI) / traits.length;
+                    trait.x = centerX + radius * Math.cos(angle);
+                    trait.y = centerY + radius * Math.sin(angle);
+                    empowermentState.addTrait(trait);
+                });
                 
-                // Create connections
-                appState.patientData.connections = [
-                    new Connection('t1', 't2', 'causal', 75),
-                    new Connection('t2', 't3', 'correlative', 60)
-                ];
+                // Create meaningful connections
+                empowermentState.addConnection(traits[0], traits[1], 'causal', 85);
+                empowermentState.addConnection(traits[1], traits[2], 'correlative', 70);
+                empowermentState.addConnection(traits[0], traits[3], 'synergistic', 90);
+                empowermentState.addConnection(traits[3], traits[4], 'correlative', 60);
+                empowermentState.addConnection(traits[2], traits[4], 'therapeutic', 75);
                 
-                this.updateVisualization();
+                // Initialize visualization
+                this.updateEmpowermentVisualization();
             }
             
-            updateVisualization() {
-                this.updateTraits();
-                this.updateConnections();
-                this.updateSimulation();
+            updateEmpowermentVisualization() {
+                this.updateEmpoweredConnections();
+                this.updateEmpoweredTraits();
+                this.updateEmpowermentSimulation();
             }
             
-            updateTraits() {
+            updateEmpoweredTraits() {
                 const traits = this.traitsGroup
-                    .selectAll('.trait')
-                    .data(appState.patientData.traits, d => d.id);
+                    .selectAll('.empowered-trait')
+                    .data(empowermentState.traits, d => d.id);
                 
-                // Remove exiting traits
-                traits.exit().remove();
+                // Remove exited traits
+                traits.exit()
+                    .transition()
+                    .duration(300)
+                    .style('opacity', 0)
+                    .remove();
                 
                 // Enter new traits
                 const traitsEnter = traits.enter()
                     .append('g')
-                    .attr('class', 'trait')
+                    .attr('class', 'empowered-trait')
                     .attr('transform', d => `translate(${d.x}, ${d.y})`)
-                    .style('cursor', 'pointer')
-                    .call(this.dragBehavior());
+                    .style('opacity', 0)
+                    .call(this.getEmpowermentDrag());
                 
-                // Add circle
+                // Add empowering glow
                 traitsEnter.append('circle')
+                    .attr('class', 'trait-glow')
+                    .attr('r', d => d.size * 1.3)
+                    .attr('fill', 'url(#empowerment-glow)')
+                    .attr('opacity', 0.3);
+                
+                // Add trait circle
+                traitsEnter.append('circle')
+                    .attr('class', 'trait-core')
                     .attr('r', d => d.size)
                     .attr('fill', d => d.color)
-                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
-                    .attr('stroke-width', d => d.selected ? 3 : 2);
+                    .attr('stroke', d => d.selected ? 'white' : 'rgba(255, 255, 255, 0.3)')
+                    .attr('stroke-width', d => d.selected ? 4 : 2)
+                    .attr('stroke-dasharray', d => d.selected ? 'none' : 'none');
                 
-                // Add label
+                // Add confidence ring
+                traitsEnter.append('circle')
+                    .attr('class', 'trait-confidence')
+                    .attr('r', d => d.size * 0.85)
+                    .attr('fill', 'none')
+                    .attr('stroke', 'white')
+                    .attr('stroke-width', 1.5)
+                    .attr('stroke-opacity', 0.6)
+                    .attr('stroke-dasharray', d => {
+                        const circumference = 2 * Math.PI * d.size * 0.85;
+                        const dashLength = (d.confidence / 100) * circumference;
+                        return `${dashLength}, 1000`;
+                    });
+                
+                // Add trait icon
+                traitsEnter.append('text')
+                    .attr('class', 'trait-icon')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', '0.35em')
+                    .attr('fill', 'white')
+                    .attr('font-size', d => d.size * 0.4)
+                    .text(d => '○'); // Placeholder for actual icons
+                
+                // Add trait label
                 traitsEnter.append('text')
                     .attr('class', 'trait-label')
                     .attr('text-anchor', 'middle')
-                    .attr('dy', d => d.size + 20)
-                    .attr('fill', '#ffffff')
-                    .attr('font-size', '12px')
+                    .attr('dy', d => d.size + 24)
+                    .attr('fill', 'white')
+                    .attr('font-size', '11px')
                     .attr('font-weight', '600')
+                    .attr('paint-order', 'stroke')
+                    .attr('stroke', 'rgba(0, 0, 0, 0.5)')
+                    .attr('stroke-width', 3)
+                    .attr('stroke-linecap', 'round')
+                    .attr('stroke-linejoin', 'round')
                     .text(d => d.name);
+                
+                // Add empowerment level indicator
+                traitsEnter.append('text')
+                    .attr('class', 'trait-power')
+                    .attr('text-anchor', 'middle')
+                    .attr('dy', d => d.size + 40)
+                    .attr('fill', d => {
+                        const level = d.getEmpowermentLevel();
+                        if (level > 80) return '#00cc88';
+                        if (level > 60) return '#ffaa00';
+                        return '#ff3366';
+                    })
+                    .attr('font-size', '10px')
+                    .attr('font-weight', '800')
+                    .text(d => `${d.getEmpowermentLevel()}%`);
+                
+                // Fade in
+                traitsEnter.transition()
+                    .duration(500)
+                    .style('opacity', 1);
                 
                 // Update all traits
                 const allTraits = traits.merge(traitsEnter);
                 
+                // Add empowering interactions
                 allTraits
-                    .on('click', (event, d) => this.handleTraitClick(event, d))
-                    .select('circle')
-                    .attr('stroke', d => d.selected ? '#ffffff' : 'rgba(255,255,255,0.3)')
-                    .attr('stroke-width', d => d.selected ? 3 : 2);
+                    .on('click', (event, d) => this.handleTraitEmpowerment(event, d))
+                    .on('mouseenter', (event, d) => this.empowerHoverEffect(event, d, true))
+                    .on('mouseleave', (event, d) => this.empowerHoverEffect(event, d, false));
+                
+                // Update visual properties
+                allTraits.select('.trait-core')
+                    .attr('fill', d => d.color)
+                    .attr('stroke', d => d.selected ? 'white' : 'rgba(255, 255, 255, 0.3)')
+                    .attr('stroke-width', d => d.selected ? 4 : 2);
+                
+                allTraits.select('.trait-confidence')
+                    .attr('stroke-dasharray', d => {
+                        const circumference = 2 * Math.PI * d.size * 0.85;
+                        const dashLength = (d.confidence / 100) * circumference;
+                        return `${dashLength}, 1000`;
+                    });
+                
+                allTraits.select('.trait-power')
+                    .text(d => `${d.getEmpowermentLevel()}%`)
+                    .attr('fill', d => {
+                        const level = d.getEmpowermentLevel();
+                        if (level > 80) return '#00cc88';
+                        if (level > 60) return '#ffaa00';
+                        return '#ff3366';
+                    });
             }
             
-            updateConnections() {
+            updateEmpoweredConnections() {
+                // Filter out invalid connections
+                const validConnections = empowermentState.connections.filter(conn => {
+                    const sourceExists = empowermentState.traits.some(t => t.id === conn.sourceId);
+                    const targetExists = empowermentState.traits.some(t => t.id === conn.targetId);
+                    return sourceExists && targetExists;
+                });
+                
                 const connections = this.connectionsGroup
-                    .selectAll('.connection')
-                    .data(appState.patientData.connections, d => d.id);
+                    .selectAll('.empowered-connection')
+                    .data(validConnections, d => d.id);
                 
-                connections.exit().remove();
+                // Remove invalid connections
+                connections.exit()
+                    .transition()
+                    .duration(300)
+                    .style('opacity', 0)
+                    .remove();
                 
+                // Enter new connections with empowering animation
                 const connectionsEnter = connections.enter()
                     .append('line')
-                    .attr('class', 'connection')
-                    .attr('stroke', d => this.getConnectionColor(d))
-                    .attr('stroke-width', d => d.selected ? 3 : 2);
+                    .attr('class', 'empowered-connection')
+                    .attr('stroke', d => d.getTypeColor())
+                    .attr('stroke-width', d => d.getStrokeWidth())
+                    .attr('stroke-opacity', 0.7)
+                    .attr('stroke-dasharray', d => d.type === 'inhibitory' ? '5,3' : 'none')
+                    .style('opacity', 0);
                 
-                connections.merge(connectionsEnter)
-                    .attr('stroke', d => this.getConnectionColor(d))
-                    .attr('stroke-width', d => d.selected ? 3 : 2)
-                    .on('click', (event, d) => this.handleConnectionClick(event, d));
+                // Add empowering glow effect
+                connectionsEnter
+                    .style('filter', 'url(#glow)');
+                
+                // Animate connection creation
+                connectionsEnter.transition()
+                    .duration(800)
+                    .style('opacity', 0.8)
+                    .transition()
+                    .duration(200)
+                    .style('opacity', 0.7);
+                
+                // Update all connections
+                const allConnections = connections.merge(connectionsEnter);
+                
+                // Add empowering interactions
+                allConnections
+                    .on('click', (event, d) => this.handleConnectionEmpowerment(event, d))
+                    .on('mouseenter', (event, d) => {
+                        d3.select(event.currentTarget)
+                            .transition()
+                            .duration(200)
+                            .attr('stroke-width', d.getStrokeWidth() + 2)
+                            .attr('stroke-opacity', 1);
+                    })
+                    .on('mouseleave', (event, d) => {
+                        d3.select(event.currentTarget)
+                            .transition()
+                            .duration(200)
+                            .attr('stroke-width', d.getStrokeWidth())
+                            .attr('stroke-opacity', 0.7);
+                    });
+                
+                // Update visual properties
+                allConnections
+                    .attr('stroke', d => d.getTypeColor())
+                    .attr('stroke-width', d => d.selected ? d.getStrokeWidth() + 2 : d.getStrokeWidth())
+                    .attr('stroke-opacity', d => d.selected ? 1 : 0.7);
             }
             
-            updateSimulation() {
-                this.simulation.nodes(appState.patientData.traits);
-                this.simulation.force('link').links(appState.patientData.connections);
+            updateEmpowermentSimulation() {
+                this.simulation.nodes(empowermentState.traits);
+                this.simulation.force('link').links(empowermentState.connections);
                 this.simulation.alpha(1).restart();
             }
             
-            ticked() {
-                // Update connection positions
-                this.connectionsGroup.selectAll('.connection')
+            empowermentTick() {
+                // Update connection positions with empowering animation
+                this.connectionsGroup.selectAll('.empowered-connection')
                     .attr('x1', d => {
-                        const source = appState.patientData.traits.find(t => t.id === d.sourceId);
+                        const source = empowermentState.traits.find(t => t.id === d.sourceId);
                         return source ? source.x : 0;
                     })
                     .attr('y1', d => {
-                        const source = appState.patientData.traits.find(t => t.id === d.sourceId);
+                        const source = empowermentState.traits.find(t => t.id === d.sourceId);
                         return source ? source.y : 0;
                     })
                     .attr('x2', d => {
-                        const target = appState.patientData.traits.find(t => t.id === d.targetId);
+                        const target = empowermentState.traits.find(t => t.id === d.targetId);
                         return target ? target.x : 0;
                     })
                     .attr('y2', d => {
-                        const target = appState.patientData.traits.find(t => t.id === d.targetId);
+                        const target = empowermentState.traits.find(t => t.id === d.targetId);
                         return target ? target.y : 0;
                     });
                 
-                // Update trait positions
-                this.traitsGroup.selectAll('.trait')
+                // Update trait positions with smooth transitions
+                this.traitsGroup.selectAll('.empowered-trait')
                     .attr('transform', d => `translate(${d.x}, ${d.y})`);
             }
             
-            dragBehavior() {
+            getEmpowermentDrag() {
                 return d3.drag()
-                    .on('start', (event, d) => this.dragStarted(event, d))
-                    .on('drag', (event, d) => this.dragged(event, d))
-                    .on('end', (event, d) => this.dragEnded(event, d));
+                    .on('start', (event, d) => this.empowerDragStart(event, d))
+                    .on('drag', (event, d) => this.empowerDragMove(event, d))
+                    .on('end', (event, d) => this.empowerDragEnd(event, d));
             }
             
-            dragStarted(event, d) {
+            empowerDragStart(event, d) {
                 if (!event.active) this.simulation.alphaTarget(0.3).restart();
-                d.fx = d.x;
-                d.fy = d.y;
+                
+                // Add empowering visual feedback
+                d3.select(event.sourceEvent.target)
+                    .select('.trait-core')
+                    .transition()
+                    .duration(200)
+                    .attr('r', d.size * 1.1);
+                
+                // Show connection lines to related traits
+                this.highlightRelatedTraits(d);
+                
+                empowermentState.recordAction('drag_start', d);
             }
             
-            dragged(event, d) {
+            empowerDragMove(event, d) {
                 d.fx = event.x;
                 d.fy = event.y;
+                
+                // Update position with smooth animation
+                d.x = event.x;
+                d.y = event.y;
+                
+                // Real-time connection updates
+                this.updateConnectedLines(d);
             }
             
-            dragEnded(event, d) {
+            empowerDragEnd(event, d) {
                 if (!event.active) this.simulation.alphaTarget(0);
                 d.fx = null;
                 d.fy = null;
+                
+                // Reset visual feedback
+                d3.select(event.sourceEvent.target)
+                    .select('.trait-core')
+                    .transition()
+                    .duration(200)
+                    .attr('r', d.size);
+                
+                // Remove highlights
+                this.removeHighlights();
+                
+                empowermentState.recordAction('drag_end', d);
+                showEmpowermentToast('Trait repositioned for optimal visualization', 'info');
             }
             
-            handleTraitClick(event, trait) {
+            handleTraitEmpowerment(event, trait) {
                 event.stopPropagation();
                 
-                if (appState.currentMode === 'connect') {
-                    if (appState.isConnecting) {
-                        this.completeConnection(trait);
+                if (empowermentState.currentTool === 'connect') {
+                    if (empowermentState.isConnecting) {
+                        this.completeEmpowermentConnection(trait);
                     } else {
-                        this.startConnection(trait);
+                        this.startEmpowermentConnection(trait);
                     }
                 } else {
-                    appState.patientData.clearSelection();
-                    trait.selected = true;
-                    this.updateVisualization();
-                    this.updatePropertyPanel();
+                    // Toggle selection with empowerment
+                    const wasSelected = trait.selected;
+                    
+                    if (!event.ctrlKey && !event.metaKey) {
+                        empowermentState.clearSelection();
+                    }
+                    
+                    trait.selected = !wasSelected;
+                    
+                    // Empowerment feedback
+                    if (trait.selected) {
+                        this.animateEmpowermentSelection(trait);
+                        showEmpowermentToast(`${trait.name} selected - Explore properties in the insights panel`, 'success');
+                    }
+                    
+                    this.updateEmpowermentVisualization();
+                    this.updateEmpowermentInsights();
                 }
             }
             
-            handleConnectionClick(event, connection) {
+            handleConnectionEmpowerment(event, connection) {
                 event.stopPropagation();
-                appState.patientData.clearSelection();
-                connection.selected = true;
-                this.updateVisualization();
-                this.updatePropertyPanel();
+                
+                const wasSelected = connection.selected;
+                
+                if (!event.ctrlKey && !event.metaKey) {
+                    empowermentState.clearSelection();
+                }
+                
+                connection.selected = !wasSelected;
+                
+                // Empowerment feedback
+                if (connection.selected) {
+                    this.animateConnectionSelection(connection);
+                    showEmpowermentToast('Connection selected - Adjust strength and type', 'info');
+                }
+                
+                this.updateEmpowermentVisualization();
+                this.updateEmpowermentInsights();
             }
             
-            getConnectionColor(connection) {
-                const colors = {
-                    'causal': '#ef4444',
-                    'correlative': '#f59e0b',
-                    'therapeutic': '#10b981',
-                    'inhibitory': '#3b82f6'
-                };
-                return colors[connection.type] || '#94a3b8';
+            startEmpowermentConnection(trait) {
+                empowermentState.isConnecting = true;
+                empowermentState.connectionStart = trait;
+                
+                // Show connection guide
+                this.showConnectionGuide();
+                
+                // Highlight trait
+                this.animateEmpowermentSelection(trait);
+                
+                showEmpowermentToast(`Connecting from ${trait.name} - Click another trait to complete`, 'info');
             }
             
-            updatePropertyPanel() {
-                const selectedTrait = appState.patientData.getSelectedTrait();
+            completeEmpowermentConnection(targetTrait) {
+                if (!empowermentState.connectionStart || empowermentState.connectionStart.id === targetTrait.id) {
+                    this.cancelEmpowermentConnection();
+                    return;
+                }
+                
+                // Check for existing connection
+                const existing = empowermentState.connections.find(
+                    conn => (conn.sourceId === empowermentState.connectionStart.id && 
+                            conn.targetId === targetTrait.id) ||
+                           (conn.sourceId === targetTrait.id && 
+                            conn.targetId === empowermentState.connectionStart.id)
+                );
+                
+                if (existing) {
+                    showEmpowermentToast('Connection already exists! Try adjusting its properties.', 'warning');
+                    this.cancelEmpowermentConnection();
+                    return;
+                }
+                
+                // Create empowered connection
+                const connection = empowermentState.addConnection(
+                    empowermentState.connectionStart,
+                    targetTrait,
+                    'correlative',
+                    75
+                );
+                
+                if (connection) {
+                    // Animate connection creation
+                    this.animateNewConnection(connection);
+                    
+                    showEmpowermentToast(
+                        `Powerful connection created between ${empowermentState.connectionStart.name} and ${targetTrait.name}!`,
+                        'success'
+                    );
+                }
+                
+                this.cancelEmpowermentConnection();
+                this.updateEmpowermentVisualization();
+            }
+            
+            cancelEmpowermentConnection() {
+                empowermentState.isConnecting = false;
+                empowermentState.connectionStart = null;
+                this.hideConnectionGuide();
+            }
+            
+            showConnectionGuide() {
+                document.getElementById('connectionGuide').classList.add('visible');
+            }
+            
+            hideConnectionGuide() {
+                document.getElementById('connectionGuide').classList.remove('visible');
+            }
+            
+            updateEmpowermentInsights() {
+                const selectedTrait = empowermentState.getSelectedTrait();
                 const content = selectedTrait ? 
-                    this.createTraitProperties(selectedTrait) : 
-                    this.createEmptyProperties();
+                    this.createEmpowermentProperties(selectedTrait) : 
+                    this.createEmptyInsights();
                 
                 document.getElementById('propertiesContent').innerHTML = content;
             }
             
-            createTraitProperties(trait) {
+            createEmpowermentProperties(trait) {
                 return `
-                    <div class="property-section">
-                        <div class="property-title">
-                            <i class="fas fa-object-group"></i>
-                            ${trait.name}
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-star"></i>
+                            <span>${trait.name}</span>
                         </div>
                         
-                        <div class="property-group">
-                            <label class="property-label">Severity Level</label>
-                            <input type="range" class="property-slider" min="0" max="100" value="${trait.value}"
-                                   oninput="network.updateTrait('${trait.id}', 'value', this.value)">
-                            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
-                                <span style="font-size: 0.85rem; color: var(--text-secondary);">Mild</span>
-                                <span style="font-weight: 600;">${trait.value}%</span>
-                                <span style="font-size: 0.85rem; color: var(--text-secondary);">Severe</span>
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="width: 60px; height: 60px; background: ${trait.color}; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-fire" style="color: white; font-size: 1.5rem;"></i>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.25rem;">Empowerment Level</div>
+                                <div style="font-size: 1.5rem; font-weight: 800; color: ${trait.getEmpowermentLevel() > 80 ? '#00cc88' : '#ffaa00'}">
+                                    ${trait.getEmpowermentLevel()}%
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="property-group">
-                            <label class="property-label">Diagnostic Confidence</label>
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Clinical Severity</div>
+                            <input type="range" class="property-slider" min="0" max="100" value="${trait.severity}"
+                                   oninput="empowermentViz.updateTraitProperty('${trait.id}', 'severity', this.value)">
+                            <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
+                                <span style="font-size: 0.85rem; color: var(--text-tertiary);">Mild</span>
+                                <span style="font-weight: 700; font-size: 1.1rem;">${trait.severity}%</span>
+                                <span style="font-size: 0.85rem; color: var(--text-tertiary);">Severe</span>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600;">Diagnostic Confidence</div>
                             <input type="range" class="property-slider" min="0" max="100" value="${trait.confidence}"
-                                   oninput="network.updateTrait('${trait.id}', 'confidence', this.value)">
+                                   oninput="empowermentViz.updateTraitProperty('${trait.id}', 'confidence', this.value)">
                             <div style="display: flex; justify-content: space-between; margin-top: 0.5rem;">
-                                <span style="font-size: 0.85rem; color: var(--text-secondary);">Low</span>
-                                <span style="font-weight: 600;">${trait.confidence}%</span>
-                                <span style="font-size: 0.85rem; color: var(--text-secondary);">High</span>
+                                <span style="font-size: 0.85rem; color: var(--text-tertiary);">Low</span>
+                                <span style="font-weight: 700; font-size: 1.1rem;">${trait.confidence}%</span>
+                                <span style="font-size: 0.85rem; color: var(--text-tertiary);">High</span>
                             </div>
                         </div>
                         
-                        <div class="property-group">
-                            <label class="property-label">Color</label>
-                            <input type="color" class="property-input" value="${trait.color}"
-                                   onchange="network.updateTrait('${trait.id}', 'color', this.value)">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <button class="control-btn" onclick="empowermentViz.centerOnTrait('${trait.id}')">
+                                <i class="fas fa-crosshairs"></i>
+                                <span>Center</span>
+                            </button>
+                            <button class="control-btn" style="background: rgba(255, 51, 102, 0.2);" 
+                                    onclick="empowermentViz.removeTrait('${trait.id}')">
+                                <i class="fas fa-trash"></i>
+                                <span>Remove</span>
+                            </button>
                         </div>
-                        
-                        <button class="header-btn" onclick="network.removeTrait('${trait.id}')" 
-                                style="width: 100%; margin-top: 1rem;">
-                            <i class="fas fa-trash"></i> Remove Trait
-                        </button>
+                    </div>
+                    
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Connected Traits</span>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                            ${trait.connections.length} connections influencing this trait
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            ${this.getConnectedTraitsHTML(trait)}
+                        </div>
                     </div>
                 `;
             }
             
-            createEmptyProperties() {
+            createEmptyInsights() {
                 return `
-                    <div class="property-section">
-                        <div class="property-title">
-                            <i class="fas fa-object-group"></i>
-                            Properties Panel
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>Clinical Insights</span>
                         </div>
-                        <div style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary);">
-                            <i class="fas fa-mouse-pointer" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                            <div style="font-size: 1rem; margin-bottom: 0.5rem; font-weight: 500;">
-                                Select a trait to edit properties
+                        <div style="text-align: center; padding: 3rem 2rem;">
+                            <i class="fas fa-mouse-pointer" style="font-size: 3rem; color: var(--primary-blue); margin-bottom: 1.5rem;"></i>
+                            <div style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; color: white;">
+                                Select a Clinical Trait
                             </div>
-                            <div style="font-size: 0.9rem;">
-                                Click on any trait in the network to view and modify its properties
+                            <div style="color: var(--text-secondary); line-height: 1.6;">
+                                Click on any trait in the network to unlock detailed properties, 
+                                adjust clinical parameters, and explore treatment implications.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Network Intelligence</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: rgba(0, 102, 255, 0.1); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: 800; color: var(--primary-blue);">
+                                    ${empowermentState.traits.length}
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Clinical Traits</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: rgba(0, 204, 136, 0.1); border-radius: 8px;">
+                                <div style="font-size: 2rem; font-weight: 800; color: #00cc88;">
+                                    ${empowermentState.connections.length}
+                                </div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">Relationships</div>
                             </div>
                         </div>
                     </div>
                 `;
             }
             
-            updateTrait(traitId, property, value) {
-                const trait = appState.patientData.traits.find(t => t.id === traitId);
+            getConnectedTraitsHTML(trait) {
+                const connectedTraits = empowermentState.connections
+                    .filter(conn => conn.sourceId === trait.id || conn.targetId === trait.id)
+                    .map(conn => {
+                        const otherId = conn.sourceId === trait.id ? conn.targetId : conn.sourceId;
+                        const otherTrait = empowermentState.traits.find(t => t.id === otherId);
+                        return otherTrait ? `
+                            <div style="padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.05); 
+                                        border-radius: 6px; border-left: 3px solid ${conn.getTypeColor()};">
+                                <div style="font-weight: 600; font-size: 0.85rem; color: white;">${otherTrait.name}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+                                    ${conn.type} • ${conn.strength}% strength
+                                </div>
+                            </div>
+                        ` : '';
+                    })
+                    .join('');
+                
+                return connectedTraits || '<div style="color: var(--text-tertiary); font-style: italic;">No connections yet</div>';
+            }
+            
+            updateTraitProperty(traitId, property, value) {
+                const trait = empowermentState.traits.find(t => t.id === traitId);
                 if (trait) {
-                    trait[property] = property === 'value' || property === 'confidence' ? 
-                        parseInt(value) : value;
-                    this.updateVisualization();
-                    showToast(`Updated ${property}`, 'success');
+                    const oldValue = trait[property];
+                    trait[property] = parseInt(value);
+                    
+                    // Empowerment feedback
+                    if (Math.abs(oldValue - trait[property]) > 10) {
+                        showEmpowermentToast(`${property.replace('_', ' ')} updated significantly`, 'info');
+                    }
+                    
+                    this.updateEmpowermentVisualization();
+                    empowermentState.updateEmpowermentScore();
                 }
             }
             
             removeTrait(traitId) {
-                appState.patientData.removeTrait(traitId);
-                this.updateVisualization();
-                this.updatePropertyPanel();
-                showToast('Trait removed', 'success');
+                const trait = empowermentState.traits.find(t => t.id === traitId);
+                if (trait) {
+                    empowermentState.removeSelected();
+                    this.updateEmpowermentVisualization();
+                    this.updateEmpowermentInsights();
+                    
+                    showEmpowermentToast(`${trait.name} removed from analysis`, 'warning');
+                }
             }
             
-            resize(width, height) {
-                this.width = width;
-                this.height = height;
-                this.svg.attr('width', width).attr('height', height);
-                this.simulation.force('center', d3.forceCenter(width / 2, height / 2));
-                this.simulation.alpha(0.3).restart();
+            centerOnTrait(traitId) {
+                const trait = empowermentState.traits.find(t => t.id === traitId);
+                if (trait) {
+                    // Calculate transform to center on trait
+                    const transform = d3.zoomIdentity
+                        .translate(this.width / 2 - trait.x, this.height / 2 - trait.y)
+                        .scale(1.5);
+                    
+                    this.svg.transition()
+                        .duration(1000)
+                        .call(this.zoom.transform, transform);
+                    
+                    showEmpowermentToast(`Centered view on ${trait.name}`, 'info');
+                }
+            }
+            
+            // Empowerment animation methods
+            animateEmpowermentSelection(trait) {
+                const element = this.traitsGroup.select(`.empowered-trait[data-id="${trait.id}"]`);
+                if (element.empty()) return;
+                
+                element.select('.trait-glow')
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', 0.6)
+                    .transition()
+                    .duration(300)
+                    .attr('opacity', 0.3);
+            }
+            
+            animateConnectionSelection(connection) {
+                const element = this.connectionsGroup.select(`.empowered-connection[data-id="${connection.id}"]`);
+                if (element.empty()) return;
+                
+                element.transition()
+                    .duration(200)
+                    .attr('stroke-width', connection.getStrokeWidth() + 4)
+                    .transition()
+                    .duration(200)
+                    .attr('stroke-width', connection.getStrokeWidth() + 2);
+            }
+            
+            animateNewConnection(connection) {
+                const element = this.connectionsGroup.select(`.empowered-connection[data-id="${connection.id}"]`);
+                if (element.empty()) return;
+                
+                element
+                    .attr('stroke-dasharray', '10,3')
+                    .attr('stroke-dashoffset', 100)
+                    .transition()
+                    .duration(1000)
+                    .ease(d3.easeLinear)
+                    .attr('stroke-dashoffset', 0)
+                    .on('end', () => {
+                        element.attr('stroke-dasharray', connection.type === 'inhibitory' ? '5,3' : 'none');
+                    });
+            }
+            
+            empowerHoverEffect(event, trait, isEntering) {
+                const element = d3.select(event.currentTarget);
+                
+                if (isEntering) {
+                    element.select('.trait-core')
+                        .transition()
+                        .duration(200)
+                        .attr('r', trait.size * 1.1);
+                        
+                    element.select('.trait-glow')
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 0.5);
+                } else {
+                    element.select('.trait-core')
+                        .transition()
+                        .duration(200)
+                        .attr('r', trait.size);
+                        
+                    element.select('.trait-glow')
+                        .transition()
+                        .duration(200)
+                        .attr('opacity', 0.3);
+                }
+            }
+            
+            highlightRelatedTraits(trait) {
+                // Find and highlight connected traits
+                const connectedIds = empowermentState.connections
+                    .filter(conn => conn.sourceId === trait.id || conn.targetId === trait.id)
+                    .flatMap(conn => [conn.sourceId, conn.targetId])
+                    .filter(id => id !== trait.id);
+                
+                this.traitsGroup.selectAll('.empowered-trait')
+                    .classed('related-highlight', d => connectedIds.includes(d.id));
+            }
+            
+            removeHighlights() {
+                this.traitsGroup.selectAll('.empowered-trait')
+                    .classed('related-highlight', false);
+            }
+            
+            updateConnectedLines(trait) {
+                // Update positions of connected lines in real-time during drag
+                this.connectionsGroup.selectAll('.empowered-connection')
+                    .filter(d => d.sourceId === trait.id || d.targetId === trait.id)
+                    .attr('x1', d => {
+                        const source = empowermentState.traits.find(t => t.id === d.sourceId);
+                        return source ? source.x : 0;
+                    })
+                    .attr('y1', d => {
+                        const source = empowermentState.traits.find(t => t.id === d.sourceId);
+                        return source ? source.y : 0;
+                    })
+                    .attr('x2', d => {
+                        const target = empowermentState.traits.find(t => t.id === d.targetId);
+                        return target ? target.x : 0;
+                    })
+                    .attr('y2', d => {
+                        const target = empowermentState.traits.find(t => t.id === d.targetId);
+                        return target ? target.y : 0;
+                    });
             }
         }
         
-        // UI Management
-        let network;
+        // ============================================
+        // EMPOWERMENT UI MANAGEMENT
+        // ============================================
         
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            const messageEl = document.getElementById('toastMessage');
-            const icon = toast.querySelector('.toast-icon');
+        let empowermentViz;
+        const empowermentState = new EmpowermentState();
+        
+        function showEmpowermentToast(message, type = 'info') {
+            // Create toast if doesn't exist
+            let toast = document.getElementById('empowermentToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'empowermentToast';
+                toast.className = 'toast-empowerment';
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="toast-message">${message}</span>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+            }
             
-            messageEl.textContent = message;
-            icon.className = 'toast-icon ' + type;
+            // Update toast
+            const icon = toast.querySelector('i');
+            const content = toast.querySelector('.toast-message');
+            content.textContent = message;
             
-            const iconClass = {
-                'success': 'fa-check-circle',
-                'info': 'fa-info-circle',
-                'warning': 'fa-exclamation-triangle',
-                'error': 'fa-times-circle'
-            }[type] || 'fa-info-circle';
+            // Set type-based styling
+            const colors = {
+                'success': '#00cc88',
+                'info': '#0066ff',
+                'warning': '#ffaa00',
+                'error': '#ff3366'
+            };
             
-            icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+            icon.style.color = colors[type] || colors.info;
             
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            // Show toast
+            toast.classList.add('visible');
+            
+            // Auto-hide
+            setTimeout(() => {
+                toast.classList.remove('visible');
+            }, 3000);
         }
         
-        function loadTraitLibrary() {
-            const traits = {
+        function loadEmpowermentLibrary() {
+            const universe = {
                 immune: [
-                    new Trait('immune1', 'Eosinophilic Inflammation', 'immune', 'Type-2 inflammation with elevated eosinophils', '#ef4444'),
-                    new Trait('immune2', 'Neutrophilic Inflammation', 'immune', 'Neutrophil-dominated airway inflammation', '#3b82f6'),
-                    new Trait('immune3', 'Th2 Immune Response', 'immune', 'Elevated IL-4, IL-5, IL-13 cytokines', '#8b5cf6')
+                    new EmpoweredTrait('immune_1', 'Eosinophilic Inflammation', 'immune', 
+                        'Type-2 inflammation with elevated eosinophils', '#ff3366', 'fas fa-fire'),
+                    new EmpoweredTrait('immune_2', 'Neutrophilic Response', 'immune', 
+                        'Neutrophil-dominated inflammation', '#4d94ff', 'fas fa-shield-virus'),
+                    new EmpoweredTrait('immune_3', 'Th2 Cytokine Storm', 'immune', 
+                        'Elevated IL-4, IL-5, IL-13', '#9966ff', 'fas fa-bolt')
                 ],
                 physiological: [
-                    new Trait('phys1', 'Airflow Limitation', 'physiological', 'Obstructive pattern on spirometry', '#10b981'),
-                    new Trait('phys2', 'Bronchial Hyperreactivity', 'physiological', 'Exaggerated bronchoconstriction response', '#ec4899'),
-                    new Trait('phys3', 'Gas Trapping', 'physiological', 'Air trapping on expiration', '#06b6d4')
+                    new EmpoweredTrait('physio_1', 'Airflow Limitation', 'physiological', 
+                        'Obstructive pattern on spirometry', '#00cc88', 'fas fa-wind'),
+                    new EmpoweredTrait('physio_2', 'Bronchial Hyperreactivity', 'physiological', 
+                        'Exaggerated bronchoconstriction', '#ffaa00', 'fas fa-wave-square'),
+                    new EmpoweredTrait('physio_3', 'Gas Trapping', 'physiological', 
+                        'Air trapping on expiration', '#00ccff', 'fas fa-cloud')
                 ],
                 clinical: [
-                    new Trait('clin1', 'Cough Hypersensitivity', 'clinical', 'Heightened cough reflex sensitivity', '#f97316'),
-                    new Trait('clin2', 'Exertional Dyspnea', 'clinical', 'Breathlessness on exertion', '#6366f1'),
-                    new Trait('clin3', 'Wheeze', 'clinical', 'Musical breath sounds', '#a855f7')
+                    new EmpoweredTrait('clinical_1', 'Cough Sensitivity', 'clinical', 
+                        'Heightened cough reflex', '#ff66cc', 'fas fa-lungs'),
+                    new EmpoweredTrait('clinical_2', 'Exertional Dyspnea', 'clinical', 
+                        'Breathlessness on exertion', '#ffaa00', 'fas fa-running'),
+                    new EmpoweredTrait('clinical_3', 'Nocturnal Symptoms', 'clinical', 
+                        'Nighttime symptom exacerbation', '#9966ff', 'fas fa-moon')
                 ]
             };
             
             const container = document.getElementById('traitLibrary');
             container.innerHTML = '';
             
-            Object.entries(traits).forEach(([category, traitList]) => {
-                const categoryName = category === 'immune' ? 'Immune Markers' : 
-                                  category === 'physiological' ? 'Physiological Traits' : 'Clinical Symptoms';
+            Object.entries(universe).forEach(([category, traits]) => {
+                const categoryName = category === 'immune' ? 'Immune System' :
+                                  category === 'physiological' ? 'Physiological Measures' : 'Clinical Symptoms';
                 
                 const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'trait-category';
+                categoryDiv.className = 'universe-category';
                 categoryDiv.innerHTML = `
-                    <div class="category-header">
+                    <div class="category-badge">
                         <div class="category-icon">
-                            <i class="fas fa-${category === 'immune' ? 'shield-alt' : category === 'physiological' ? 'heartbeat' : 'stethoscope'}"></i>
+                            <i class="fas fa-${category === 'immune' ? 'shield-alt' : 
+                                             category === 'physiological' ? 'heartbeat' : 'stethoscope'}"></i>
                         </div>
-                        <div class="category-title">${categoryName}</div>
+                        <div style="flex: 1;">
+                            <div class="category-name">${categoryName}</div>
+                            <div class="category-count">${traits.length} empowering traits</div>
+                        </div>
                     </div>
-                    <div class="trait-items" id="${category}-traits"></div>
+                    <div class="trait-powers" id="${category}-powers"></div>
                 `;
                 
                 container.appendChild(categoryDiv);
                 
-                const itemsContainer = categoryDiv.querySelector('.trait-items');
-                traitList.forEach(trait => {
-                    const item = document.createElement('div');
-                    item.className = 'trait-item';
-                    item.draggable = true;
-                    item.innerHTML = `
+                const powersContainer = categoryDiv.querySelector('.trait-powers');
+                traits.forEach(trait => {
+                    const power = document.createElement('div');
+                    power.className = 'trait-power';
+                    power.draggable = true;
+                    power.innerHTML = `
                         <div class="trait-name">${trait.name}</div>
-                        <div class="trait-desc">${trait.description}</div>
+                        <div class="trait-description">${trait.description}</div>
                     `;
                     
-                    item.addEventListener('dragstart', (event) => {
+                    // Empowering drag start
+                    power.addEventListener('dragstart', (event) => {
                         event.dataTransfer.setData('text/plain', JSON.stringify(trait));
-                        item.classList.add('dragging');
+                        power.classList.add('dragging');
+                        
+                        // Empowerment visual feedback
+                        event.dataTransfer.setDragImage(createDragImage(trait), 50, 50);
                     });
                     
-                    item.addEventListener('dragend', () => {
-                        item.classList.remove('dragging');
+                    // Empowering drag end
+                    power.addEventListener('dragend', () => {
+                        power.classList.remove('dragging');
                     });
                     
-                    itemsContainer.appendChild(item);
+                    powersContainer.appendChild(power);
                 });
             });
+            
+            // Create custom drag image
+            function createDragImage(trait) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw trait representation
+                ctx.fillStyle = trait.color;
+                ctx.beginPath();
+                ctx.arc(50, 50, 40, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('+', 50, 50);
+                
+                return canvas;
+            }
         }
         
-        function setupEventListeners() {
-            // Mobile menu
-            document.getElementById('mobileMenuBtn').addEventListener('click', () => {
-                document.getElementById('leftSidebar').classList.add('active');
-            });
-            
-            document.getElementById('sidebarClose').addEventListener('click', () => {
-                document.getElementById('leftSidebar').classList.remove('active');
-            });
-            
-            // Mobile properties panel
-            document.getElementById('mobilePropertiesBtn').addEventListener('click', () => {
-                document.getElementById('propertiesPanel').classList.add('active');
-                document.getElementById('panelOverlay').classList.add('active');
-            });
-            
-            document.getElementById('panelOverlay').addEventListener('click', () => {
-                document.getElementById('propertiesPanel').classList.remove('active');
-                document.getElementById('panelOverlay').classList.remove('active');
-            });
-            
-            // Tool buttons
-            document.querySelectorAll('.canvas-tool, .mobile-tool').forEach(tool => {
+        function setupEmpowermentListeners() {
+            // Tool empowerment
+            document.querySelectorAll('.tool-empowerment').forEach(tool => {
                 tool.addEventListener('click', function() {
                     const toolName = this.dataset.tool;
                     
                     // Update active tool
-                    document.querySelectorAll('.canvas-tool, .mobile-tool').forEach(t => 
+                    document.querySelectorAll('.tool-empowerment').forEach(t => 
                         t.classList.remove('active'));
                     this.classList.add('active');
                     
-                    appState.currentMode = toolName;
+                    empowermentState.currentTool = toolName;
                     
-                    if (toolName === 'connect') {
-                        showToast('Click on a trait to start connecting, then click on another trait', 'info');
-                    } else if (toolName === 'zoom-in') {
-                        network.svg.transition().call(network.zoom.scaleBy, 1.2);
-                    } else if (toolName === 'zoom-out') {
-                        network.svg.transition().call(network.zoom.scaleBy, 0.8);
-                    } else if (toolName === 'pan') {
-                        showToast('Drag to pan the canvas', 'info');
+                    // Tool-specific empowerment
+                    switch(toolName) {
+                        case 'connect':
+                            showEmpowermentToast('Connection mode enabled - Create powerful relationships', 'info');
+                            empowermentViz.showConnectionGuide();
+                            break;
+                        case 'select':
+                            empowermentViz.hideConnectionGuide();
+                            break;
+                        case 'zoom-in':
+                            empowermentViz.svg.transition()
+                                .duration(300)
+                                .call(empowermentViz.zoom.scaleBy, 1.2);
+                            break;
+                        case 'zoom-out':
+                            empowermentViz.svg.transition()
+                                .duration(300)
+                                .call(empowermentViz.zoom.scaleBy, 0.8);
+                            break;
+                        case 'arrange':
+                            empowermentViz.updateEmpowermentSimulation();
+                            showEmpowermentToast('Network auto-arranged for optimal clarity', 'success');
+                            break;
                     }
                 });
             });
             
-            // Panel tabs
-            document.querySelectorAll('.panel-tab').forEach(tab => {
+            // Insight tabs
+            document.querySelectorAll('.insight-tab').forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabName = this.dataset.tab;
                     
-                    document.querySelectorAll('.panel-tab').forEach(t => 
+                    // Update active tab
+                    document.querySelectorAll('.insight-tab').forEach(t => 
                         t.classList.remove('active'));
                     this.classList.add('active');
                     
-                    document.querySelectorAll('.panel-content').forEach(content => 
+                    // Show corresponding content
+                    document.querySelectorAll('.insight-content').forEach(content => 
                         content.classList.remove('active'));
                     document.getElementById(tabName + 'Content').classList.add('active');
                 });
             });
             
-            // Header buttons
-            document.getElementById('importPatientBtn').addEventListener('click', () => {
-                document.getElementById('importModal').classList.add('show');
-            });
+            // Control buttons
+            document.getElementById('runSimulationBtn').addEventListener('click', runEmpowermentSimulation);
+            document.getElementById('mobileSimulateBtn').addEventListener('click', runEmpowermentSimulation);
+            document.getElementById('runQuickSim').addEventListener('click', runEmpowermentSimulation);
             
             document.getElementById('saveSessionBtn').addEventListener('click', () => {
-                showToast('Session saved successfully', 'success');
+                showEmpowermentToast('Session saved! Your clinical insights are preserved.', 'success');
             });
             
-            document.getElementById('runSimBtn').addEventListener('click', () => {
-                runSimulation();
+            // Mobile controls
+            document.getElementById('mobileLibraryBtn').addEventListener('click', () => {
+                document.getElementById('libraryPanel').classList.toggle('empowered');
             });
             
-            document.getElementById('mobileRunBtn').addEventListener('click', () => {
-                runSimulation();
+            document.getElementById('mobileInsightsBtn').addEventListener('click', () => {
+                document.getElementById('insightsPanel').classList.toggle('empowered');
             });
             
-            // Modal controls
-            document.getElementById('closeImportModal').addEventListener('click', () => {
-                document.getElementById('importModal').classList.remove('show');
-            });
-            
-            document.getElementById('cancelImport').addEventListener('click', () => {
-                document.getElementById('importModal').classList.remove('show');
-            });
-            
-            document.getElementById('confirmImport').addEventListener('click', () => {
-                showToast('Patient data imported. Generating network...', 'success');
-                document.getElementById('importModal').classList.remove('show');
-                
-                setTimeout(() => {
-                    showToast('Trait network successfully generated', 'success');
-                }, 1500);
-            });
-            
-            // Data options
-            document.querySelectorAll('.data-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    document.querySelectorAll('.data-option').forEach(opt => 
-                        opt.classList.remove('selected'));
-                    this.classList.add('selected');
+            // Search empowerment
+            document.getElementById('traitSearch').addEventListener('input', (event) => {
+                const searchTerm = event.target.value.toLowerCase();
+                document.querySelectorAll('.trait-power').forEach(power => {
+                    const name = power.querySelector('.trait-name').textContent.toLowerCase();
+                    const desc = power.querySelector('.trait-description').textContent.toLowerCase();
+                    const matches = name.includes(searchTerm) || desc.includes(searchTerm);
+                    power.style.display = matches ? 'block' : 'none';
                 });
             });
             
-            // Drop traits on canvas
+            // Drop empowerment on canvas
             const canvas = document.getElementById('networkCanvas');
             
             canvas.addEventListener('dragover', (event) => {
@@ -1808,109 +2631,116 @@
                     
                     // Calculate drop position
                     const rect = canvas.getBoundingClientRect();
-                    const scale = appState.zoomLevel;
-                    const x = (event.clientX - rect.left - appState.panOffset.x) / scale;
-                    const y = (event.clientY - rect.top - appState.panOffset.y) / scale;
+                    const scale = empowermentState.zoomLevel;
+                    const x = (event.clientX - rect.left - empowermentState.panOffset.x) / scale;
+                    const y = (event.clientY - rect.top - empowermentState.panOffset.y) / scale;
                     
-                    // Create new trait
-                    const newTrait = new Trait(
+                    // Create new empowered trait
+                    const newTrait = new EmpoweredTrait(
                         traitData.id + '-' + Date.now(),
                         traitData.name,
                         traitData.category,
                         traitData.description,
-                        traitData.color
+                        traitData.color,
+                        traitData.icon
                     );
                     
                     newTrait.x = x;
                     newTrait.y = y;
                     
-                    appState.patientData.addTrait(newTrait);
-                    network.updateVisualization();
+                    empowermentState.addTrait(newTrait);
+                    empowermentViz.updateEmpowermentVisualization();
                     
-                    showToast(`Added ${newTrait.name}`, 'success');
+                    showEmpowermentToast(`${newTrait.name} added to your clinical analysis!`, 'success');
                 } catch (error) {
-                    console.error('Drop error:', error);
+                    console.error('Empowerment drop error:', error);
                 }
             });
             
-            // Keyboard shortcuts
+            // Keyboard empowerment
             document.addEventListener('keydown', (event) => {
-                // Delete selected
+                // Delete selected with empowerment
                 if ((event.key === 'Delete' || event.key === 'Backspace') && 
                     !event.target.classList.contains('property-input')) {
-                    const selectedTrait = appState.patientData.getSelectedTrait();
-                    if (selectedTrait) {
-                        network.removeTrait(selectedTrait.id);
-                    }
+                    empowermentState.removeSelected();
+                    empowermentViz.updateEmpowermentVisualization();
+                    empowermentViz.updateEmpowermentInsights();
                 }
                 
-                // Escape to cancel/clear
+                // Escape clears selection
                 if (event.key === 'Escape') {
-                    appState.patientData.clearSelection();
-                    network.updateVisualization();
-                    network.updatePropertyPanel();
+                    empowermentState.clearSelection();
+                    empowermentViz.updateEmpowermentVisualization();
+                    empowermentViz.updateEmpowermentInsights();
+                }
+                
+                // Space centers view
+                if (event.key === ' ' && !event.target.matches('input, textarea')) {
+                    event.preventDefault();
+                    empowermentViz.svg.transition()
+                        .duration(500)
+                        .call(empowermentViz.zoom.transform, d3.zoomIdentity);
                 }
             });
             
-            // Search functionality
-            document.getElementById('traitSearch').addEventListener('input', (event) => {
-                const searchTerm = event.target.value.toLowerCase();
-                document.querySelectorAll('.trait-item').forEach(item => {
-                    const name = item.querySelector('.trait-name').textContent.toLowerCase();
-                    const desc = item.querySelector('.trait-desc').textContent.toLowerCase();
-                    const matches = name.includes(searchTerm) || desc.includes(searchTerm);
-                    item.style.display = matches ? 'block' : 'none';
-                });
+            // Window resize empowerment
+            window.addEventListener('resize', () => {
+                if (empowermentViz) {
+                    const width = canvas.parentElement.clientWidth;
+                    const height = canvas.parentElement.clientHeight;
+                    empowermentViz.svg.attr('width', width).attr('height', height);
+                    empowermentViz.width = width;
+                    empowermentViz.height = height;
+                    empowermentViz.simulation.force('center', d3.forceCenter(width / 2, height / 2));
+                    empowermentViz.simulation.alpha(0.3).restart();
+                }
             });
             
-            // Window resize
-            window.addEventListener('resize', handleResize);
+            // Scroll empowerment
+            window.addEventListener('scroll', () => {
+                const header = document.querySelector('.empowerment-header');
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
         }
         
-        function handleResize() {
-            detectMobile();
+        function runEmpowermentSimulation() {
+            showEmpowermentToast('Running clinical simulation...', 'info');
             
-            if (network) {
-                const width = document.getElementById('networkCanvas').parentElement.clientWidth;
-                const height = document.getElementById('networkCanvas').parentElement.clientHeight;
-                network.resize(width, height);
-            }
-            
-            // Close mobile panels on larger screens
-            if (window.innerWidth > 768) {
-                document.getElementById('leftSidebar').classList.remove('active');
-                document.getElementById('propertiesPanel').classList.remove('active');
-                document.getElementById('panelOverlay').classList.remove('active');
-            }
-        }
-        
-        function runSimulation() {
-            showToast('Running simulation...', 'info');
-            
-            // Simulate loading
+            // Simulate processing
             setTimeout(() => {
-                showToast('Simulation complete! Results updated.', 'success');
-                
-                // Show results in simulation panel
+                // Update simulation tab with results
                 const results = `
-                    <div class="property-section">
-                        <div class="property-title">
-                            <i class="fas fa-chart-bar"></i>
-                            Simulation Results
+                    <div class="insight-card">
+                        <div class="insight-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Simulation Results</span>
                         </div>
-                        <div style="padding: 1rem 0;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px; margin-bottom: 0.75rem;">
+                        <div style="margin: 1.5rem 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; 
+                                        padding: 1rem; background: rgba(0, 204, 136, 0.1); 
+                                        border-radius: 8px; margin-bottom: 0.75rem;">
                                 <span>Eosinophilic Inflammation</span>
-                                <span style="color: var(--success-green); font-weight: 600;">-65%</span>
+                                <span style="color: #00cc88; font-weight: 800; font-size: 1.1rem;">-65%</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; 
+                                        padding: 1rem; background: rgba(0, 102, 255, 0.1); 
+                                        border-radius: 8px; margin-bottom: 0.75rem;">
                                 <span>Airflow Limitation</span>
-                                <span style="color: var(--success-green); font-weight: 600;">+22%</span>
+                                <span style="color: #0066ff; font-weight: 800; font-size: 1.1rem;">+22%</span>
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background: rgba(30, 41, 59, 0.5); border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; 
+                                        padding: 1rem; background: rgba(255, 170, 0, 0.1); 
+                                        border-radius: 8px;">
                                 <span>Cough Sensitivity</span>
-                                <span style="color: var(--success-green); font-weight: 600;">-48%</span>
+                                <span style="color: #ffaa00; font-weight: 800; font-size: 1.1rem;">-48%</span>
                             </div>
+                        </div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 1rem;">
+                            Based on current network configuration over 6-month projection
                         </div>
                     </div>
                 `;
@@ -1918,48 +2748,76 @@
                 document.getElementById('simulationContent').innerHTML = results;
                 
                 // Switch to simulation tab
-                document.querySelector('.panel-tab[data-tab="simulation"]').click();
+                document.querySelector('.insight-tab[data-tab="simulation"]').click();
+                
+                showEmpowermentToast('Simulation complete! Insights updated.', 'success');
             }, 2000);
         }
         
-        // Initialize app
+        // ============================================
+        // EMPOWERMENT INITIALIZATION
+        // ============================================
+        
         document.addEventListener('DOMContentLoaded', () => {
-            // Simulate loading
+            // Empowering loading sequence
+            const messages = [
+                "Initializing clinical intelligence engine...",
+                "Loading empowerment visualization...",
+                "Preparing trait universe...",
+                "Calibrating connection algorithms...",
+                "Ready to empower clinical decisions!"
+            ];
+            
             let progress = 0;
-            const interval = setInterval(() => {
-                progress += 5;
+            let messageIndex = 0;
+            
+            const loadingInterval = setInterval(() => {
+                progress += 2;
                 document.getElementById('loadingBar').style.width = `${progress}%`;
                 document.getElementById('progressPercent').textContent = `${progress}%`;
                 
+                // Update message every 20%
+                if (progress % 20 === 0 && messageIndex < messages.length) {
+                    document.getElementById('loadingMessage').textContent = messages[messageIndex];
+                    messageIndex++;
+                }
+                
                 if (progress >= 100) {
-                    clearInterval(interval);
+                    clearInterval(loadingInterval);
                     
-                    // Hide loading screen
+                    // Empowering transition
                     document.getElementById('loadingScreen').style.opacity = '0';
+                    document.getElementById('loadingScreen').style.transform = 'scale(1.1)';
+                    
                     setTimeout(() => {
                         document.getElementById('loadingScreen').style.display = 'none';
                         document.getElementById('appContainer').style.display = 'block';
                         
-                        // Initialize app
-                        detectMobile();
-                        network = new NetworkVisualizer('networkCanvas');
-                        loadTraitLibrary();
-                        setupEventListeners();
+                        // Initialize empowerment engine
+                        empowermentViz = new EmpowermentVisualizer('networkCanvas');
+                        loadEmpowermentLibrary();
+                        setupEmpowermentListeners();
                         
-                        // Initial property panel update
-                        network.updatePropertyPanel();
+                        // Initial insights
+                        empowermentViz.updateEmpowermentInsights();
                         
-                        // Welcome message
+                        // Welcome empowerment
                         setTimeout(() => {
-                            showToast('Welcome to TRAITMAP! Drag traits from the library to start building.', 'info');
-                        }, 500);
-                    }, 300);
+                            showEmpowermentToast(
+                                'Welcome to TRAITMAP! Your clinical intelligence platform is ready. ' +
+                                'Drag traits, create connections, and discover insights.',
+                                'success'
+                            );
+                        }, 1000);
+                    }, 500);
                 }
-            }, 50);
+            }, 40);
         });
         
-        // Make network accessible globally
-        window.network = network;
+        // Make empowerment accessible globally
+        window.empowermentViz = empowermentViz;
+        window.empowermentState = empowermentState;
+        window.showEmpowermentToast = showEmpowermentToast;
     </script>
 </body>
 </html>
