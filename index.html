@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRAITMAP - Advanced Respiratory Phenotyping Platform</title>
+    <title>TRAITMAP - Complete Respiratory Trait Intelligence Platform</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -14,188 +14,101 @@
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
         
+        :root {
+            --primary-blue: #2563eb;
+            --secondary-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --mobile-breakpoint: 768px;
+        }
+        
         body {
-            background: #0a0e17;
-            color: #e2e8f0;
+            background: var(--dark-bg);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
         }
         
-        /* Research Lab Header */
-        .lab-header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-            border-bottom: 1px solid #312e81;
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
+        /* Mobile-first navigation */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
             z-index: 1000;
-            backdrop-filter: blur(10px);
+            padding: 0.5rem;
         }
         
-        .header-grid {
+        .nav-items {
             display: grid;
-            grid-template-columns: auto 1fr auto;
-            align-items: center;
-            gap: 2rem;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.25rem;
         }
         
-        .platform-brand {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .platform-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-        
-        .platform-name h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(135deg, #818cf8, #c4b5fd);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-        
-        .platform-name .tagline {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            font-weight: 500;
-        }
-        
-        .research-actions {
-            display: flex;
-            gap: 0.75rem;
-        }
-        
-        .research-btn {
-            padding: 0.75rem 1.5rem;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #475569;
-            border-radius: 10px;
-            color: #cbd5e1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            font-weight: 500;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .research-btn:hover {
-            background: rgba(51, 65, 85, 0.8);
-            border-color: #6366f1;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-        }
-        
-        .research-btn.primary {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            border: none;
-            color: white;
-        }
-        
-        .lab-status {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        
-        .status-indicator {
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-        
-        /* Main Research Dashboard */
-        .research-dashboard {
-            display: grid;
-            grid-template-columns: 300px 1fr 350px;
-            height: calc(100vh - 90px);
-            gap: 0;
-        }
-        
-        /* Left: Discovery Panel */
-        .discovery-panel {
-            background: rgba(15, 23, 42, 0.8);
-            border-right: 1px solid #1e293b;
+        .nav-item {
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .discovery-tabs {
-            display: flex;
-            background: rgba(30, 41, 59, 0.8);
-            border-bottom: 1px solid #1e293b;
-        }
-        
-        .discovery-tab {
-            flex: 1;
-            padding: 1rem;
-            background: transparent;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-bottom: 2px solid transparent;
+            align-items: center;
+            padding: 0.5rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.7rem;
+            border-radius: 8px;
             transition: all 0.2s;
         }
         
-        .discovery-tab.active {
-            color: #818cf8;
-            border-bottom-color: #818cf8;
-            background: rgba(99, 102, 241, 0.1);
+        .nav-item.active {
+            color: var(--primary-blue);
+            background: rgba(37, 99, 235, 0.1);
         }
         
-        .discovery-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
         }
         
-        /* Algorithm Discovery */
-        .algorithm-card {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid #475569;
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
+        /* Main container with mobile-first design */
+        .app-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding-bottom: 70px; /* Space for mobile nav */
         }
         
-        .algorithm-card:hover {
-            border-color: #6366f1;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
-            transform: translateY(-2px);
+        /* Header with responsive design */
+        .app-header {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1e1b4b 100%);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        .algorithm-header {
+        .header-content {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
         
-        .algorithm-icon {
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-purple));
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -203,1534 +116,1488 @@
             font-size: 1.2rem;
         }
         
-        .algorithm-stats {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-            font-size: 0.85rem;
+        .app-title h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--secondary-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
         
-        .stat-badge {
-            padding: 0.25rem 0.75rem;
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 20px;
-            color: #cbd5e1;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .app-title .subtitle {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
         }
         
-        /* Biomarker Matrix */
-        .matrix-container {
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: 12px;
-            padding: 1rem;
-            overflow-x: auto;
-        }
-        
-        .matrix-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1rem;
-        }
-        
-        .biomarker-cell {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 8px;
-            padding: 1rem;
-            border: 1px solid #475569;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-        
-        .biomarker-cell:hover {
-            border-color: #6366f1;
-            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
-        }
-        
-        .biomarker-level {
-            width: 100%;
-            height: 6px;
-            background: #334155;
-            border-radius: 3px;
-            margin: 0.5rem 0;
-            overflow: hidden;
-        }
-        
-        .biomarker-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #34d399);
-            border-radius: 3px;
-        }
-        
-        /* Center: 3D Network Visualization */
-        .visualization-panel {
-            background: linear-gradient(135deg, #0a0e17 0%, #0f172a 100%);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        #network-3d {
-            width: 100%;
-            height: 100%;
-        }
-        
-        .visualization-controls {
-            position: absolute;
-            top: 1.5rem;
-            left: 1.5rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            z-index: 100;
-        }
-        
-        .viz-btn {
-            width: 40px;
-            height: 40px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid #475569;
-            border-radius: 8px;
-            color: #cbd5e1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        
-        .viz-btn:hover {
-            background: rgba(30, 41, 59, 0.9);
-            border-color: #6366f1;
-            transform: scale(1.05);
-        }
-        
-        .viz-btn.active {
-            background: #6366f1;
-            border-color: #6366f1;
-            color: white;
-        }
-        
-        .data-overlay {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid #312e81;
-            border-radius: 12px;
-            padding: 1.25rem;
-            width: 300px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-        
-        .data-stream {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 1rem;
-        }
-        
-        .stream-item {
-            padding: 0.75rem;
-            background: rgba(30, 41, 59, 0.6);
-            margin-bottom: 0.5rem;
-            border-radius: 8px;
-            border-left: 3px solid #6366f1;
-            font-size: 0.9rem;
-        }
-        
-        /* Right: Analysis Panel */
-        .analysis-panel {
-            background: rgba(15, 23, 42, 0.8);
-            border-left: 1px solid #1e293b;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .analysis-header {
-            padding: 1.5rem;
-            background: rgba(30, 41, 59, 0.8);
-            border-bottom: 1px solid #1e293b;
-        }
-        
-        .analysis-header h2 {
-            font-size: 1.3rem;
-            color: #e2e8f0;
-            margin-bottom: 0.5rem;
-        }
-        
-        .analysis-subtitle {
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        
-        .analysis-content {
+        .patient-selector {
             flex: 1;
-            overflow-y: auto;
-            padding: 1.5rem;
+            min-width: 200px;
+            max-width: 300px;
         }
         
-        /* Phenotype Cluster */
-        .phenotype-cluster {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid #475569;
-            border-radius: 12px;
-            padding: 1.5rem;
+        .patient-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        /* Main views container */
+        .views-container {
+            display: none;
+            padding: 1rem;
+        }
+        
+        .view.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* TODAY VIEW - Current Trait Profile */
+        .today-header {
             margin-bottom: 1.5rem;
         }
         
-        .cluster-header {
+        .today-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .date-display {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .trait-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .trait-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        
+        .trait-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--secondary-blue);
+        }
+        
+        .trait-card.active {
+            border-color: var(--secondary-blue);
+            border-left: 4px solid var(--secondary-blue);
+        }
+        
+        .trait-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .trait-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .trait-category {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(148, 163, 184, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            display: inline-block;
+        }
+        
+        .trait-severity {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .severity-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .severity-dot.low { background: var(--success-green); }
+        .severity-dot.medium { background: var(--warning-orange); }
+        .severity-dot.high { background: var(--danger-red); }
+        
+        .trait-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .metric {
+            text-align: center;
+            padding: 0.75rem;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+        }
+        
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--secondary-blue);
+            margin-bottom: 0.25rem;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .data-sources {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 1rem;
+        }
+        
+        .data-sources i {
+            margin-right: 0.5rem;
+        }
+        
+        /* TRENDS VIEW - Temporal Analysis */
+        .trends-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .time-range-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--card-bg);
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .time-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .time-btn.active {
+            background: var(--secondary-blue);
+            color: white;
+        }
+        
+        .trends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .trend-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        .trend-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
         
-        .cluster-badge {
-            padding: 0.25rem 0.75rem;
-            background: rgba(99, 102, 241, 0.2);
-            color: #a5b4fc;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .trend-chart {
+            height: 150px;
+            margin: 1rem 0;
+            position: relative;
         }
         
-        .cluster-metrics {
+        .trend-line {
+            fill: none;
+            stroke: var(--secondary-blue);
+            stroke-width: 2;
+        }
+        
+        .trend-point {
+            fill: var(--secondary-blue);
+            stroke: white;
+            stroke-width: 2;
+            cursor: pointer;
+        }
+        
+        .trend-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .trend-direction {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .trend-direction.up { color: var(--danger-red); }
+        .trend-direction.down { color: var(--success-green); }
+        .trend-direction.stable { color: var(--warning-orange); }
+        
+        /* ACTIONS VIEW - Recommendations */
+        .actions-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .action-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        .action-priority {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .priority-high { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+        .priority-medium { background: rgba(245, 158, 11, 0.2); color: #fcd34d; }
+        .priority-low { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+        
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .action-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .action-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: var(--secondary-blue);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .action-btn.secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        /* COMPARE VIEW - Cohort Analysis */
+        .compare-controls {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .cohort-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 1rem;
             margin-top: 1rem;
         }
         
-        .metric-box {
-            text-align: center;
-            padding: 0.75rem;
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 8px;
-        }
-        
-        .metric-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #818cf8;
-            margin-bottom: 0.25rem;
-        }
-        
-        .metric-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        /* Prediction Engine */
-        .prediction-engine {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid #475569;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .prediction-slider {
-            margin: 1.5rem 0;
-        }
-        
-        .slider-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        
-        .slider-track {
-            width: 100%;
-            height: 8px;
-            background: #334155;
-            border-radius: 4px;
-            position: relative;
-            cursor: pointer;
-        }
-        
-        .slider-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #6366f1, #8b5cf6);
-            border-radius: 4px;
-            width: 60%;
-        }
-        
-        .prediction-output {
-            background: rgba(15, 23, 42, 0.8);
+        .cohort-option {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 1rem;
-            margin-top: 1rem;
-            border: 1px solid #312e81;
-        }
-        
-        /* Drug Discovery Panel */
-        .drug-discovery {
-            background: rgba(30, 41, 59, 0.6);
-            border: 1px solid #475569;
-            border-radius: 12px;
-            padding: 1.5rem;
-        }
-        
-        .molecule-preview {
-            width: 100%;
-            height: 150px;
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 8px;
-            margin: 1rem 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        
-        .property-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-        
-        .property-item {
-            padding: 0.75rem;
-            background: rgba(15, 23, 42, 0.8);
-            border-radius: 8px;
-        }
-        
-        /* Simulation Mode */
-        .simulation-mode {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid #312e81;
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            z-index: 1000;
-        }
-        
-        .simulation-controls {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .sim-btn {
-            width: 36px;
-            height: 36px;
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid #475569;
-            border-radius: 8px;
-            color: #cbd5e1;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             transition: all 0.2s;
         }
         
-        .sim-btn:hover {
-            background: rgba(51, 65, 85, 0.8);
-            border-color: #6366f1;
+        .cohort-option:hover {
+            border-color: var(--secondary-blue);
         }
         
-        .sim-btn.primary {
-            background: #6366f1;
-            border-color: #6366f1;
+        .cohort-option.active {
+            border-color: var(--secondary-blue);
+            background: rgba(37, 99, 235, 0.1);
+        }
+        
+        .comparison-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .comparison-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+        
+        .comparison-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .comparison-bar {
+            height: 20px;
+            background: var(--border-color);
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-blue), var(--accent-purple));
+            border-radius: 10px;
+        }
+        
+        /* DATA VIEW - Manual Data Entry */
+        .data-entry-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--secondary-blue);
+        }
+        
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1em;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--secondary-blue);
             color: white;
         }
         
-        .simulation-progress {
-            flex: 1;
+        .btn-primary:hover {
+            background: var(--primary-blue);
         }
         
-        .progress-bar {
-            width: 100%;
-            height: 6px;
-            background: #334155;
-            border-radius: 3px;
-            overflow: hidden;
+        .btn-secondary {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
         }
         
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #34d399);
-            width: 45%;
-            border-radius: 3px;
+        .btn-secondary:hover {
+            border-color: var(--secondary-blue);
         }
         
-        /* Animations */
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        
-        @keyframes glow {
-            0% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.5); }
-            50% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.8); }
-            100% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.5); }
-        }
-        
-        .glowing {
-            animation: glow 2s infinite;
-        }
-        
-        /* Responsive */
-        @media (max-width: 1400px) {
-            .research-dashboard {
-                grid-template-columns: 280px 1fr;
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .mobile-nav {
+                display: block;
             }
             
-            .analysis-panel {
-                display: none;
+            .app-header {
+                padding: 0.75rem;
             }
-        }
-        
-        @media (max-width: 1024px) {
-            .research-dashboard {
+            
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .patient-selector {
+                max-width: 100%;
+            }
+            
+            .trait-cards-grid,
+            .trends-grid,
+            .actions-grid,
+            .comparison-results {
                 grid-template-columns: 1fr;
             }
             
-            .discovery-panel {
-                display: none;
+            .trait-card,
+            .trend-card,
+            .action-card,
+            .comparison-card {
+                padding: 1rem;
             }
+            
+            .trends-controls {
+                flex-direction: column;
+            }
+            
+            .time-range-selector {
+                justify-content: center;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .trait-cards-grid,
+            .trends-grid,
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Offline indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--warning-orange);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: none;
+            z-index: 1001;
+        }
+        
+        .offline-indicator.show {
+            display: block;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            display: none;
+        }
+        
+        .loading-overlay.show {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--secondary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
-    <!-- Research Lab Header -->
-    <div class="lab-header">
-        <div class="header-grid">
-            <div class="platform-brand">
-                <div class="platform-icon glowing">
-                    <i class="fas fa-atom"></i>
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        <i class="fas fa-wifi"></i> Working Offline
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Main App Container -->
+    <div class="app-container">
+        <!-- Header -->
+        <div class="app-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <i class="fas fa-lungs"></i>
+                    </div>
+                    <div class="app-title">
+                        <h1>TRAITMAP</h1>
+                        <div class="subtitle">Respiratory Trait Intelligence</div>
+                    </div>
                 </div>
-                <div class="platform-name">
-                    <h1>TRAITMAP v3.1</h1>
-                    <div class="tagline">Advanced Respiratory Phenotyping & Discovery Platform</div>
+                
+                <div class="patient-selector">
+                    <select class="patient-select" id="patientSelect">
+                        <option value="demo">Demo Patient (John Smith)</option>
+                        <option value="new">+ Add New Patient</option>
+                    </select>
                 </div>
             </div>
-            
-            <div class="research-actions">
-                <button class="research-btn">
+        </div>
+        
+        <!-- Main Views -->
+        <div class="views-container">
+            <!-- Today View -->
+            <div class="view" id="todayView">
+                <div class="today-header">
+                    <h2>Current Trait Profile</h2>
+                    <div class="date-display" id="currentDate"></div>
+                </div>
+                
+                <div class="trait-cards-grid" id="traitCards">
+                    <!-- Traits will be loaded here -->
+                </div>
+                
+                <div class="data-sources">
                     <i class="fas fa-database"></i>
-                    <span>Load Cohort</span>
-                </button>
-                <button class="research-btn">
-                    <i class="fas fa-play-circle"></i>
-                    <span>Run Analysis</span>
-                </button>
-                <button class="research-btn primary">
-                    <i class="fas fa-rocket"></i>
-                    <span>Start Simulation</span>
-                </button>
-                <button class="research-btn">
-                    <i class="fas fa-chart-network"></i>
-                    <span>Export Results</span>
-                </button>
-            </div>
-            
-            <div class="lab-status">
-                <div class="status-indicator"></div>
-                <span>AI Engine: <strong>Active</strong></span>
-                <span>Data Stream: <strong>Live</strong></span>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Main Research Dashboard -->
-    <div class="research-dashboard">
-        <!-- Left: Discovery Panel -->
-        <div class="discovery-panel">
-            <div class="discovery-tabs">
-                <button class="discovery-tab active" data-tab="algorithms">
-                    <i class="fas fa-brain"></i> AI Algorithms
-                </button>
-                <button class="discovery-tab" data-tab="biomarkers">
-                    <i class="fas fa-dna"></i> Biomarkers
-                </button>
-                <button class="discovery-tab" data-tab="pathways">
-                    <i class="fas fa-project-diagram"></i> Pathways
-                </button>
-            </div>
-            
-            <div class="discovery-content" id="discoveryContent">
-                <!-- AI Algorithms Content -->
-                <div class="algorithm-discovery">
-                    <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
-                        Active Learning Algorithms
-                    </h3>
-                    
-                    <div class="algorithm-card">
-                        <div class="algorithm-header">
-                            <div class="algorithm-icon">
-                                <i class="fas fa-network-wired"></i>
-                            </div>
-                            <div>
-                                <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Graph Neural Network</h4>
-                                <p style="color: #94a3b8; font-size: 0.85rem;">Trait relationship prediction</p>
-                            </div>
-                        </div>
-                        <div class="algorithm-stats">
-                            <div class="stat-badge">
-                                <i class="fas fa-bolt" style="color: #fbbf24;"></i>
-                                <span>Accuracy: 94.2%</span>
-                            </div>
-                            <div class="stat-badge">
-                                <i class="fas fa-clock" style="color: #60a5fa;"></i>
-                                <span>Last trained: 2h ago</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="algorithm-card">
-                        <div class="algorithm-header">
-                            <div class="algorithm-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <div>
-                                <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Temporal Transformer</h4>
-                                <p style="color: #94a3b8; font-size: 0.85rem;">Disease progression modeling</p>
-                            </div>
-                        </div>
-                        <div class="algorithm-stats">
-                            <div class="stat-badge">
-                                <i class="fas fa-bolt" style="color: #fbbf24;"></i>
-                                <span>R²: 0.89</span>
-                            </div>
-                            <div class="stat-badge">
-                                <i class="fas fa-database" style="color: #8b5cf6;"></i>
-                                <span>45K sequences</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="algorithm-card">
-                        <div class="algorithm-header">
-                            <div class="algorithm-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <div>
-                                <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Generative Adversarial Net</h4>
-                                <p style="color: #94a3b8; font-size: 0.85rem;">Synthetic phenotype generation</p>
-                            </div>
-                        </div>
-                        <div class="algorithm-stats">
-                            <div class="stat-badge">
-                                <i class="fas fa-sync-alt" style="color: #60a5fa;"></i>
-                                <span>Cycle: 1.2M</span>
-                            </div>
-                            <div class="stat-badge">
-                                <i class="fas fa-shield-alt" style="color: #10b981;"></i>
-                                <span>FID: 12.4</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Center: Advanced Visualization -->
-        <div class="visualization-panel">
-            <div class="visualization-controls">
-                <button class="viz-btn active" title="3D View">
-                    <i class="fas fa-cube"></i>
-                </button>
-                <button class="viz-btn" title="Force Graph">
-                    <i class="fas fa-project-diagram"></i>
-                </button>
-                <button class="viz-btn" title="Heat Map">
-                    <i class="fas fa-fire"></i>
-                </button>
-                <button class="viz-btn" title="Timeline">
-                    <i class="fas fa-stream"></i>
-                </button>
-                <button class="viz-btn" title="Reset View">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-            
-            <div class="data-overlay">
-                <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.5rem;">
-                    <i class="fas fa-satellite-dish"></i> Live Data Stream
-                </h3>
-                <div class="data-stream" id="dataStream">
-                    <!-- Data stream items will be added here -->
+                    Data sources: Spirometry, Lab results, FeNO, Patient questionnaires
                 </div>
             </div>
             
-            <svg id="network-3d"></svg>
-        </div>
-        
-        <!-- Right: Analysis Panel -->
-        <div class="analysis-panel">
-            <div class="analysis-header">
-                <h2>Phenotype Analysis</h2>
-                <div class="analysis-subtitle">
-                    Cluster #7 - Eosinophilic Predominant
+            <!-- Trends View -->
+            <div class="view" id="trendsView">
+                <div class="today-header">
+                    <h2>Trait Evolution</h2>
+                    <div class="date-display">Track changes over time</div>
+                </div>
+                
+                <div class="trends-controls">
+                    <div class="time-range-selector">
+                        <button class="time-btn active" data-range="3m">3 Months</button>
+                        <button class="time-btn" data-range="6m">6 Months</button>
+                        <button class="time-btn" data-range="1y">1 Year</button>
+                        <button class="time-btn" data-range="all">All Time</button>
+                    </div>
+                </div>
+                
+                <div class="trends-grid" id="trendsGrid">
+                    <!-- Trend charts will be loaded here -->
                 </div>
             </div>
             
-            <div class="analysis-content">
-                <div class="phenotype-cluster">
-                    <div class="cluster-header">
-                        <h3 style="color: #e2e8f0; font-size: 1.1rem;">
-                            <i class="fas fa-users"></i> Subphenotype Characteristics
-                        </h3>
-                        <div class="cluster-badge">N=428</div>
-                    </div>
-                    
-                    <div class="cluster-metrics">
-                        <div class="metric-box">
-                            <div class="metric-value">3.2×</div>
-                            <div class="metric-label">Exacerbation Risk</div>
+            <!-- Actions View -->
+            <div class="view" id="actionsView">
+                <div class="today-header">
+                    <h2>Clinical Actions</h2>
+                    <div class="date-display">Personalized recommendations</div>
+                </div>
+                
+                <div class="actions-grid" id="actionsGrid">
+                    <!-- Action cards will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Compare View -->
+            <div class="view" id="compareView">
+                <div class="today-header">
+                    <h2>Cohort Comparison</h2>
+                    <div class="date-display">Benchmark against similar patients</div>
+                </div>
+                
+                <div class="compare-controls">
+                    <h3 style="margin-bottom: 1rem;">Select Comparison Cohort</h3>
+                    <div class="cohort-selector">
+                        <div class="cohort-option active" data-cohort="similar">
+                            <div style="font-weight: 600;">Similar Patients</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Age 60-70, Severe Asthma</div>
                         </div>
-                        <div class="metric-box">
-                            <div class="metric-value">64%</div>
-                            <div class="metric-label">Biologic Response</div>
+                        <div class="cohort-option" data-cohort="responders">
+                            <div style="font-weight: 600;">Biologic Responders</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Patients who responded to anti-IL-5</div>
                         </div>
-                        <div class="metric-box">
-                            <div class="metric-value">2.8</div>
-                            <div class="metric-label">QoL Impact</div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-top: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="color: #94a3b8; font-size: 0.9rem;">Key Biomarkers</span>
-                            <span style="color: #818cf8; font-size: 0.85rem;">↑ 42% from baseline</span>
-                        </div>
-                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                            <span style="padding: 0.25rem 0.75rem; background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-radius: 20px; font-size: 0.8rem;">
-                                IL-5
-                            </span>
-                            <span style="padding: 0.25rem 0.75rem; background: rgba(34, 197, 94, 0.2); color: #86efac; border-radius: 20px; font-size: 0.8rem;">
-                                Eotaxin-3
-                            </span>
-                            <span style="padding: 0.25rem 0.75rem; background: rgba(59, 130, 246, 0.2); color: #93c5fd; border-radius: 20px; font-size: 0.8rem;">
-                                Periostin
-                            </span>
+                        <div class="cohort-option" data-cohort="institution">
+                            <div style="font-weight: 600;">Institution Average</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">All asthma patients</div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="prediction-engine">
-                    <h3 style="color: #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem;">
-                        <i class="fas fa-crystal-ball"></i> Treatment Response Predictor
-                    </h3>
+                <div class="comparison-results" id="comparisonResults">
+                    <!-- Comparison results will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Data View -->
+            <div class="view" id="dataView">
+                <div class="today-header">
+                    <h2>Data Management</h2>
+                    <div class="date-display">Add or update patient data</div>
+                </div>
+                
+                <div class="data-entry-form">
+                    <h3 style="margin-bottom: 1.5rem;">Add New Measurement</h3>
                     
-                    <div class="prediction-slider">
-                        <div class="slider-label">
-                            <span>IL-5 Inhibition Sensitivity</span>
-                            <span>85%</span>
-                        </div>
-                        <div class="slider-track">
-                            <div class="slider-fill" id="sensitivitySlider"></div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Measurement Type</label>
+                        <select class="form-select" id="measurementType">
+                            <option value="spirometry">Spirometry (FEV₁)</option>
+                            <option value="lab">Lab Test (Eosinophils)</option>
+                            <option value="feno">FeNO Measurement</option>
+                            <option value="symptoms">Symptom Score</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
                     
-                    <div class="prediction-slider">
-                        <div class="slider-label">
-                            <span>Steroid Resistance Index</span>
-                            <span>32%</span>
-                        </div>
-                        <div class="slider-track">
-                            <div class="slider-fill" style="width: 32%; background: linear-gradient(90deg, #f59e0b, #fbbf24);"></div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Value</label>
+                        <input type="text" class="form-input" id="measurementValue" placeholder="Enter value (e.g., 62%)">
                     </div>
                     
-                    <div class="prediction-output">
-                        <div style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem;">
-                            Recommended Intervention:
-                        </div>
-                        <div style="color: #e2e8f0; font-weight: 600;">
-                            <i class="fas fa-prescription-bottle-alt" style="color: #818cf8;"></i>
-                            Mepolizumab + ICS optimization
-                        </div>
-                        <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem;">
-                            Predicted exacerbation reduction: 68% (95% CI: 52-81%)
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-input" id="measurementDate" value="">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-input" id="measurementNotes" rows="3" placeholder="Additional context..."></textarea>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                        <button class="btn btn-primary" id="saveMeasurementBtn">Save Measurement</button>
                     </div>
                 </div>
                 
-                <div class="drug-discovery">
-                    <h3 style="color: #e2e8f0; font-size: 1.1rem; margin-bottom: 1rem;">
-                        <i class="fas fa-flask"></i> Novel Target Discovery
-                    </h3>
-                    
-                    <div class="molecule-preview">
-                        <div style="text-align: center;">
-                            <div style="font-size: 2rem; color: #818cf8; margin-bottom: 0.5rem;">
-                                <i class="fas fa-atom"></i>
-                            </div>
-                            <div>TSLP Receptor Antagonist</div>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">Binding affinity: 2.4 nM</div>
-                        </div>
-                    </div>
-                    
-                    <div class="property-grid">
-                        <div class="property-item">
-                            <div style="color: #94a3b8; font-size: 0.8rem;">IC₅₀</div>
-                            <div style="color: #e2e8f0; font-weight: 600;">8.2 nM</div>
-                        </div>
-                        <div class="property-item">
-                            <div style="color: #94a3b8; font-size: 0.8rem;">Selectivity</div>
-                            <div style="color: #e2e8f0; font-weight: 600;">124×</div>
-                        </div>
-                        <div class="property-item">
-                            <div style="color: #94a3b8; font-size: 0.8rem;">LogP</div>
-                            <div style="color: #e2e8f0; font-weight: 600;">2.1</div>
-                        </div>
-                        <div class="property-item">
-                            <div style="color: #94a3b8; font-size: 0.8rem;">T₁/₂</div>
-                            <div style="color: #e2e8f0; font-weight: 600;">18h</div>
-                        </div>
+                <div style="margin-top: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Recent Measurements</h3>
+                    <div id="recentMeasurements">
+                        <!-- Recent measurements will be loaded here -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Simulation Mode Controls -->
-    <div class="simulation-mode">
-        <div style="color: #e2e8f0; font-weight: 600;">
-            <i class="fas fa-play-circle" style="color: #10b981;"></i>
-            Simulation Mode Active
-        </div>
-        
-        <div class="simulation-controls">
-            <button class="sim-btn">
-                <i class="fas fa-step-backward"></i>
-            </button>
-            <button class="sim-btn primary">
-                <i class="fas fa-pause"></i>
-            </button>
-            <button class="sim-btn">
-                <i class="fas fa-step-forward"></i>
-            </button>
-            <button class="sim-btn">
-                <i class="fas fa-redo"></i>
-            </button>
-        </div>
-        
-        <div class="simulation-progress">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span style="color: #94a3b8; font-size: 0.85rem;">Epoch 42/100</span>
-                <span style="color: #818cf8; font-size: 0.85rem;">Loss: 0.042</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-        </div>
-        
-        <div style="color: #94a3b8; font-size: 0.85rem;">
-            <i class="fas fa-microchip"></i>
-            4.2 TFLOPS | 16GB VRAM
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav">
+        <div class="nav-items">
+            <a href="#" class="nav-item active" data-view="today">
+                <i class="fas fa-home"></i>
+                <span>Today</span>
+            </a>
+            <a href="#" class="nav-item" data-view="trends">
+                <i class="fas fa-chart-line"></i>
+                <span>Trends</span>
+            </a>
+            <a href="#" class="nav-item" data-view="actions">
+                <i class="fas fa-bullseye"></i>
+                <span>Actions</span>
+            </a>
+            <a href="#" class="nav-item" data-view="compare">
+                <i class="fas fa-users"></i>
+                <span>Compare</span>
+            </a>
+            <a href="#" class="nav-item" data-view="data">
+                <i class="fas fa-database"></i>
+                <span>Data</span>
+            </a>
         </div>
     </div>
 
     <script>
-        // Advanced Research Data
-        const researchData = {
-            cohorts: [
-                { id: 1, name: "Severe Asthma Biomarker Study", n: 1250, status: "active" },
-                { id: 2, name: "COPD Progression Multi-omics", n: 842, status: "complete" },
-                { id: 3, name: "Bronchiectasis Microbiome", n: 312, status: "active" }
-            ],
-            algorithms: [
-                { 
-                    name: "Graph Neural Network", 
-                    accuracy: 94.2, 
-                    training: "2h ago",
-                    params: "4.2M",
-                    task: "Trait relationship prediction"
-                },
-                { 
-                    name: "Temporal Transformer", 
-                    accuracy: 89.0, 
-                    training: "1d ago",
-                    params: "12.8M",
-                    task: "Disease progression modeling"
-                },
-                { 
-                    name: "Generative Adversarial Net", 
-                    accuracy: 92.1, 
-                    training: "3h ago",
-                    params: "8.4M",
-                    task: "Synthetic phenotype generation"
-                }
-            ],
-            biomarkers: [
-                { name: "IL-5", level: 85, type: "cytokine", trend: "increasing" },
-                { name: "Eotaxin-3", level: 72, type: "chemokine", trend: "stable" },
-                { name: "Periostin", level: 68, type: "matrix", trend: "increasing" },
-                { name: "FeNO", level: 91, type: "clinical", trend: "increasing" },
-                { name: "Blood Eosinophils", level: 88, type: "cellular", trend: "increasing" },
-                { name: "Sputum Neutrophils", level: 32, type: "cellular", trend: "decreasing" }
-            ],
-            phenotypes: [
-                {
-                    id: 7,
-                    name: "Eosinophilic Predominant",
-                    size: 428,
-                    risk: 3.2,
-                    response: 64,
-                    biomarkers: ["IL-5", "Eotaxin-3", "Periostin", "FeNO"],
-                    treatments: ["Anti-IL-5", "Anti-IL-4Rα", "ICS Optimization"]
-                },
-                {
-                    id: 3,
-                    name: "Neutrophilic Inflammatory",
-                    size: 312,
-                    risk: 2.8,
-                    response: 42,
-                    biomarkers: ["IL-8", "Neutrophil Elastase", "MMP-9"],
-                    treatments: ["Macrolides", "PDE4 Inhibitors"]
-                },
-                {
-                    id: 12,
-                    name: "Mixed Granulocytic",
-                    size: 196,
-                    risk: 3.8,
-                    response: 38,
-                    biomarkers: ["IL-5", "IL-8", "TNF-α"],
-                    treatments: ["Combination Therapy", "Broad Anti-inflammatory"]
-                }
-            ]
-        };
-
-        // Initialize the platform
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize 3D network visualization
-            initializeAdvancedNetwork();
+        // ================================
+        // CORE DATA MANAGEMENT
+        // ================================
+        
+        class TraitMapDatabase {
+            constructor() {
+                this.patients = {};
+                this.currentPatientId = 'demo';
+                this.initDemoData();
+                this.loadFromStorage();
+            }
             
-            // Set up discovery tabs
-            setupDiscoveryTabs();
+            initDemoData() {
+                // Demo patient data
+                this.patients.demo = {
+                    id: 'demo',
+                    name: 'John Smith',
+                    age: 62,
+                    diagnosis: 'Severe Asthma with COPD Overlap',
+                    lastVisit: '2024-03-15',
+                    
+                    traits: [
+                        {
+                            id: 'eosinophilic_inflammation',
+                            name: 'Eosinophilic Inflammation',
+                            category: 'immune',
+                            severity: 'high',
+                            currentValue: '520 cells/μL',
+                            trend: 'increasing',
+                            lastUpdated: '2024-03-10',
+                            dataSources: ['Lab Results', 'FeNO'],
+                            confidence: 0.95
+                        },
+                        {
+                            id: 'airflow_limitation',
+                            name: 'Airflow Limitation',
+                            category: 'physio',
+                            severity: 'medium',
+                            currentValue: 'FEV₁ 62%',
+                            trend: 'stable',
+                            lastUpdated: '2024-03-05',
+                            dataSources: ['Spirometry'],
+                            confidence: 0.98
+                        },
+                        {
+                            id: 'saba_overuse',
+                            name: 'SABA Overuse',
+                            category: 'behavioral',
+                            severity: 'medium',
+                            currentValue: '4×/week',
+                            trend: 'increasing',
+                            lastUpdated: '2024-03-12',
+                            dataSources: ['Smart Inhaler', 'Prescription Records'],
+                            confidence: 0.85
+                        },
+                        {
+                            id: 'mucus_hypersecretion',
+                            name: 'Mucus Hypersecretion',
+                            category: 'clinical',
+                            severity: 'low',
+                            currentValue: 'Moderate sputum',
+                            trend: 'stable',
+                            lastUpdated: '2024-03-01',
+                            dataSources: ['Patient Report'],
+                            confidence: 0.75
+                        }
+                    ],
+                    
+                    measurements: [
+                        { date: '2024-01-15', type: 'spirometry', value: 68, unit: '% predicted', trait: 'airflow_limitation' },
+                        { date: '2024-02-01', type: 'lab', value: 480, unit: 'cells/μL', trait: 'eosinophilic_inflammation' },
+                        { date: '2024-02-15', type: 'spirometry', value: 65, unit: '% predicted', trait: 'airflow_limitation' },
+                        { date: '2024-03-01', type: 'lab', value: 520, unit: 'cells/μL', trait: 'eosinophilic_inflammation' },
+                        { date: '2024-03-05', type: 'spirometry', value: 62, unit: '% predicted', trait: 'airflow_limitation' },
+                        { date: '2024-03-10', type: 'feno', value: 45, unit: 'ppb', trait: 'eosinophilic_inflammation' },
+                        { date: '2024-03-12', type: 'behavioral', value: 4, unit: 'uses/week', trait: 'saba_overuse' }
+                    ],
+                    
+                    actions: [
+                        {
+                            id: 'biologic_consideration',
+                            title: 'Consider Biologic Therapy',
+                            description: 'Persistent eosinophilia (>450 cells/μL) despite ICS therapy suggests potential benefit from anti-IL-5 therapy.',
+                            priority: 'high',
+                            relatedTraits: ['eosinophilic_inflammation'],
+                            evidence: 'Based on blood eosinophil trends over 3 months'
+                        },
+                        {
+                            id: 'controller_optimization',
+                            title: 'Optimize Controller Therapy',
+                            description: 'SABA overuse indicates potential suboptimal controller therapy. Review ICS/LABA adherence and technique.',
+                            priority: 'medium',
+                            relatedTraits: ['saba_overuse', 'airflow_limitation'],
+                            evidence: 'SABA use 4×/week exceeds guideline recommendations'
+                        },
+                        {
+                            id: 'sputum_culture',
+                            title: 'Consider Sputum Culture',
+                            description: 'Persistent mucus hypersecretion may indicate infection or non-type 2 inflammation.',
+                            priority: 'low',
+                            relatedTraits: ['mucus_hypersecretion'],
+                            evidence: 'Chronic productive cough reported'
+                        }
+                    ],
+                    
+                    cohorts: {
+                        similar: {
+                            name: 'Similar Patients',
+                            description: 'Age 60-70, Severe Asthma',
+                            size: 142,
+                            metrics: {
+                                eosinophilic_inflammation: { avg: 380, patient: 520 },
+                                airflow_limitation: { avg: 58, patient: 62 },
+                                saba_overuse: { avg: 2.8, patient: 4 }
+                            }
+                        },
+                        responders: {
+                            name: 'Biologic Responders',
+                            description: 'Patients who responded to anti-IL-5',
+                            size: 85,
+                            metrics: {
+                                eosinophilic_inflammation: { avg: 510, patient: 520 },
+                                airflow_limitation: { avg: 61, patient: 62 },
+                                exacerbations: { avg: 1.2, patient: 2.5 }
+                            }
+                        }
+                    }
+                };
+            }
+            
+            saveToStorage() {
+                try {
+                    localStorage.setItem('traitmap_patients', JSON.stringify(this.patients));
+                    localStorage.setItem('traitmap_current_patient', this.currentPatientId);
+                } catch (e) {
+                    console.warn('LocalStorage save failed:', e);
+                }
+            }
+            
+            loadFromStorage() {
+                try {
+                    const savedPatients = localStorage.getItem('traitmap_patients');
+                    const savedCurrent = localStorage.getItem('traitmap_current_patient');
+                    
+                    if (savedPatients) {
+                        const parsed = JSON.parse(savedPatients);
+                        // Merge with demo data
+                        Object.assign(this.patients, parsed);
+                    }
+                    
+                    if (savedCurrent) {
+                        this.currentPatientId = savedCurrent;
+                    }
+                } catch (e) {
+                    console.warn('LocalStorage load failed:', e);
+                }
+            }
+            
+            getCurrentPatient() {
+                return this.patients[this.currentPatientId];
+            }
+            
+            addMeasurement(measurement) {
+                const patient = this.getCurrentPatient();
+                if (!patient.measurements) patient.measurements = [];
+                patient.measurements.push(measurement);
+                this.updateTraitsFromMeasurements();
+                this.saveToStorage();
+            }
+            
+            updateTraitsFromMeasurements() {
+                // In a full implementation, this would automatically update trait values
+                // based on new measurements
+                console.log('Traits updated from measurements');
+            }
+        }
+        
+        // ================================
+        // APPLICATION STATE
+        // ================================
+        
+        const appState = {
+            currentView: 'today',
+            currentPatient: null,
+            database: null,
+            isLoading: false
+        };
+        
+        // ================================
+        // UI COMPONENTS
+        // ================================
+        
+        class UIComponents {
+            static showLoading() {
+                document.getElementById('loadingOverlay').classList.add('show');
+                appState.isLoading = true;
+            }
+            
+            static hideLoading() {
+                document.getElementById('loadingOverlay').classList.remove('show');
+                appState.isLoading = false;
+            }
+            
+            static showNotification(message, type = 'info') {
+                // Simple notification - could be enhanced with a proper notification system
+                alert(message); // For simplicity in this demo
+            }
+            
+            static formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+            }
+            
+            static renderTraitCard(trait) {
+                return `
+                    <div class="trait-card ${trait.severity === 'high' ? 'active' : ''}" data-trait-id="${trait.id}">
+                        <div class="trait-card-header">
+                            <div>
+                                <div class="trait-name">${trait.name}</div>
+                                <span class="trait-category">${this.getCategoryLabel(trait.category)}</span>
+                            </div>
+                            <div class="trait-severity">
+                                <div class="severity-dot ${trait.severity}"></div>
+                                <span style="font-size: 0.9rem; text-transform: capitalize;">${trait.severity}</span>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 1rem 0; color: var(--text-secondary); font-size: 0.9rem;">
+                            ${trait.currentValue}
+                            <div style="font-size: 0.8rem; margin-top: 0.25rem;">
+                                Last updated: ${this.formatDate(trait.lastUpdated)}
+                            </div>
+                        </div>
+                        
+                        <div class="trait-metrics">
+                            <div class="metric">
+                                <div class="metric-value">${(trait.confidence * 100).toFixed(0)}%</div>
+                                <div class="metric-label">Confidence</div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-value" style="color: ${trait.trend === 'increasing' ? 'var(--danger-red)' : trait.trend === 'decreasing' ? 'var(--success-green)' : 'var(--warning-orange)'}">
+                                    ${trait.trend === 'increasing' ? '↑' : trait.trend === 'decreasing' ? '↓' : '→'}
+                                </div>
+                                <div class="metric-label">Trend</div>
+                            </div>
+                        </div>
+                        
+                        <div class="data-sources">
+                            <i class="fas fa-clipboard-list"></i>
+                            Sources: ${trait.dataSources.join(', ')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            static renderTrendChart(traitId, measurements) {
+                // Filter measurements for this trait
+                const traitMeasurements = measurements.filter(m => m.trait === traitId);
+                if (traitMeasurements.length < 2) return '';
+                
+                // Sort by date
+                traitMeasurements.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                // Calculate trend
+                const first = traitMeasurements[0].value;
+                const last = traitMeasurements[traitMeasurements.length - 1].value;
+                const trend = last > first ? 'up' : last < first ? 'down' : 'stable';
+                const percentChange = ((last - first) / first * 100).toFixed(1);
+                
+                // Get trait name
+                const trait = appState.database.getCurrentPatient().traits.find(t => t.id === traitId);
+                if (!trait) return '';
+                
+                return `
+                    <div class="trend-card">
+                        <div class="trend-header">
+                            <div style="font-weight: 600;">${trait.name}</div>
+                            <div class="trend-direction ${trend}">
+                                <i class="fas fa-${trend === 'up' ? 'arrow-up' : trend === 'down' ? 'arrow-down' : 'minus'}"></i>
+                                <span>${Math.abs(percentChange)}%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="trend-chart" id="chart-${traitId}">
+                            <!-- Simple inline SVG chart -->
+                            <svg width="100%" height="100%" viewBox="0 0 300 100">
+                                ${this.generateSimpleChart(traitMeasurements)}
+                            </svg>
+                        </div>
+                        
+                        <div class="trend-info">
+                            <div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Start</div>
+                                <div style="font-weight: 600;">${first}${traitMeasurements[0].unit}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Current</div>
+                                <div style="font-weight: 600;">${last}${traitMeasurements[traitMeasurements.length - 1].unit}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Time Span</div>
+                                <div style="font-weight: 600;">${traitMeasurements.length} readings</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            static generateSimpleChart(measurements) {
+                if (measurements.length < 2) return '';
+                
+                // Simple line chart generation
+                const points = measurements.map((m, i) => {
+                    const x = (i / (measurements.length - 1)) * 280 + 10;
+                    // Normalize value for display (simplified)
+                    const normalizedValue = Math.min(90, Math.max(10, m.value));
+                    const y = 90 - (normalizedValue - 10) * 0.8;
+                    return `${x},${y}`;
+                }).join(' ');
+                
+                // Create circles for each point
+                const circles = measurements.map((m, i) => {
+                    const x = (i / (measurements.length - 1)) * 280 + 10;
+                    const normalizedValue = Math.min(90, Math.max(10, m.value));
+                    const y = 90 - (normalizedValue - 10) * 0.8;
+                    return `<circle cx="${x}" cy="${y}" r="3" fill="#3b82f6" stroke="white" stroke-width="1" />`;
+                }).join('');
+                
+                return `
+                    <polyline points="${points}" fill="none" stroke="#3b82f6" stroke-width="2" />
+                    ${circles}
+                `;
+            }
+            
+            static renderActionCard(action) {
+                return `
+                    <div class="action-card">
+                        <div class="action-priority priority-${action.priority}">
+                            ${action.priority.toUpperCase()} PRIORITY
+                        </div>
+                        
+                        <div class="action-title">${action.title}</div>
+                        
+                        <div class="action-description">
+                            ${action.description}
+                        </div>
+                        
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 1rem;">
+                            <i class="fas fa-clipboard-check"></i>
+                            ${action.evidence}
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="action-btn secondary" data-action="${action.id}" data-type="info">
+                                <i class="fas fa-info-circle"></i> More Info
+                            </button>
+                            <button class="action-btn" data-action="${action.id}" data-type="implement">
+                                <i class="fas fa-check"></i> Mark Done
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            static renderComparisonCard(traitId, patientValue, cohortAvg, cohortName) {
+                const trait = appState.database.getCurrentPatient().traits.find(t => t.id === traitId);
+                if (!trait) return '';
+                
+                const percentage = Math.min(100, Math.max(0, (patientValue / cohortAvg) * 100));
+                
+                return `
+                    <div class="comparison-card">
+                        <div class="comparison-header">
+                            <div style="font-weight: 600;">${trait.name}</div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                ${percentage > 120 ? '↑ Above' : percentage < 80 ? '↓ Below' : '≈ Similar'} to average
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 1rem 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                <span style="font-size: 0.9rem;">Patient</span>
+                                <span style="font-weight: 600;">${patientValue}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-size: 0.9rem;">Cohort Average</span>
+                                <span style="color: var(--text-secondary);">${cohortAvg.toFixed(1)}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="comparison-bar">
+                            <div class="bar-fill" style="width: ${Math.min(100, percentage)}%"></div>
+                        </div>
+                        
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem;">
+                            Compared to ${cohortName} (n=${appState.database.getCurrentPatient().cohorts[cohortName].size})
+                        </div>
+                    </div>
+                `;
+            }
+            
+            static getCategoryLabel(category) {
+                const labels = {
+                    'immune': 'Immune/Inflammatory',
+                    'physio': 'Physiological',
+                    'clinical': 'Clinical',
+                    'behavioral': 'Behavioral',
+                    'radio': 'Radiological'
+                };
+                return labels[category] || category;
+            }
+        }
+        
+        // ================================
+        // VIEW CONTROLLERS
+        // ================================
+        
+        class ViewController {
+            static showView(viewName) {
+                // Hide all views
+                document.querySelectorAll('.view').forEach(view => {
+                    view.classList.remove('active');
+                });
+                
+                // Show selected view
+                document.getElementById(`${viewName}View`).classList.add('active');
+                
+                // Update navigation
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`.nav-item[data-view="${viewName}"]`).classList.add('active');
+                
+                // Update app state
+                appState.currentView = viewName;
+                
+                // Load view-specific data
+                this.loadViewData(viewName);
+            }
+            
+            static loadViewData(viewName) {
+                switch(viewName) {
+                    case 'today':
+                        this.loadTodayView();
+                        break;
+                    case 'trends':
+                        this.loadTrendsView();
+                        break;
+                    case 'actions':
+                        this.loadActionsView();
+                        break;
+                    case 'compare':
+                        this.loadCompareView();
+                        break;
+                    case 'data':
+                        this.loadDataView();
+                        break;
+                }
+            }
+            
+            static loadTodayView() {
+                const patient = appState.database.getCurrentPatient();
+                const container = document.getElementById('traitCards');
+                
+                // Update date
+                document.getElementById('currentDate').textContent = 
+                    `As of ${UIComponents.formatDate(new Date().toISOString().split('T')[0])}`;
+                
+                // Render trait cards
+                container.innerHTML = patient.traits.map(trait => 
+                    UIComponents.renderTraitCard(trait)
+                ).join('');
+            }
+            
+            static loadTrendsView() {
+                const patient = appState.database.getCurrentPatient();
+                const container = document.getElementById('trendsGrid');
+                
+                // Get unique traits with measurements
+                const traitsWithData = patient.traits.filter(trait => 
+                    patient.measurements.some(m => m.trait === trait.id)
+                );
+                
+                // Render trend charts
+                container.innerHTML = traitsWithData.map(trait => 
+                    UIComponents.renderTrendChart(trait.id, patient.measurements)
+                ).join('');
+            }
+            
+            static loadActionsView() {
+                const patient = appState.database.getCurrentPatient();
+                const container = document.getElementById('actionsGrid');
+                
+                container.innerHTML = patient.actions.map(action => 
+                    UIComponents.renderActionCard(action)
+                ).join('');
+            }
+            
+            static loadCompareView() {
+                const patient = appState.database.getCurrentPatient();
+                const container = document.getElementById('comparisonResults');
+                const selectedCohort = document.querySelector('.cohort-option.active').dataset.cohort;
+                
+                const cohort = patient.cohorts[selectedCohort];
+                if (!cohort) return;
+                
+                container.innerHTML = Object.entries(cohort.metrics).map(([traitId, values]) => {
+                    // Extract numeric value from patient's current value string
+                    const patientValue = parseFloat(values.patient.toString().replace(/[^\d.]/g, ''));
+                    return UIComponents.renderComparisonCard(traitId, patientValue, values.avg, selectedCohort);
+                }).join('');
+            }
+            
+            static loadDataView() {
+                const patient = appState.database.getCurrentPatient();
+                const container = document.getElementById('recentMeasurements');
+                
+                // Sort measurements by date (newest first)
+                const sortedMeasurements = [...patient.measurements].sort((a, b) => 
+                    new Date(b.date) - new Date(a.date)
+                ).slice(0, 10); // Show last 10
+                
+                container.innerHTML = sortedMeasurements.map(measurement => `
+                    <div style="background: var(--card-bg); padding: 1rem; margin-bottom: 0.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <div style="font-weight: 600;">${measurement.type.toUpperCase()}</div>
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                ${UIComponents.formatDate(measurement.date)}
+                            </div>
+                        </div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: var(--secondary-blue);">
+                            ${measurement.value} ${measurement.unit}
+                        </div>
+                        ${measurement.notes ? `<div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">${measurement.notes}</div>` : ''}
+                    </div>
+                `).join('');
+                
+                // Set today's date as default
+                document.getElementById('measurementDate').value = new Date().toISOString().split('T')[0];
+            }
+        }
+        
+        // ================================
+        // INITIALIZATION
+        // ================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize database
+            appState.database = new TraitMapDatabase();
+            appState.currentPatient = appState.database.getCurrentPatient();
             
             // Set up event listeners
-            setupResearchEventListeners();
+            setupEventListeners();
             
-            // Start data stream simulation
-            simulateDataStream();
+            // Show initial view
+            ViewController.showView('today');
             
-            // Initialize simulation controls
-            initializeSimulation();
+            // Check online status
+            updateOnlineStatus();
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
             
-            console.log("TRAITMAP Research Platform v3.1 Initialized");
-            console.log("Advanced phenotyping algorithms active");
-            console.log("Real-time data streaming enabled");
+            console.log('TRAITMAP Platform Initialized');
+            console.log('Patient:', appState.currentPatient.name);
+            console.log('Traits:', appState.currentPatient.traits.length);
+            console.log('Measurements:', appState.currentPatient.measurements.length);
         });
-
-        function initializeAdvancedNetwork() {
-            const width = document.querySelector('.visualization-panel').clientWidth;
-            const height = document.querySelector('.visualization-panel').clientHeight;
-            
-            const svg = d3.select('#network-3d')
-                .attr('width', width)
-                .attr('height', height);
-                
-            svg.selectAll('*').remove();
-            
-            // Create a more advanced network simulation
-            const simulation = d3.forceSimulation()
-                .force('link', d3.forceLink().id(d => d.id).distance(150))
-                .force('charge', d3.forceManyBody().strength(-400))
-                .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('x', d3.forceX(width / 2).strength(0.1))
-                .force('y', d3.forceY(height / 2).strength(0.1))
-                .force('collision', d3.forceCollide().radius(45))
-                .alphaDecay(0.01);
-            
-            // Create gradient definitions for 3D effect
-            const defs = svg.append('defs');
-            
-            // Create gradient for trait nodes
-            const traitGradient = defs.append('linearGradient')
-                .attr('id', 'trait-gradient')
-                .attr('x1', '0%').attr('y1', '0%')
-                .attr('x2', '100%').attr('y2', '100%');
-                
-            traitGradient.append('stop')
-                .attr('offset', '0%')
-                .attr('stop-color', '#6366f1');
-                
-            traitGradient.append('stop')
-                .attr('offset', '100%')
-                .attr('stop-color', '#8b5cf6');
-            
-            // Create gradient for biomarker nodes
-            const bioGradient = defs.append('linearGradient')
-                .attr('id', 'bio-gradient')
-                .attr('x1', '0%').attr('y1', '0%')
-                .attr('x2', '100%').attr('y2', '100%');
-                
-            bioGradient.append('stop')
-                .attr('offset', '0%')
-                .attr('stop-color', '#10b981');
-                
-            bioGradient.append('stop')
-                .attr('offset', '100%')
-                .attr('stop-color', '#34d399');
-            
-            const g = svg.append('g');
-            
-            // Enable zoom and pan
-            const zoom = d3.zoom()
-                .scaleExtent([0.1, 5])
-                .on('zoom', (event) => {
-                    g.attr('transform', event.transform);
+        
+        function setupEventListeners() {
+            // Mobile navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const viewName = this.dataset.view;
+                    ViewController.showView(viewName);
                 });
-                
-            svg.call(zoom);
+            });
             
-            // Create complex network data
-            const { nodes, links } = createAdvancedNetworkData();
-            
-            // Draw links with gradient effect
-            const link = g.append('g')
-                .selectAll('line')
-                .data(links)
-                .enter()
-                .append('line')
-                .attr('stroke', d => {
-                    if (d.type === 'biological') return 'url(#trait-gradient)';
-                    if (d.type === 'clinical') return '#f59e0b';
-                    return '#475569';
-                })
-                .attr('stroke-width', d => d.strength || 2)
-                .attr('stroke-opacity', 0.4)
-                .attr('stroke-dasharray', d => d.dashed ? '5,5' : null);
-            
-            // Draw nodes with 3D effect
-            const node = g.append('g')
-                .selectAll('circle')
-                .data(nodes)
-                .enter()
-                .append('circle')
-                .attr('r', d => d.size || 25)
-                .attr('fill', d => {
-                    if (d.type === 'trait') return 'url(#trait-gradient)';
-                    if (d.type === 'biomarker') return 'url(#bio-gradient)';
-                    if (d.type === 'treatment') return '#8b5cf6';
-                    return '#475569';
-                })
-                .attr('stroke', '#ffffff')
-                .attr('stroke-width', 1.5)
-                .attr('stroke-opacity', 0.3)
-                .call(d3.drag()
-                    .on('start', dragstarted)
-                    .on('drag', dragged)
-                    .on('end', dragended))
-                .on('mouseover', handleNodeHover)
-                .on('mouseout', handleNodeLeave)
-                .on('click', handleNodeClick);
-            
-            // Add glow effect to important nodes
-            node.filter(d => d.important)
-                .attr('filter', 'url(#glow)');
-            
-            // Create glow filter
-            const filter = defs.append('filter')
-                .attr('id', 'glow')
-                .attr('x', '-50%')
-                .attr('y', '-50%')
-                .attr('width', '200%')
-                .attr('height', '200%');
-                
-            filter.append('feGaussianBlur')
-                .attr('stdDeviation', '3.5')
-                .attr('result', 'coloredBlur');
-                
-            const feMerge = filter.append('feMerge');
-            feMerge.append('feMergeNode')
-                .attr('in', 'coloredBlur');
-            feMerge.append('feMergeNode')
-                .attr('in', 'SourceGraphic');
-            
-            // Add labels with halo effect
-            const label = g.append('g')
-                .selectAll('text')
-                .data(nodes.filter(d => d.type === 'trait' || d.type === 'biomarker'))
-                .enter()
-                .append('text')
-                .text(d => d.name)
-                .attr('font-size', d => d.type === 'trait' ? '12px' : '10px')
-                .attr('text-anchor', 'middle')
-                .attr('dy', '0.35em')
-                .attr('fill', '#ffffff')
-                .attr('font-weight', '600')
-                .attr('paint-order', 'stroke')
-                .attr('stroke', 'rgba(15, 23, 42, 0.8)')
-                .attr('stroke-width', 3)
-                .attr('stroke-linecap', 'round')
-                .attr('stroke-linejoin', 'round');
-            
-            // Add smaller text for treatments
-            const treatmentLabel = g.append('g')
-                .selectAll('text')
-                .data(nodes.filter(d => d.type === 'treatment'))
-                .enter()
-                .append('text')
-                .text(d => d.name)
-                .attr('font-size', '9px')
-                .attr('text-anchor', 'middle')
-                .attr('dy', '0.35em')
-                .attr('fill', '#cbd5e1')
-                .attr('font-weight', '500');
-            
-            // Update simulation
-            simulation.nodes(nodes).on('tick', ticked);
-            simulation.force('link').links(links);
-            
-            function ticked() {
-                link
-                    .attr('x1', d => d.source.x)
-                    .attr('y1', d => d.source.y)
-                    .attr('x2', d => d.target.x)
-                    .attr('y2', d => d.target.y);
-                    
-                node
-                    .attr('cx', d => d.x)
-                    .attr('cy', d => d.y);
-                    
-                label
-                    .attr('x', d => d.x)
-                    .attr('y', d => d.y + (d.type === 'trait' ? 40 : 30));
-                    
-                treatmentLabel
-                    .attr('x', d => d.x)
-                    .attr('y', d => d.y + 25);
-            }
-            
-            function dragstarted(event) {
-                if (!event.active) simulation.alphaTarget(0.3).restart();
-                event.subject.fx = event.subject.x;
-                event.subject.fy = event.subject.y;
-            }
-            
-            function dragged(event) {
-                event.subject.fx = event.x;
-                event.subject.fy = event.y;
-            }
-            
-            function dragended(event) {
-                if (!event.active) simulation.alphaTarget(0);
-                event.subject.fx = null;
-                event.subject.fy = null;
-            }
-            
-            function handleNodeHover(event, d) {
-                // Highlight connected nodes
-                link.style('stroke-opacity', l => 
-                    (l.source === d || l.target === d) ? 0.8 : 0.1);
-                
-                node.style('opacity', n =>
-                    n === d || links.some(l => 
-                        (l.source === d && l.target === n) || 
-                        (l.target === d && l.source === n)
-                    ) ? 1 : 0.3);
-                    
-                // Show tooltip
-                showNodeTooltip(d, event.pageX, event.pageY);
-            }
-            
-            function handleNodeLeave() {
-                link.style('stroke-opacity', 0.4);
-                node.style('opacity', 1);
-                hideNodeTooltip();
-            }
-            
-            function handleNodeClick(event, d) {
-                if (d.type === 'trait') {
-                    showTraitDetails(d);
+            // Patient selector
+            document.getElementById('patientSelect').addEventListener('change', function(e) {
+                if (this.value === 'new') {
+                    UIComponents.showNotification('Add New Patient feature would open here');
+                    this.value = 'demo';
+                } else {
+                    appState.database.currentPatientId = this.value;
+                    appState.currentPatient = appState.database.getCurrentPatient();
+                    ViewController.showView(appState.currentView);
                 }
-            }
+            });
             
-            window.researchNetwork = simulation;
-        }
-
-        function createAdvancedNetworkData() {
-            const nodes = [];
-            const links = [];
-            
-            // Core traits
-            const coreTraits = [
-                { id: 'eosinophilic', name: 'Eosinophilic Inflammation', type: 'trait', size: 30, important: true },
-                { id: 'neutrophilic', name: 'Neutrophilic Inflammation', type: 'trait', size: 28 },
-                { id: 'airflow', name: 'Airflow Limitation', type: 'trait', size: 32, important: true },
-                { id: 'remodeling', name: 'Airway Remodeling', type: 'trait', size: 26 },
-                { id: 'hyperreactivity', name: 'Bronchial Hyperreactivity', type: 'trait', size: 24 }
-            ];
-            
-            // Biomarkers
-            const biomarkers = [
-                { id: 'il5', name: 'IL-5', type: 'biomarker', size: 18 },
-                { id: 'feNO', name: 'FeNO', type: 'biomarker', size: 16 },
-                { id: 'eos', name: 'Blood Eos', type: 'biomarker', size: 16 },
-                { id: 'periostin', name: 'Periostin', type: 'biomarker', size: 14 },
-                { id: 'il8', name: 'IL-8', type: 'biomarker', size: 14 },
-                { id: 'neut_elastase', name: 'Neutrophil Elastase', type: 'biomarker', size: 14 }
-            ];
-            
-            // Treatments
-            const treatments = [
-                { id: 'mepolizumab', name: 'Mepolizumab', type: 'treatment', size: 12 },
-                { id: 'dupilumab', name: 'Dupilumab', type: 'treatment', size: 12 },
-                { id: 'roflumilast', name: 'Roflumilast', type: 'treatment', size: 12 },
-                { id: 'ics_laba', name: 'ICS/LABA', type: 'treatment', size: 14 },
-                { id: 'lama', name: 'LAMA', type: 'treatment', size: 12 }
-            ];
-            
-            nodes.push(...coreTraits, ...biomarkers, ...treatments);
-            
-            // Create complex connections
-            // Eosinophilic inflammation connections
-            links.push(
-                { source: 'eosinophilic', target: 'il5', type: 'biological', strength: 3 },
-                { source: 'eosinophilic', target: 'feNO', type: 'clinical', strength: 2 },
-                { source: 'eosinophilic', target: 'eos', type: 'biological', strength: 3 },
-                { source: 'eosinophilic', target: 'periostin', type: 'biological', strength: 2 },
-                { source: 'eosinophilic', target: 'mepolizumab', type: 'therapeutic', strength: 4 },
-                { source: 'eosinophilic', target: 'dupilumab', type: 'therapeutic', strength: 3 }
-            );
-            
-            // Airflow limitation connections
-            links.push(
-                { source: 'airflow', target: 'ics_laba', type: 'therapeutic', strength: 3 },
-                { source: 'airflow', target: 'lama', type: 'therapeutic', strength: 2 },
-                { source: 'airflow', target: 'eosinophilic', type: 'biological', strength: 2, dashed: true },
-                { source: 'airflow', target: 'remodeling', type: 'biological', strength: 2 }
-            );
-            
-            // Neutrophilic inflammation connections
-            links.push(
-                { source: 'neutrophilic', target: 'il8', type: 'biological', strength: 3 },
-                { source: 'neutrophilic', target: 'neut_elastase', type: 'biological', strength: 2 },
-                { source: 'neutrophilic', target: 'roflumilast', type: 'therapeutic', strength: 3 }
-            );
-            
-            // Inter-trait connections
-            links.push(
-                { source: 'eosinophilic', target: 'hyperreactivity', type: 'biological', strength: 1 },
-                { source: 'remodeling', target: 'airflow', type: 'biological', strength: 2 }
-            );
-            
-            return { nodes, links };
-        }
-
-        function showNodeTooltip(node, x, y) {
-            // In a full implementation, this would show a detailed tooltip
-            // with node information
-            console.log(`Hovering over: ${node.name} (${node.type})`);
-        }
-
-        function hideNodeTooltip() {
-            // Would hide tooltip
-        }
-
-        function showTraitDetails(trait) {
-            // In a full implementation, this would open a detailed modal
-            // or update the analysis panel with trait-specific information
-            console.log(`Selected trait: ${trait.name}`);
-            
-            // Update the analysis panel header
-            document.querySelector('.analysis-subtitle').textContent = 
-                `Selected: ${trait.name}`;
-        }
-
-        function setupDiscoveryTabs() {
-            const tabs = document.querySelectorAll('.discovery-tab');
-            const content = document.getElementById('discoveryContent');
-            
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabName = this.getAttribute('data-tab');
-                    
-                    // Update active tab
-                    tabs.forEach(t => t.classList.remove('active'));
+            // Time range selector
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
-                    
-                    // Update content
-                    updateDiscoveryContent(tabName);
+                    // In full implementation, would filter trends by time range
                 });
             });
-        }
-
-        function updateDiscoveryContent(tabName) {
-            const content = document.getElementById('discoveryContent');
             
-            if (tabName === 'algorithms') {
-                content.innerHTML = `
-                    <div class="algorithm-discovery">
-                        <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
-                            Active Learning Algorithms
-                        </h3>
-                        
-                        <div class="algorithm-card">
-                            <div class="algorithm-header">
-                                <div class="algorithm-icon">
-                                    <i class="fas fa-network-wired"></i>
-                                </div>
-                                <div>
-                                    <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Graph Neural Network</h4>
-                                    <p style="color: #94a3b8; font-size: 0.85rem;">Trait relationship prediction</p>
-                                </div>
-                            </div>
-                            <div class="algorithm-stats">
-                                <div class="stat-badge">
-                                    <i class="fas fa-bolt" style="color: #fbbf24;"></i>
-                                    <span>Accuracy: 94.2%</span>
-                                </div>
-                                <div class="stat-badge">
-                                    <i class="fas fa-clock" style="color: #60a5fa;"></i>
-                                    <span>Last trained: 2h ago</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="algorithm-card">
-                            <div class="algorithm-header">
-                                <div class="algorithm-icon" style="background: linear-gradient(135deg, #10b981, #34d399);">
-                                    <i class="fas fa-chart-line"></i>
-                                </div>
-                                <div>
-                                    <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Temporal Transformer</h4>
-                                    <p style="color: #94a3b8; font-size: 0.85rem;">Disease progression modeling</p>
-                                </div>
-                            </div>
-                            <div class="algorithm-stats">
-                                <div class="stat-badge">
-                                    <i class="fas fa-bolt" style="color: #fbbf24;"></i>
-                                    <span>R²: 0.89</span>
-                                </div>
-                                <div class="stat-badge">
-                                    <i class="fas fa-database" style="color: #8b5cf6;"></i>
-                                    <span>45K sequences</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="algorithm-card">
-                            <div class="algorithm-header">
-                                <div class="algorithm-icon" style="background: linear-gradient(135deg, #ec4899, #f472b6);">
-                                    <i class="fas fa-robot"></i>
-                                </div>
-                                <div>
-                                    <h4 style="color: #e2e8f0; margin-bottom: 0.25rem;">Generative Adversarial Net</h4>
-                                    <p style="color: #94a3b8; font-size: 0.85rem;">Synthetic phenotype generation</p>
-                                </div>
-                            </div>
-                            <div class="algorithm-stats">
-                                <div class="stat-badge">
-                                    <i class="fas fa-sync-alt" style="color: #60a5fa;"></i>
-                                    <span>Cycle: 1.2M</span>
-                                </div>
-                                <div class="stat-badge">
-                                    <i class="fas fa-shield-alt" style="color: #10b981;"></i>
-                                    <span>FID: 12.4</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (tabName === 'biomarkers') {
-                content.innerHTML = `
-                    <div class="biomarker-explorer">
-                        <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
-                            Multi-omics Biomarker Matrix
-                        </h3>
-                        
-                        <div class="matrix-container">
-                            <div class="matrix-grid">
-                                ${researchData.biomarkers.map(biomarker => `
-                                    <div class="biomarker-cell">
-                                        <div style="color: #e2e8f0; font-weight: 600; font-size: 0.9rem;">
-                                            ${biomarker.name}
-                                        </div>
-                                        <div style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 0.5rem;">
-                                            ${biomarker.type}
-                                        </div>
-                                        <div class="biomarker-level">
-                                            <div class="biomarker-fill" style="width: ${biomarker.level}%"></div>
-                                        </div>
-                                        <div style="color: #94a3b8; font-size: 0.75rem; text-align: right;">
-                                            ${biomarker.level}% expression
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(30, 41, 59, 0.6); border-radius: 8px;">
-                            <h4 style="color: #e2e8f0; margin-bottom: 0.5rem; font-size: 1rem;">
-                                <i class="fas fa-chart-bar"></i> Biomarker Statistics
-                            </h4>
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <div style="text-align: center;">
-                                    <div style="font-size: 1.5rem; color: #818cf8; font-weight: 600;">6</div>
-                                    <div style="color: #94a3b8; font-size: 0.8rem;">Active Biomarkers</div>
-                                </div>
-                                <div style="text-align: center;">
-                                    <div style="font-size: 1.5rem; color: #34d399; font-weight: 600;">3</div>
-                                    <div style="color: #94a3b8; font-size: 0.8rem;">Novel Discoveries</div>
-                                </div>
-                                <div style="text-align: center;">
-                                    <div style="font-size: 1.5rem; color: #f59e0b; font-weight: 600;">82%</div>
-                                    <div style="color: #94a3b8; font-size: 0.8rem;">Predictive Power</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (tabName === 'pathways') {
-                content.innerHTML = `
-                    <div class="pathway-analysis">
-                        <h3 style="color: #e2e8f0; margin-bottom: 1.5rem; font-size: 1.1rem;">
-                            Biological Pathway Analysis
-                        </h3>
-                        
-                        <div style="background: rgba(30, 41, 59, 0.6); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem;">
-                            <h4 style="color: #e2e8f0; margin-bottom: 1rem; font-size: 1rem;">
-                                <i class="fas fa-sitemap"></i> Type 2 Inflammation Pathway
-                            </h4>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-                                <span style="color: #94a3b8; font-size: 0.9rem;">IL-4/IL-13 Signaling</span>
-                                <span style="color: #818cf8; font-size: 0.85rem; font-weight: 600;">Active</span>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-                                <span style="color: #94a3b8; font-size: 0.9rem;">JAK-STAT Activation</span>
-                                <span style="color: #818cf8; font-size: 0.85rem; font-weight: 600;">Active</span>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="color: #94a3b8; font-size: 0.9rem;">Eosinophil Trafficking</span>
-                                <span style="color: #818cf8; font-size: 0.85rem; font-weight: 600;">Overactive</span>
-                            </div>
-                        </div>
-                        
-                        <div style="background: rgba(30, 41, 59, 0.6); border-radius: 12px; padding: 1.5rem;">
-                            <h4 style="color: #e2e8f0; margin-bottom: 1rem; font-size: 1rem;">
-                                <i class="fas fa-biohazard"></i> Oxidative Stress Pathway
-                            </h4>
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-                                <span style="color: #94a3b8; font-size: 0.9rem;">NADPH Oxidase</span>
-                                <span style="color: #f59e0b; font-size: 0.85rem; font-weight: 600;">Moderate</span>
-                            </div>
-                            <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <span style="color: #94a3b8; font-size: 0.9rem;">Antioxidant Defense</span>
-                                <span style="color: #ef4444; font-size: 0.85rem; font-weight: 600;">Compromised</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
+            // Cohort selector
+            document.querySelectorAll('.cohort-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.cohort-option').forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    ViewController.loadCompareView();
+                });
+            });
+            
+            // Action buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.action-btn')) {
+                    const button = e.target.closest('.action-btn');
+                    const actionId = button.dataset.action;
+                    const actionType = button.dataset.type;
+                    
+                    if (actionType === 'implement') {
+                        UIComponents.showNotification(`Action "${actionId}" marked as completed`);
+                        // In full implementation, would update database
+                    } else if (actionType === 'info') {
+                        UIComponents.showNotification(`More information about ${actionId}`);
+                    }
+                }
+            });
+            
+            // Data entry form
+            document.getElementById('saveMeasurementBtn').addEventListener('click', function() {
+                const type = document.getElementById('measurementType').value;
+                const value = document.getElementById('measurementValue').value;
+                const date = document.getElementById('measurementDate').value;
+                const notes = document.getElementById('measurementNotes').value;
+                
+                if (!value || !date) {
+                    UIComponents.showNotification('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                // Determine which trait this measurement relates to
+                let trait = 'other';
+                if (type === 'spirometry') trait = 'airflow_limitation';
+                if (type === 'lab') trait = 'eosinophilic_inflammation';
+                if (type === 'feno') trait = 'eosinophilic_inflammation';
+                if (type === 'symptoms') trait = 'mucus_hypersecretion';
+                
+                const measurement = {
+                    date,
+                    type,
+                    value: parseFloat(value),
+                    unit: getUnitForType(type),
+                    trait,
+                    notes
+                };
+                
+                appState.database.addMeasurement(measurement);
+                UIComponents.showNotification('Measurement saved successfully!');
+                
+                // Clear form
+                document.getElementById('measurementValue').value = '';
+                document.getElementById('measurementNotes').value = '';
+                
+                // Reload data view
+                ViewController.loadDataView();
+            });
+            
+            document.getElementById('cancelBtn').addEventListener('click', function() {
+                document.getElementById('measurementValue').value = '';
+                document.getElementById('measurementNotes').value = '';
+                UIComponents.showNotification('Form cleared');
+            });
+            
+            // Trait card clicks
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.trait-card')) {
+                    const card = e.target.closest('.trait-card');
+                    const traitId = card.dataset.traitId;
+                    const trait = appState.currentPatient.traits.find(t => t.id === traitId);
+                    
+                    if (trait) {
+                        UIComponents.showNotification(
+                            `Selected: ${trait.name}\nValue: ${trait.currentValue}\nTrend: ${trait.trend}`,
+                            'info'
+                        );
+                    }
+                }
+            });
+        }
+        
+        function getUnitForType(type) {
+            const units = {
+                'spirometry': '% predicted',
+                'lab': ' cells/μL',
+                'feno': ' ppb',
+                'symptoms': '/10 score',
+                'behavioral': ' uses/week',
+                'other': ''
+            };
+            return units[type] || '';
+        }
+        
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (!navigator.onLine) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
             }
         }
-
-        function simulateDataStream() {
-            const streamContainer = document.getElementById('dataStream');
-            
-            // Initial data
-            const initialData = [
-                { type: 'biomarker', message: 'IL-5 levels detected: 3.2 pg/mL ↑', time: '2s ago' },
-                { type: 'clinical', message: 'FEV₁ measurement: 62% predicted', time: '5s ago' },
-                { type: 'genomic', message: 'Gene expression cluster identified: Type 2-high', time: '12s ago' },
-                { type: 'ai', message: 'GAN generated 142 synthetic phenotypes', time: '25s ago' },
-                { type: 'network', message: 'Graph embedding updated: 4.2M nodes processed', time: '38s ago' }
-            ];
-            
-            initialData.forEach(data => {
-                addDataStreamItem(data);
+        
+        // Add service worker for offline capability (simplified)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
             });
-            
-            // Simulate live updates
-            let updateCount = 0;
-            setInterval(() => {
-                updateCount++;
-                
-                const updates = [
-                    { type: 'biomarker', message: `Blood eosinophils: ${420 + Math.floor(Math.random() * 100)} cells/μL`, time: 'Just now' },
-                    { type: 'ai', message: `Prediction confidence: ${85 + Math.floor(Math.random() * 10)}%`, time: 'Just now' },
-                    { type: 'clinical', message: 'Sputum sample analysis complete', time: 'Just now' },
-                    { type: 'network', message: `Edge weight optimization: Epoch ${updateCount}`, time: 'Just now' },
-                    { type: 'genomic', message: 'Transcriptome batch processing: 98.2% complete', time: 'Just now' }
-                ];
-                
-                const randomUpdate = updates[Math.floor(Math.random() * updates.length)];
-                addDataStreamItem(randomUpdate);
-                
-                // Limit to 10 items
-                if (streamContainer.children.length > 10) {
-                    streamContainer.removeChild(streamContainer.firstChild);
-                }
-            }, 3000);
-        }
-
-        function addDataStreamItem(data) {
-            const streamContainer = document.getElementById('dataStream');
-            
-            const item = document.createElement('div');
-            item.className = 'stream-item';
-            
-            let icon = 'fas fa-circle';
-            let color = '#94a3b8';
-            
-            switch(data.type) {
-                case 'biomarker': 
-                    icon = 'fas fa-vial';
-                    color = '#10b981';
-                    break;
-                case 'clinical':
-                    icon = 'fas fa-stethoscope';
-                    color = '#3b82f6';
-                    break;
-                case 'ai':
-                    icon = 'fas fa-robot';
-                    color = '#8b5cf6';
-                    break;
-                case 'network':
-                    icon = 'fas fa-project-diagram';
-                    color = '#f59e0b';
-                    break;
-                case 'genomic':
-                    icon = 'fas fa-dna';
-                    color = '#ec4899';
-                    break;
-            }
-            
-            item.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <i class="${icon}" style="color: ${color};"></i>
-                    <div style="flex: 1;">
-                        <div style="color: #e2e8f0; font-size: 0.9rem;">${data.message}</div>
-                        <div style="color: #94a3b8; font-size: 0.75rem;">${data.time}</div>
-                    </div>
-                </div>
-            `;
-            
-            streamContainer.appendChild(item);
-            streamContainer.scrollTop = streamContainer.scrollHeight;
-        }
-
-        function setupResearchEventListeners() {
-            // Visualization controls
-            document.querySelectorAll('.viz-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    if (!this.classList.contains('active')) {
-                        document.querySelectorAll('.viz-btn').forEach(b => b.classList.remove('active'));
-                        this.classList.add('active');
-                        
-                        const viewType = this.getAttribute('title');
-                        console.log(`Switching to ${viewType} view`);
-                    }
-                });
-            });
-            
-            // Research action buttons
-            document.querySelectorAll('.research-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const action = this.querySelector('span').textContent;
-                    console.log(`Research action: ${action}`);
-                    
-                    if (action === 'Start Simulation') {
-                        startSimulationMode();
-                    } else if (action === 'Run Analysis') {
-                        runAdvancedAnalysis();
-                    }
-                });
-            });
-            
-            // Sensitivity slider interaction
-            document.querySelectorAll('.slider-track').forEach(track => {
-                track.addEventListener('click', function(e) {
-                    const rect = this.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const percentage = Math.min(100, Math.max(0, (x / rect.width) * 100));
-                    
-                    const fill = this.querySelector('.slider-fill');
-                    fill.style.width = `${percentage}%`;
-                    
-                    const label = this.previousElementSibling.querySelector('span:last-child');
-                    label.textContent = `${Math.round(percentage)}%`;
-                });
-            });
-        }
-
-        function initializeSimulation() {
-            const simControls = document.querySelectorAll('.sim-btn');
-            
-            simControls.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const icon = this.querySelector('i').className;
-                    
-                    if (icon.includes('play')) {
-                        this.querySelector('i').className = 'fas fa-pause';
-                        this.classList.add('primary');
-                        console.log('Simulation resumed');
-                    } else if (icon.includes('pause')) {
-                        this.querySelector('i').className = 'fas fa-play';
-                        this.classList.remove('primary');
-                        console.log('Simulation paused');
-                    } else if (icon.includes('redo')) {
-                        console.log('Simulation reset');
-                        document.querySelector('.progress-fill').style.width = '0%';
-                        setTimeout(() => {
-                            document.querySelector('.progress-fill').style.width = '45%';
-                        }, 100);
-                    }
-                });
-            });
-        }
-
-        function startSimulationMode() {
-            console.log('Starting advanced simulation mode');
-            
-            // Animate progress bar
-            const progressFill = document.querySelector('.progress-fill');
-            let width = 0;
-            const interval = setInterval(() => {
-                width += 0.5;
-                progressFill.style.width = `${width}%`;
-                
-                if (width >= 45) {
-                    clearInterval(interval);
-                }
-            }, 50);
-            
-            // Show simulation notification
-            showNotification('Simulation started: Phenotype evolution modeling active');
-        }
-
-        function runAdvancedAnalysis() {
-            console.log('Running multi-omics analysis pipeline');
-            
-            // Update metrics in analysis panel
-            const metrics = document.querySelectorAll('.metric-value');
-            metrics[0].textContent = `${(3.2 + Math.random() * 0.5).toFixed(1)}×`;
-            metrics[1].textContent = `${Math.floor(64 + Math.random() * 10)}%`;
-            metrics[2].textContent = `${(2.8 + Math.random() * 0.3).toFixed(1)}`;
-            
-            // Show analysis notification
-            showNotification('Analysis complete: 3 new subphenotypes identified');
-        }
-
-        function showNotification(message) {
-            // In a full implementation, this would show a toast notification
-            console.log(`Notification: ${message}`);
-            
-            // Simple alert for demo
-            alert(message);
         }
     </script>
 </body>
