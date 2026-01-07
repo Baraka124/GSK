@@ -8,7 +8,6 @@
     <!-- PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas2pdf@1.0.8/dist/canvas2pdf.js"></script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +15,6 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <!-- Clinical Platform CSS -->
     <style>
         /* =================================================== */
         /* COMPREHENSIVE CLINICAL DESIGN SYSTEM */
@@ -289,6 +287,33 @@
             color: white;
         }
         
+        .clinical-btn.danger {
+            background: var(--clinical-red);
+            border-color: var(--clinical-red);
+            color: white;
+        }
+        
+        /* Collapse Toggle */
+        .collapse-toggle {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-clinical-card);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-md);
+            color: var(--text-clinical-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition-fast);
+        }
+        
+        .collapse-toggle:hover {
+            background: var(--bg-clinical-hover);
+            border-color: var(--clinical-blue-light);
+            transform: translateY(-2px);
+        }
+        
         /* Main Layout */
         .clinical-main-container {
             display: flex;
@@ -334,6 +359,37 @@
         .sidebar-search {
             padding: var(--space-lg);
             border-bottom: 1px solid var(--border-clinical);
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-container input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: var(--bg-clinical-card);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-md);
+            color: var(--text-clinical-primary);
+            font-size: var(--text-sm);
+            font-family: 'Inter', sans-serif;
+            transition: all var(--transition-fast);
+        }
+        
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--clinical-blue-light);
+            box-shadow: 0 0 0 3px rgba(74, 139, 201, 0.2);
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-clinical-tertiary);
+            font-size: 14px;
         }
         
         .trait-library-container {
@@ -393,10 +449,37 @@
             transition: all var(--transition-fast);
         }
         
+        .clinical-tool:hover {
+            background: var(--bg-clinical-hover);
+            border-color: var(--clinical-blue-light);
+            transform: translateY(-2px);
+        }
+        
         .clinical-tool.active {
             background: var(--clinical-blue-primary);
             border-color: var(--clinical-blue-primary);
             color: white;
+        }
+        
+        .clinical-tool .tooltip {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-clinical-panel);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-sm);
+            padding: 6px 12px;
+            font-size: var(--text-xs);
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-fast);
+            z-index: 1000;
+        }
+        
+        .clinical-tool:hover .tooltip {
+            opacity: 1;
         }
         
         /* Dashboard */
@@ -411,6 +494,83 @@
             width: 300px;
             box-shadow: var(--shadow-clinical-lg);
             z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-lg);
+        }
+        
+        .dashboard-title {
+            font-size: var(--text-sm);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-clinical-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        
+        .dashboard-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+        }
+        
+        .clinical-metric {
+            background: var(--bg-clinical-card);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+            transition: transform var(--transition-fast);
+        }
+        
+        .clinical-metric:hover {
+            transform: translateY(-2px);
+        }
+        
+        .metric-value {
+            font-size: var(--text-2xl);
+            font-weight: 800;
+            margin-bottom: 4px;
+            color: var(--clinical-blue-light);
+        }
+        
+        .metric-label {
+            font-size: var(--text-xs);
+            color: var(--text-clinical-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .clinical-insight-box {
+            background: linear-gradient(135deg, rgba(28, 78, 128, 0.3), rgba(74, 139, 201, 0.3));
+            border-left: 4px solid var(--clinical-blue-light);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-top: var(--space-lg);
+        }
+        
+        .insight-title {
+            font-size: var(--text-sm);
+            font-weight: 700;
+            margin-bottom: var(--space-sm);
+            color: var(--text-clinical-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        
+        .insight-text {
+            font-size: var(--text-sm);
+            color: var(--text-clinical-secondary);
+            line-height: 1.5;
         }
         
         /* Details Panel */
@@ -428,6 +588,164 @@
             width: var(--details-collapsed);
         }
         
+        .details-header {
+            padding: var(--space-lg);
+            border-bottom: 1px solid var(--border-clinical);
+            background: linear-gradient(135deg, rgba(28, 78, 128, 0.3), transparent);
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .details-title {
+            font-size: var(--text-lg);
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-clinical-primary);
+        }
+        
+        .details-subtitle {
+            font-size: var(--text-sm);
+            color: var(--text-clinical-tertiary);
+        }
+        
+        .details-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--space-lg);
+        }
+        
+        .clinical-section {
+            margin-bottom: var(--space-xl);
+        }
+        
+        .section-label {
+            font-size: var(--text-xs);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-clinical-secondary);
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        
+        .clinical-info-card {
+            background: var(--bg-clinical-card);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-md);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+        
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--clinical-blue-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .info-card-title {
+            font-size: var(--text-base);
+            font-weight: 700;
+            color: var(--text-clinical-primary);
+            flex: 1;
+        }
+        
+        .info-card-content {
+            color: var(--text-clinical-secondary);
+            font-size: var(--text-sm);
+            line-height: 1.6;
+        }
+        
+        .evidence-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(242, 204, 143, 0.2);
+            color: var(--clinical-yellow);
+            padding: 6px 12px;
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: 700;
+            margin: var(--space-sm) 0;
+        }
+        
+        .biomarker-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--space-sm);
+            margin-top: var(--space-sm);
+        }
+        
+        .biomarker-tag {
+            background: rgba(74, 139, 201, 0.2);
+            color: var(--clinical-blue-light);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: var(--text-xs);
+            font-weight: 600;
+        }
+        
+        .treatment-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+        
+        .treatment-option {
+            background: rgba(129, 178, 154, 0.1);
+            border: 1px solid rgba(129, 178, 154, 0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            position: relative;
+        }
+        
+        .treatment-priority {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--clinical-orange);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-sm);
+            font-weight: 800;
+            box-shadow: var(--shadow-clinical);
+        }
+        
+        .clinical-progress-bar {
+            height: 6px;
+            background: var(--border-clinical);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin: var(--space-sm) 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: var(--radius-full);
+            transition: width var(--transition-slow);
+        }
+        
         /* Modals */
         .clinical-modal-overlay {
             position: fixed;
@@ -440,6 +758,7 @@
             align-items: center;
             justify-content: center;
             z-index: 2000;
+            padding: var(--space-lg);
             backdrop-filter: blur(10px);
         }
         
@@ -460,6 +779,168 @@
             box-shadow: var(--shadow-clinical-lg);
         }
         
+        .modal-header {
+            padding: var(--space-xl);
+            border-bottom: 1px solid var(--border-clinical);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(28, 78, 128, 0.3), transparent);
+        }
+        
+        .modal-title {
+            font-size: var(--text-xl);
+            font-weight: 700;
+            color: var(--text-clinical-primary);
+        }
+        
+        .modal-subtitle {
+            font-size: var(--text-sm);
+            color: var(--text-clinical-tertiary);
+            margin-top: 4px;
+        }
+        
+        .modal-body {
+            padding: var(--space-xl);
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: var(--space-lg) var(--space-xl);
+            border-top: 1px solid var(--border-clinical);
+            display: flex;
+            gap: var(--space-sm);
+            justify-content: flex-end;
+        }
+        
+        /* Database Filters */
+        .database-filters {
+            display: flex;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-lg);
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--bg-clinical-card);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-full);
+            color: var(--text-clinical-secondary);
+            font-size: var(--text-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .filter-btn:hover {
+            background: var(--bg-clinical-hover);
+            border-color: var(--border-clinical-light);
+        }
+        
+        .filter-btn.active {
+            background: var(--clinical-blue-primary);
+            border-color: var(--clinical-blue-primary);
+            color: white;
+        }
+        
+        .clinical-database-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: var(--text-sm);
+        }
+        
+        .clinical-database-table th {
+            background: var(--bg-clinical-card);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 700;
+            font-size: var(--text-xs);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border-clinical);
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+        }
+        
+        .clinical-database-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-clinical);
+            vertical-align: top;
+        }
+        
+        .clinical-database-table tr:hover {
+            background: var(--bg-clinical-hover);
+            cursor: pointer;
+        }
+        
+        /* AI Tabs */
+        .clinical-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-clinical);
+            margin-bottom: var(--space-xl);
+        }
+        
+        .clinical-tab {
+            padding: 14px 24px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            font-size: var(--text-sm);
+            color: var(--text-clinical-secondary);
+            transition: all var(--transition-fast);
+        }
+        
+        .clinical-tab:hover {
+            color: var(--text-clinical-primary);
+        }
+        
+        .clinical-tab.active {
+            border-bottom-color: var(--clinical-blue-light);
+            color: var(--clinical-blue-light);
+        }
+        
+        .clinical-insight-card {
+            background: var(--bg-clinical-card);
+            border-radius: var(--radius-md);
+            padding: var(--space-lg);
+            margin-bottom: var(--space-lg);
+            border-left: 4px solid var(--clinical-blue-light);
+        }
+        
+        .clinical-insight-card.critical {
+            border-left-color: var(--clinical-red);
+        }
+        
+        .insight-card-header {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+        
+        .insight-card-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--clinical-blue-primary);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .clinical-recommendation {
+            background: rgba(129, 178, 154, 0.1);
+            border: 1px solid rgba(129, 178, 154, 0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-top: var(--space-md);
+        }
+        
         /* Toast Notifications */
         .clinical-toast-container {
             position: fixed;
@@ -471,6 +952,7 @@
             flex-direction: column;
             gap: var(--space-sm);
             align-items: center;
+            pointer-events: none;
         }
         
         .clinical-toast {
@@ -483,9 +965,11 @@
             gap: var(--space-md);
             box-shadow: var(--shadow-clinical-lg);
             max-width: 500px;
+            width: max-content;
             transform: translateY(100px);
             opacity: 0;
-            transition: all var(--transition-slow);
+            transition: all var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: auto;
         }
         
         .clinical-toast.show {
@@ -493,23 +977,242 @@
             opacity: 1;
         }
         
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: white;
+        }
+        
+        .toast-icon.success {
+            background: var(--clinical-green);
+        }
+        
+        .toast-icon.error {
+            background: var(--clinical-red);
+        }
+        
+        .toast-icon.warning {
+            background: var(--clinical-orange);
+        }
+        
+        .toast-icon.info {
+            background: var(--clinical-blue-light);
+        }
+        
+        .toast-content {
+            flex: 1;
+        }
+        
+        .toast-title {
+            font-weight: 700;
+            margin-bottom: 2px;
+            color: var(--text-clinical-primary);
+        }
+        
+        .toast-message {
+            font-size: var(--text-sm);
+            color: var(--text-clinical-secondary);
+        }
+        
+        /* Library Sections */
+        .library-section {
+            margin-bottom: var(--space-xl);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-sm);
+            border-bottom: 1px solid var(--border-clinical);
+        }
+        
+        .section-title {
+            font-size: var(--text-sm);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-clinical-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        
+        .section-count {
+            background: var(--bg-clinical-card);
+            border-radius: var(--radius-full);
+            padding: 2px 10px;
+            font-size: var(--text-xs);
+            font-weight: 700;
+            color: var(--text-clinical-tertiary);
+        }
+        
+        .trait-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-sm);
+        }
+        
+        .clinical-trait-card {
+            background: var(--bg-clinical-card);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            cursor: grab;
+            transition: all var(--transition-base);
+            position: relative;
+            user-select: none;
+        }
+        
+        .clinical-trait-card:hover {
+            background: var(--bg-clinical-hover);
+            border-color: var(--clinical-blue-light);
+            transform: translateX(4px);
+            box-shadow: var(--shadow-clinical);
+        }
+        
+        .clinical-trait-card:active {
+            cursor: grabbing;
+        }
+        
+        .trait-card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-sm);
+        }
+        
+        .trait-color-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        
+        .trait-card-content {
+            flex: 1;
+        }
+        
+        .trait-name {
+            font-weight: 600;
+            font-size: var(--text-sm);
+            margin-bottom: 2px;
+            color: var(--text-clinical-primary);
+            line-height: 1.4;
+        }
+        
+        .trait-spanish-name {
+            font-size: var(--text-xs);
+            color: var(--text-clinical-tertiary);
+            font-style: italic;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .trait-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: var(--text-xs);
+        }
+        
+        .trait-category {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            color: var(--text-clinical-secondary);
+        }
+        
+        .trait-severity {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--radius-full);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-clinical);
+            border-radius: var(--radius-full);
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border-clinical-light);
+        }
+        
+        /* Utility Classes */
+        .text-success { color: var(--clinical-green); }
+        .text-warning { color: var(--clinical-orange); }
+        .text-danger { color: var(--clinical-red); }
+        .text-info { color: var(--clinical-blue-light); }
+        .text-muted { color: var(--text-clinical-tertiary); }
+        
+        .bg-success { background: var(--clinical-green); }
+        .bg-warning { background: var(--clinical-orange); }
+        .bg-danger { background: var(--clinical-red); }
+        .bg-info { background: var(--clinical-blue-light); }
+        
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .font-medium { font-weight: 500; }
+        
+        .hidden { display: none !important; }
+        
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-sm { gap: var(--space-sm); }
+        .gap-md { gap: var(--space-md); }
+        .gap-lg { gap: var(--space-lg); }
+        
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        
+        .p-sm { padding: var(--space-sm); }
+        .p-md { padding: var(--space-md); }
+        .p-lg { padding: var(--space-lg); }
+        
+        .m-sm { margin: var(--space-sm); }
+        .m-md { margin: var(--space-md); }
+        .m-lg { margin: var(--space-lg); }
+        
+        .rounded-sm { border-radius: var(--radius-sm); }
+        .rounded-md { border-radius: var(--radius-md); }
+        .rounded-lg { border-radius: var(--radius-lg); }
+        
+        .shadow { box-shadow: var(--shadow-clinical); }
+        .shadow-lg { box-shadow: var(--shadow-clinical-lg); }
+        
         /* Mobile Optimizations */
         @media (max-width: 768px) {
-            .clinical-toolbar {
-                bottom: 20px;
-                top: auto;
-                width: 90%;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .clinical-dashboard {
-                width: 250px;
-                right: 10px;
-            }
-            
             .clinical-header {
                 padding: 0 var(--space-md);
+            }
+            
+            .clinical-brand h1 {
+                font-size: var(--text-lg);
+            }
+            
+            .clinical-patient-info {
+                display: none;
             }
             
             .header-actions {
@@ -525,36 +1228,32 @@
                 min-width: 44px;
                 justify-content: center;
             }
+            
+            .clinical-toolbar {
+                bottom: 20px;
+                top: auto;
+                width: 90%;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .clinical-dashboard {
+                width: 250px;
+                right: 10px;
+            }
         }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--bg-clinical-panel);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            z-index: 10000;
+            min-width: 180px;
+            box-shadow: var(--shadow-clinical-lg);
         }
-        
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-clinical);
-            border-radius: var(--radius-full);
-        }
-        
-        /* Utility Classes */
-        .hidden { display: none !important; }
-        .flex { display: flex; }
-        .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
-        .justify-between { justify-content: space-between; }
-        .gap-sm { gap: var(--space-sm); }
-        .gap-md { gap: var(--space-md); }
-        .w-full { width: 100%; }
-        .h-full { height: 100%; }
-        .p-md { padding: var(--space-md); }
-        .m-md { margin: var(--space-md); }
-        .rounded-md { border-radius: var(--radius-md); }
-        .shadow { box-shadow: var(--shadow-clinical); }
     </style>
 </head>
 <body>
@@ -566,7 +1265,7 @@
                 Clinical Intelligence Platform
             </div>
             <div style="color: var(--text-clinical-tertiary); margin-bottom: var(--space-lg);">
-                Loading comprehensive clinical system...
+                Initializing comprehensive clinical database...
             </div>
             <div class="loading-progress">
                 <div class="loading-progress-bar" id="loadingProgress"></div>
@@ -583,9 +1282,7 @@
                 </div>
                 <div class="brand-text">
                     <h1>TRAITMAP PRO</h1>
-                    <div style="font-size: var(--text-xs); color: var(--text-clinical-tertiary);">
-                        Advanced Clinical Intelligence
-                    </div>
+                    <div class="subtitle">Advanced Clinical Intelligence</div>
                 </div>
             </div>
             <div class="clinical-patient-info">
@@ -597,7 +1294,7 @@
         <div class="header-actions">
             <button class="clinical-btn" id="btnDatabase">
                 <i class="fas fa-database"></i>
-                <span>Database</span>
+                <span>Clinical Database</span>
             </button>
             <button class="clinical-btn" id="btnCreateTrait">
                 <i class="fas fa-plus-circle"></i>
@@ -605,16 +1302,16 @@
             </button>
             <button class="clinical-btn" id="btnInsights">
                 <i class="fas fa-brain"></i>
-                <span>Insights</span>
+                <span>Clinical Insights</span>
             </button>
             <button class="clinical-btn primary" id="btnExport">
                 <i class="fas fa-file-medical-alt"></i>
-                <span>Report</span>
+                <span>Generate Report</span>
             </button>
-            <button class="clinical-btn" id="toggleSidebar" title="Toggle Sidebar">
+            <button class="collapse-toggle" id="toggleSidebar" title="Toggle Sidebar">
                 <i class="fas fa-chevron-left"></i>
             </button>
-            <button class="clinical-btn" id="toggleDetails" title="Toggle Details Panel">
+            <button class="collapse-toggle" id="toggleDetails" title="Toggle Details Panel">
                 <i class="fas fa-chevron-right"></i>
             </button>
         </div>
@@ -626,19 +1323,18 @@
         <aside class="clinical-sidebar" id="clinicalSidebar">
             <div class="sidebar-header">
                 <div class="sidebar-title">
-                    <i class="fas fa-book-medical"></i>
+                    <i class="fas fa-book-medical sidebar-icon"></i>
                     <span>Clinical Trait Library</span>
                 </div>
-                <button class="clinical-btn" id="collapseSidebar" style="padding: 4px 8px;">
+                <button class="collapse-toggle" id="collapseSidebar" title="Collapse Sidebar">
                     <i class="fas fa-chevron-left"></i>
                 </button>
             </div>
             
             <div class="sidebar-search">
-                <div style="position: relative;">
-                    <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-clinical-tertiary);"></i>
-                    <input type="text" id="searchInput" placeholder="Search clinical traits..." 
-                           style="width: 100%; padding: 12px 16px 12px 44px; background: var(--bg-clinical-card); border: 1px solid var(--border-clinical); border-radius: var(--radius-md); color: var(--text-clinical-primary); font-family: 'Inter', sans-serif;">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search clinical traits, biomarkers, treatments...">
                 </div>
             </div>
             
@@ -653,61 +1349,74 @@
             
             <!-- Toolbar -->
             <div class="clinical-toolbar">
-                <button class="clinical-tool active" data-tool="select" title="Select">
+                <button class="clinical-tool active" data-tool="select">
                     <i class="fas fa-mouse-pointer"></i>
+                    <div class="tooltip">Select</div>
                 </button>
-                <button class="clinical-tool" data-tool="connect" title="Connect Traits">
-                    <i class="fas fa-link"></i>
-                </button>
-                <button class="clinical-tool" data-tool="multi" title="Multi-Select">
+                <button class="clinical-tool" data-tool="multi">
                     <i class="fas fa-object-group"></i>
+                    <div class="tooltip">Multi-Select</div>
                 </button>
-                <button class="clinical-tool" data-tool="pathway" title="Create Pathway">
+                <button class="clinical-tool" data-tool="connect">
+                    <i class="fas fa-link"></i>
+                    <div class="tooltip">Establish Connection</div>
+                </button>
+                <button class="clinical-tool" data-tool="pathway">
                     <i class="fas fa-project-diagram"></i>
+                    <div class="tooltip">Create Pathway</div>
                 </button>
-                <button class="clinical-tool" data-tool="clear" title="Clear Canvas">
+                <button class="clinical-tool" data-tool="analyze">
+                    <i class="fas fa-chart-line"></i>
+                    <div class="tooltip">Analyze Patterns</div>
+                </button>
+                <button class="clinical-tool" data-tool="layout">
+                    <i class="fas fa-sitemap"></i>
+                    <div class="tooltip">Auto-Layout</div>
+                </button>
+                <button class="clinical-tool" data-tool="clear">
                     <i class="fas fa-broom"></i>
+                    <div class="tooltip">Clear Canvas</div>
                 </button>
             </div>
             
             <!-- Dashboard -->
             <div class="clinical-dashboard" id="clinicalDashboard">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-lg);">
-                    <div style="font-size: var(--text-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-clinical-secondary); display: flex; align-items: center; gap: var(--space-sm);">
+                <div class="dashboard-header">
+                    <div class="dashboard-title">
                         <i class="fas fa-chart-bar"></i>
                         Clinical Metrics
                     </div>
-                    <button class="clinical-btn" onclick="clinicalPlatform.toggleDashboard()" style="padding: 4px 8px;">
+                    <button class="clinical-btn" style="padding: 4px 8px; font-size: 12px;" onclick="clinicalPlatform.toggleDashboard()">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg);">
-                    <div style="background: var(--bg-clinical-card); border-radius: var(--radius-md); padding: var(--space-md); text-align: center;">
-                        <div style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 4px; color: var(--clinical-blue-light);" id="metricTraits">0</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-clinical-tertiary);">Clinical Traits</div>
+                <div class="dashboard-metrics">
+                    <div class="clinical-metric">
+                        <div class="metric-value" id="metricTraits">0</div>
+                        <div class="metric-label">Clinical Traits</div>
                     </div>
-                    <div style="background: var(--bg-clinical-card); border-radius: var(--radius-md); padding: var(--space-md); text-align: center;">
-                        <div style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 4px; color: var(--clinical-blue-light);" id="metricConnections">0</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-clinical-tertiary);">Relationships</div>
+                    <div class="clinical-metric">
+                        <div class="metric-value" id="metricConnections">0</div>
+                        <div class="metric-label">Relationships</div>
                     </div>
-                    <div style="background: var(--bg-clinical-card); border-radius: var(--radius-md); padding: var(--space-md); text-align: center;">
-                        <div style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 4px; color: var(--clinical-blue-light);" id="metricSeverity">0%</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-clinical-tertiary);">Avg Severity</div>
+                    <div class="clinical-metric">
+                        <div class="metric-value" id="metricSeverity">0%</div>
+                        <div class="metric-label">Avg Severity</div>
                     </div>
-                    <div style="background: var(--bg-clinical-card); border-radius: var(--radius-md); padding: var(--space-md); text-align: center;">
-                        <div style="font-size: var(--text-2xl); font-weight: 800; margin-bottom: 4px; color: var(--clinical-blue-light);" id="metricComplexity">0</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-clinical-tertiary);">Complexity Score</div>
+                    <div class="clinical-metric">
+                        <div class="metric-value" id="metricComplexity">0</div>
+                        <div class="metric-label">Complexity Score</div>
                     </div>
                 </div>
                 
-                <div style="background: linear-gradient(135deg, rgba(28, 78, 128, 0.3), rgba(74, 139, 201, 0.3)); border-left: 4px solid var(--clinical-blue-light); border-radius: var(--radius-md); padding: var(--space-md);">
-                    <div style="font-size: var(--text-sm); font-weight: 700; margin-bottom: var(--space-sm); color: var(--text-clinical-primary); display: flex; align-items: center; gap: var(--space-sm);">
+                <div class="clinical-insight-box" id="dashboardInsight">
+                    <div class="insight-title">
                         <i class="fas fa-lightbulb"></i>
                         Clinical Guidance
                     </div>
-                    <div style="font-size: var(--text-sm); color: var(--text-clinical-secondary); line-height: 1.5;" id="dashboardInsight">
-                        Add clinical traits to begin comprehensive assessment.
+                    <div class="insight-text">
+                        Add clinical traits to begin comprehensive assessment and receive evidence-based recommendations.
                     </div>
                 </div>
             </div>
@@ -715,27 +1424,21 @@
 
         <!-- Details Panel -->
         <aside class="clinical-details-panel" id="clinicalDetails">
-            <div class="sidebar-header">
+            <div class="details-header">
                 <div>
-                    <div style="font-size: var(--text-lg); font-weight: 700; margin-bottom: 4px; color: var(--text-clinical-primary);" id="selectedTraitTitle">
-                        No Trait Selected
-                    </div>
-                    <div style="font-size: var(--text-sm); color: var(--text-clinical-tertiary);" id="selectedTraitSubtitle">
-                        Select a clinical trait to view details
-                    </div>
+                    <div class="details-title" id="selectedTraitTitle">No Trait Selected</div>
+                    <div class="details-subtitle" id="selectedTraitSubtitle">Select a clinical trait to view detailed information</div>
                 </div>
-                <button class="clinical-btn" id="collapseDetails" style="padding: 4px 8px;">
+                <button class="collapse-toggle" id="collapseDetails" title="Collapse Details">
                     <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
             
-            <div class="trait-library-container" id="detailsContent">
+            <div class="details-content" id="detailsContent">
                 <div style="text-align: center; padding: 60px 20px; color: var(--text-clinical-tertiary);">
                     <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
-                    <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">
-                        Select Clinical Trait
-                    </div>
-                    <div>Click on any trait in the canvas to view comprehensive clinical information.</div>
+                    <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">Select Clinical Trait</div>
+                    <div>Click on any clinical trait in the canvas to view comprehensive clinical information, evidence levels, and treatment pathways.</div>
                 </div>
             </div>
         </aside>
@@ -744,26 +1447,24 @@
     <!-- Create Trait Modal -->
     <div class="clinical-modal-overlay" id="createTraitModal">
         <div class="clinical-modal">
-            <div class="sidebar-header" style="background: linear-gradient(135deg, rgba(28, 78, 128, 0.3), transparent);">
+            <div class="modal-header">
                 <div>
-                    <div style="font-size: var(--text-xl); font-weight: 700; color: var(--text-clinical-primary);">
-                        Create New Clinical Trait
-                    </div>
-                    <div style="font-size: var(--text-sm); color: var(--text-clinical-tertiary);">
-                        Define a custom clinical trait with full details
-                    </div>
+                    <div class="modal-title">Create New Clinical Trait</div>
+                    <div class="modal-subtitle">Define a custom clinical trait with full details</div>
                 </div>
                 <button class="clinical-btn" onclick="clinicalPlatform.hideCreateTraitModal()">
                     <i class="fas fa-times"></i>
+                    Close
                 </button>
             </div>
             
-            <div style="padding: var(--space-xl); flex: 1; overflow-y: auto;">
+            <div class="modal-body">
                 <form id="createTraitForm" style="display: flex; flex-direction: column; gap: var(--space-lg);">
                     <!-- Basic Information -->
                     <div>
-                        <div style="font-size: var(--text-sm); font-weight: 700; color: var(--text-clinical-secondary); margin-bottom: var(--space-md);">
-                            Basic Information
+                        <div class="section-label">
+                            <i class="fas fa-info-circle"></i>
+                            BASIC INFORMATION
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
                             <div>
@@ -785,8 +1486,9 @@
                     
                     <!-- Category & Severity -->
                     <div>
-                        <div style="font-size: var(--text-sm); font-weight: 700; color: var(--text-clinical-secondary); margin-bottom: var(--space-md);">
-                            Clinical Classification
+                        <div class="section-label">
+                            <i class="fas fa-tags"></i>
+                            CLINICAL CLASSIFICATION
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
                             <div>
@@ -824,8 +1526,9 @@
                     
                     <!-- Clinical Details -->
                     <div>
-                        <div style="font-size: var(--text-sm); font-weight: 700; color: var(--text-clinical-secondary); margin-bottom: var(--space-md);">
-                            Clinical Details
+                        <div class="section-label">
+                            <i class="fas fa-clipboard-check"></i>
+                            CLINICAL DETAILS
                         </div>
                         <div style="display: flex; flex-direction: column; gap: var(--space-md);">
                             <div>
@@ -848,8 +1551,9 @@
                     
                     <!-- Treatment Pathway -->
                     <div>
-                        <div style="font-size: var(--text-sm); font-weight: 700; color: var(--text-clinical-secondary); margin-bottom: var(--space-md);">
-                            Treatment Pathway
+                        <div class="section-label">
+                            <i class="fas fa-prescription-bottle-medical"></i>
+                            TREATMENT PATHWAY
                         </div>
                         <div style="display: flex; flex-direction: column; gap: var(--space-md);">
                             <div>
@@ -871,7 +1575,7 @@
                 </form>
             </div>
             
-            <div style="padding: var(--space-lg) var(--space-xl); border-top: 1px solid var(--border-clinical); display: flex; gap: var(--space-sm); justify-content: flex-end;">
+            <div class="modal-footer">
                 <button class="clinical-btn" onclick="clinicalPlatform.hideCreateTraitModal()">
                     <i class="fas fa-times"></i>
                     Cancel
@@ -887,44 +1591,60 @@
     <!-- Database Modal -->
     <div class="clinical-modal-overlay" id="databaseModal">
         <div class="clinical-modal">
-            <div class="sidebar-header" style="background: linear-gradient(135deg, rgba(28, 78, 128, 0.3), transparent);">
+            <div class="modal-header">
                 <div>
-                    <div style="font-size: var(--text-xl); font-weight: 700; color: var(--text-clinical-primary);">
-                        Clinical Traits Database
-                    </div>
-                    <div style="font-size: var(--text-sm); color: var(--text-clinical-tertiary);">
-                        200+ evidence-based traits with treatment pathways
-                    </div>
+                    <div class="modal-title">Clinical Traits Database</div>
+                    <div class="modal-subtitle">Comprehensive library of 200+ clinical traits with evidence-based evaluation and treatment</div>
                 </div>
                 <button class="clinical-btn" onclick="clinicalPlatform.hideDatabase()">
                     <i class="fas fa-times"></i>
+                    Close
                 </button>
             </div>
             
-            <div style="padding: var(--space-xl); flex: 1; overflow-y: auto;">
-                <div style="display: flex; gap: var(--space-sm); margin-bottom: var(--space-lg); flex-wrap: wrap;">
-                    <button class="clinical-btn" data-filter="all" onclick="clinicalPlatform.filterDatabase('all')">All Traits</button>
-                    <button class="clinical-btn" data-filter="pulmonary" onclick="clinicalPlatform.filterDatabase('pulmonary')">Pulmonary</button>
-                    <button class="clinical-btn" data-filter="inflammatory" onclick="clinicalPlatform.filterDatabase('inflammatory')">Inflammatory</button>
-                    <button class="clinical-btn" data-filter="clinical" onclick="clinicalPlatform.filterDatabase('clinical')">Clinical</button>
-                    <button class="clinical-btn" data-filter="user-defined" onclick="clinicalPlatform.filterDatabase('user-defined')">User Traits</button>
+            <div class="modal-body">
+                <div class="database-filters">
+                    <button class="filter-btn active" data-filter="all">All Traits</button>
+                    <button class="filter-btn" data-filter="pulmonary">Pulmonary</button>
+                    <button class="filter-btn" data-filter="inflammatory">Inflammatory</button>
+                    <button class="filter-btn" data-filter="physiological">Physiological</button>
+                    <button class="filter-btn" data-filter="clinical">Clinical</button>
+                    <button class="filter-btn" data-filter="comorbid">Comorbidities</button>
+                    <button class="filter-btn" data-filter="behavioral">Behavioral</button>
+                    <button class="filter-btn" data-filter="pharmacological">Pharmacological</button>
+                    <button class="filter-btn" data-filter="surgical">Surgical</button>
+                    <button class="filter-btn" data-filter="user-defined">User Traits</button>
                 </div>
                 
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: var(--text-sm);">
+                    <table class="clinical-database-table" id="databaseTable">
                         <thead>
                             <tr>
-                                <th style="background: var(--bg-clinical-card); padding: 14px 16px; text-align: left; font-weight: 700; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-clinical);">Trait</th>
-                                <th style="background: var(--bg-clinical-card); padding: 14px 16px; text-align: left; font-weight: 700; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-clinical);">Category</th>
-                                <th style="background: var(--bg-clinical-card); padding: 14px 16px; text-align: left; font-weight: 700; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-clinical);">Severity</th>
-                                <th style="background: var(--bg-clinical-card); padding: 14px 16px; text-align: left; font-weight: 700; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-clinical);">Action</th>
+                                <th>Trait</th>
+                                <th>Category</th>
+                                <th>Clinical Evaluation</th>
+                                <th>Biomarkers</th>
+                                <th>Evidence</th>
+                                <th>Treatment</th>
+                                <th>Severity</th>
                             </tr>
                         </thead>
                         <tbody id="databaseBody">
-                            <!-- Populated dynamically -->
+                            <!-- Dynamically populated -->
                         </tbody>
                     </table>
                 </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="clinical-btn" onclick="clinicalPlatform.hideDatabase()">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
+                <button class="clinical-btn primary" onclick="clinicalPlatform.exportDatabase()">
+                    <i class="fas fa-download"></i>
+                    Export Database
+                </button>
             </div>
         </div>
     </div>
@@ -932,45 +1652,39 @@
     <!-- AI Insights Modal -->
     <div class="clinical-modal-overlay" id="insightsModal">
         <div class="clinical-modal">
-            <div class="sidebar-header" style="background: linear-gradient(135deg, rgba(28, 78, 128, 0.3), transparent);">
+            <div class="modal-header">
                 <div>
-                    <div style="font-size: var(--text-xl); font-weight: 700; color: var(--text-clinical-primary);">
-                        Clinical Intelligence Analysis
-                    </div>
-                    <div style="font-size: var(--text-sm); color: var(--text-clinical-tertiary);">
-                        Evidence-based insights and treatment pathways
-                    </div>
+                    <div class="modal-title">Clinical Intelligence Analysis</div>
+                    <div class="modal-subtitle">Evidence-based insights, treatment pathways, and clinical decision support</div>
                 </div>
-                <button class="clinical-btn" onclick="clinicalPlatform.hideInsights()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <div style="padding: var(--space-xl); flex: 1; overflow-y: auto;">
-                <div style="display: flex; border-bottom: 1px solid var(--border-clinical); margin-bottom: var(--space-xl);">
-                    <button class="clinical-btn" style="border-radius: 0; border-bottom: 3px solid transparent;" 
-                            onclick="clinicalPlatform.setAITab('clinical')" data-tab="clinical">
-                        Clinical Summary
-                    </button>
-                    <button class="clinical-btn" style="border-radius: 0; border-bottom: 3px solid transparent;" 
-                            onclick="clinicalPlatform.setAITab('patterns')" data-tab="patterns">
-                        Pattern Recognition
-                    </button>
-                    <button class="clinical-btn" style="border-radius: 0; border-bottom: 3px solid transparent;" 
-                            onclick="clinicalPlatform.setAITab('treatment')" data-tab="treatment">
-                        Treatment Algorithm
-                    </button>
-                </div>
-                
-                <div id="insightsContent">
-                    <!-- Populated dynamically -->
-                </div>
-            </div>
-            
-            <div style="padding: var(--space-lg) var(--space-xl); border-top: 1px solid var(--border-clinical); display: flex; gap: var(--space-sm); justify-content: flex-end;">
                 <button class="clinical-btn" onclick="clinicalPlatform.hideInsights()">
                     <i class="fas fa-times"></i>
                     Close
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="clinical-tabs">
+                    <div class="clinical-tab active" data-tab="clinical">Clinical Summary</div>
+                    <div class="clinical-tab" data-tab="patterns">Pattern Recognition</div>
+                    <div class="clinical-tab" data-tab="treatment">Treatment Algorithm</div>
+                    <div class="clinical-tab" data-tab="biomarkers">Biomarker Profile</div>
+                    <div class="clinical-tab" data-tab="management">Clinical Management</div>
+                </div>
+                
+                <div id="insightsContent">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="clinical-btn" onclick="clinicalPlatform.hideInsights()">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
+                <button class="clinical-btn secondary" onclick="clinicalPlatform.generateTreatmentPathway()">
+                    <i class="fas fa-project-diagram"></i>
+                    Create Pathway
                 </button>
                 <button class="clinical-btn primary" onclick="clinicalPlatform.generateClinicalReport()">
                     <i class="fas fa-file-pdf"></i>
@@ -983,1421 +1697,1639 @@
     <!-- Toast Container -->
     <div class="clinical-toast-container" id="toastContainer"></div>
 
-    <!-- Clinical Database & PDF Generation Script -->
-    <script src="clinical-database.js"></script>
-    <script src="pdf-generator.js"></script>
+<script>
+// ===================================================
+// CLINICAL DATABASE
+// ===================================================
+class ClinicalDatabase {
+    constructor() {
+        this.traits = this.loadDatabase();
+        this.userTraits = this.loadUserTraits();
+    }
     
-    <!-- Main Application Script -->
-    <script>
-    // ===================================================
-    // CLINICAL PLATFORM - ENHANCED VERSION
-    // ===================================================
-    class ClinicalPlatform {
-        constructor() {
-            this.database = new ClinicalDatabase();
-            this.state = new ClinicalState();
-            this.canvas = document.getElementById('clinicalNetworkCanvas');
-            this.ctx = this.canvas.getContext('2d');
-            this.pdfGenerator = new ClinicalPDFGenerator();
-            this.init();
+    loadDatabase() {
+        // This would be loaded from your clinical-database.js
+        // For now, we'll use a simplified version
+        return [
+            {
+                id: "PULM-001",
+                name: "Airflow Limitation (Obstructive)",
+                spanishName: "Limitación al flujo aéreo",
+                category: "pulmonary",
+                color: "var(--pulmonary)",
+                icon: "fas fa-wind",
+                evaluation: "Spirometry (pre/post bronchodilator), FEV1/FVC ratio",
+                severity: 85,
+                treatment: {
+                    firstLine: "LAMA/LABA combination therapy",
+                    nonPharmacological: "Smoking cessation, Pulmonary rehabilitation"
+                },
+                biomarkers: ["FEV1", "FVC", "FEV1/FVC", "PEF"],
+                evidence: { level: "A" }
+            },
+            {
+                id: "INFL-001",
+                name: "Eosinophilic Airway Inflammation",
+                spanishName: "Inflamación de vías respiratorias eosínofílica",
+                category: "inflammatory",
+                color: "var(--inflammatory)",
+                icon: "fas fa-virus",
+                evaluation: "Blood eosinophil count, Fractional exhaled nitric oxide",
+                severity: 80,
+                treatment: {
+                    firstLine: "High-dose ICS ± LABA",
+                    nonPharmacological: "Allergen avoidance"
+                },
+                biomarkers: ["Blood eosinophils", "FeNO", "IgE"],
+                evidence: { level: "A" }
+            }
+        ];
+    }
+    
+    loadUserTraits() {
+        const saved = localStorage.getItem('clinical_user_traits');
+        return saved ? JSON.parse(saved) : [];
+    }
+    
+    saveUserTrait(trait) {
+        this.userTraits.push(trait);
+        localStorage.setItem('clinical_user_traits', JSON.stringify(this.userTraits));
+        return trait;
+    }
+    
+    getAllTraits() {
+        return [...this.traits, ...this.userTraits];
+    }
+    
+    searchTraits(query) {
+        const q = query.toLowerCase();
+        return this.getAllTraits().filter(trait => 
+            trait.name.toLowerCase().includes(q) ||
+            (trait.spanishName && trait.spanishName.toLowerCase().includes(q)) ||
+            trait.category.toLowerCase().includes(q) ||
+            (trait.biomarkers && trait.biomarkers.some(b => b.toLowerCase().includes(q)))
+        );
+    }
+}
+
+// ===================================================
+// CLINICAL STATE MANAGEMENT
+// ===================================================
+class ClinicalState {
+    constructor() {
+        this.traits = [];
+        this.connections = [];
+        this.selectedTraits = new Set();
+        this.selectionOrder = [];
+        this.currentTool = 'select';
+        this.draggingTrait = null;
+        this.dragOffset = { x: 0, y: 0 };
+        this.lastMousePos = { x: 0, y: 0 };
+        this.multiSelectMode = false;
+    }
+    
+    addTrait(trait) {
+        const newTrait = {
+            ...trait,
+            x: window.innerWidth / 2 + (Math.random() * 300 - 150),
+            y: window.innerHeight / 2 + (Math.random() * 300 - 150),
+            connections: [],
+            id: `${trait.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        };
+        
+        this.traits.push(newTrait);
+        return newTrait;
+    }
+    
+    removeTrait(traitId) {
+        this.traits = this.traits.filter(t => t.id !== traitId);
+        this.selectedTraits.delete(this.traits.find(t => t.id === traitId));
+        this.connections = this.connections.filter(c => 
+            c.source !== traitId && c.target !== traitId
+        );
+    }
+    
+    createConnection(sourceId, targetId) {
+        if (sourceId === targetId) return null;
+        
+        const existing = this.connections.find(c => 
+            (c.source === sourceId && c.target === targetId) ||
+            (c.source === targetId && c.target === sourceId)
+        );
+        
+        if (existing) return null;
+        
+        const connection = {
+            id: `${sourceId}-${targetId}-${Date.now()}`,
+            source: sourceId,
+            target: targetId,
+            strength: this.calculateConnectionStrength(sourceId, targetId),
+            created: new Date().toISOString()
+        };
+        
+        this.connections.push(connection);
+        
+        // Update trait connections
+        const sourceTrait = this.traits.find(t => t.id === sourceId);
+        const targetTrait = this.traits.find(t => t.id === targetId);
+        if (sourceTrait && !sourceTrait.connections.includes(targetId)) {
+            sourceTrait.connections.push(targetId);
+        }
+        if (targetTrait && !targetTrait.connections.includes(sourceId)) {
+            targetTrait.connections.push(sourceId);
         }
         
-        init() {
-            this.setupCanvas();
-            this.loadTraitLibrary();
-            this.setupEventListeners();
-            this.startRenderLoop();
-            this.simulateLoading();
-        }
+        return connection;
+    }
+    
+    calculateConnectionStrength(sourceId, targetId) {
+        const source = this.traits.find(t => t.id === sourceId);
+        const target = this.traits.find(t => t.id === targetId);
+        if (!source || !target) return 50;
         
-        simulateLoading() {
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 2;
-                document.getElementById('loadingProgress').style.width = `${progress}%`;
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        document.getElementById('loadingScreen').style.display = 'none';
-                        this.showToast('System Ready', 'Clinical Intelligence Platform loaded successfully', 'success');
-                    }, 500);
-                }
-            }, 50);
-        }
+        let strength = 50;
         
-        setupCanvas() {
-            this.resizeCanvas();
-            window.addEventListener('resize', () => this.resizeCanvas());
-        }
+        if (source.category === target.category) strength += 20;
+        if (source.severity > 70 && target.severity > 70) strength += 15;
         
-        resizeCanvas() {
-            const rect = this.canvas.parentElement.getBoundingClientRect();
-            const dpr = window.devicePixelRatio || 1;
-            this.canvas.width = rect.width * dpr;
-            this.canvas.height = rect.height * dpr;
-            this.canvas.style.width = `${rect.width}px`;
-            this.canvas.style.height = `${rect.height}px`;
-            this.ctx.scale(dpr, dpr);
-        }
+        return Math.min(100, Math.max(30, strength));
+    }
+    
+    getNetworkMetrics() {
+        const totalTraits = this.traits.length;
+        const totalConnections = this.connections.length;
+        const avgSeverity = totalTraits > 0 
+            ? this.traits.reduce((sum, t) => sum + t.severity, 0) / totalTraits 
+            : 0;
         
-        loadTraitLibrary() {
-            const library = document.getElementById('traitLibrary');
-            library.innerHTML = '';
+        const categories = {};
+        this.traits.forEach(t => {
+            categories[t.category] = (categories[t.category] || 0) + 1;
+        });
+        
+        const highSeverity = this.traits.filter(t => t.severity >= 80).length;
+        const criticalTraits = this.traits.filter(t => t.severity >= 90).length;
+        
+        return {
+            totalTraits,
+            totalConnections,
+            avgSeverity: Math.round(avgSeverity),
+            categoryDistribution: categories,
+            highSeverity,
+            criticalTraits,
+            complexityScore: Math.min(100, (totalTraits * 3) + (totalConnections * 2))
+        };
+    }
+    
+    toggleSidebar() {
+        return !this.sidebarCollapsed;
+    }
+    
+    toggleDetails() {
+        return !this.detailsCollapsed;
+    }
+}
+
+// ===================================================
+// CLINICAL PLATFORM MAIN CLASS
+// ===================================================
+class ClinicalPlatform {
+    constructor() {
+        this.database = new ClinicalDatabase();
+        this.state = new ClinicalState();
+        this.canvas = document.getElementById('clinicalNetworkCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.init();
+    }
+    
+    init() {
+        this.setupCanvas();
+        this.loadTraitLibrary();
+        this.setupEventListeners();
+        this.startRenderLoop();
+        this.simulateLoading();
+    }
+    
+    simulateLoading() {
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 2;
+            document.getElementById('loadingProgress').style.width = `${progress}%`;
             
-            // Group traits by category
-            const categories = {};
-            this.database.getAllTraits().forEach(trait => {
-                if (!categories[trait.category]) {
-                    categories[trait.category] = [];
-                }
-                categories[trait.category].push(trait);
-            });
-            
-            // Create sections for each category
-            Object.entries(categories).forEach(([category, traits]) => {
-                const section = document.createElement('div');
-                section.className = 'library-section';
-                
-                const header = document.createElement('div');
-                header.style.cssText = `
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    margin-bottom: var(--space-md);
-                    padding-bottom: var(--space-sm);
-                    border-bottom: 1px solid var(--border-clinical);
-                `;
-                header.innerHTML = `
-                    <div style="font-size: var(--text-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-clinical-secondary); display: flex; align-items: center; gap: var(--space-sm);">
-                        <i class="fas fa-folder-medical"></i>
-                        ${category}
-                    </div>
-                    <div style="background: var(--bg-clinical-card); border-radius: var(--radius-full); padding: 2px 10px; font-size: var(--text-xs); font-weight: 700; color: var(--text-clinical-tertiary);">
-                        ${traits.length}
-                    </div>
-                `;
-                
-                const grid = document.createElement('div');
-                grid.style.cssText = `
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: var(--space-sm);
-                `;
-                
-                traits.forEach(trait => {
-                    const traitCard = this.createTraitCard(trait);
-                    grid.appendChild(traitCard);
-                });
-                
-                section.appendChild(header);
-                section.appendChild(grid);
-                library.appendChild(section);
-            });
-        }
+            if (progress >= 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    this.showToast('Clinical Intelligence Platform Ready', 'Comprehensive database loaded', 'success');
+                }, 500);
+            }
+        }, 50);
+    }
+    
+    setupCanvas() {
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+    }
+    
+    resizeCanvas() {
+        const rect = this.canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = rect.height * dpr;
+        this.canvas.style.width = `${rect.width}px`;
+        this.canvas.style.height = `${rect.height}px`;
+        this.ctx.scale(dpr, dpr);
+    }
+    
+    loadTraitLibrary() {
+        const library = document.getElementById('traitLibrary');
+        library.innerHTML = '';
         
-        createTraitCard(trait) {
-            const card = document.createElement('div');
-            card.className = 'clinical-trait-card';
-            card.draggable = true;
-            card.dataset.traitId = trait.id;
+        // Group traits by category
+        const categories = {};
+        this.database.getAllTraits().forEach(trait => {
+            if (!categories[trait.category]) {
+                categories[trait.category] = [];
+            }
+            categories[trait.category].push(trait);
+        });
+        
+        // Create sections for each category
+        Object.entries(categories).forEach(([category, traits]) => {
+            const section = document.createElement('div');
+            section.className = 'library-section';
             
-            card.style.cssText = `
-                background: var(--bg-clinical-card);
-                border: 1px solid var(--border-clinical);
-                border-radius: var(--radius-md);
-                padding: var(--space-md);
-                cursor: grab;
-                transition: all var(--transition-base);
-                user-select: none;
+            const header = document.createElement('div');
+            header.className = 'section-header';
+            header.innerHTML = `
+                <div class="section-title">
+                    <i class="fas fa-folder-medical"></i>
+                    ${category}
+                </div>
+                <div class="section-count">${traits.length}</div>
             `;
             
-            if (trait.isUserDefined) {
-                card.style.borderLeft = `4px solid var(--user-defined)`;
+            const grid = document.createElement('div');
+            grid.className = 'trait-grid';
+            
+            traits.forEach(trait => {
+                const traitCard = this.createTraitCard(trait);
+                grid.appendChild(traitCard);
+            });
+            
+            section.appendChild(header);
+            section.appendChild(grid);
+            library.appendChild(section);
+        });
+    }
+    
+    createTraitCard(trait) {
+        const card = document.createElement('div');
+        card.className = 'clinical-trait-card';
+        card.setAttribute('draggable', 'true');
+        card.dataset.traitId = trait.id;
+        
+        if (trait.isUserDefined) {
+            card.style.borderLeft = `4px solid var(--user-defined)`;
+        }
+        
+        card.innerHTML = `
+            <div class="trait-card-header">
+                <div class="trait-color-indicator" style="background: ${trait.color};"></div>
+                <div class="trait-card-content">
+                    <div class="trait-name">${trait.name}</div>
+                    ${trait.spanishName ? `<div class="trait-spanish-name">${trait.spanishName}</div>` : ''}
+                </div>
+            </div>
+            <div class="trait-card-footer">
+                <div class="trait-category">${trait.category}</div>
+                <div class="trait-severity" style="color: ${this.getSeverityColor(trait.severity)}">
+                    <i class="fas fa-chart-line"></i> ${trait.severity}%
+                </div>
+            </div>
+        `;
+        
+        card.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('trait', JSON.stringify(trait));
+            card.style.opacity = '0.5';
+        });
+        
+        card.addEventListener('dragend', () => {
+            card.style.opacity = '1';
+        });
+        
+        card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.addTraitToCanvas(trait);
+        });
+        
+        return card;
+    }
+    
+    setupEventListeners() {
+        // Canvas events
+        this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
+        this.canvas.addEventListener('mouseup', () => this.onCanvasMouseUp());
+        
+        // Allow drop on canvas
+        this.canvas.addEventListener('dragover', (e) => e.preventDefault());
+        this.canvas.addEventListener('drop', (e) => this.onCanvasDrop(e));
+        
+        // Toolbar
+        document.querySelectorAll('.clinical-tool').forEach(tool => {
+            tool.addEventListener('click', (e) => {
+                const toolName = e.currentTarget.dataset.tool;
+                this.setTool(toolName);
+            });
+        });
+        
+        // Header buttons
+        document.getElementById('btnDatabase').addEventListener('click', () => this.showDatabase());
+        document.getElementById('btnCreateTrait').addEventListener('click', () => this.showCreateTraitModal());
+        document.getElementById('btnInsights').addEventListener('click', () => this.showInsights());
+        document.getElementById('btnExport').addEventListener('click', () => this.generateClinicalReport());
+        
+        // Collapse buttons
+        document.getElementById('toggleSidebar').addEventListener('click', () => this.toggleSidebar());
+        document.getElementById('toggleDetails').addEventListener('click', () => this.toggleDetailsPanel());
+        document.getElementById('collapseSidebar').addEventListener('click', () => this.toggleSidebar());
+        document.getElementById('collapseDetails').addEventListener('click', () => this.toggleDetailsPanel());
+        
+        // Search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            this.searchTraits(e.target.value);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                this.state.multiSelectMode = true;
             }
             
-            card.innerHTML = `
-                <div style="display: flex; align-items: flex-start; gap: var(--space-sm); margin-bottom: var(--space-sm);">
-                    <div style="width: 12px; height: 12px; border-radius: 50%; background: ${trait.color}; flex-shrink: 0; margin-top: 4px;"></div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; font-size: var(--text-sm); margin-bottom: 2px; color: var(--text-clinical-primary);">
-                            ${trait.name}
-                        </div>
-                        ${trait.spanishName ? `
-                        <div style="font-size: var(--text-xs); color: var(--text-clinical-tertiary); font-style: italic; margin-bottom: var(--space-sm);">
-                            ${trait.spanishName}
-                        </div>
-                        ` : ''}
-                    </div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; font-size: var(--text-xs);">
-                    <div style="background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: var(--radius-full); color: var(--text-clinical-secondary);">
-                        ${trait.category}
-                    </div>
-                    <div style="font-weight: 700; display: flex; align-items: center; gap: 4px; color: ${this.getSeverityColor(trait.severity)};">
-                        <i class="fas fa-chart-line"></i> ${trait.severity}%
-                    </div>
-                </div>
-            `;
-            
-            card.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('trait', JSON.stringify(trait));
-                card.style.opacity = '0.5';
-            });
-            
-            card.addEventListener('dragend', () => {
-                card.style.opacity = '1';
-            });
-            
-            card.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.addTraitToCanvas(trait);
-            });
-            
-            return card;
-        }
-        
-        addTraitToCanvas(trait) {
-            const newTrait = {
-                ...trait,
-                x: this.canvas.width / (2 * window.devicePixelRatio) + (Math.random() * 200 - 100),
-                y: this.canvas.height / (2 * window.devicePixelRatio) + (Math.random() * 200 - 100),
-                connections: [],
-                selected: false,
-                id: `${trait.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-            };
-            
-            this.state.addTrait(newTrait);
-            this.updateMetrics();
-            this.showTraitDetails(newTrait);
-            this.showToast('Trait Added', `${trait.name} added to assessment`, 'success');
-        }
-        
-        // ===================================================
-        // ENHANCED SELECTION & LINKING SYSTEM
-        // ===================================================
-        setupEventListeners() {
-            // Canvas events
-            this.canvas.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
-            this.canvas.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
-            this.canvas.addEventListener('mouseup', () => this.onCanvasMouseUp());
-            this.canvas.addEventListener('touchstart', (e) => this.onTouchStart(e));
-            this.canvas.addEventListener('touchmove', (e) => this.onTouchMove(e));
-            this.canvas.addEventListener('touchend', () => this.onTouchEnd());
-            
-            // Allow drop on canvas
-            this.canvas.addEventListener('dragover', (e) => e.preventDefault());
-            this.canvas.addEventListener('drop', (e) => this.onCanvasDrop(e));
-            
-            // Toolbar
-            document.querySelectorAll('.clinical-tool').forEach(tool => {
-                tool.addEventListener('click', (e) => {
-                    const toolName = e.currentTarget.dataset.tool;
-                    this.setTool(toolName);
-                });
-            });
-            
-            // Header buttons
-            document.getElementById('btnDatabase').addEventListener('click', () => this.showDatabase());
-            document.getElementById('btnCreateTrait').addEventListener('click', () => this.showCreateTraitModal());
-            document.getElementById('btnInsights').addEventListener('click', () => this.showInsights());
-            document.getElementById('btnExport').addEventListener('click', () => this.generateClinicalReport());
-            
-            // Collapse buttons
-            document.getElementById('toggleSidebar').addEventListener('click', () => this.toggleSidebar());
-            document.getElementById('toggleDetails').addEventListener('click', () => this.toggleDetailsPanel());
-            document.getElementById('collapseSidebar').addEventListener('click', () => this.toggleSidebar());
-            document.getElementById('collapseDetails').addEventListener('click', () => this.toggleDetailsPanel());
-            
-            // Search
-            document.getElementById('searchInput').addEventListener('input', (e) => {
-                this.searchTraits(e.target.value);
-            });
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', (e) => {
-                // Ctrl/Cmd for multi-select
-                if (e.ctrlKey || e.metaKey) {
-                    this.state.multiSelectMode = true;
-                }
-                
-                // Keyboard shortcuts
-                if (e.key === 'Escape') this.clearSelection();
-                if (e.key === 'Delete' && this.state.selectedTraits.size > 0) this.deleteSelectedTraits();
-                if (e.key === 'l' || e.key === 'L') this.linkSelectedTraits();
-                if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    this.selectAllTraits();
-                }
-                if (e.key === '[') this.toggleSidebar();
-                if (e.key === ']') this.toggleDetailsPanel();
-            });
-            
-            document.addEventListener('keyup', (e) => {
-                if (e.key === 'Control' || e.key === 'Meta') {
-                    this.state.multiSelectMode = false;
-                }
-            });
-            
-            // Mobile context menu
-            this.canvas.addEventListener('contextmenu', (e) => {
+            if (e.key === 'Escape') this.clearSelection();
+            if (e.key === 'Delete' && this.state.selectedTraits.size > 0) this.deleteSelectedTraits();
+            if (e.key === 'l' || e.key === 'L') this.linkSelectedTraits();
+            if (e.key === 'a' && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
-                if (this.state.selectedTraits.size > 0) {
-                    this.showContextMenu(e.clientX, e.clientY);
-                }
-            });
-        }
-        
-        onCanvasMouseDown(e) {
-            const rect = this.canvas.getBoundingClientRect();
-            const scale = window.devicePixelRatio;
-            const x = (e.clientX - rect.left) * (this.canvas.width / rect.width) / scale;
-            const y = (e.clientY - rect.top) * (this.canvas.height / rect.height) / scale;
-            
-            this.state.lastMousePos = { x: e.clientX, y: e.clientY };
-            
-            const trait = this.getTraitAtPosition(x, y);
-            
-            if (trait) {
-                if (this.state.currentTool === 'multi') {
-                    // Multi-select mode
-                    this.toggleTraitSelection(trait);
-                } else if (this.state.currentTool === 'connect') {
-                    // Connect mode - add to selection
-                    this.addToSelection(trait);
-                    if (this.state.selectedTraits.size >= 2) {
-                        this.linkSelectedTraits();
-                    }
-                } else {
-                    // Select mode
-                    if (this.state.multiSelectMode) {
-                        this.toggleTraitSelection(trait);
-                    } else {
-                        this.clearSelection();
-                        this.addToSelection(trait);
-                    }
-                    this.state.draggingTrait = trait;
-                    this.state.dragOffset = { x: trait.x - x, y: trait.y - y };
-                }
-            } else {
-                this.clearSelection();
+                this.selectAllTraits();
             }
-        }
+            if (e.key === '[') this.toggleSidebar();
+            if (e.key === ']') this.toggleDetailsPanel();
+        });
         
-        onCanvasMouseMove(e) {
-            if (!this.state.draggingTrait) return;
-            
-            const rect = this.canvas.getBoundingClientRect();
-            const scale = window.devicePixelRatio;
-            const x = (e.clientX - rect.left) * (this.canvas.width / rect.width) / scale;
-            const y = (e.clientY - rect.top) * (this.canvas.height / rect.height) / scale;
-            
-            this.state.draggingTrait.x = x + this.state.dragOffset.x;
-            this.state.draggingTrait.y = y + this.state.dragOffset.y;
-            
-            // Keep within bounds
-            const margin = 40;
-            this.state.draggingTrait.x = Math.max(margin, Math.min(this.canvas.width / scale - margin, this.state.draggingTrait.x));
-            this.state.draggingTrait.y = Math.max(margin, Math.min(this.canvas.height / scale - margin, this.state.draggingTrait.y));
-        }
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Control' || e.key === 'Meta') {
+                this.state.multiSelectMode = false;
+            }
+        });
         
-        onCanvasMouseUp() {
-            this.state.draggingTrait = null;
-        }
-        
-        onCanvasDrop(e) {
+        // Context menu
+        this.canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            const rect = this.canvas.getBoundingClientRect();
-            const scale = window.devicePixelRatio;
-            const x = (e.clientX - rect.left) * (this.canvas.width / rect.width) / scale;
-            const y = (e.clientY - rect.top) * (this.canvas.height / rect.height) / scale;
-            
-            try {
-                const traitData = JSON.parse(e.dataTransfer.getData('trait'));
-                this.addTraitToCanvasAtPosition(traitData, x, y);
-            } catch (err) {
-                console.warn('Invalid trait data');
+            if (this.state.selectedTraits.size > 0) {
+                this.showContextMenu(e.clientX, e.clientY);
             }
-        }
+        });
+    }
+    
+    onCanvasMouseDown(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        const scale = window.devicePixelRatio;
+        const x = (e.clientX - rect.left) * (this.canvas.width / rect.width) / scale;
+        const y = (e.clientY - rect.top) * (this.canvas.height / rect.height) / scale;
         
-        // Touch events for mobile
-        onTouchStart(e) {
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
-                this.onCanvasMouseDown({ clientX: touch.clientX, clientY: touch.clientY });
-            }
-        }
+        this.state.lastMousePos = { x: e.clientX, y: e.clientY };
         
-        onTouchMove(e) {
-            if (e.touches.length === 1) {
-                const touch = e.touches[0];
-                this.onCanvasMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
-            }
-        }
+        const trait = this.getTraitAtPosition(x, y);
         
-        onTouchEnd() {
-            this.onCanvasMouseUp();
-        }
-        
-        addTraitToCanvasAtPosition(traitData, x, y) {
-            const newTrait = {
-                ...traitData,
-                x: x,
-                y: y,
-                connections: [],
-                selected: false,
-                id: `${traitData.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-            };
-            
-            this.state.addTrait(newTrait);
-            this.updateMetrics();
-            this.showTraitDetails(newTrait);
-        }
-        
-        getTraitAtPosition(x, y) {
-            for (const trait of this.state.traits) {
-                const dx = trait.x - x;
-                const dy = trait.y - y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 40) {
-                    return trait;
+        if (trait) {
+            if (this.state.currentTool === 'multi') {
+                this.toggleTraitSelection(trait);
+            } else if (this.state.currentTool === 'connect') {
+                this.addToSelection(trait);
+                if (this.state.selectedTraits.size >= 2) {
+                    this.linkSelectedTraits();
                 }
-            }
-            return null;
-        }
-        
-        // ===================================================
-        // SELECTION & LINKING FUNCTIONS
-        // ===================================================
-        toggleTraitSelection(trait) {
-            if (this.state.selectedTraits.has(trait)) {
-                this.state.selectedTraits.delete(trait);
-                trait.selected = false;
             } else {
-                this.state.selectedTraits.add(trait);
-                trait.selected = true;
-                if (!this.state.selectionOrder.includes(trait.id)) {
-                    this.state.selectionOrder.push(trait.id);
+                if (this.state.multiSelectMode) {
+                    this.toggleTraitSelection(trait);
+                } else {
+                    this.clearSelection();
+                    this.addToSelection(trait);
                 }
+                this.state.draggingTrait = trait;
+                this.state.dragOffset = { x: trait.x - x, y: trait.y - y };
+                this.showTraitDetails(trait);
+            }
+        } else {
+            this.clearSelection();
+        }
+    }
+    
+    onCanvasMouseMove(e) {
+        if (!this.state.draggingTrait) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const scale = window.devicePixelRatio;
+        const x = (e.clientX - rect.left) * (this.canvas.width / rect.width) / scale;
+        const y = (e.clientY - rect.top) * (this.canvas.height / rect.height) / scale;
+        
+        this.state.draggingTrait.x = x + this.state.dragOffset.x;
+        this.state.draggingTrait.y = y + this.state.dragOffset.y;
+        
+        // Keep within bounds
+        const margin = 40;
+        this.state.draggingTrait.x = Math.max(margin, Math.min(this.canvas.width / scale - margin, this.state.draggingTrait.x));
+        this.state.draggingTrait.y = Math.max(margin, Math.min(this.canvas.height / scale - margin, this.state.draggingTrait.y));
+        
+        this.state.lastMousePos = { x: e.clientX, y: e.clientY };
+    }
+    
+    onCanvasMouseUp() {
+        this.state.draggingTrait = null;
+    }
+    
+    onCanvasDrop(e) {
+        e.preventDefault();
+        const rect = this.canvas.getBoundingClientRect();
+        const scale = window.devicePixelRatio;
+        const x = (e.clientX - rect.left) * (this.canvas.width / rect.width) / scale;
+        const y = (e.clientY - rect.top) * (this.canvas.height / rect.height) / scale;
+        
+        try {
+            const traitData = JSON.parse(e.dataTransfer.getData('trait'));
+            this.addTraitToCanvasAtPosition(traitData, x, y);
+        } catch (err) {
+            console.warn('Invalid trait data');
+        }
+    }
+    
+    getTraitAtPosition(x, y) {
+        for (const trait of this.state.traits) {
+            const dx = trait.x - x;
+            const dy = trait.y - y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 40) {
+                return trait;
             }
         }
+        return null;
+    }
+    
+    addTraitToCanvas(trait) {
+        const newTrait = this.state.addTrait(trait);
+        this.updateMetrics();
+        this.showTraitDetails(newTrait);
+        this.showToast('Trait Added', `${trait.name} added to assessment`, 'success');
+    }
+    
+    addTraitToCanvasAtPosition(trait, x, y) {
+        const newTrait = {
+            ...trait,
+            x: x,
+            y: y,
+            connections: [],
+            id: `${trait.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        };
         
-        addToSelection(trait) {
+        this.state.traits.push(newTrait);
+        this.updateMetrics();
+        this.showTraitDetails(newTrait);
+    }
+    
+    toggleTraitSelection(trait) {
+        if (this.state.selectedTraits.has(trait)) {
+            this.state.selectedTraits.delete(trait);
+            trait.selected = false;
+        } else {
             this.state.selectedTraits.add(trait);
             trait.selected = true;
             if (!this.state.selectionOrder.includes(trait.id)) {
                 this.state.selectionOrder.push(trait.id);
             }
         }
-        
-        clearSelection() {
-            this.state.selectedTraits.forEach(trait => trait.selected = false);
-            this.state.selectedTraits.clear();
-            this.state.selectionOrder = [];
+    }
+    
+    addToSelection(trait) {
+        this.state.selectedTraits.add(trait);
+        trait.selected = true;
+        if (!this.state.selectionOrder.includes(trait.id)) {
+            this.state.selectionOrder.push(trait.id);
         }
+    }
+    
+    clearSelection() {
+        this.state.selectedTraits.forEach(trait => trait.selected = false);
+        this.state.selectedTraits.clear();
+        this.state.selectionOrder = [];
+    }
+    
+    selectAllTraits() {
+        this.state.traits.forEach(trait => {
+            this.state.selectedTraits.add(trait);
+            trait.selected = true;
+        });
+        this.showToast('All Selected', `${this.state.traits.length} traits selected`, 'info');
+    }
+    
+    deleteSelectedTraits() {
+        if (this.state.selectedTraits.size === 0) return;
         
-        selectAllTraits() {
-            this.state.traits.forEach(trait => {
-                this.state.selectedTraits.add(trait);
-                trait.selected = true;
+        if (confirm(`Delete ${this.state.selectedTraits.size} selected trait(s)?`)) {
+            this.state.selectedTraits.forEach(trait => {
+                this.state.removeTrait(trait.id);
             });
-            this.showToast('All Selected', `${this.state.traits.length} traits selected`, 'info');
+            this.clearSelection();
+            this.updateMetrics();
+            this.showTraitDetails(null);
+            this.showToast('Traits Deleted', 'Selected traits removed', 'info');
+        }
+    }
+    
+    linkSelectedTraits() {
+        if (this.state.selectedTraits.size < 2) {
+            this.showToast('Need More Traits', 'Select at least 2 traits to link', 'warning');
+            return;
         }
         
-        deleteSelectedTraits() {
-            if (this.state.selectedTraits.size === 0) return;
-            
-            if (confirm(`Delete ${this.state.selectedTraits.size} selected trait(s)?`)) {
-                this.state.selectedTraits.forEach(trait => {
-                    this.state.removeTrait(trait.id);
-                });
-                this.clearSelection();
-                this.updateMetrics();
-                this.showTraitDetails(null);
-                this.showToast('Traits Deleted', 'Selected traits removed from assessment', 'info');
+        const traitsArray = Array.from(this.state.selectedTraits);
+        let connectionsCreated = 0;
+        
+        for (let i = 0; i < traitsArray.length; i++) {
+            for (let j = i + 1; j < traitsArray.length; j++) {
+                const connection = this.state.createConnection(traitsArray[i].id, traitsArray[j].id);
+                if (connection) connectionsCreated++;
             }
         }
         
-        linkSelectedTraits() {
-            if (this.state.selectedTraits.size < 2) {
-                this.showToast('Need More Traits', 'Select at least 2 traits to link', 'warning');
-                return;
-            }
-            
-            // Create connections between all selected traits
-            const traitsArray = Array.from(this.state.selectedTraits);
-            let connectionsCreated = 0;
-            
-            for (let i = 0; i < traitsArray.length; i++) {
-                for (let j = i + 1; j < traitsArray.length; j++) {
-                    const connection = this.state.createConnection(traitsArray[i].id, traitsArray[j].id);
-                    if (connection) connectionsCreated++;
+        if (connectionsCreated > 0) {
+            this.updateMetrics();
+            this.showToast('Connections Created', 
+                `${connectionsCreated} relationships established`, 
+                'success');
+        }
+        
+        this.state.selectionOrder = [];
+    }
+    
+    setTool(tool) {
+        this.state.currentTool = tool;
+        
+        document.querySelectorAll('.clinical-tool').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tool === tool);
+        });
+        
+        switch(tool) {
+            case 'connect':
+                this.showToast('Connect Mode', 'Click traits to connect them', 'info');
+                break;
+            case 'multi':
+                this.showToast('Multi-Select Mode', 'Ctrl/Cmd + click to select multiple traits', 'info');
+                break;
+            case 'analyze':
+                this.analyzeClinicalPatterns();
+                break;
+            case 'layout':
+                this.autoLayout();
+                break;
+            case 'clear':
+                if (this.state.traits.length > 0 && confirm('Clear all clinical assessment data?')) {
+                    this.state.traits = [];
+                    this.state.connections = [];
+                    this.clearSelection();
+                    this.updateMetrics();
+                    this.showTraitDetails(null);
+                    this.showToast('Canvas Cleared', 'All data removed', 'info');
                 }
-            }
-            
-            if (connectionsCreated > 0) {
-                this.updateMetrics();
-                this.showToast('Connections Created', 
-                    `${connectionsCreated} clinical relationships established`, 
-                    'success');
-            }
-            
-            // Clear selection order but keep traits selected
-            this.state.selectionOrder = [];
+                break;
+        }
+    }
+    
+    autoLayout() {
+        const centerX = this.canvas.width / (2 * window.devicePixelRatio);
+        const centerY = this.canvas.height / (2 * window.devicePixelRatio);
+        const radius = Math.min(centerX, centerY) * 0.6;
+        
+        this.state.traits.forEach((trait, i) => {
+            const angle = (i * 2 * Math.PI) / this.state.traits.length;
+            trait.x = centerX + radius * Math.cos(angle);
+            trait.y = centerY + radius * Math.sin(angle);
+        });
+        
+        this.showToast('Auto Layout Applied', 'Traits arranged circularly', 'info');
+    }
+    
+    analyzeClinicalPatterns() {
+        if (this.state.traits.length === 0) {
+            this.showToast('No Data', 'Add clinical traits to analyze patterns', 'warning');
+            return;
         }
         
-        // ===================================================
-        // UI FUNCTIONS
-        // ===================================================
-        setTool(tool) {
-            this.state.currentTool = tool;
-            
-            document.querySelectorAll('.clinical-tool').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tool === tool);
-            });
-            
-            switch(tool) {
-                case 'connect':
-                    this.showToast('Connect Mode', 'Click traits to connect them', 'info');
-                    break;
-                case 'multi':
-                    this.showToast('Multi-Select Mode', 'Ctrl/Cmd + click to select multiple traits', 'info');
-                    break;
-                case 'pathway':
-                    this.showToast('Pathway Tool', 'Create treatment pathways', 'info');
-                    break;
-                case 'clear':
-                    if (confirm('Clear all clinical assessment data?')) {
-                        this.state.traits = [];
-                        this.state.connections = [];
-                        this.clearSelection();
-                        this.updateMetrics();
-                        this.showTraitDetails(null);
-                        this.showToast('Canvas Cleared', 'All data removed', 'info');
-                    }
-                    break;
-            }
-        }
+        this.showInsights();
+    }
+    
+    // ===================================================
+    // UI FUNCTIONS
+    // ===================================================
+    toggleSidebar() {
+        const sidebar = document.getElementById('clinicalSidebar');
+        const collapsed = sidebar.classList.toggle('collapsed');
         
-        showTraitDetails(trait) {
-            const title = document.getElementById('selectedTraitTitle');
-            const subtitle = document.getElementById('selectedTraitSubtitle');
-            const content = document.getElementById('detailsContent');
-            
-            if (!trait) {
-                title.textContent = 'No Trait Selected';
-                subtitle.textContent = 'Select a clinical trait to view details';
-                content.innerHTML = `
-                    <div style="text-align: center; padding: 60px 20px; color: var(--text-clinical-tertiary);">
-                        <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">
-                            Select Clinical Trait
-                        </div>
-                        <div>Click on any trait in the canvas to view comprehensive clinical information.</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            title.textContent = trait.name;
-            subtitle.textContent = `${trait.category} • Severity: ${trait.severity}% • ${trait.connections.length} connections`;
+        const icon = collapsed ? 'fa-chevron-right' : 'fa-chevron-left';
+        document.getElementById('toggleSidebar').innerHTML = `<i class="fas ${icon}"></i>`;
+        document.getElementById('collapseSidebar').innerHTML = `<i class="fas ${icon}"></i>`;
+        
+        this.showToast('Sidebar', collapsed ? 'Collapsed' : 'Expanded', 'info');
+    }
+    
+    toggleDetailsPanel() {
+        const details = document.getElementById('clinicalDetails');
+        const collapsed = details.classList.toggle('collapsed');
+        
+        const icon = collapsed ? 'fa-chevron-left' : 'fa-chevron-right';
+        document.getElementById('toggleDetails').innerHTML = `<i class="fas ${icon}"></i>`;
+        document.getElementById('collapseDetails').innerHTML = `<i class="fas ${icon}"></i>`;
+        
+        this.showToast('Details Panel', collapsed ? 'Collapsed' : 'Expanded', 'info');
+    }
+    
+    toggleDashboard() {
+        const dashboard = document.getElementById('clinicalDashboard');
+        dashboard.classList.toggle('hidden');
+    }
+    
+    showContextMenu(x, y) {
+        const existingMenu = document.querySelector('.context-menu');
+        if (existingMenu) existingMenu.remove();
+        
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.style.cssText = `
+            position: fixed;
+            left: ${x}px;
+            top: ${y}px;
+        `;
+        
+        menu.innerHTML = `
+            <button onclick="clinicalPlatform.linkSelectedTraits()" 
+                    style="width: 100%; padding: 8px 12px; text-align: left; background: none; border: none; color: var(--text-clinical-primary); cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-link"></i>
+                Link Selected (${this.state.selectedTraits.size})
+            </button>
+            <hr style="border: none; height: 1px; background: var(--border-clinical); margin: 4px 0;">
+            <button onclick="clinicalPlatform.deleteSelectedTraits()"
+                    style="width: 100%; padding: 8px 12px; text-align: left; background: none; border: none; color: var(--clinical-red); cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-trash"></i>
+                Delete Selected
+            </button>
+        `;
+        
+        document.body.appendChild(menu);
+        
+        setTimeout(() => {
+            const closeHandler = (e) => {
+                if (!menu.contains(e.target)) {
+                    menu.remove();
+                    document.removeEventListener('click', closeHandler);
+                }
+            };
+            document.addEventListener('click', closeHandler);
+        }, 10);
+    }
+    
+    // ===================================================
+    // TRAIT DETAILS
+    // ===================================================
+    showTraitDetails(trait) {
+        const title = document.getElementById('selectedTraitTitle');
+        const subtitle = document.getElementById('selectedTraitSubtitle');
+        const content = document.getElementById('detailsContent');
+        
+        if (!trait) {
+            title.textContent = 'No Trait Selected';
+            subtitle.textContent = 'Select a clinical trait to view detailed information';
             
             content.innerHTML = `
-                <div style="margin-bottom: var(--space-xl);">
-                    <div style="font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-clinical-secondary); margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm);">
-                        <i class="fas fa-clipboard-check"></i>
-                        CLINICAL EVALUATION
+                <div style="text-align: center; padding: 60px 20px; color: var(--text-clinical-tertiary);">
+                    <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                    <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">Select Clinical Trait</div>
+                    <div>Click on any clinical trait in the canvas to view comprehensive clinical information, evidence levels, and treatment pathways.</div>
+                </div>
+            `;
+            return;
+        }
+        
+        title.textContent = trait.name;
+        subtitle.textContent = `${trait.spanishName ? trait.spanishName + ' • ' : ''}${trait.category} • Severity: ${trait.severity}% • ${trait.connections ? trait.connections.length : 0} connections`;
+        
+        content.innerHTML = `
+            <div class="clinical-section">
+                <div class="section-label">
+                    <i class="fas fa-clipboard-check"></i>
+                    CLINICAL EVALUATION
+                </div>
+                <div class="clinical-info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                        <div class="info-card-title">Diagnostic Assessment</div>
                     </div>
-                    <div style="background: var(--bg-clinical-card); border: 1px solid var(--border-clinical); border-radius: var(--radius-md); padding: var(--space-lg);">
-                        <div style="color: var(--text-clinical-secondary); font-size: var(--text-sm); line-height: 1.6;">
-                            ${trait.evaluation}
+                    <div class="info-card-content">
+                        ${trait.evaluation}
+                    </div>
+                    
+                    ${trait.evidence ? `
+                    <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px;">
+                        <span class="evidence-badge">
+                            <i class="fas fa-certificate"></i>
+                            Evidence Level ${trait.evidence.level}
+                        </span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <div class="clinical-section">
+                <div class="section-label">
+                    <i class="fas fa-vial"></i>
+                    BIOMARKERS & SEVERITY
+                </div>
+                <div class="clinical-info-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div style="font-weight: 700; color: var(--text-clinical-primary);">
+                            Clinical Severity: ${trait.severity}%
+                        </div>
+                        <div style="font-size: 12px; color: ${this.getSeverityColor(trait.severity)}; font-weight: 700;">
+                            ${this.getSeverityLabel(trait.severity)}
                         </div>
                     </div>
-                </div>
-                
-                <div style="margin-bottom: var(--space-xl);">
-                    <div style="font-size: var(--text-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-clinical-secondary); margin-bottom: var(--space-md); display: flex; align-items: center; gap: var(--space-sm);">
-                        <i class="fas fa-prescription-bottle-medical"></i>
-                        TREATMENT PATHWAY
+                    
+                    <div class="clinical-progress-bar">
+                        <div class="progress-fill" style="width: ${trait.severity}%; background: ${this.getSeverityColor(trait.severity)};"></div>
                     </div>
-                    <div style="background: var(--bg-clinical-card); border: 1px solid var(--border-clinical); border-radius: var(--radius-md); padding: var(--space-lg);">
+                    
+                    ${trait.biomarkers && trait.biomarkers.length > 0 ? `
+                    <div style="font-weight: 700; margin: 16px 0 8px; color: var(--text-clinical-primary);">
+                        Key Biomarkers
+                    </div>
+                    <div class="biomarker-grid">
+                        ${trait.biomarkers.slice(0, 6).map(bio => 
+                            `<span class="biomarker-tag">${bio}</span>`
+                        ).join('')}
+                        ${trait.biomarkers.length > 6 ? 
+                            `<span class="biomarker-tag">+${trait.biomarkers.length - 6} more</span>` : ''}
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <div class="clinical-section">
+                <div class="section-label">
+                    <i class="fas fa-prescription-bottle-medical"></i>
+                    TREATMENT PATHWAY
+                </div>
+                <div class="clinical-info-card">
+                    ${typeof trait.treatment === 'object' ? `
                         <div style="font-weight: 700; margin-bottom: 8px; color: var(--text-clinical-primary);">
                             First-Line Treatment
                         </div>
-                        <div style="color: var(--text-clinical-secondary); font-size: var(--text-sm); line-height: 1.6; margin-bottom: var(--space-md);">
-                            ${trait.treatment?.firstLine || trait.treatment}
+                        <div style="color: var(--text-clinical-secondary); font-size: 13px; margin-bottom: var(--space-md);">
+                            ${trait.treatment.firstLine}
                         </div>
-                        
-                        ${trait.treatment?.nonPharmacological ? `
+                        ${trait.treatment.nonPharmacological ? `
                         <div style="font-weight: 700; margin-bottom: 8px; color: var(--text-clinical-primary);">
                             Non-Pharmacological Management
                         </div>
-                        <div style="color: var(--text-clinical-secondary); font-size: var(--text-sm); line-height: 1.6;">
+                        <div style="color: var(--text-clinical-secondary); font-size: 13px;">
                             ${trait.treatment.nonPharmacological}
                         </div>
                         ` : ''}
-                    </div>
-                </div>
-                
-                ${trait.isUserDefined ? `
-                <div style="background: rgba(138, 75, 175, 0.1); border: 1px solid var(--user-defined); border-radius: var(--radius-md); padding: var(--space-md); margin-bottom: var(--space-lg);">
-                    <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
-                        <i class="fas fa-user-edit" style="color: var(--user-defined);"></i>
-                        <div style="font-weight: 700; color: var(--user-defined);">User-Defined Trait</div>
-                    </div>
-                    <div style="color: var(--text-clinical-secondary); font-size: var(--text-sm);">
-                        This trait was created by a user and saved to the system.
-                    </div>
-                </div>
-                ` : ''}
-                
-                <div style="display: flex; gap: 12px; margin-top: 24px;">
-                    <button class="clinical-btn" onclick="clinicalPlatform.centerTrait('${trait.id}')" style="flex: 1;">
-                        <i class="fas fa-crosshairs"></i>
-                        Center View
-                    </button>
-                    <button class="clinical-btn" onclick="clinicalPlatform.deleteTrait('${trait.id}')" style="flex: 1;">
-                        <i class="fas fa-trash"></i>
-                        Remove
-                    </button>
-                </div>
-            `;
-        }
-        
-        centerTrait(traitId) {
-            const trait = this.state.traits.find(t => t.id === traitId);
-            if (trait) {
-                const centerX = this.canvas.width / (2 * window.devicePixelRatio);
-                const centerY = this.canvas.height / (2 * window.devicePixelRatio);
-                
-                const offsetX = centerX - trait.x;
-                const offsetY = centerY - trait.y;
-                
-                this.state.traits.forEach(t => {
-                    t.x += offsetX;
-                    t.y += offsetY;
-                });
-                
-                this.showToast('View Centered', `Focused on ${trait.name}`, 'info');
-            }
-        }
-        
-        deleteTrait(traitId) {
-            const trait = this.state.traits.find(t => t.id === traitId);
-            if (trait && confirm(`Delete ${trait.name}?`)) {
-                this.state.removeTrait(traitId);
-                this.updateMetrics();
-                this.showTraitDetails(null);
-                this.showToast('Trait Deleted', `${trait.name} removed`, 'info');
-            }
-        }
-        
-        updateMetrics() {
-            const metrics = this.state.getNetworkMetrics();
-            
-            document.getElementById('metricTraits').textContent = metrics.totalTraits;
-            document.getElementById('metricConnections').textContent = metrics.totalConnections;
-            document.getElementById('metricSeverity').textContent = `${metrics.avgSeverity}%`;
-            document.getElementById('metricComplexity').textContent = metrics.complexityScore;
-            
-            const insight = document.getElementById('dashboardInsight');
-            if (metrics.totalTraits === 0) {
-                insight.textContent = 'Add clinical traits to begin comprehensive assessment.';
-            } else if (metrics.avgSeverity >= 80) {
-                insight.textContent = `High clinical severity detected (${metrics.avgSeverity}%). Immediate intervention recommended.`;
-            } else if (metrics.totalTraits >= 5) {
-                insight.textContent = `Complex clinical profile with ${metrics.totalTraits} traits. Consider comprehensive management.`;
-            } else {
-                insight.textContent = 'Continue adding traits for comprehensive clinical assessment.';
-            }
-        }
-        
-        // ===================================================
-        // MODAL FUNCTIONS
-        // ===================================================
-        showDatabase() {
-            document.getElementById('databaseModal').classList.add('active');
-            this.populateDatabaseTable();
-        }
-        
-        hideDatabase() {
-            document.getElementById('databaseModal').classList.remove('active');
-        }
-        
-        showCreateTraitModal() {
-            document.getElementById('createTraitModal').classList.add('active');
-            document.getElementById('createTraitForm').reset();
-        }
-        
-        hideCreateTraitModal() {
-            document.getElementById('createTraitModal').classList.remove('active');
-        }
-        
-        showInsights() {
-            if (this.state.traits.length === 0) {
-                this.showToast('No Data', 'Add clinical traits to generate insights', 'warning');
-                return;
-            }
-            document.getElementById('insightsModal').classList.add('active');
-            this.generateInsights();
-        }
-        
-        hideInsights() {
-            document.getElementById('insightsModal').classList.remove('active');
-        }
-        
-        // ===================================================
-        // CUSTOM TRAIT CREATION
-        // ===================================================
-        saveCustomTrait() {
-            const form = document.getElementById('createTraitForm');
-            if (!form.checkValidity()) {
-                form.reportValidity();
-                return;
-            }
-            
-            const formData = new FormData(form);
-            const traitData = {
-                id: `USER-${Date.now()}`,
-                name: formData.get('name'),
-                spanishName: formData.get('spanishName') || '',
-                category: formData.get('category'),
-                severity: parseInt(formData.get('severity')),
-                evaluation: formData.get('evaluation'),
-                biomarkers: formData.get('biomarkers') ? formData.get('biomarkers').split(',').map(b => b.trim()) : [],
-                treatment: {
-                    firstLine: formData.get('firstLineTreatment'),
-                    nonPharmacological: formData.get('nonPharmacological') || ''
-                },
-                color: this.getCategoryColor(formData.get('category')),
-                isUserDefined: true,
-                created: new Date().toISOString(),
-                icon: 'fas fa-user-md'
-            };
-            
-            // Save to database
-            this.database.saveUserTrait(traitData);
-            
-            // Add to canvas
-            this.addTraitToCanvas(traitData);
-            
-            // Close modal
-            this.hideCreateTraitModal();
-            
-            this.showToast('Trait Created', `${traitData.name} saved to database and added to canvas`, 'success');
-        }
-        
-        getCategoryColor(category) {
-            const colorMap = {
-                'pulmonary': 'var(--pulmonary)',
-                'inflammatory': 'var(--inflammatory)',
-                'physiological': 'var(--physiological)',
-                'radiological': 'var(--radiological)',
-                'clinical': 'var(--clinical)',
-                'comorbid': 'var(--comorbid)',
-                'behavioral': 'var(--behavioral)',
-                'pharmacological': 'var(--pharmacological)',
-                'surgical': 'var(--surgical)',
-                'user-defined': 'var(--user-defined)'
-            };
-            return colorMap[category] || 'var(--clinical-gray)';
-        }
-        
-        getSeverityColor(severity) {
-            if (severity >= 80) return 'var(--clinical-red)';
-            if (severity >= 65) return 'var(--clinical-orange)';
-            if (severity >= 50) return 'var(--clinical-yellow)';
-            return 'var(--clinical-green)';
-        }
-        
-        // ===================================================
-        // DATABASE FUNCTIONS
-        // ===================================================
-        populateDatabaseTable() {
-            const tbody = document.getElementById('databaseBody');
-            tbody.innerHTML = '';
-            
-            this.database.getAllTraits().forEach(trait => {
-                const row = document.createElement('tr');
-                row.style.cursor = 'pointer';
-                row.innerHTML = `
-                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-clinical); vertical-align: top;">
-                        <div style="font-weight: 700; margin-bottom: 4px;">${trait.name}</div>
-                        ${trait.spanishName ? `<div style="font-size: 11px; color: var(--text-clinical-tertiary);">${trait.spanishName}</div>` : ''}
-                    </td>
-                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-clinical); vertical-align: top;">
-                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; font-size: 12px;">
-                            <div style="width: 8px; height: 8px; border-radius: 50%; background: ${trait.color};"></div>
-                            ${trait.category}
+                    ` : `
+                        <div style="color: var(--text-clinical-secondary); font-size: 13px;">
+                            ${trait.treatment}
                         </div>
-                    </td>
-                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-clinical); vertical-align: top;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="width: 60px; height: 6px; background: var(--border-clinical); border-radius: 3px; overflow: hidden;">
-                                <div style="width: ${trait.severity}%; height: 100%; background: ${this.getSeverityColor(trait.severity)};"></div>
-                            </div>
-                            <span style="font-weight: 700; color: ${this.getSeverityColor(trait.severity)};">${trait.severity}%</span>
-                        </div>
-                    </td>
-                    <td style="padding: 14px 16px; border-bottom: 1px solid var(--border-clinical); vertical-align: top;">
-                        <button class="clinical-btn" onclick="event.stopPropagation(); clinicalPlatform.addTraitToCanvas(${JSON.stringify(trait).replace(/"/g, '&quot;')})" style="padding: 6px 12px; font-size: 12px;">
-                            <i class="fas fa-plus"></i>
-                            Add
-                        </button>
-                    </td>
-                `;
-                
-                row.addEventListener('click', () => {
-                    this.addTraitToCanvas(trait);
-                    this.hideDatabase();
-                });
-                
-                tbody.appendChild(row);
-            });
-        }
-        
-        filterDatabase(filter) {
-            const rows = document.querySelectorAll('#databaseBody tr');
-            rows.forEach(row => {
-                const category = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                if (filter === 'all' || category.includes(filter)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
+                    `}
+                </div>
+            </div>
             
-            // Update button states
-            document.querySelectorAll('[data-filter]').forEach(btn => {
-                btn.classList.toggle('primary', btn.dataset.filter === filter);
-            });
-        }
-        
-        searchTraits(query) {
-            if (!query.trim()) {
-                this.loadTraitLibrary();
-                return;
-            }
-            
-            const results = this.database.searchTraits(query);
-            const library = document.getElementById('traitLibrary');
-            library.innerHTML = '';
-            
-            if (results.length === 0) {
-                library.innerHTML = `
-                    <div style="text-align: center; padding: 40px 20px; color: var(--text-clinical-tertiary);">
-                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
-                        <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">
-                            No Results Found
-                        </div>
-                        <div>Try different search terms</div>
-                    </div>
-                `;
-                return;
-            }
-            
-            const grid = document.createElement('div');
-            grid.style.cssText = `
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: var(--space-sm);
-            `;
-            
-            results.forEach(trait => {
-                const traitCard = this.createTraitCard(trait);
-                grid.appendChild(traitCard);
-            });
-            
-            library.appendChild(grid);
-        }
-        
-        // ===================================================
-        // INSIGHTS FUNCTIONS
-        // ===================================================
-        setAITab(tab) {
-            document.querySelectorAll('[data-tab]').forEach(btn => {
-                btn.classList.toggle('primary', btn.dataset.tab === tab);
-            });
-            this.generateInsights();
-        }
-        
-        generateInsights() {
-            const content = document.getElementById('insightsContent');
-            const metrics = this.state.getNetworkMetrics();
-            
-            content.innerHTML = `
-                <div style="background: var(--bg-clinical-card); border-radius: var(--radius-md); padding: var(--space-lg); margin-bottom: var(--space-lg);">
-                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
-                        <div style="width: 36px; height: 36px; background: var(--clinical-blue-primary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white;">
+            ${trait.isUserDefined ? `
+            <div class="clinical-section">
+                <div class="section-label">
+                    <i class="fas fa-user-edit"></i>
+                    TRAIT INFORMATION
+                </div>
+                <div class="clinical-info-card" style="background: rgba(138, 75, 175, 0.1); border-color: var(--user-defined);">
+                    <div class="info-card-header">
+                        <div class="info-card-icon" style="background: var(--user-defined);">
                             <i class="fas fa-user-md"></i>
                         </div>
-                        <div style="font-size: var(--text-base); font-weight: 700; color: var(--text-clinical-primary); flex: 1;">
-                            Clinical Assessment Summary
-                        </div>
+                        <div class="info-card-title">User-Defined Trait</div>
                     </div>
-                    <div style="color: var(--text-clinical-secondary); line-height: 1.6; margin-bottom: var(--space-md);">
-                        Patient presents with <strong>${metrics.totalTraits}</strong> clinically significant traits across 
-                        <strong>${Object.keys(metrics.categoryDistribution).length}</strong> domains. 
-                        Average clinical severity of <strong>${metrics.avgSeverity}%</strong> indicates 
-                        ${metrics.avgSeverity >= 80 ? 'critical' : metrics.avgSeverity >= 65 ? 'high' : 'moderate'} 
-                        complexity.
-                    </div>
-                    <div style="background: rgba(129, 178, 154, 0.1); border: 1px solid rgba(129, 178, 154, 0.3); border-radius: var(--radius-md); padding: var(--space-md); margin-top: var(--space-md);">
-                        <strong>Clinical Priority:</strong> 
-                        ${metrics.criticalTraits > 0 ? 
-                            `${metrics.criticalTraits} critical traits require immediate intervention` : 
-                            `${metrics.highSeverity} high-severity traits need prioritized management`}
+                    <div class="info-card-content">
+                        This trait was created by a user and saved to the system database.
                     </div>
                 </div>
-                
-                <div style="background: var(--bg-clinical-card); border-radius: var(--radius-md); padding: var(--space-lg);">
-                    <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
-                        <div style="width: 36px; height: 36px; background: var(--clinical-orange); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div style="font-size: var(--text-base); font-weight: 700; color: var(--text-clinical-primary); flex: 1;">
-                            Treatment Prioritization
-                        </div>
-                    </div>
-                    <div style="color: var(--text-clinical-secondary); line-height: 1.6;">
-                        ${this.generateTreatmentRecommendations()}
-                    </div>
-                </div>
-            `;
+            </div>
+            ` : ''}
+            
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="clinical-btn" onclick="clinicalPlatform.centerTrait('${trait.id}')" style="flex: 1;">
+                    <i class="fas fa-crosshairs"></i>
+                    Center View
+                </button>
+                <button class="clinical-btn danger" onclick="clinicalPlatform.deleteTrait('${trait.id}')" style="flex: 1;">
+                    <i class="fas fa-trash"></i>
+                    Remove
+                </button>
+            </div>
+        `;
+    }
+    
+    centerTrait(traitId) {
+        const trait = this.state.traits.find(t => t.id === traitId);
+        if (trait) {
+            const centerX = this.canvas.width / (2 * window.devicePixelRatio);
+            const centerY = this.canvas.height / (2 * window.devicePixelRatio);
+            
+            const offsetX = centerX - trait.x;
+            const offsetY = centerY - trait.y;
+            
+            this.state.traits.forEach(t => {
+                t.x += offsetX;
+                t.y += offsetY;
+            });
+            
+            this.showToast('View Centered', `Focused on ${trait.name}`, 'info');
+        }
+    }
+    
+    deleteTrait(traitId) {
+        const trait = this.state.traits.find(t => t.id === traitId);
+        if (trait && confirm(`Delete ${trait.name}?`)) {
+            this.state.removeTrait(traitId);
+            this.updateMetrics();
+            this.showTraitDetails(null);
+            this.showToast('Trait Deleted', `${trait.name} removed`, 'info');
+        }
+    }
+    
+    updateMetrics() {
+        const metrics = this.state.getNetworkMetrics();
+        
+        document.getElementById('metricTraits').textContent = metrics.totalTraits;
+        document.getElementById('metricConnections').textContent = metrics.totalConnections;
+        document.getElementById('metricSeverity').textContent = `${metrics.avgSeverity}%`;
+        document.getElementById('metricComplexity').textContent = metrics.complexityScore;
+        
+        const insight = document.getElementById('dashboardInsight');
+        if (metrics.totalTraits === 0) {
+            insight.textContent = 'Add clinical traits to begin comprehensive assessment and receive evidence-based recommendations.';
+        } else if (metrics.totalTraits >= 6) {
+            insight.textContent = `High clinical complexity detected (${metrics.complexityScore}/100). Consider multidisciplinary assessment and comprehensive management plan.`;
+        } else if (metrics.totalTraits >= 3) {
+            insight.textContent = `Moderate clinical complexity. Focus on integrated treatment approach addressing key domains.`;
+        } else {
+            insight.textContent = `Developing clinical profile. Continue assessment to identify key treatment targets.`;
+        }
+    }
+    
+    getSeverityColor(severity) {
+        if (severity >= 80) return 'var(--clinical-red)';
+        if (severity >= 65) return 'var(--clinical-orange)';
+        if (severity >= 50) return 'var(--clinical-yellow)';
+        return 'var(--clinical-green)';
+    }
+    
+    getSeverityLabel(severity) {
+        if (severity >= 80) return 'CRITICAL';
+        if (severity >= 65) return 'HIGH';
+        if (severity >= 50) return 'MODERATE';
+        return 'LOW';
+    }
+    
+    // ===================================================
+    // MODAL FUNCTIONS
+    // ===================================================
+    showCreateTraitModal() {
+        document.getElementById('createTraitModal').classList.add('active');
+        document.getElementById('createTraitForm').reset();
+    }
+    
+    hideCreateTraitModal() {
+        document.getElementById('createTraitModal').classList.remove('active');
+    }
+    
+    showDatabase() {
+        document.getElementById('databaseModal').classList.add('active');
+        this.populateDatabaseTable();
+    }
+    
+    hideDatabase() {
+        document.getElementById('databaseModal').classList.remove('active');
+    }
+    
+    showInsights() {
+        if (this.state.traits.length === 0) {
+            this.showToast('No Data', 'Add clinical traits to generate insights', 'warning');
+            return;
+        }
+        document.getElementById('insightsModal').classList.add('active');
+        this.generateInsights();
+    }
+    
+    hideInsights() {
+        document.getElementById('insightsModal').classList.remove('active');
+    }
+    
+    // ===================================================
+    // CUSTOM TRAIT CREATION
+    // ===================================================
+    saveCustomTrait() {
+        const form = document.getElementById('createTraitForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
         }
         
-        generateTreatmentRecommendations() {
-            const sortedTraits = [...this.state.traits].sort((a, b) => b.severity - a.severity);
-            const topTraits = sortedTraits.slice(0, 3);
+        const formData = new FormData(form);
+        const traitData = {
+            id: `USER-${Date.now()}`,
+            name: formData.get('name'),
+            spanishName: formData.get('spanishName') || '',
+            category: formData.get('category'),
+            severity: parseInt(formData.get('severity')),
+            evaluation: formData.get('evaluation'),
+            biomarkers: formData.get('biomarkers') ? 
+                formData.get('biomarkers').split(',').map(b => b.trim()).filter(b => b) : [],
+            treatment: {
+                firstLine: formData.get('firstLineTreatment'),
+                nonPharmacological: formData.get('nonPharmacological') || ''
+            },
+            color: this.getCategoryColor(formData.get('category')),
+            isUserDefined: true,
+            created: new Date().toISOString(),
+            icon: 'fas fa-user-md'
+        };
+        
+        // Save to database
+        this.database.saveUserTrait(traitData);
+        
+        // Add to canvas
+        this.addTraitToCanvas(traitData);
+        
+        // Update library
+        this.loadTraitLibrary();
+        
+        // Close modal
+        this.hideCreateTraitModal();
+        
+        this.showToast('Trait Created', `${traitData.name} saved and added to canvas`, 'success');
+    }
+    
+    getCategoryColor(category) {
+        const colorMap = {
+            'pulmonary': 'var(--pulmonary)',
+            'inflammatory': 'var(--inflammatory)',
+            'physiological': 'var(--physiological)',
+            'radiological': 'var(--radiological)',
+            'clinical': 'var(--clinical)',
+            'comorbid': 'var(--comorbid)',
+            'behavioral': 'var(--behavioral)',
+            'pharmacological': 'var(--pharmacological)',
+            'surgical': 'var(--surgical)',
+            'user-defined': 'var(--user-defined)'
+        };
+        return colorMap[category] || 'var(--clinical-gray)';
+    }
+    
+    // ===================================================
+    // DATABASE FUNCTIONS
+    // ===================================================
+    populateDatabaseTable() {
+        const tbody = document.getElementById('databaseBody');
+        tbody.innerHTML = '';
+        
+        this.database.getAllTraits().forEach(trait => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>
+                    <div style="font-weight: 700; margin-bottom: 4px;">${trait.name}</div>
+                    <div style="font-size: 11px; color: var(--text-clinical-tertiary);">${trait.spanishName || ''}</div>
+                </td>
+                <td>
+                    <span style="display: inline-flex; align-items: center; gap: 4px;">
+                        <span style="width: 8px; height: 8px; background: ${trait.color}; border-radius: 50%;"></span>
+                        ${trait.category}
+                    </span>
+                </td>
+                <td>${trait.evaluation.substring(0, 60)}...</td>
+                <td>
+                    <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                        ${trait.biomarkers ? trait.biomarkers.slice(0, 2).map(b => 
+                            `<span style="background: rgba(74, 139, 201, 0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">${b}</span>`
+                        ).join('') : ''}
+                        ${trait.biomarkers && trait.biomarkers.length > 2 ? 
+                            `<span style="background: rgba(74, 139, 201, 0.2); padding: 2px 6px; border-radius: 10px; font-size: 10px;">+${trait.biomarkers.length - 2}</span>` : ''}
+                    </div>
+                </td>
+                <td>
+                    ${trait.evidence ? `
+                    <span class="evidence-badge">
+                        <i class="fas fa-certificate"></i>
+                        Level ${trait.evidence.level}
+                    </span>
+                    ` : 'N/A'}
+                </td>
+                <td>${typeof trait.treatment === 'object' ? trait.treatment.firstLine.substring(0, 40) + '...' : trait.treatment.substring(0, 40) + '...'}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="width: 40px; height: 4px; background: var(--border-clinical); border-radius: 2px; overflow: hidden;">
+                            <div style="width: ${trait.severity}%; height: 100%; background: ${this.getSeverityColor(trait.severity)};"></div>
+                        </div>
+                        <span style="font-weight: 700; color: ${this.getSeverityColor(trait.severity)};">${trait.severity}%</span>
+                    </div>
+                </td>
+            `;
             
-            let html = 'Based on clinical severity, recommend addressing:<br><br>';
+            row.addEventListener('click', () => {
+                this.addTraitToCanvas(trait);
+                this.hideDatabase();
+            });
             
-            topTraits.forEach((trait, index) => {
-                html += `
-                    <div style="background: rgba(74, 139, 201, 0.1); border-radius: var(--radius-md); padding: var(--space-md); margin-bottom: var(--space-sm);">
-                        <div style="display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-sm);">
-                            <div style="width: 24px; height: 24px; background: ${trait.color}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 700;">${index + 1}</div>
+            tbody.appendChild(row);
+        });
+    }
+    
+    filterDatabase(filter) {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        const rows = document.querySelectorAll('#databaseBody tr');
+        rows.forEach(row => {
+            const category = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            if (filter === 'all' || category.includes(filter)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    exportDatabase() {
+        const allTraits = this.database.getAllTraits();
+        let csv = 'Name,Spanish Name,Category,Evaluation,Biomarkers,Evidence,Severity,Treatment\n';
+        
+        allTraits.forEach(trait => {
+            const biomarkers = trait.biomarkers ? trait.biomarkers.join('; ') : '';
+            const treatment = typeof trait.treatment === 'object' ? trait.treatment.firstLine : trait.treatment;
+            const evidence = trait.evidence ? `Level ${trait.evidence.level}` : 'N/A';
+            csv += `"${trait.name}","${trait.spanishName || ''}","${trait.category}","${trait.evaluation}","${biomarkers}","${evidence}","${trait.severity}%","${treatment}"\n`;
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'clinical_traits_database.csv';
+        a.click();
+        
+        this.showToast('Database Exported', 'Clinical traits database saved as CSV', 'success');
+    }
+    
+    searchTraits(query) {
+        if (!query.trim()) {
+            this.loadTraitLibrary();
+            return;
+        }
+        
+        const results = this.database.searchTraits(query);
+        const library = document.getElementById('traitLibrary');
+        library.innerHTML = '';
+        
+        if (results.length === 0) {
+            library.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-clinical-tertiary);">
+                    <i class="fas fa-search" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
+                    <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">
+                        No Results Found
+                    </div>
+                    <div>Try different search terms</div>
+                </div>
+            `;
+            return;
+        }
+        
+        const grid = document.createElement('div');
+        grid.className = 'trait-grid';
+        
+        results.forEach(trait => {
+            const traitCard = this.createTraitCard(trait);
+            grid.appendChild(traitCard);
+        });
+        
+        library.appendChild(grid);
+    }
+    
+    // ===================================================
+    // INSIGHTS FUNCTIONS
+    // ===================================================
+    setAITab(tabName) {
+        document.querySelectorAll('.clinical-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+        
+        this.generateInsights();
+    }
+    
+    generateInsights() {
+        const content = document.getElementById('insightsContent');
+        const activeTab = document.querySelector('.clinical-tab.active').dataset.tab;
+        const metrics = this.state.getNetworkMetrics();
+        
+        switch(activeTab) {
+            case 'clinical':
+                content.innerHTML = this.generateClinicalSummary(metrics);
+                break;
+            case 'patterns':
+                content.innerHTML = this.generatePatternRecognition(metrics);
+                break;
+            case 'treatment':
+                content.innerHTML = this.generateTreatmentAlgorithm(metrics);
+                break;
+            case 'biomarkers':
+                content.innerHTML = this.generateBiomarkerProfile(metrics);
+                break;
+            case 'management':
+                content.innerHTML = this.generateClinicalManagement(metrics);
+                break;
+        }
+    }
+    
+    generateClinicalSummary(metrics) {
+        return `
+            <div class="clinical-insight-card">
+                <div class="insight-card-header">
+                    <div class="insight-card-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div class="insight-card-title">Patient Clinical Profile</div>
+                </div>
+                <div class="info-card-content">
+                    Comprehensive assessment reveals <strong>${metrics.totalTraits}</strong> clinically significant traits across 
+                    <strong>${Object.keys(metrics.categoryDistribution).length}</strong> domains. 
+                    Average clinical severity of <strong>${metrics.avgSeverity}%</strong> indicates 
+                    ${metrics.avgSeverity >= 80 ? 'critical' : metrics.avgSeverity >= 65 ? 'high' : 'moderate'} 
+                    complexity requiring ${metrics.avgSeverity >= 80 ? 'urgent multidisciplinary intervention' : 
+                    metrics.avgSeverity >= 65 ? 'prioritized comprehensive management' : 'focused clinical attention'}.
+                </div>
+                <div class="clinical-recommendation">
+                    <strong>Clinical Priority:</strong> 
+                    ${metrics.criticalTraits > 0 ? 
+                        `${metrics.criticalTraits} critical traits require immediate intervention` : 
+                        `${metrics.highSeverity} high-severity traits need prioritized management`}
+                </div>
+            </div>
+        `;
+    }
+    
+    generatePatternRecognition(metrics) {
+        const patterns = [];
+        const traits = this.state.traits;
+        
+        if (traits.some(t => t.category === 'inflammatory') && 
+            traits.some(t => t.category === 'clinical')) {
+            patterns.push('Inflammatory-symptomatic axis identified');
+        }
+        
+        return `
+            <div class="clinical-insight-card">
+                <div class="insight-card-header">
+                    <div class="insight-card-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <div class="insight-card-title">Clinical Pattern Recognition</div>
+                </div>
+                <div class="info-card-content">
+                    ${patterns.length > 0 ? 
+                        `Identified <strong>${patterns.length}</strong> key clinical patterns:` :
+                        'No distinct clinical patterns detected'}
+                </div>
+                ${patterns.map(pattern => `
+                    <div class="clinical-recommendation" style="margin-top: 8px;">
+                        <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                        ${pattern}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    generateTreatmentAlgorithm(metrics) {
+        const sortedTraits = [...this.state.traits].sort((a, b) => b.severity - a.severity);
+        const topTraits = sortedTraits.slice(0, 3);
+        
+        return `
+            <div class="clinical-insight-card critical">
+                <div class="insight-card-header">
+                    <div class="insight-card-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="insight-card-title">Treatment Prioritization</div>
+                </div>
+                <div class="info-card-content">
+                    Based on clinical severity and evidence, recommend addressing:
+                </div>
+                ${topTraits.map((trait, index) => `
+                    <div class="clinical-recommendation" style="margin-top: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                            <div style="width: 28px; height: 28px; background: ${trait.color}; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800;">${index + 1}</div>
                             <div style="font-weight: 700; font-size: 14px;">${trait.name} (${trait.severity}%)</div>
                         </div>
-                        <div style="font-size: 13px; color: var(--text-clinical-secondary);">
+                        <div style="color: var(--text-clinical-secondary); font-size: 13px;">
                             <strong>First-line:</strong> ${typeof trait.treatment === 'object' ? trait.treatment.firstLine : trait.treatment}
                         </div>
                     </div>
-                `;
-            });
-            
-            return html;
-        }
-        
-        // ===================================================
-        // PDF REPORT GENERATION
-        // ===================================================
-        generateClinicalReport() {
-            this.showToast('Generating Report', 'Creating comprehensive clinical report...', 'info');
-            
-            try {
-                const reportData = {
-                    title: 'Comprehensive Clinical Assessment Report',
-                    date: new Date().toLocaleDateString(),
-                    time: new Date().toLocaleTimeString(),
-                    patientInfo: 'Clinical Decision Support Assessment',
-                    traits: this.state.traits,
-                    connections: this.state.connections,
-                    metrics: this.state.getNetworkMetrics(),
-                    networkImage: this.captureNetworkImage()
-                };
-                
-                this.pdfGenerator.generateReport(reportData);
-                
-                this.showToast('Report Generated', 'Comprehensive clinical report saved', 'success');
-            } catch (error) {
-                console.error('Error generating report:', error);
-                this.showToast('Report Error', 'Failed to generate clinical report', 'error');
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    generateBiomarkerProfile(metrics) {
+        const allBiomarkers = [];
+        this.state.traits.forEach(trait => {
+            if (trait.biomarkers) {
+                allBiomarkers.push(...trait.biomarkers);
             }
+        });
+        
+        const uniqueBiomarkers = [...new Set(allBiomarkers)].slice(0, 12);
+        
+        return `
+            <div class="clinical-insight-card">
+                <div class="insight-card-header">
+                    <div class="insight-card-icon">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <div class="insight-card-title">Recommended Biomarker Panel</div>
+                </div>
+                <div class="info-card-content">
+                    Based on clinical traits, consider monitoring these biomarkers:
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px;">
+                    ${uniqueBiomarkers.map(bio => `
+                        <span style="background: rgba(74, 139, 201, 0.2); color: var(--clinical-blue-light); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                            <i class="fas fa-flask" style="margin-right: 4px;"></i>${bio}
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    generateClinicalManagement(metrics) {
+        return `
+            <div class="clinical-insight-card">
+                <div class="insight-card-header">
+                    <div class="insight-card-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="insight-card-title">Clinical Management Plan</div>
+                </div>
+                <div class="info-card-content">
+                    <div style="margin-bottom: 16px;">
+                        <strong style="color: var(--clinical-green);">Immediate Actions (0-2 weeks):</strong>
+                        <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-clinical-secondary);">
+                            <li>Initiate first-line therapy for highest severity traits</li>
+                            <li>Baseline biomarker assessment</li>
+                            <li>Patient education on treatment expectations</li>
+                            <li>Schedule follow-up appointment</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    generateTreatmentPathway() {
+        if (this.state.traits.length < 2) {
+            this.showToast('Insufficient Data', 'Need at least 2 traits to create pathway', 'warning');
+            return;
         }
         
-        captureNetworkImage() {
-            // Create a temporary canvas for higher quality capture
-            const tempCanvas = document.createElement('canvas');
-            const tempCtx = tempCanvas.getContext('2d');
-            const dpr = 2; // Higher DPI for print
-            
-            tempCanvas.width = this.canvas.width * dpr;
-            tempCanvas.height = this.canvas.height * dpr;
-            tempCtx.scale(dpr, dpr);
-            
-            // Draw the current network state
-            tempCtx.fillStyle = getComputedStyle(document.documentElement)
-                .getPropertyValue('--bg-clinical-dark').trim();
-            tempCtx.fillRect(0, 0, tempCanvas.width / dpr, tempCanvas.height / dpr);
-            
-            // Draw connections
-            this.state.connections.forEach(conn => {
-                const source = this.state.traits.find(t => t.id === conn.source);
-                const target = this.state.traits.find(t => t.id === conn.target);
-                if (source && target) {
-                    tempCtx.beginPath();
-                    tempCtx.moveTo(source.x, source.y);
-                    tempCtx.lineTo(target.x, target.y);
-                    tempCtx.strokeStyle = this.getConnectionColor(conn.strength);
-                    tempCtx.lineWidth = 2;
-                    tempCtx.stroke();
-                }
-            });
-            
-            // Draw traits
-            this.state.traits.forEach(trait => {
-                this.drawTraitOnContext(trait, tempCtx);
-            });
-            
-            return tempCanvas.toDataURL('image/png');
-        }
+        this.showToast('Pathway Created', 'Treatment pathway generated successfully', 'success');
+    }
+    
+    // ===================================================
+    // PDF REPORT GENERATION
+    // ===================================================
+    generateClinicalReport() {
+        this.showToast('Generating Report', 'Creating comprehensive clinical report...', 'info');
         
-        drawTraitOnContext(trait, context) {
-            const x = trait.x;
-            const y = trait.y;
-            const radius = 35;
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
             
-            // Draw circle
-            context.beginPath();
-            context.arc(x, y, radius, 0, Math.PI * 2);
-            context.fillStyle = trait.color;
-            context.fill();
+            // Title Page
+            doc.setFontSize(28);
+            doc.setTextColor(28, 78, 128);
+            doc.text('COMPREHENSIVE CLINICAL ASSESSMENT', 105, 40, { align: 'center' });
             
-            // Draw border
-            context.beginPath();
-            context.arc(x, y, radius + 2, 0, Math.PI * 2);
-            context.strokeStyle = trait.selected ? '#ffffff' : trait.color;
-            context.lineWidth = 2;
-            context.stroke();
+            doc.setFontSize(16);
+            doc.setTextColor(74, 139, 201);
+            doc.text('TRAITMAP PRO Clinical Intelligence System', 105, 60, { align: 'center' });
             
-            // Draw severity indicator
-            context.beginPath();
-            context.arc(x + radius * 0.7, y - radius * 0.7, 8, 0, Math.PI * 2);
-            context.fillStyle = this.getSeverityColor(trait.severity);
-            context.fill();
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 105, 75, { align: 'center' });
             
-            context.font = 'bold 8px Inter';
-            context.fillStyle = 'white';
-            context.fillText(trait.severity, x + radius * 0.7 - 4, y - radius * 0.7 + 3);
+            const metrics = this.state.getNetworkMetrics();
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Clinical Assessment Summary', 20, 100);
+            
+            doc.setFontSize(11);
+            doc.text(`Total Clinical Traits: ${metrics.totalTraits}`, 20, 115);
+            doc.text(`Clinical Relationships: ${metrics.totalConnections}`, 20, 125);
+            doc.text(`Average Severity: ${metrics.avgSeverity}%`, 20, 135);
+            doc.text(`Complexity Score: ${metrics.complexityScore}/100`, 20, 145);
+            
+            // Save PDF
+            const fileName = `Clinical_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+            doc.save(fileName);
+            
+            this.showToast('Report Generated', 'Clinical report saved', 'success');
+            
+        } catch (error) {
+            console.error('Error generating report:', error);
+            this.showToast('Report Error', 'Failed to generate clinical report', 'error');
         }
-        
-        getConnectionColor(strength) {
-            if (strength >= 80) return 'var(--clinical-red)';
-            if (strength >= 65) return 'var(--clinical-orange)';
-            return 'var(--clinical-blue-light)';
-        }
-        
-        // ===================================================
-        // RENDERING ENGINE
-        // ===================================================
-        startRenderLoop() {
-            const render = () => {
-                this.renderCanvas();
-                requestAnimationFrame(render);
-            };
+    }
+    
+    // ===================================================
+    // RENDERING ENGINE
+    // ===================================================
+    startRenderLoop() {
+        const render = () => {
+            this.renderCanvas();
             requestAnimationFrame(render);
-        }
+        };
+        requestAnimationFrame(render);
+    }
+    
+    renderCanvas() {
+        const width = this.canvas.width / window.devicePixelRatio;
+        const height = this.canvas.height / window.devicePixelRatio;
         
-        renderCanvas() {
-            const width = this.canvas.width / window.devicePixelRatio;
-            const height = this.canvas.height / window.devicePixelRatio;
-            
-            this.ctx.clearRect(0, 0, width, height);
-            
-            // Draw grid
-            this.drawGrid();
-            
-            // Draw connections
-            this.state.connections.forEach(conn => {
-                const source = this.state.traits.find(t => t.id === conn.source);
-                const target = this.state.traits.find(t => t.id === conn.target);
-                if (source && target) {
-                    this.drawConnection(source, target, conn);
-                }
-            });
-            
-            // Draw traits
-            this.state.traits.forEach(trait => {
-                this.drawTrait(trait);
-            });
-            
-            // Draw connection preview if in connect mode
-            if (this.state.currentTool === 'connect' && this.state.selectedTraits.size > 0) {
-                const lastTrait = Array.from(this.state.selectedTraits).pop();
-                this.drawConnectionPreview(lastTrait);
-            }
-        }
+        this.ctx.clearRect(0, 0, width, height);
         
-        drawGrid() {
-            const width = this.canvas.width / window.devicePixelRatio;
-            const height = this.canvas.height / window.devicePixelRatio;
-            const gridSize = 60;
-            
-            this.ctx.strokeStyle = 'rgba(28, 78, 128, 0.1)';
-            this.ctx.lineWidth = 1;
-            
-            for (let x = 0; x <= width; x += gridSize) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(x, 0);
-                this.ctx.lineTo(x, height);
-                this.ctx.stroke();
-            }
-            
-            for (let y = 0; y <= height; y += gridSize) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, y);
-                this.ctx.lineTo(width, y);
-                this.ctx.stroke();
-            }
-        }
+        // Draw grid
+        this.drawGrid();
         
-        drawConnection(source, target, conn) {
+        // Draw connections
+        this.state.connections.forEach(conn => {
+            const source = this.state.traits.find(t => t.id === conn.source);
+            const target = this.state.traits.find(t => t.id === conn.target);
+            if (source && target) {
+                this.drawConnection(source, target, conn);
+            }
+        });
+        
+        // Draw traits
+        this.state.traits.forEach(trait => {
+            this.drawTrait(trait);
+        });
+        
+        // Draw connection preview if in connect mode
+        if (this.state.currentTool === 'connect' && this.state.selectedTraits.size > 0) {
+            const lastTrait = Array.from(this.state.selectedTraits).pop();
+            this.drawConnectionPreview(lastTrait);
+        }
+    }
+    
+    drawGrid() {
+        const width = this.canvas.width / window.devicePixelRatio;
+        const height = this.canvas.height / window.devicePixelRatio;
+        const gridSize = 60;
+        
+        this.ctx.strokeStyle = 'rgba(28, 78, 128, 0.1)';
+        this.ctx.lineWidth = 1;
+        
+        for (let x = 0; x <= width; x += gridSize) {
             this.ctx.beginPath();
-            this.ctx.moveTo(source.x, source.y);
-            this.ctx.lineTo(target.x, target.y);
-            
-            const color = this.getConnectionColor(conn.strength);
-            this.ctx.strokeStyle = color;
-            this.ctx.lineWidth = conn.strength >= 80 ? 3 : 2;
-            this.ctx.globalAlpha = 0.7;
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, height);
             this.ctx.stroke();
-            this.ctx.globalAlpha = 1;
         }
         
-        drawConnectionPreview(trait) {
-            if (!this.state.lastMousePos) return;
-            
-            const rect = this.canvas.getBoundingClientRect();
-            const scale = window.devicePixelRatio;
-            const x = (this.state.lastMousePos.x - rect.left) * (this.canvas.width / rect.width) / scale;
-            const y = (this.state.lastMousePos.y - rect.top) * (this.canvas.height / rect.height) / scale;
-            
+        for (let y = 0; y <= height; y += gridSize) {
             this.ctx.beginPath();
-            this.ctx.moveTo(trait.x, trait.y);
-            this.ctx.lineTo(x, y);
-            this.ctx.strokeStyle = 'var(--clinical-blue-accent)';
-            this.ctx.lineWidth = 2;
-            this.ctx.setLineDash([5, 3]);
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(width, y);
             this.ctx.stroke();
-            this.ctx.setLineDash([]);
+        }
+    }
+    
+    drawConnection(source, target, conn) {
+        const x1 = source.x;
+        const y1 = source.y;
+        const x2 = target.x;
+        const y2 = target.y;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(x1, y1);
+        this.ctx.lineTo(x2, y2);
+        
+        // Style based on connection strength
+        let color, width, dash;
+        if (conn.strength >= 80) {
+            color = 'var(--clinical-red)';
+            width = 3;
+            dash = [];
+        } else if (conn.strength >= 65) {
+            color = 'var(--clinical-orange)';
+            width = 2.5;
+            dash = [];
+        } else {
+            color = 'var(--clinical-blue-light)';
+            width = 2;
+            dash = [5, 3];
         }
         
-        drawTrait(trait) {
-            const x = trait.x;
-            const y = trait.y;
-            const radius = 35;
-            
-            // Selection glow
-            if (trait.selected) {
-                this.ctx.beginPath();
-                this.ctx.arc(x, y, radius + 10, 0, Math.PI * 2);
-                const gradient = this.ctx.createRadialGradient(
-                    x, y, radius,
-                    x, y, radius + 10
-                );
-                gradient.addColorStop(0, this.hexToRgba('#6baed6', 0.7));
-                gradient.addColorStop(1, this.hexToRgba('#6baed6', 0));
-                this.ctx.fillStyle = gradient;
-                this.ctx.fill();
-            }
-            
-            // Trait circle
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = width;
+        if (dash.length) this.ctx.setLineDash(dash);
+        this.ctx.globalAlpha = 0.7;
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+        this.ctx.globalAlpha = 1;
+        
+        // Draw strength indicator
+        const midX = (x1 + x2) / 2;
+        const midY = (y1 + y2) / 2;
+        
+        this.ctx.beginPath();
+        this.ctx.arc(midX, midY, 6, 0, Math.PI * 2);
+        this.ctx.fillStyle = color;
+        this.ctx.fill();
+        
+        this.ctx.font = 'bold 9px Inter';
+        this.ctx.fillStyle = 'white';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(conn.strength, midX, midY);
+    }
+    
+    drawConnectionPreview(trait) {
+        if (!this.state.lastMousePos) return;
+        
+        const rect = this.canvas.getBoundingClientRect();
+        const scale = window.devicePixelRatio;
+        const x = (this.state.lastMousePos.x - rect.left) * (this.canvas.width / rect.width) / scale;
+        const y = (this.state.lastMousePos.y - rect.top) * (this.canvas.height / rect.height) / scale;
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(trait.x, trait.y);
+        this.ctx.lineTo(x, y);
+        this.ctx.strokeStyle = 'var(--clinical-blue-accent)';
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 3]);
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+    }
+    
+    drawTrait(trait) {
+        const x = trait.x;
+        const y = trait.y;
+        const radius = 35;
+        
+        // Selection glow
+        if (trait.selected) {
             this.ctx.beginPath();
-            this.ctx.arc(x, y, radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = trait.color;
+            this.ctx.arc(x, y, radius + 10, 0, Math.PI * 2);
+            const gradient = this.ctx.createRadialGradient(
+                x, y, radius,
+                x, y, radius + 10
+            );
+            gradient.addColorStop(0, this.hexToRgba('#6baed6', 0.7));
+            gradient.addColorStop(1, this.hexToRgba('#6baed6', 0));
+            this.ctx.fillStyle = gradient;
+            this.ctx.fill();
+        }
+        
+        // Trait circle
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, radius, 0, Math.PI * 2);
+        this.ctx.fillStyle = trait.color;
+        this.ctx.fill();
+        
+        // Border
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, radius + 2, 0, Math.PI * 2);
+        this.ctx.strokeStyle = trait.selected ? '#ffffff' : trait.color;
+        this.ctx.lineWidth = 2;
+        this.ctx.stroke();
+        
+        // Severity indicator
+        this.ctx.beginPath();
+        this.ctx.arc(x + radius * 0.7, y - radius * 0.7, 8, 0, Math.PI * 2);
+        this.ctx.fillStyle = this.getSeverityColor(trait.severity);
+        this.ctx.fill();
+        
+        this.ctx.font = 'bold 8px Inter';
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillText(trait.severity, x + radius * 0.7 - 4, y - radius * 0.7 + 3);
+        
+        // Selection number
+        const orderIndex = this.state.selectionOrder.indexOf(trait.id);
+        if (orderIndex !== -1) {
+            this.ctx.beginPath();
+            this.ctx.arc(x - radius * 0.7, y - radius * 0.7, 8, 0, Math.PI * 2);
+            this.ctx.fillStyle = '#6baed6';
             this.ctx.fill();
             
-            // Border
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, radius + 2, 0, Math.PI * 2);
-            this.ctx.strokeStyle = trait.selected ? '#ffffff' : trait.color;
-            this.ctx.lineWidth = 2;
-            this.ctx.stroke();
-            
-            // Severity indicator
-            this.ctx.beginPath();
-            this.ctx.arc(x + radius * 0.7, y - radius * 0.7, 8, 0, Math.PI * 2);
-            this.ctx.fillStyle = this.getSeverityColor(trait.severity);
-            this.ctx.fill();
-            
-            this.ctx.font = 'bold 8px Inter';
             this.ctx.fillStyle = 'white';
-            this.ctx.fillText(trait.severity, x + radius * 0.7 - 4, y - radius * 0.7 + 3);
-            
-            // Selection number
-            const orderIndex = this.state.selectionOrder.indexOf(trait.id);
-            if (orderIndex !== -1) {
-                this.ctx.beginPath();
-                this.ctx.arc(x - radius * 0.7, y - radius * 0.7, 8, 0, Math.PI * 2);
-                this.ctx.fillStyle = '#6baed6';
-                this.ctx.fill();
-                
-                this.ctx.fillStyle = 'white';
-                this.ctx.font = 'bold 10px Inter';
-                this.ctx.fillText(orderIndex + 1, x - radius * 0.7 - 4, y - radius * 0.7 + 4);
-            }
-        }
-        
-        hexToRgba(hex, alpha) {
-            if (hex.startsWith('var(--')) {
-                const colorName = hex.match(/var\(--([^)]+)\)/)[1];
-                const computedStyle = getComputedStyle(document.documentElement);
-                hex = computedStyle.getPropertyValue(`--${colorName}`).trim();
-            }
-            
-            hex = hex.replace('#', '');
-            
-            let r, g, b;
-            if (hex.length === 3) {
-                r = parseInt(hex[0] + hex[0], 16);
-                g = parseInt(hex[1] + hex[1], 16);
-                b = parseInt(hex[2] + hex[2], 16);
-            } else if (hex.length === 6) {
-                r = parseInt(hex.substring(0, 2), 16);
-                g = parseInt(hex.substring(2, 4), 16);
-                b = parseInt(hex.substring(4, 6), 16);
-            } else {
-                return `rgba(255, 255, 255, ${alpha})`;
-            }
-            
-            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        }
-        
-        // ===================================================
-        // UI CONTROLS
-        // ===================================================
-        toggleSidebar() {
-            const sidebar = document.getElementById('clinicalSidebar');
-            const isCollapsed = sidebar.classList.toggle('collapsed');
-            
-            const icon = isCollapsed ? 'fa-chevron-right' : 'fa-chevron-left';
-            document.getElementById('toggleSidebar').innerHTML = `<i class="fas ${icon}"></i>`;
-            document.getElementById('collapseSidebar').innerHTML = `<i class="fas ${icon}"></i>`;
-            
-            this.showToast('Sidebar', isCollapsed ? 'Collapsed' : 'Expanded', 'info');
-        }
-        
-        toggleDetailsPanel() {
-            const details = document.getElementById('clinicalDetails');
-            const isCollapsed = details.classList.toggle('collapsed');
-            
-            const icon = isCollapsed ? 'fa-chevron-left' : 'fa-chevron-right';
-            document.getElementById('toggleDetails').innerHTML = `<i class="fas ${icon}"></i>`;
-            document.getElementById('collapseDetails').innerHTML = `<i class="fas ${icon}"></i>`;
-            
-            this.showToast('Details Panel', isCollapsed ? 'Collapsed' : 'Expanded', 'info');
-        }
-        
-        toggleDashboard() {
-            const dashboard = document.getElementById('clinicalDashboard');
-            dashboard.classList.toggle('hidden');
-        }
-        
-        showContextMenu(x, y) {
-            // Remove existing menu
-            const existingMenu = document.querySelector('.context-menu');
-            if (existingMenu) existingMenu.remove();
-            
-            const menu = document.createElement('div');
-            menu.className = 'context-menu';
-            menu.style.cssText = `
-                position: fixed;
-                left: ${x}px;
-                top: ${y}px;
-                background: var(--bg-clinical-panel);
-                border: 1px solid var(--border-clinical);
-                border-radius: var(--radius-md);
-                padding: 8px;
-                z-index: 10000;
-                min-width: 180px;
-                box-shadow: var(--shadow-clinical-lg);
-            `;
-            
-            menu.innerHTML = `
-                <button onclick="clinicalPlatform.linkSelectedTraits()" 
-                        style="width: 100%; padding: 8px 12px; text-align: left; background: none; border: none; color: var(--text-clinical-primary); cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-link"></i>
-                    Link Selected (${this.state.selectedTraits.size})
-                </button>
-                <hr style="border: none; height: 1px; background: var(--border-clinical); margin: 4px 0;">
-                <button onclick="clinicalPlatform.deleteSelectedTraits()"
-                        style="width: 100%; padding: 8px 12px; text-align: left; background: none; border: none; color: var(--clinical-red); cursor: pointer; border-radius: var(--radius-sm); display: flex; align-items: center; gap: 8px;">
-                    <i class="fas fa-trash"></i>
-                    Delete Selected
-                </button>
-            `;
-            
-            document.body.appendChild(menu);
-            
-            // Close menu when clicking elsewhere
-            setTimeout(() => {
-                const closeHandler = (e) => {
-                    if (!menu.contains(e.target)) {
-                        menu.remove();
-                        document.removeEventListener('click', closeHandler);
-                    }
-                };
-                document.addEventListener('click', closeHandler);
-            }, 10);
-        }
-        
-        // ===================================================
-        // UTILITIES
-        // ===================================================
-        showToast(title, message, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `clinical-toast`;
-            
-            const iconMap = {
-                success: { icon: 'fa-check-circle', color: 'var(--clinical-green)' },
-                error: { icon: 'fa-exclamation-circle', color: 'var(--clinical-red)' },
-                warning: { icon: 'fa-exclamation-triangle', color: 'var(--clinical-orange)' },
-                info: { icon: 'fa-info-circle', color: 'var(--clinical-blue-light)' }
-            };
-            
-            const config = iconMap[type] || iconMap.info;
-            
-            toast.innerHTML = `
-                <div style="width: 24px; height: 24px; background: ${config.color}; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; color: white;">
-                    <i class="fas ${config.icon}"></i>
-                </div>
-                <div style="flex: 1;">
-                    <div style="font-weight: 700; margin-bottom: 2px; color: var(--text-clinical-primary);">${title}</div>
-                    <div style="font-size: var(--text-sm); color: var(--text-clinical-secondary);">${message}</div>
-                </div>
-            `;
-            
-            container.appendChild(toast);
-            
-            setTimeout(() => toast.classList.add('show'), 10);
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 5000);
+            this.ctx.font = 'bold 10px Inter';
+            this.ctx.fillText(orderIndex + 1, x - radius * 0.7 - 4, y - radius * 0.7 + 4);
         }
     }
-
-    // ===================================================
-    // CLINICAL STATE MANAGEMENT
-    // ===================================================
-    class ClinicalState {
-        constructor() {
-            this.traits = [];
-            this.connections = [];
-            this.selectedTraits = new Set();
-            this.selectionOrder = [];
-            this.currentTool = 'select';
-            this.draggingTrait = null;
-            this.dragOffset = { x: 0, y: 0 };
-            this.lastMousePos = { x: 0, y: 0 };
-            this.multiSelectMode = false;
+    
+    hexToRgba(hex, alpha) {
+        if (hex.startsWith('var(--')) {
+            const colorName = hex.match(/var\(--([^)]+)\)/)[1];
+            const computedStyle = getComputedStyle(document.documentElement);
+            hex = computedStyle.getPropertyValue(`--${colorName}`).trim();
         }
         
-        addTrait(trait) {
-            this.traits.push(trait);
+        hex = hex.replace('#', '');
+        
+        let r, g, b;
+        if (hex.length === 3) {
+            r = parseInt(hex[0] + hex[0], 16);
+            g = parseInt(hex[1] + hex[1], 16);
+            b = parseInt(hex[2] + hex[2], 16);
+        } else if (hex.length === 6) {
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        } else {
+            return `rgba(255, 255, 255, ${alpha})`;
         }
         
-        removeTrait(traitId) {
-            this.traits = this.traits.filter(t => t.id !== traitId);
-            this.selectedTraits.delete(this.traits.find(t => t.id === traitId));
-            this.connections = this.connections.filter(c => 
-                c.source !== traitId && c.target !== traitId
-            );
-        }
-        
-        createConnection(sourceId, targetId) {
-            if (sourceId === targetId) return null;
-            
-            const existing = this.connections.find(c => 
-                (c.source === sourceId && c.target === targetId) ||
-                (c.source === targetId && c.target === sourceId)
-            );
-            
-            if (existing) return null;
-            
-            const connection = {
-                id: `${sourceId}-${targetId}-${Date.now()}`,
-                source: sourceId,
-                target: targetId,
-                strength: this.calculateConnectionStrength(sourceId, targetId),
-                created: new Date().toISOString()
-            };
-            
-            this.connections.push(connection);
-            
-            // Update trait connections
-            const sourceTrait = this.traits.find(t => t.id === sourceId);
-            const targetTrait = this.traits.find(t => t.id === targetId);
-            if (sourceTrait && !sourceTrait.connections.includes(targetId)) {
-                sourceTrait.connections.push(targetId);
-            }
-            if (targetTrait && !targetTrait.connections.includes(sourceId)) {
-                targetTrait.connections.push(sourceId);
-            }
-            
-            return connection;
-        }
-        
-        calculateConnectionStrength(sourceId, targetId) {
-            const source = this.traits.find(t => t.id === sourceId);
-            const target = this.traits.find(t => t.id === targetId);
-            if (!source || !target) return 50;
-            
-            let strength = 50;
-            
-            if (source.category === target.category) strength += 20;
-            if (source.severity > 70 && target.severity > 70) strength += 15;
-            
-            return Math.min(100, Math.max(30, strength));
-        }
-        
-        getNetworkMetrics() {
-            const totalTraits = this.traits.length;
-            const totalConnections = this.connections.length;
-            const avgSeverity = totalTraits > 0 
-                ? this.traits.reduce((sum, t) => sum + t.severity, 0) / totalTraits 
-                : 0;
-            
-            const categories = {};
-            this.traits.forEach(t => {
-                categories[t.category] = (categories[t.category] || 0) + 1;
-            });
-            
-            const highSeverity = this.traits.filter(t => t.severity >= 80).length;
-            const criticalTraits = this.traits.filter(t => t.severity >= 90).length;
-            
-            return {
-                totalTraits,
-                totalConnections,
-                avgSeverity: Math.round(avgSeverity),
-                categoryDistribution: categories,
-                highSeverity,
-                criticalTraits,
-                complexityScore: Math.min(100, totalTraits * 2 + totalConnections)
-            };
-        }
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
+    
+    // ===================================================
+    // UTILITIES
+    // ===================================================
+    showToast(title, message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `clinical-toast`;
+        
+        const iconMap = {
+            success: { icon: 'fa-check-circle', color: 'var(--clinical-green)' },
+            error: { icon: 'fa-exclamation-circle', color: 'var(--clinical-red)' },
+            warning: { icon: 'fa-exclamation-triangle', color: 'var(--clinical-orange)' },
+            info: { icon: 'fa-info-circle', color: 'var(--clinical-blue-light)' }
+        };
+        
+        const config = iconMap[type] || iconMap.info;
+        
+        toast.innerHTML = `
+            <div class="toast-icon" style="background: ${config.color};">
+                <i class="fas ${config.icon}"></i>
+            </div>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+        `;
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+}
 
-    // ===================================================
-    // INITIALIZE APPLICATION
-    // ===================================================
-    let clinicalPlatform;
-    
-    window.addEventListener('DOMContentLoaded', () => {
-        clinicalPlatform = new ClinicalPlatform();
-        window.clinicalPlatform = clinicalPlatform;
-    });
-    
-    // Handle mobile touch
-    document.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 1) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    </script>
+// ===================================================
+// INITIALIZE APPLICATION
+// ===================================================
+let clinicalPlatform;
+
+window.addEventListener('DOMContentLoaded', () => {
+    clinicalPlatform = new ClinicalPlatform();
+    window.clinicalPlatform = clinicalPlatform;
+});
+</script>
 </body>
 </html>
