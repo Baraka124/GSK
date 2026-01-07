@@ -3441,10 +3441,10 @@ Primary treatment targets have been prioritized based on severity, evidence leve
 // ===================================================
 // INITIALIZE CLINICAL PLATFORM
 // ===================================================
-let ClinicalPlatform;
+let clinicalPlatformInstance;
 window.addEventListener('DOMContentLoaded', () => {
-    ClinicalPlatform = new ClinicalPlatform();
-    window.ClinicalPlatform = ClinicalPlatform;
+    clinicalPlatformInstance = new ClinicalPlatform();
+window.ClinicalPlatform = clinicalPlatformInstance;
 });
 </script>
 </body>
