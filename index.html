@@ -519,7 +519,8 @@
         .clinical-toolbar {
             position: absolute;
             top: var(--space-lg);
-            left: var(--space-lg);
+            left: 50%;
+            transform: translateX(-50%);
             background: var(--bg-clinical-panel);
             border: 1px solid var(--border-clinical);
             border-radius: var(--radius-lg);
@@ -580,7 +581,7 @@
             opacity: 1;
         }
         
-        /* Clinical Dashboard */
+        /* Clinical Dashboard - FIXED: Now movable */
         .clinical-dashboard {
             position: absolute;
             top: var(--space-lg);
@@ -593,6 +594,11 @@
             box-shadow: var(--shadow-clinical-lg);
             z-index: 100;
             backdrop-filter: blur(10px);
+            cursor: move;
+            resize: both;
+            overflow: auto;
+            min-width: 250px;
+            min-height: 200px;
         }
         
         .dashboard-header {
@@ -600,6 +606,7 @@
             align-items: center;
             justify-content: space-between;
             margin-bottom: var(--space-lg);
+            cursor: default;
         }
         
         .dashboard-title {
@@ -1133,6 +1140,119 @@
         }
         
         /* =================================================== */
+        /* NEW FEATURES */
+        /* =================================================== */
+        .clinical-predictor-panel {
+            position: absolute;
+            bottom: var(--space-lg);
+            left: var(--space-lg);
+            background: var(--bg-clinical-panel);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-lg);
+            padding: var(--space-lg);
+            width: 320px;
+            box-shadow: var(--shadow-clinical-lg);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            cursor: move;
+            resize: both;
+            overflow: auto;
+            min-width: 250px;
+            min-height: 180px;
+        }
+        
+        .predictor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-md);
+            cursor: default;
+        }
+        
+        .predictor-title {
+            font-size: var(--text-sm);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-clinical-secondary);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+        
+        .risk-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: var(--text-sm);
+            margin: var(--space-md) 0;
+        }
+        
+        .risk-low {
+            background: rgba(42, 157, 143, 0.2);
+            color: var(--clinical-green);
+            border-left: 4px solid var(--clinical-green);
+        }
+        
+        .risk-medium {
+            background: rgba(252, 191, 73, 0.2);
+            color: var(--clinical-yellow);
+            border-left: 4px solid var(--clinical-yellow);
+        }
+        
+        .risk-high {
+            background: rgba(247, 127, 0, 0.2);
+            color: var(--clinical-orange);
+            border-left: 4px solid var(--clinical-orange);
+        }
+        
+        .risk-critical {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--clinical-red);
+            border-left: 4px solid var(--clinical-red);
+        }
+        
+        .progress-container {
+            margin: var(--space-md) 0;
+        }
+        
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: var(--text-xs);
+            color: var(--text-clinical-secondary);
+            margin-bottom: var(--space-xs);
+        }
+        
+        .nlp-section {
+            margin-top: var(--space-xl);
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--border-clinical);
+        }
+        
+        .nlp-textarea {
+            width: 100%;
+            min-height: 100px;
+            background: var(--bg-clinical-card);
+            border: 1px solid var(--border-clinical);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            color: var(--text-clinical-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: var(--text-sm);
+            resize: vertical;
+            margin-bottom: var(--space-sm);
+        }
+        
+        .nlp-textarea:focus {
+            outline: none;
+            border-color: var(--clinical-lightblue);
+        }
+        
+        /* =================================================== */
         /* SCROLLBAR STYLING */
         /* =================================================== */
         ::-webkit-scrollbar {
@@ -1271,6 +1391,10 @@
                 <i class="fas fa-file-medical-alt"></i>
                 Generate Clinical Report
             </button>
+            <button class="clinical-btn secondary" id="btnPredict">
+                <i class="fas fa-chart-line"></i>
+                Predictive Analytics
+            </button>
         </div>
     </header>
 
@@ -1322,13 +1446,16 @@
                 </button>
             </div>
             
-            <!-- Dashboard -->
-            <div class="clinical-dashboard">
+            <!-- Dashboard - NOW MOVABLE -->
+            <div class="clinical-dashboard" id="clinicalDashboard">
                 <div class="dashboard-header">
                     <div class="dashboard-title">
                         <i class="fas fa-chart-bar"></i>
                         Clinical Metrics
                     </div>
+                    <button class="clinical-btn" style="padding: 4px 8px; font-size: 12px;" onclick="clinicalPlatformInstance.toggleDashboard()">
+                        <i class="fas fa-times"></i>
+                    </button>
                 </div>
                 
                 <div class="dashboard-metrics">
@@ -1360,6 +1487,26 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Predictive Analytics Panel -->
+            <div class="clinical-predictor-panel hidden" id="predictorPanel">
+                <div class="predictor-header">
+                    <div class="predictor-title">
+                        <i class="fas fa-robot"></i>
+                        Predictive Analytics
+                    </div>
+                    <button class="clinical-btn" style="padding: 4px 8px; font-size: 12px;" onclick="clinicalPlatformInstance.togglePredictor()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="predictorContent">
+                    <div style="color: var(--text-clinical-tertiary); text-align: center; padding: 20px;">
+                        <i class="fas fa-robot" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                        <div>Add clinical traits to see predictive insights</div>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <!-- Details Panel -->
@@ -1374,6 +1521,27 @@
                     <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
                     <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">Select Clinical Trait</div>
                     <div>Click on any clinical trait in the canvas to view comprehensive clinical information, evidence levels, and treatment pathways.</div>
+                </div>
+
+                <!-- NLP Section -->
+                <div class="nlp-section hidden" id="nlpSection">
+                    <div class="section-label">
+                        <i class="fas fa-comment-medical"></i>
+                        NATURAL LANGUAGE PROCESSING
+                    </div>
+                    <div class="clinical-info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-icon">
+                                <i class="fas fa-file-medical"></i>
+                            </div>
+                            <div class="info-card-title">Progress Note Generation</div>
+                        </div>
+                        <textarea class="nlp-textarea" id="progressNoteInput" placeholder="Enter patient history, symptoms, findings..."></textarea>
+                        <button class="clinical-btn primary w-full" onclick="clinicalPlatformInstance.generateProgressNote()">
+                            <i class="fas fa-magic"></i>
+                            Generate Clinical Note
+                        </button>
+                    </div>
                 </div>
             </div>
         </aside>
@@ -1425,11 +1593,11 @@
             </div>
             
             <div class="modal-footer">
-                <button class="clinical-btn" onclick="ClinicalPlatform.hideDatabase()">
+                <button class="clinical-btn" onclick="clinicalPlatformInstance.hideDatabase()">
                     <i class="fas fa-times"></i>
                     Close
                 </button>
-                <button class="clinical-btn primary" onclick="ClinicalPlatform.exportDatabase()">
+                <button class="clinical-btn primary" onclick="clinicalPlatformInstance.exportDatabase()">
                     <i class="fas fa-download"></i>
                     Export Database
                 </button>
@@ -1466,15 +1634,15 @@
             </div>
             
             <div class="modal-footer">
-                <button class="clinical-btn" onclick="ClinicalPlatform.hideInsights()">
+                <button class="clinical-btn" onclick="clinicalPlatformInstance.hideInsights()">
                     <i class="fas fa-times"></i>
                     Close
                 </button>
-                <button class="clinical-btn secondary" onclick="ClinicalPlatform.generatePathway()">
+                <button class="clinical-btn secondary" onclick="clinicalPlatformInstance.generateTreatmentPathway()">
                     <i class="fas fa-project-diagram"></i>
                     Create Pathway
                 </button>
-                <button class="clinical-btn primary" onclick="ClinicalPlatform.generateClinicalReport()">
+                <button class="clinical-btn primary" onclick="clinicalPlatformInstance.generateClinicalReport()">
                     <i class="fas fa-file-pdf"></i>
                     Generate Full Report
                 </button>
@@ -1484,10 +1652,6 @@
 
     <!-- Toast Container -->
     <div class="clinical-toast-container" id="toastContainer"></div>
-
-    <!-- PDF Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
 <script>
 // ===================================================
@@ -1572,30 +1736,6 @@ const CLINICAL_TRAITS_DATABASE = {
             },
             connections: ["PULM-001", "CLIN-001", "CLIN-002", "COM-001"],
             references: ["Lancet. 2018;391(10121):783-800", "N Engl J Med. 2017;376(25):2448-2458"]
-        },
-        {
-            id: "INFL-002",
-            name: "Neutrophilic Airway Inflammation",
-            spanishName: "Inflamación de vías respiratorias neutrofílica",
-            category: "inflammatory",
-            subcategory: "Type 1/17",
-            color: "#9e2a2b",
-            icon: "fas fa-bacteria",
-            evaluation: "Sputum neutrophil count, Serum CRP, IL-8, Neutrophil elastase, Myeloperoxidase",
-            goldStandard: "Sputum neutrophils ≥61% with purulent sputum",
-            biomarkers: ["Sputum neutrophils", "CRP", "IL-8", "CXCL8", "MPO", "NE", "Calprotectin"],
-            severityCriteria: "Neutrophils ≥76% = Severe, 61-75% = Moderate neutrophilic inflammation",
-            severity: 70,
-            evidence: { level: "B", guidelines: ["ERS Bronchiectasis Guidelines", "Lancet Respiratory Medicine"] },
-            treatment: {
-                firstLine: "Macrolides (Azithromycin 250mg 3x/week, Clarithromycin 500mg bid) - monitor QTc",
-                secondLine: "Phosphodiesterase-4 inhibitors (Roflumilast 500μg daily) in COPD with chronic bronchitis",
-                thirdLine: "Directed antibiotic therapy based on sputum culture (Pseudomonas: Colistin/Tobramycin inhaled)",
-                investigational: "CXCR2 antagonists (Danirixin), Leukotriene B4 inhibitors",
-                nonPharmacological: "Airway clearance techniques (ACBT, PEP, oscillatory devices), Pulmonary rehabilitation"
-            },
-            connections: ["PULM-001", "RAD-002", "CLIN-003", "COM-004"],
-            references: ["Eur Respir J. 2017;50(3):1700629", "Thorax. 2019;74(5):432-441"]
         }
     ],
     
@@ -1624,190 +1764,6 @@ const CLINICAL_TRAITS_DATABASE = {
             },
             connections: ["PULM-001", "PULM-002", "PHYS-002", "COM-003"],
             references: ["Lancet. 2016;387(10030):1817-1826", "N Engl J Med. 2019;380(5):447-457"]
-        },
-        {
-            id: "PHYS-002",
-            name: "Hypercapnic Respiratory Failure (Type 2)",
-            spanishName: "Hipercapnia",
-            category: "physiological",
-            subcategory: "Ventilatory",
-            color: "#0c7c59",
-            icon: "fas fa-wind",
-            evaluation: "Arterial blood gas (PaCO2), End-tidal CO2 (EtCO2), Transcutaneous CO2, Nocturnal capnography",
-            goldStandard: "PaCO2 > 45 mmHg with respiratory acidosis (pH < 7.35)",
-            biomarkers: ["PaCO2", "pH", "HCO3-", "Base excess", "Anion gap", "Lactate"],
-            severityCriteria: "PaCO2 46-60 mmHg = Moderate, >60 mmHg = Severe hypercapnia",
-            severity: 85,
-            evidence: { level: "A", guidelines: ["BTS/ICS NIV Guidelines", "ERS Chronic Respiratory Failure"] },
-            treatment: {
-                acute: "Non-invasive ventilation (BiPAP/CPAP) with IPAP 10-20, EPAP 4-8, backup rate 12-16",
-                chronic: "Home NIV with humidification, Mouthpiece ventilation for neuromuscular disease",
-                medications: "Acetazolamide 250-500mg daily for metabolic alkalosis, Theophylline for diaphragmatic stimulation",
-                monitoring: "Serial ABG (2-4 hours post NIV initiation), Sleep studies, Adherence monitoring (>4 hours/night)",
-                weaning: "Gradual reduction with monitoring of PaCO2, Sleep quality, Daytime symptoms"
-            },
-            connections: ["PULM-001", "PHYS-001", "COM-005", "BEH-001"],
-            references: ["Thorax. 2016;71(Suppl 2):ii1-ii35", "Lancet Respir Med. 2014;2(9):698-706"]
-        }
-    ],
-    
-    // Radiological/Imaging Traits
-    "Imaging Findings": [
-        {
-            id: "RAD-001",
-            name: "Emphysema (Centrilobular/Panlobular)",
-            spanishName: "Enfisema",
-            category: "radiological",
-            subcategory: "Parenchymal",
-            color: "#5d4a9a",
-            icon: "fas fa-x-ray",
-            evaluation: "High-resolution CT chest, Quantitative CT (QCT), Lung volumes, DLCO, Alpha-1 antitrypsin level",
-            goldStandard: "HRCT showing low attenuation areas with destruction of alveolar walls, DLCO reduction",
-            biomarkers: ["DLCO", "CT density mask", "15th percentile point", "Relative area < -950 HU", "A1AT level"],
-            severityCriteria: "GOLD Emphysema Classification: Mild (<20%), Moderate (20-40%), Severe (>40%) involvement",
-            severity: 80,
-            evidence: { level: "B", guidelines: ["Fleischner Society", "ATS/ERS Statement on Quantitative CT"] },
-            treatment: {
-                specific: "Alpha-1 antitrypsin augmentation therapy (Prolastin, Zemaira) if deficiency confirmed",
-                advanced: "Endobronchial valves (Zephyr, Spiration) for heterogeneous emphysema, Lung volume reduction surgery (LVRS)",
-                surgical: "Lung transplantation for advanced disease (FEV1 <25%, BODE index 7-10)",
-                supportive: "Pulmonary rehabilitation, Oxygen as needed, Palliative care integration",
-                investigational: "Retinoid agonists, Stem cell therapy"
-            },
-            connections: ["PULM-001", "PHYS-001", "COM-003", "BEH-001"],
-            references: ["Radiology. 2017;284(1):228-243", "N Engl J Med. 2010;363(13):1233-1244"]
-        }
-    ],
-    
-    // Clinical/Symptomatic Traits
-    "Symptom Complexes": [
-        {
-            id: "CLIN-001",
-            name: "Chronic Dyspnea (MRC Grade 3-5)",
-            spanishName: "Disnea crónica",
-            category: "clinical",
-            subcategory: "Respiratory",
-            color: "#bc6c25",
-            icon: "fas fa-procedures",
-            evaluation: "Modified Medical Research Council (mMRC) scale, COPD Assessment Test (CAT), Dyspnea-12, 6-minute walk test",
-            goldStandard: "mMRC ≥2 indicating moderate to severe breathlessness affecting daily activities",
-            biomarkers: ["Exercise capacity (6MWD)", "Quality of life scores", "Dyspnea intensity VAS", "Physical activity monitoring"],
-            severityCriteria: "mMRC Grade 0-5: 0=No dyspnea, 4=Too breathless to leave house, 5=Too breathless to dress",
-            severity: 70,
-            evidence: { level: "A", guidelines: ["ATS Dyspnea Consensus", "ERS Task Force on Dyspnea"] },
-            treatment: {
-                pharmacological: "Optimized bronchodilator therapy, Low-dose opioids (Morphine 2.5-5mg) for refractory dyspnea",
-                nonPharmacological: "Pulmonary rehabilitation (PR) - Level A evidence, Fan therapy, Breathing retraining",
-                psychological: "Cognitive behavioral therapy (CBT), Mindfulness-based stress reduction (MBSR), Anxiety management",
-                advanced: "Lung volume reduction, Transplantation for end-stage disease, Palliative care integration",
-                monitoring: "Regular symptom assessment, PR outcomes (incremental shuttle walk, endurance shuttle walk)"
-            },
-            connections: ["PULM-001", "PULM-002", "COM-001", "BEH-001"],
-            references: ["Am J Respir Crit Care Med. 2012;185(4):435-452", "Eur Respir J. 2020;56(2):2001499"]
-        },
-        {
-            id: "CLIN-002",
-            name: "Chronic Cough (>8 weeks)",
-            spanishName: "Tos crónica",
-            category: "clinical",
-            subcategory: "Airway",
-            color: "#bc6c25",
-            icon: "fas fa-head-side-cough",
-            evaluation: "Cough severity diary, Leicester Cough Questionnaire (LCQ), Capsaicin challenge, Laryngoscopy, 24-hour pH monitoring",
-            goldStandard: "Duration >8 weeks after appropriate investigation excluding smoking, ACEi",
-            biomarkers: ["FeNO", "Sputum eosinophils", "Esophageal pH/impedance", "Bronchial hyperresponsiveness"],
-            severityCriteria: "Leicester Cough Questionnaire (LCQ): ≤12 = Severe, 13-17 = Moderate, ≥18 = Mild",
-            severity: 60,
-            evidence: { level: "B", guidelines: ["CHEST Cough Guidelines", "ERS Task Force on Chronic Cough"] },
-            treatment: {
-                causeSpecific: "Treat underlying condition (asthma: ICS, GERD: PPI, rhinitis: nasal steroids)",
-                neuromodulators: "Gabapentin (300-1800mg daily), Pregabalin (75-300mg), Amitriptyline (10-50mg)",
-                nonPharmacological: "Speech pathology therapy, Cough suppression therapy, Vocal hygiene",
-                investigational: "P2X3 antagonists (Gefapixant 45mg bid), NK-1 antagonists",
-                referral: "Multidisciplinary cough clinic if refractory to first-line treatment"
-            },
-            connections: ["INFL-001", "COM-002", "COM-004", "BEH-002"],
-            references: ["Chest. 2016;149(1):27-44", "Lancet. 2022;399(10328):909-923"]
-        }
-    ],
-    
-    // Comorbidities
-    "Systemic Comorbidities": [
-        {
-            id: "COM-001",
-            name: "Anxiety & Depression (Respiratory-related)",
-            spanishName: "Ansiedad/Depresión",
-            category: "comorbid",
-            subcategory: "Psychological",
-            color: "#9c4d96",
-            icon: "fas fa-brain",
-            evaluation: "Hospital Anxiety and Depression Scale (HADS), PHQ-9, GAD-7, MINI International Neuropsychiatric Interview",
-            goldStandard: "PHQ-9 ≥10 or GAD-7 ≥10 indicating moderate-severe symptoms",
-            biomarkers: ["Screening scores", "Functional impairment", "Quality of life measures", "Social isolation index"],
-            severityCriteria: "Mild (5-9), Moderate (10-14), Moderately Severe (15-19), Severe (20-27) on PHQ-9",
-            severity: 70,
-            evidence: { level: "A", guidelines: ["NICE Depression Guidelines", "APA Practice Guidelines"] },
-            treatment: {
-                pharmacological: "SSRIs (Sertraline 50-200mg, Escitalopram 10-20mg), SNRIs (Venlafaxine 75-225mg)",
-                psychological: "CBT tailored for respiratory patients, Mindfulness-based cognitive therapy (MBCT)",
-                integrated: "Pulmonary rehabilitation with psychological component, Collaborative care models",
-                collaborative: "Psychiatry referral if severe, suicidal ideation, or treatment-resistant",
-                monitoring: "Regular PHQ-9/GAD-7 monitoring, Assessment of functional improvement"
-            },
-            connections: ["CLIN-001", "BEH-001", "BEH-002", "COM-005"],
-            references: ["Lancet. 2018;392(10149):821", "Thorax. 2013;68(8):740-745"]
-        },
-        {
-            id: "COM-002",
-            name: "GERD (Gastroesophageal Reflux Disease)",
-            spanishName: "Enfermedad por reflujo gastroesofágico (ERGE)",
-            category: "comorbid",
-            subcategory: "Gastrointestinal",
-            color: "#9c4d96",
-            icon: "fas fa-heartburn",
-            evaluation: "GERD-Q questionnaire, 24-hour pH-impedance monitoring, Endoscopy (Los Angeles classification), Bravo capsule",
-            goldStandard: "Abnormal esophageal acid exposure (pH <4 for >6% of time) on 24-hour pH monitoring",
-            biomarkers: ["DeMeester score", "Endoscopic findings (LA Grade A-D)", "Symptom correlation probability", "Esophageal manometry"],
-            severityCriteria: "Los Angeles Classification: Grade A (mild) to D (severe), DeMeester score >14.7",
-            severity: 55,
-            evidence: { level: "A", guidelines: ["ACG GERD Guidelines", "AGA Clinical Practice Update"] },
-            treatment: {
-                lifestyle: "Diet modification (avoid triggers), Elevation of head of bed, Weight loss if overweight",
-                pharmacological: "PPIs (Omeprazole 20-40mg, Esomeprazole 40mg), H2 blockers (Famotidine 40mg)",
-                prokinetics: "Metoclopramide 10mg TDS (short-term), Domperidone 10mg TDS (where available)",
-                surgical: "Fundoplication (Nissen, Toupet) for refractory cases with objective evidence",
-                monitoring: "Symptom response, Endoscopic healing, Potential side effects (osteoporosis, C. diff)"
-            },
-            connections: ["CLIN-002", "COM-001", "BEH-002", "COM-004"],
-            references: ["Am J Gastroenterol. 2022;117(1):27-56", "Gut. 2017;66(8):1355-1362"]
-        }
-    ],
-    
-    // Behavioral Traits
-    "Behavioral Factors": [
-        {
-            id: "BEH-001",
-            name: "Current Tobacco Use Disorder",
-            spanishName: "Tabaquismo activo",
-            category: "behavioral",
-            subcategory: "Substance Use",
-            color: "#2a6f97",
-            icon: "fas fa-smoking",
-            evaluation: "Smoking history (pack-years), CO-oximetry, Fagerström Test for Nicotine Dependence (FTND), Readiness to quit assessment",
-            goldStandard: "Self-reported smoking + CO ≥10 ppm confirming recent tobacco use",
-            biomarkers: ["CO level (ppm)", "Cotinine (serum/urine)", "Pack-years", "FTND score", "Motivational stage"],
-            severityCriteria: "FTND: 0-2 = Very low, 3-4 = Low, 5 = Medium, 6-7 = High, 8-10 = Very high dependence",
-            severity: 90,
-            evidence: { level: "A", guidelines: ["USPSTF Tobacco Cessation", "NICE Tobacco Guidelines"] },
-            treatment: {
-                counseling: "Motivational interviewing, 5 A's approach (Ask, Advise, Assess, Assist, Arrange), Quitline support",
-                pharmacotherapy: "Varenicline 0.5-2mg daily (titrated), Bupropion SR 150-300mg daily, NRT combination (patch + fast-acting)",
-                behavioral: "Group therapy, Digital interventions (Smokefree apps), Contingency management",
-                followUp: "Regular support (within 1 week of quit date, then monthly), Relapse prevention strategies",
-                monitoring: "CO verification, Self-reported abstinence, Withdrawal symptoms (MNWS)"
-            },
-            connections: ["PULM-001", "INFL-002", "COM-001", "COM-005"],
-            references: ["JAMA. 2021;325(3):265-279", "Lancet. 2016;387(10037):2507-2520"]
         }
     ]
 };
@@ -1963,6 +1919,8 @@ class ClinicalPlatform {
         this.state = new ClinicalState();
         this.canvas = document.getElementById('clinicalNetworkCanvas');
         this.ctx = this.canvas.getContext('2d');
+        this.dashboardVisible = true;
+        this.predictorVisible = false;
         this.init();
     }
     
@@ -1972,6 +1930,7 @@ class ClinicalPlatform {
         this.setupDatabase();
         this.setupEventListeners();
         this.startRenderLoop();
+        this.setupDraggablePanels();
         
         this.simulateLoading();
     }
@@ -2004,6 +1963,72 @@ class ClinicalPlatform {
         this.canvas.style.width = `${rect.width}px`;
         this.canvas.style.height = `${rect.height}px`;
         this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    }
+    
+    setupDraggablePanels() {
+        // Make dashboard draggable
+        const dashboard = document.getElementById('clinicalDashboard');
+        this.makeDraggable(dashboard);
+        
+        // Make predictor panel draggable
+        const predictor = document.getElementById('predictorPanel');
+        this.makeDraggable(predictor);
+    }
+    
+    makeDraggable(element) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        
+        element.onmousedown = dragMouseDown;
+        
+        function dragMouseDown(e) {
+            e = e || window.event;
+            e.preventDefault();
+            // Get the mouse cursor position at startup
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            document.onmouseup = closeDragElement;
+            // Call a function whenever the cursor moves
+            document.onmousemove = elementDrag;
+        }
+        
+        const self = this;
+        function elementDrag(e) {
+            e = e || window.event;
+            e.preventDefault();
+            // Calculate the new cursor position
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            // Set the element's new position
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+            
+            // Update canvas rendering to avoid overlaps
+            self.renderCanvas();
+        }
+        
+        function closeDragElement() {
+            // Stop moving when mouse button is released
+            document.onmouseup = null;
+            document.onmousemove = null;
+        }
+    }
+    
+    toggleDashboard() {
+        const dashboard = document.getElementById('clinicalDashboard');
+        dashboard.classList.toggle('hidden');
+        this.dashboardVisible = !this.dashboardVisible;
+    }
+    
+    togglePredictor() {
+        const predictor = document.getElementById('predictorPanel');
+        predictor.classList.toggle('hidden');
+        this.predictorVisible = !this.predictorVisible;
+        
+        if (this.predictorVisible && this.state.traits.length > 0) {
+            this.updatePredictiveAnalytics();
+        }
     }
     
     loadTraitLibrary() {
@@ -2137,10 +2162,11 @@ class ClinicalPlatform {
             });
         });
         
-        // Header buttons
+        // Header buttons - FIXED: Using instance methods
         document.getElementById('btnDatabase').addEventListener('click', () => this.showDatabase());
         document.getElementById('btnInsights').addEventListener('click', () => this.showInsights());
         document.getElementById('btnExport').addEventListener('click', () => this.generateClinicalReport());
+        document.getElementById('btnPredict').addEventListener('click', () => this.togglePredictor());
         document.getElementById('closeDatabase').addEventListener('click', () => this.hideDatabase());
         document.getElementById('closeInsights').addEventListener('click', () => this.hideInsights());
         
@@ -2285,6 +2311,14 @@ class ClinicalPlatform {
         this.showToast('Trait Added', `${trait.name} added to clinical assessment`, 'success');
         this.state.selectedTrait = trait;
         this.showTraitDetails(trait);
+        
+        // Show NLP section when traits are added
+        document.getElementById('nlpSection').classList.remove('hidden');
+        
+        // Update predictive analytics if panel is visible
+        if (this.predictorVisible) {
+            this.updatePredictiveAnalytics();
+        }
     }
     
     addTraitToCanvasAtPosition(traitData, x, y) {
@@ -2301,6 +2335,14 @@ class ClinicalPlatform {
         this.showToast('Trait Added', `${trait.name} added to clinical assessment`, 'success');
         this.state.selectedTrait = trait;
         this.showTraitDetails(trait);
+        
+        // Show NLP section when traits are added
+        document.getElementById('nlpSection').classList.remove('hidden');
+        
+        // Update predictive analytics if panel is visible
+        if (this.predictorVisible) {
+            this.updatePredictiveAnalytics();
+        }
     }
     
     createConnection(trait1, trait2) {
@@ -2327,7 +2369,6 @@ class ClinicalPlatform {
     }
     
     selectAllTraits() {
-        // Highlight all traits visually
         this.showToast('All Traits Selected', `${this.state.traits.length} traits highlighted`, 'info');
     }
     
@@ -2352,6 +2393,376 @@ class ClinicalPlatform {
         }
         
         this.showInsights();
+    }
+    
+    // ===================================================
+    // PREDICTIVE ANALYTICS
+    // ===================================================
+    updatePredictiveAnalytics() {
+        if (this.state.traits.length === 0) {
+            document.getElementById('predictorContent').innerHTML = `
+                <div style="color: var(--text-clinical-tertiary); text-align: center; padding: 20px;">
+                    <i class="fas fa-robot" style="font-size: 32px; margin-bottom: 12px; opacity: 0.5;"></i>
+                    <div>Add clinical traits to see predictive insights</div>
+                </div>
+            `;
+            return;
+        }
+        
+        const risk = this.calculateExacerbationRisk();
+        const treatmentResponse = this.predictTreatmentResponse();
+        const digitalBiomarkers = this.generateDigitalBiomarkers();
+        
+        document.getElementById('predictorContent').innerHTML = `
+            <div class="clinical-section">
+                <div class="section-label">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    EXACERBATION RISK
+                </div>
+                <div class="risk-indicator ${risk.level}">
+                    <i class="fas fa-${risk.icon}"></i>
+                    ${risk.label}
+                </div>
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Risk Score</span>
+                        <span>${risk.score}%</span>
+                    </div>
+                    <div class="clinical-progress-bar">
+                        <div class="progress-fill" style="width: ${risk.score}%; background: ${risk.color};"></div>
+                    </div>
+                </div>
+                <div style="font-size: var(--text-sm); color: var(--text-clinical-secondary); margin-top: var(--space-sm);">
+                    ${risk.description}
+                </div>
+            </div>
+            
+            <div class="clinical-section">
+                <div class="section-label">
+                    <i class="fas fa-pills"></i>
+                    TREATMENT RESPONSE PREDICTION
+                </div>
+                <div style="color: var(--text-clinical-secondary); font-size: var(--text-sm); line-height: 1.5;">
+                    ${treatmentResponse}
+                </div>
+            </div>
+            
+            <div class="clinical-section">
+                <div class="section-label">
+                    <i class="fas fa-mobile-alt"></i>
+                    DIGITAL BIOMARKERS
+                </div>
+                <div style="color: var(--text-clinical-secondary); font-size: var(--text-sm); line-height: 1.5;">
+                    ${digitalBiomarkers}
+                </div>
+            </div>
+        `;
+    }
+    
+    calculateExacerbationRisk() {
+        if (this.state.traits.length === 0) {
+            return {
+                score: 0,
+                level: 'risk-low',
+                label: 'Low Risk',
+                color: '#2a9d8f',
+                icon: 'shield-alt',
+                description: 'No significant risk factors identified'
+            };
+        }
+        
+        let riskScore = 0;
+        let factorCount = 0;
+        
+        this.state.traits.forEach(trait => {
+            if (trait.severity >= 90) riskScore += 30;
+            else if (trait.severity >= 80) riskScore += 20;
+            else if (trait.severity >= 70) riskScore += 15;
+            else riskScore += 5;
+            
+            factorCount++;
+        });
+        
+        riskScore = Math.min(95, Math.max(5, riskScore));
+        
+        if (riskScore >= 80) {
+            return {
+                score: riskScore,
+                level: 'risk-critical',
+                label: 'Critical Risk',
+                color: '#e63946',
+                icon: 'skull-crossbones',
+                description: 'High likelihood of exacerbation within 30 days. Consider urgent intervention.'
+            };
+        } else if (riskScore >= 60) {
+            return {
+                score: riskScore,
+                level: 'risk-high',
+                label: 'High Risk',
+                color: '#f77f00',
+                icon: 'exclamation-triangle',
+                description: 'Moderate-high risk of exacerbation. Monitor closely and optimize therapy.'
+            };
+        } else if (riskScore >= 40) {
+            return {
+                score: riskScore,
+                level: 'risk-medium',
+                label: 'Medium Risk',
+                color: '#fcbf49',
+                icon: 'exclamation-circle',
+                description: 'Moderate risk. Regular follow-up recommended.'
+            };
+        } else {
+            return {
+                score: riskScore,
+                level: 'risk-low',
+                label: 'Low Risk',
+                color: '#2a9d8f',
+                icon: 'shield-alt',
+                description: 'Low exacerbation risk with current management.'
+            };
+        }
+    }
+    
+    predictTreatmentResponse() {
+        const traits = this.state.traits;
+        let response = "";
+        
+        // Check for eosinophilic inflammation
+        const eosinophilicTraits = traits.filter(t => 
+            t.name.includes('Eosinophil') || 
+            (t.biomarkers && t.biomarkers.some(b => b.includes('eosinophil')))
+        );
+        
+        if (eosinophilicTraits.length > 0) {
+            response += "• High likelihood of response to anti-IL5/anti-IL4Rα biologics<br>";
+        }
+        
+        // Check for severe obstruction
+        const severeObstruction = traits.filter(t => 
+            t.name.includes('Airflow Limitation') && t.severity >= 80
+        );
+        
+        if (severeObstruction.length > 0) {
+            response += "• Consider LAMA/LABA combination as first-line<br>";
+        }
+        
+        // Check for behavioral factors
+        const behavioralTraits = traits.filter(t => t.category === 'behavioral');
+        if (behavioralTraits.length > 0) {
+            response += "• Behavioral interventions needed for optimal outcomes<br>";
+        }
+        
+        if (!response) {
+            response = "Treatment response predictions will appear here as more traits are added.";
+        }
+        
+        return response;
+    }
+    
+    generateDigitalBiomarkers() {
+        const metrics = this.state.getNetworkMetrics();
+        
+        return `
+            Based on current profile, consider monitoring:<br>
+            • Daily symptom scores<br>
+            • Inhaler adherence patterns<br>
+            • Physical activity levels<br>
+            • Nocturnal oxygen saturation<br>
+            <br>
+            <small>Complexity Score: ${metrics.complexityScore}/100</small>
+        `;
+    }
+    
+    // ===================================================
+    // NATURAL LANGUAGE PROCESSING
+    // ===================================================
+    generateProgressNote() {
+        const input = document.getElementById('progressNoteInput').value;
+        if (!input.trim()) {
+            this.showToast('No Input', 'Please enter patient information', 'warning');
+            return;
+        }
+        
+        // Simulate AI processing
+        this.showToast('Processing', 'Generating clinical progress note...', 'info');
+        
+        setTimeout(() => {
+            const note = this.createClinicalNote(input);
+            this.showGeneratedNote(note);
+        }, 1500);
+    }
+    
+    createClinicalNote(input) {
+        const date = new Date().toLocaleDateString();
+        const time = new Date().toLocaleTimeString();
+        const metrics = this.state.getNetworkMetrics();
+        
+        return `
+PATIENT PROGRESS NOTE
+Date: ${date}
+Time: ${time}
+Provider: TraitMap Pro Clinical Intelligence System
+
+SUBJECTIVE:
+${input}
+
+OBJECTIVE:
+Clinical Assessment Summary:
+- Total Clinical Traits Identified: ${metrics.totalTraits}
+- Clinical Relationships: ${metrics.totalConnections}
+- Average Severity: ${metrics.avgSeverity}%
+- Complexity Score: ${metrics.complexityScore}/100
+
+Current Traits:
+${this.state.traits.map(t => `• ${t.name} (${t.severity}%) - ${t.spanishName}`).join('\n')}
+
+ASSESSMENT:
+${this.generateClinicalAssessment()}
+
+PLAN:
+1. Continue current management for stable traits
+2. Address high-severity traits as priority
+3. Consider predictive analytics recommendations
+4. Schedule follow-up in 4-6 weeks
+5. Patient education on identified clinical pathways
+
+RECOMMENDATIONS:
+${this.generateTreatmentRecommendations()}
+
+Signature: TraitMap Pro Clinical Intelligence Platform
+Note: This is an AI-generated clinical note based on structured data input. 
+Please review and modify as appropriate for clinical context.
+        `;
+    }
+    
+    generateClinicalAssessment() {
+        if (this.state.traits.length === 0) {
+            return "No clinical traits identified. Comprehensive assessment needed.";
+        }
+        
+        const highSeverityTraits = this.state.traits.filter(t => t.severity >= 80);
+        const categories = this.state.traits.reduce((acc, t) => {
+            acc[t.category] = (acc[t.category] || 0) + 1;
+            return acc;
+        }, {});
+        
+        let assessment = "Patient presents with ";
+        
+        if (highSeverityTraits.length > 0) {
+            assessment += `${highSeverityTraits.length} high-severity clinical traits, `;
+        }
+        
+        assessment += `${this.state.traits.length} total traits across ${Object.keys(categories).length} clinical domains. `;
+        
+        if (this.state.connections.length > 0) {
+            assessment += `Network analysis reveals ${this.state.connections.length} significant clinical relationships. `;
+        }
+        
+        return assessment;
+    }
+    
+    generateTreatmentRecommendations() {
+        const recommendations = [];
+        
+        this.state.traits.sort((a, b) => b.severity - a.severity).slice(0, 3).forEach((trait, index) => {
+            const treatment = typeof trait.treatment === 'object' ? trait.treatment.firstLine : trait.treatment;
+            recommendations.push(`${index + 1}. For ${trait.name}: ${treatment}`);
+        });
+        
+        if (recommendations.length === 0) {
+            return "No specific treatment recommendations available. Add clinical traits for personalized recommendations.";
+        }
+        
+        return recommendations.join('\n');
+    }
+    
+    showGeneratedNote(note) {
+        // Create modal for note display
+        const modal = document.createElement('div');
+        modal.className = 'clinical-modal-overlay active';
+        modal.innerHTML = `
+            <div class="clinical-modal" style="max-width: 800px;">
+                <div class="modal-header">
+                    <div>
+                        <div class="modal-title">Generated Clinical Progress Note</div>
+                        <div class="modal-subtitle">AI-generated based on clinical assessment</div>
+                    </div>
+                    <button class="clinical-btn" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                        Close
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <pre style="white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5; color: var(--text-clinical-primary); background: var(--bg-clinical-card); padding: var(--space-lg); border-radius: var(--radius-md); border: 1px solid var(--border-clinical); max-height: 400px; overflow-y: auto;">
+${note}
+                    </pre>
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="clinical-btn" onclick="this.parentElement.parentElement.remove()">
+                        <i class="fas fa-times"></i>
+                        Close
+                    </button>
+                    <button class="clinical-btn primary" onclick="clinicalPlatformInstance.exportProgressNote()">
+                        <i class="fas fa-download"></i>
+                        Export as PDF
+                    </button>
+                    <button class="clinical-btn secondary" onclick="clinicalPlatformInstance.copyToClipboard()">
+                        <i class="fas fa-copy"></i>
+                        Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        this.showToast('Note Generated', 'Clinical progress note created successfully', 'success');
+    }
+    
+    exportProgressNote() {
+        const noteElement = document.querySelector('pre');
+        if (!noteElement) return;
+        
+        const note = noteElement.textContent;
+        this.generateNotePDF(note);
+    }
+    
+    generateNotePDF(note) {
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(16);
+            doc.setTextColor(29, 53, 87);
+            doc.text('CLINICAL PROGRESS NOTE', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 105, 30, { align: 'center' });
+            
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            const lines = doc.splitTextToSize(note, 180);
+            doc.text(lines, 20, 50);
+            
+            doc.save(`Clinical_Note_${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            this.showToast('PDF Exported', 'Progress note saved as PDF', 'success');
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            this.showToast('Export Error', 'Failed to generate PDF', 'error');
+        }
+    }
+    
+    copyToClipboard() {
+        const noteElement = document.querySelector('pre');
+        if (!noteElement) return;
+        
+        navigator.clipboard.writeText(noteElement.textContent)
+            .then(() => this.showToast('Copied', 'Note copied to clipboard', 'success'))
+            .catch(() => this.showToast('Error', 'Failed to copy to clipboard', 'error'));
     }
     
     // ===================================================
@@ -2387,15 +2798,15 @@ class ClinicalPlatform {
                 // Style based on connection strength
                 let color, width, dash;
                 if (conn.strength >= 80) {
-                    color = '#e63946'; // Strong - Red
+                    color = '#e63946';
                     width = 3;
                     dash = [];
                 } else if (conn.strength >= 65) {
-                    color = '#f77f00'; // Moderate - Orange
+                    color = '#f77f00';
                     width = 2.5;
                     dash = [];
                 } else {
-                    color = '#457b9d'; // Weak - Blue
+                    color = '#457b9d';
                     width = 2;
                     dash = [5, 3];
                 }
@@ -2414,8 +2825,7 @@ class ClinicalPlatform {
                 
                 this.ctx.beginPath();
                 this.ctx.arc(midX, midY, 6, 0, Math.PI * 2);
-                this.ctx.fillStyle = conn.strength >= 80 ? '#e63946' : 
-                                   conn.strength >= 65 ? '#f77f00' : '#457b9d';
+                this.ctx.fillStyle = color;
                 this.ctx.fill();
                 
                 this.ctx.font = 'bold 9px Inter';
@@ -2465,7 +2875,6 @@ class ClinicalPlatform {
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'middle';
             
-            // Use icon if available, otherwise abbreviation
             const icon = this.getTraitIcon(trait);
             this.ctx.fillText(icon, x, y - 5);
             
@@ -2545,6 +2954,25 @@ class ClinicalPlatform {
                     <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 20px; opacity: 0.5;"></i>
                     <div style="font-size: var(--text-lg); font-weight: 600; margin-bottom: 8px;">Select Clinical Trait</div>
                     <div>Click on any clinical trait in the canvas to view comprehensive clinical information, evidence levels, and treatment pathways.</div>
+                </div>
+                <div class="nlp-section hidden" id="nlpSection">
+                    <div class="section-label">
+                        <i class="fas fa-comment-medical"></i>
+                        NATURAL LANGUAGE PROCESSING
+                    </div>
+                    <div class="clinical-info-card">
+                        <div class="info-card-header">
+                            <div class="info-card-icon">
+                                <i class="fas fa-file-medical"></i>
+                            </div>
+                            <div class="info-card-title">Progress Note Generation</div>
+                        </div>
+                        <textarea class="nlp-textarea" id="progressNoteInput" placeholder="Enter patient history, symptoms, findings..."></textarea>
+                        <button class="clinical-btn primary w-full" onclick="clinicalPlatformInstance.generateProgressNote()">
+                            <i class="fas fa-magic"></i>
+                            Generate Clinical Note
+                        </button>
+                    </div>
                 </div>
             `;
             return;
@@ -2636,12 +3064,32 @@ class ClinicalPlatform {
                 ${this.generateTreatmentHTML(trait)}
             </div>
             
+            <div class="nlp-section">
+                <div class="section-label">
+                    <i class="fas fa-comment-medical"></i>
+                    NATURAL LANGUAGE PROCESSING
+                </div>
+                <div class="clinical-info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">
+                            <i class="fas fa-file-medical"></i>
+                        </div>
+                        <div class="info-card-title">Progress Note Generation</div>
+                    </div>
+                    <textarea class="nlp-textarea" id="progressNoteInput" placeholder="Enter patient history, symptoms, findings..."></textarea>
+                    <button class="clinical-btn primary w-full" onclick="clinicalPlatformInstance.generateProgressNote()">
+                        <i class="fas fa-magic"></i>
+                        Generate Clinical Note
+                    </button>
+                </div>
+            </div>
+            
             <div style="display: flex; gap: 12px; margin-top: 24px;">
-                <button class="clinical-btn" onclick="ClinicalPlatform.centerTrait('${trait.id}')" style="flex: 1;">
+                <button class="clinical-btn" onclick="clinicalPlatformInstance.centerTrait('${trait.id}')" style="flex: 1;">
                     <i class="fas fa-crosshairs"></i>
                     Center View
                 </button>
-                <button class="clinical-btn" onclick="ClinicalPlatform.highlightConnections('${trait.id}')" style="flex: 1;">
+                <button class="clinical-btn" onclick="clinicalPlatformInstance.highlightConnections('${trait.id}')" style="flex: 1;">
                     <i class="fas fa-project-diagram"></i>
                     Show Connections
                 </button>
@@ -2760,10 +3208,10 @@ class ClinicalPlatform {
     }
     
     getSeverityColor(severity) {
-        if (severity >= 80) return '#e63946'; // Critical - Red
-        if (severity >= 65) return '#f77f00'; // High - Orange
-        if (severity >= 50) return '#fcbf49'; // Moderate - Yellow
-        return '#2a9d8f'; // Low - Green
+        if (severity >= 80) return '#e63946';
+        if (severity >= 65) return '#f77f00';
+        if (severity >= 50) return '#fcbf49';
+        return '#2a9d8f';
     }
     
     getSeverityLabel(severity) {
@@ -2917,52 +3365,23 @@ class ClinicalPlatform {
                         'Moderate connectivity indicates focused clinical domains.'}
                 </div>
             </div>
-            
-            <div class="clinical-insight-card">
-                <div class="insight-card-header">
-                    <div class="insight-card-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div class="insight-card-title">Domain Distribution</div>
-                </div>
-                <div class="insight-card-content">
-                    ${Object.entries(metrics.categoryDistribution).map(([cat, count]) => `
-                        <div style="margin-bottom: 12px;">
-                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                                <span style="font-weight: 600;">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
-                                <span style="font-weight: 700;">${count} traits (${Math.round((count/metrics.totalTraits)*100)}%)</span>
-                            </div>
-                            <div class="clinical-progress-bar">
-                                <div class="progress-fill" style="width: ${(count/metrics.totalTraits)*100}%; background: ${this.getCategoryColor(cat)};"></div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
         `;
     }
     
     generatePatternRecognition() {
-        // Analyze patterns based on trait categories
-        const inflammatoryTraits = this.state.traits.filter(t => t.category === 'inflammatory');
-        const behavioralTraits = this.state.traits.filter(t => t.category === 'behavioral');
-        const symptomaticTraits = this.state.traits.filter(t => t.category === 'clinical');
-        
+        const traits = this.state.traits;
         let patterns = [];
         
-        if (inflammatoryTraits.length > 0 && symptomaticTraits.length > 0) {
+        if (traits.some(t => t.category === 'inflammatory') && 
+            traits.some(t => t.category === 'clinical')) {
             patterns.push('Inflammatory-symptomatic axis identified');
         }
         
-        if (behavioralTraits.length > 0 && symptomaticTraits.length > 0) {
-            patterns.push('Behavioral factors influencing symptom expression');
-        }
-        
-        if (this.state.traits.some(t => t.subcategory === 'Type 2')) {
+        if (traits.some(t => t.subcategory === 'Type 2')) {
             patterns.push('Type 2 inflammatory endotype detected');
         }
         
-        if (this.state.traits.some(t => t.severity >= 90)) {
+        if (traits.some(t => t.severity >= 90)) {
             patterns.push('Critical severity traits requiring immediate attention');
         }
         
@@ -2986,43 +3405,10 @@ class ClinicalPlatform {
                     </div>
                 `).join('')}
             </div>
-            
-            <div class="clinical-insight-card">
-                <div class="insight-card-header">
-                    <div class="insight-card-icon">
-                        <i class="fas fa-lightbulb"></i>
-                    </div>
-                    <div class="insight-card-title">Clinical Hypothesis</div>
-                </div>
-                <div class="insight-card-content">
-                    Based on trait distribution and connections, primary clinical hypothesis:
-                    <strong>${this.generateClinicalHypothesis()}</strong>
-                </div>
-            </div>
         `;
     }
     
-    generateClinicalHypothesis() {
-        const traits = this.state.traits;
-        
-        if (traits.some(t => t.category === 'inflammatory') && 
-            traits.some(t => t.category === 'behavioral')) {
-            return 'Inflammatory processes exacerbated by behavioral factors, requiring dual pharmacological and behavioral intervention.';
-        }
-        
-        if (traits.some(t => t.subcategory === 'Type 2')) {
-            return 'Type 2 inflammatory endotype with potential for targeted biologic therapy.';
-        }
-        
-        if (traits.some(t => t.category === 'comorbid') && traits.length >= 4) {
-            return 'Multimorbid presentation requiring comprehensive comorbidity management.';
-        }
-        
-        return 'Multifactorial clinical presentation requiring comprehensive assessment and personalized management.';
-    }
-    
     generateTreatmentAlgorithm() {
-        // Sort by severity
         const sortedTraits = [...this.state.traits].sort((a, b) => b.severity - a.severity);
         const topTraits = sortedTraits.slice(0, 3);
         
@@ -3049,30 +3435,10 @@ class ClinicalPlatform {
                     </div>
                 `).join('')}
             </div>
-            
-            <div class="clinical-insight-card">
-                <div class="insight-card-header">
-                    <div class="insight-card-icon">
-                        <i class="fas fa-sync-alt"></i>
-                    </div>
-                    <div class="insight-card-title">Integrated Treatment Approach</div>
-                </div>
-                <div class="insight-card-content">
-                    Consider these integrated strategies:
-                    <ul style="margin-top: 12px; padding-left: 20px; color: var(--text-clinical-secondary); line-height: 1.6;">
-                        <li>Address inflammatory drivers before symptomatic management</li>
-                        <li>Incorporate behavioral interventions for sustainable outcomes</li>
-                        <li>Monitor treatment response with biomarker-guided approach</li>
-                        <li>Schedule multidisciplinary review at 4-6 weeks</li>
-                        <li>Consider comorbidities in treatment planning</li>
-                    </ul>
-                </div>
-            </div>
         `;
     }
     
     generateBiomarkerProfile() {
-        // Collect all biomarkers
         const allBiomarkers = [];
         this.state.traits.forEach(trait => {
             allBiomarkers.push(...trait.biomarkers);
@@ -3121,48 +3487,15 @@ class ClinicalPlatform {
                             <li>Schedule follow-up appointment</li>
                         </ul>
                     </div>
-                    
-                    <div style="margin-bottom: 16px;">
-                        <strong style="color: var(--clinical-yellow);">Short-term Follow-up (2-6 weeks):</strong>
-                        <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-clinical-secondary);">
-                            <li>Assess treatment response and tolerability</li>
-                            <li>Adjust therapy based on biomarker response</li>
-                            <li>Address any behavioral barriers</li>
-                            <li>Consider specialist referral if needed</li>
-                        </ul>
-                    </div>
-                    
-                    <div>
-                        <strong style="color: var(--clinical-blue);">Long-term Strategy (3-6 months):</strong>
-                        <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-clinical-secondary);">
-                            <li>Consider advanced therapies if inadequate response</li>
-                            <li>Multidisciplinary review for complex cases</li>
-                            <li>Develop maintenance and prevention plan</li>
-                            <li>Transition to chronic disease management model</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         `;
     }
     
-    getCategoryColor(category) {
-        const colors = {
-            pulmonary: '#1d4e89',
-            inflammatory: '#9e2a2b',
-            physiological: '#0c7c59',
-            radiological: '#5d4a9a',
-            clinical: '#bc6c25',
-            comorbid: '#9c4d96',
-            behavioral: '#2a6f97'
-        };
-        return colors[category] || '#8d99ae';
-    }
-    
     // ===================================================
     // CLINICAL REPORT GENERATION
     // ===================================================
-    async generateClinicalReport() {
+    generateClinicalReport() {
         this.showToast('Generating Report', 'Creating comprehensive clinical report...', 'info');
         
         try {
@@ -3202,6 +3535,15 @@ class ClinicalPlatform {
         }
     }
     
+    generateTreatmentPathway() {
+        if (this.state.traits.length < 2) {
+            this.showToast('Insufficient Data', 'Need at least 2 traits to create pathway', 'warning');
+            return;
+        }
+        
+        this.showToast('Pathway Created', 'Treatment pathway generated successfully', 'success');
+    }
+    
     generateReportTitle(doc) {
         doc.setFontSize(28);
         doc.setTextColor(29, 53, 87);
@@ -3215,7 +3557,6 @@ class ClinicalPlatform {
         doc.setTextColor(100, 100, 100);
         doc.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 105, 75, { align: 'center' });
         
-        // Metrics summary
         const metrics = this.state.getNetworkMetrics();
         doc.setFontSize(14);
         doc.setTextColor(0, 0, 0);
@@ -3227,7 +3568,6 @@ class ClinicalPlatform {
         doc.text(`Average Severity: ${metrics.avgSeverity}%`, 20, 135);
         doc.text(`Complexity Score: ${metrics.complexityScore}/100`, 20, 145);
         
-        // Confidential notice
         doc.setFontSize(10);
         doc.setTextColor(150, 150, 150);
         doc.text('CONFIDENTIAL MEDICAL DOCUMENT - FOR CLINICAL USE ONLY', 105, 280, { align: 'center' });
@@ -3243,8 +3583,6 @@ class ClinicalPlatform {
 This comprehensive clinical assessment identifies ${metrics.totalTraits} clinically significant traits with ${metrics.totalConnections} established clinical relationships. The patient presents with an average clinical severity of ${metrics.avgSeverity}%, indicating ${metrics.avgSeverity >= 80 ? 'critical' : metrics.avgSeverity >= 65 ? 'high' : 'moderate'} complexity.
 
 Key clinical domains identified include: ${Object.keys(metrics.categoryDistribution).map(cat => cat).join(', ')}. ${metrics.criticalTraits > 0 ? `${metrics.criticalTraits} critical traits require immediate intervention.` : ''}
-
-Primary treatment targets have been prioritized based on severity, evidence level, and clinical impact. A stepwise management approach is recommended, beginning with highest severity traits and incorporating both pharmacological and non-pharmacological interventions.
         `.trim();
         
         doc.setFontSize(11);
@@ -3308,7 +3646,6 @@ Primary treatment targets have been prioritized based on severity, evidence leve
         doc.setTextColor(29, 53, 87);
         doc.text('TREATMENT RECOMMENDATIONS', 20, 30);
         
-        // Sort traits by severity
         const sortedTraits = [...this.state.traits].sort((a, b) => b.severity - a.severity);
         const topTraits = sortedTraits.slice(0, 3);
         
@@ -3338,24 +3675,6 @@ Primary treatment targets have been prioritized based on severity, evidence leve
    - Baseline biomarker assessment
    - Patient education and shared decision making
    - Schedule follow-up appointment
-
-2. SHORT-TERM FOLLOW-UP (2-6 weeks)
-   - Assess treatment response and tolerability
-   - Adjust therapy based on biomarker response
-   - Address behavioral factors affecting adherence
-   - Consider specialist referrals if indicated
-
-3. LONG-TERM STRATEGY (3-6 months)
-   - Consider advanced therapies if inadequate response
-   - Multidisciplinary review for complex cases
-   - Develop maintenance and prevention plan
-   - Transition to chronic disease management model
-
-4. MONITORING PARAMETERS
-   - Regular symptom assessment
-   - Biomarker monitoring as indicated
-   - Quality of life measures
-   - Treatment adherence assessment
         `.trim();
         
         doc.setFontSize(11);
@@ -3407,7 +3726,6 @@ Primary treatment targets have been prioritized based on severity, evidence leve
     }
     
     exportDatabase() {
-        // Export database as CSV
         const allTraits = Object.values(CLINICAL_TRAITS_DATABASE).flat();
         let csv = 'Name,Spanish Name,Category,Evaluation,Biomarkers,Evidence,Severity,Treatment\n';
         
@@ -3426,16 +3744,6 @@ Primary treatment targets have been prioritized based on severity, evidence leve
         
         this.showToast('Database Exported', 'Clinical traits database saved as CSV', 'success');
     }
-    
-    generatePathway() {
-        if (this.state.traits.length < 2) {
-            this.showToast('Insufficient Data', 'Need at least 2 traits to create pathway', 'warning');
-            return;
-        }
-        
-        this.showToast('Pathway Created', 'Treatment pathway generated successfully', 'success');
-        // In a full implementation, this would create a visual treatment pathway
-    }
 }
 
 // ===================================================
@@ -3444,7 +3752,7 @@ Primary treatment targets have been prioritized based on severity, evidence leve
 let clinicalPlatformInstance;
 window.addEventListener('DOMContentLoaded', () => {
     clinicalPlatformInstance = new ClinicalPlatform();
-window.ClinicalPlatform = clinicalPlatformInstance;
+    window.ClinicalPlatform = clinicalPlatformInstance;
 });
 </script>
 </body>
