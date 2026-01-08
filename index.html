@@ -1837,6 +1837,24 @@
                 // Update active tab button
                 $('.tab-btn').removeClass('active');
                 $(this).addClass('active');
+                // Add with other button click handlers
+$('#btnLaunchAvatar').click(function() {
+    if (!AppState.currentPatient) {
+        alert('Please select or create a patient first');
+        return;
+    }
+    if (!AppState.currentDisease) {
+        alert('Please select a disease first');
+        return;
+    }
+    
+    // Launch avatar in new window
+    window.open(
+        `avatar.html?patient=${AppState.currentPatient.id}&disease=${AppState.currentDisease.id}`, 
+        '_blank', 
+        'width=1400,height=900,menubar=no,toolbar=no'
+    );
+});
                 
                 // Show active tab content
                 $('.tab-pane').removeClass('active');
