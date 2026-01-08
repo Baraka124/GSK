@@ -1,3903 +1,913 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinical Network Intelligence v4.0 - Advanced Trait Mapping</title>
-    
-    <!-- Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Source+Sans+Pro:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    
+    <title>Airway Disease Traits Network</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* =================================================== */
-        /* CLINICAL DESIGN SYSTEM */
-        /* =================================================== */
-        
         :root {
-            /* Clinical Color Palette */
-            --clinical-blue: #2D6CA2;
-            --clinical-light-blue: #4A8BC9;
-            --clinical-teal: #417B8C;
-            --clinical-green: #81B29A;
-            --clinical-yellow: #F2CC8F;
-            --clinical-orange: #E07A5F;
-            --clinical-red: #D64550;
-            --clinical-purple: #7B6BA9;
-            --clinical-pink: #E39A9C;
-            
-            /* Severity Spectrum */
-            --severity-critical: var(--clinical-red);
-            --severity-high: var(--clinical-orange);
-            --severity-moderate: var(--clinical-yellow);
-            --severity-low: var(--clinical-green);
-            --severity-minimal: #7FD1B9;
-            
-            /* Category Colors */
-            --category-pulmonary: var(--clinical-blue);
-            --category-inflammatory: var(--clinical-red);
-            --category-physiological: var(--clinical-green);
-            --category-radiological: var(--clinical-purple);
-            --category-clinical: #C4906A;
-            --category-comorbid: var(--clinical-pink);
-            --category-behavioral: #4A7C8C;
-            --category-pharmacological: #6A8D73;
-            
-            /* UI Colors */
-            --bg-dark: #0A0F1C;
-            --bg-panel: #111827;
-            --bg-card: #1F2937;
-            --bg-hover: #374151;
-            
-            --text-primary: #F9FAFB;
-            --text-secondary: #D1D5DB;
-            --text-tertiary: #9CA3AF;
-            --text-accent: var(--clinical-light-blue);
-            
-            --border: #374151;
-            --border-light: #4B5563;
-            --border-accent: var(--clinical-light-blue);
-            
-            /* Shadows */
-            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.7);
-            --shadow-xl: 0 20px 50px -12px rgba(0, 0, 0, 0.9);
-            
-            /* Spacing */
-            --space-1: 0.25rem;
-            --space-2: 0.5rem;
-            --space-3: 0.75rem;
-            --space-4: 1rem;
-            --space-6: 1.5rem;
-            --space-8: 2rem;
-            --space-12: 3rem;
-            --space-16: 4rem;
-            
-            /* Typography */
-            --text-xs: 0.75rem;
-            --text-sm: 0.875rem;
-            --text-base: 1rem;
-            --text-lg: 1.125rem;
-            --text-xl: 1.25rem;
-            --text-2xl: 1.5rem;
-            --text-3xl: 1.875rem;
-            
-            /* Border Radius */
-            --radius-sm: 0.25rem;
-            --radius-md: 0.375rem;
-            --radius-lg: 0.5rem;
-            --radius-xl: 0.75rem;
-            --radius-2xl: 1rem;
-            --radius-full: 9999px;
-            
-            /* Transitions */
-            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
-            
-            /* Layout */
-            --sidebar-width: 380px;
-            --sidebar-collapsed: 60px;
-            --details-width: 420px;
-            --header-height: 70px;
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #4cc9f0;
+            --warning: #f72585;
         }
         
-        /* =================================================== */
-        /* BASE STYLES */
-        /* =================================================== */
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        html {
-            font-size: 16px;
-            scroll-behavior: smooth;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             overflow: hidden;
-            height: 100vh;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Source Sans Pro', sans-serif;
-            font-weight: 700;
-            line-height: 1.2;
-        }
-        
-        .text-gradient {
-            background: linear-gradient(135deg, var(--clinical-light-blue), var(--clinical-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        /* =================================================== */
-        /* LOADING SCREEN */
-        /* =================================================== */
-        
-        .clinical-loading {
-            position: fixed;
-            inset: 0;
-            background: var(--bg-dark);
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            gap: var(--space-8);
+            height: 95vh;
         }
         
-        .loading-spinner {
-            width: 80px;
-            height: 80px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            border-top-color: var(--clinical-light-blue);
-            animation: spin 1s linear infinite;
+        /* Header */
+        .app-header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
         
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .header-title h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
         }
         
-        .loading-bar {
-            width: 300px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-full);
+        .connection-status {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        /* Main Layout */
+        .main-layout {
+            display: flex;
+            flex: 1;
             overflow: hidden;
-        }
-        
-        .loading-progress {
-            height: 100%;
-            background: linear-gradient(90deg, 
-                var(--clinical-light-blue), 
-                var(--severity-low));
-            width: 0%;
-            transition: width var(--transition-slow);
-        }
-        
-        /* =================================================== */
-        /* HEADER */
-        /* =================================================== */
-        
-        .clinical-header {
-            height: var(--header-height);
-            background: var(--bg-panel);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 var(--space-6);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
-        
-        .header-brand {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-        }
-        
-        .brand-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--clinical-blue), var(--clinical-light-blue));
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-        }
-        
-        .brand-text h1 {
-            font-size: var(--text-xl);
-            margin: 0;
-            background: linear-gradient(135deg, var(--clinical-light-blue), var(--clinical-teal));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        
-        .brand-subtitle {
-            font-size: var(--text-xs);
-            color: var(--text-tertiary);
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        
-        .header-actions {
-            display: flex;
-            gap: var(--space-2);
-            align-items: center;
-        }
-        
-        /* =================================================== */
-        /* BUTTONS */
-        /* =================================================== */
-        
-        .clinical-btn {
-            padding: 0.625rem 1.25rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-            font-size: var(--text-sm);
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: var(--space-2);
-            transition: all var(--transition-base);
-            outline: none;
-            user-select: none;
-            white-space: nowrap;
-        }
-        
-        .clinical-btn:hover:not(:disabled) {
-            background: var(--bg-hover);
-            border-color: var(--border-light);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-        
-        .clinical-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-        
-        .clinical-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .clinical-btn.primary {
-            background: var(--clinical-blue);
-            border-color: var(--clinical-blue);
-            color: white;
-        }
-        
-        .clinical-btn.success {
-            background: var(--severity-low);
-            border-color: var(--severity-low);
-            color: white;
-        }
-        
-        .clinical-btn.warning {
-            background: var(--severity-high);
-            border-color: var(--severity-high);
-            color: white;
-        }
-        
-        .clinical-btn.danger {
-            background: var(--severity-critical);
-            border-color: var(--severity-critical);
-            color: white;
-        }
-        
-        .btn-icon {
-            padding: 0.5rem;
-            min-width: 2.5rem;
-            justify-content: center;
-        }
-        
-        /* =================================================== */
-        /* MAIN LAYOUT */
-        /* =================================================== */
-        
-        .clinical-layout {
-            display: flex;
-            height: calc(100vh - var(--header-height));
-            margin-top: var(--header-height);
         }
         
         /* Sidebar */
-        .clinical-sidebar {
-            width: var(--sidebar-width);
-            background: var(--bg-panel);
-            border-right: 1px solid var(--border);
+        .sidebar {
+            width: 300px;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
             display: flex;
             flex-direction: column;
-            transition: width var(--transition-base);
             overflow: hidden;
         }
         
-        .clinical-sidebar.collapsed {
-            width: var(--sidebar-collapsed);
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .disease-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .disease-btn {
+            padding: 12px 15px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        
+        .disease-btn:hover {
+            border-color: var(--primary);
+            transform: translateX(3px);
+        }
+        
+        .disease-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
         
         /* Canvas Area */
-        .clinical-canvas {
+        .canvas-area {
             flex: 1;
-            position: relative;
-            background: 
-                linear-gradient(90deg, rgba(45, 108, 162, 0.03) 1px, transparent 1px) 0 0 / 60px 60px,
-                linear-gradient(rgba(45, 108, 162, 0.03) 1px, transparent 1px) 0 0 / 60px 60px;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
         
-        #networkCanvas {
+        .canvas-toolbar {
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .canvas-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+        
+        .toolbar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-outline {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            background: 
+                linear-gradient(90deg, #f8fafc 1px, transparent 1px) 0 0 / 20px 20px,
+                linear-gradient(#f8fafc 1px, transparent 1px) 0 0 / 20px 20px;
+        }
+        
+        /* Trait Nodes */
+        .trait-node {
             position: absolute;
+            width: 200px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            cursor: move;
+            border-left: 5px solid;
+            transition: transform 0.2s;
+        }
+        
+        .trait-node:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .trait-node.inflammatory { border-color: #ef476f; }
+        .trait-node.physiological { border-color: #06d6a0; }
+        .trait-node.behavioral { border-color: #ffd166; }
+        .trait-node.comorbid { border-color: #118ab2; }
+        
+        .node-header {
+            padding: 15px 15px 10px 15px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .node-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1a202c;
+        }
+        
+        .node-category {
+            display: inline-block;
+            padding: 3px 10px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+        
+        .node-content {
+            padding: 10px 15px;
+            font-size: 13px;
+            color: #4a5568;
+            line-height: 1.4;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            cursor: default;
-        }
-        
-        /* Details Panel */
-        .clinical-details {
-            width: var(--details-width);
-            background: var(--bg-panel);
-            border-left: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            transition: width var(--transition-base);
-            overflow: hidden;
-        }
-        
-        .clinical-details.collapsed {
-            width: var(--sidebar-collapsed);
-        }
-        
-        /* =================================================== */
-        /* TOOLBAR */
-        /* =================================================== */
-        
-        .clinical-toolbar {
-            position: absolute;
-            top: var(--space-6);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(31, 41, 55, 0.95);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-2xl);
-            padding: var(--space-3);
-            display: flex;
-            gap: var(--space-2);
-            backdrop-filter: blur(20px);
-            box-shadow: var(--shadow-xl);
-            z-index: 100;
-        }
-        
-        .clinical-tool {
-            width: 3rem;
-            height: 3rem;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            color: var(--text-primary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
             justify-content: center;
-            transition: all var(--transition-fast);
-            position: relative;
-        }
-        
-        .clinical-tool:hover {
-            background: var(--bg-hover);
-            border-color: var(--clinical-light-blue);
-            transform: translateY(-2px);
-        }
-        
-        .clinical-tool.active {
-            background: var(--clinical-blue);
-            border-color: var(--clinical-blue);
-            color: white;
-        }
-        
-        /* =================================================== */
-        /* DASHBOARD */
-        /* =================================================== */
-        
-        .clinical-dashboard {
-            position: absolute;
-            top: var(--space-6);
-            right: var(--space-6);
-            background: rgba(31, 41, 55, 0.95);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-2xl);
-            padding: var(--space-6);
-            width: 320px;
-            backdrop-filter: blur(20px);
-            box-shadow: var(--shadow-xl);
-            z-index: 100;
-            transition: transform var(--transition-base);
-        }
-        
-        .dashboard-metrics {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: var(--space-4);
-            margin: var(--space-4) 0;
-        }
-        
-        .clinical-metric {
-            background: var(--bg-card);
-            border-radius: var(--radius-xl);
-            padding: var(--space-4);
-            text-align: center;
-            transition: transform var(--transition-fast);
-            cursor: pointer;
-        }
-        
-        .clinical-metric:hover {
-            transform: translateY(-2px);
-            background: var(--bg-hover);
-        }
-        
-        .metric-value {
-            font-size: var(--text-2xl);
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-            color: var(--clinical-light-blue);
-        }
-        
-        /* =================================================== */
-        /* TRAIT CARDS */
-        /* =================================================== */
-        
-        .trait-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4);
-            cursor: grab;
-            transition: all var(--transition-base);
-            user-select: none;
-        }
-        
-        .trait-card:hover {
-            background: var(--bg-hover);
-            border-color: var(--clinical-light-blue);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-        
-        .trait-card:active {
-            cursor: grabbing;
-        }
-        
-        /* =================================================== */
-        /* MODALS & OVERLAYS */
-        /* =================================================== */
-        
-        .clinical-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(10, 15, 28, 0.98);
-            display: none;
             align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            padding: var(--space-6);
-            backdrop-filter: blur(20px);
         }
         
-        .clinical-modal.active {
+        .modal.active {
             display: flex;
         }
         
         .modal-content {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-2xl);
-            width: 100%;
-            max-width: 1000px;
-            max-height: 90vh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--shadow-xl);
-        }
-        
-        /* =================================================== */
-        /* TOAST NOTIFICATIONS */
-        /* =================================================== */
-        
-        .toast-container {
-            position: fixed;
-            bottom: var(--space-6);
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 3000;
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-2);
-            align-items: center;
-            pointer-events: none;
-        }
-        
-        .clinical-toast {
-            background: var(--bg-panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: var(--space-4) var(--space-6);
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-            box-shadow: var(--shadow-xl);
+            background: white;
+            border-radius: 15px;
+            width: 90%;
             max-width: 500px;
-            width: max-content;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all var(--transition-slow);
-            pointer-events: auto;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
-        .clinical-toast.show {
-            transform: translateY(0);
-            opacity: 1;
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        /* =================================================== */
-        /* UTILITIES */
-        /* =================================================== */
-        
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
-        .justify-between { justify-content: space-between; }
-        .gap-2 { gap: var(--space-2); }
-        .gap-4 { gap: var(--space-4); }
-        .gap-6 { gap: var(--space-6); }
-        
-        .w-full { width: 100%; }
-        .h-full { height: 100%; }
-        
-        .p-4 { padding: var(--space-4); }
-        .p-6 { padding: var(--space-6); }
-        
-        .m-4 { margin: var(--space-4); }
-        .m-6 { margin: var(--space-6); }
-        
-        .rounded-lg { border-radius: var(--radius-lg); }
-        .rounded-xl { border-radius: var(--radius-xl); }
-        
-        .shadow { box-shadow: var(--shadow); }
-        .shadow-lg { box-shadow: var(--shadow-lg); }
-        
-        .hidden { display: none !important; }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        .modal-body {
+            padding: 20px;
         }
         
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-full);
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
         }
         
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: var(--radius-full);
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--border-light);
-        }
-        
-        /* Selection */
-        ::selection {
-            background: var(--clinical-blue);
-            color: white;
-        }
-        
-        /* =================================================== */
-        /* RESPONSIVE */
-        /* =================================================== */
-        
-        @media (max-width: 1024px) {
-            :root {
-                --sidebar-width: 320px;
-                --details-width: 340px;
-            }
-            
-            .clinical-toolbar {
-                flex-wrap: wrap;
-                width: 90%;
-            }
-            
-            .clinical-dashboard {
-                width: 280px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .clinical-header {
-                padding: 0 var(--space-4);
-            }
-            
-            .brand-text h1 {
-                font-size: var(--text-lg);
-            }
-            
-            .header-actions .clinical-btn span {
-                display: none;
-            }
-            
-            .clinical-toolbar {
-                bottom: var(--space-4);
-                top: auto;
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-            
-            .clinical-dashboard {
-                width: calc(100% - var(--space-8));
-                right: var(--space-4);
-            }
+        /* Connections SVG */
+        .connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="clinical-loading" id="loadingScreen">
-        <div class="loading-spinner"></div>
-        <div style="text-align: center;">
-            <div style="font-size: var(--text-3xl); font-weight: 900; margin-bottom: var(--space-2);" class="text-gradient">
-                Clinical Network Intelligence v4.0
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-title">
+                <h1><i class="fas fa-project-diagram"></i> Airway Disease Traits Network</h1>
+                <p>Interactive network visualization for treatable traits</p>
+                <div class="connection-status" id="connectionStatus">
+                    <i class="fas fa-circle"></i> Connecting...
+                </div>
             </div>
-            <div style="color: var(--text-tertiary); margin-bottom: var(--space-6);">
-                Initializing Advanced Trait Mapping System...
-            </div>
-            <div class="loading-bar">
-                <div class="loading-progress" id="loadingProgress"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Header -->
-    <header class="clinical-header">
-        <div class="header-brand">
-            <div class="brand-icon">
-                <i class="fas fa-network-wired"></i>
-            </div>
-            <div class="brand-text">
-                <h1>CLINICAL NETWORK INTELLIGENCE v4.0</h1>
-                <div class="brand-subtitle">Advanced Trait Mapping & Analysis</div>
-            </div>
-            <div style="margin-left: var(--space-4); padding: var(--space-2) var(--space-4); background: var(--bg-card); border-radius: var(--radius-lg); font-size: var(--text-sm);">
-                <i class="fas fa-database"></i>
-                <span id="databaseStatus">Initializing...</span>
-            </div>
-        </div>
+        </header>
         
-        <div class="header-actions">
-            <button class="clinical-btn" id="btnDatabase">
-                <i class="fas fa-database"></i>
-                <span>Database</span>
-            </button>
-            <button class="clinical-btn" id="btnCreateTrait">
-                <i class="fas fa-plus-circle"></i>
-                <span>New Trait</span>
-            </button>
-            <button class="clinical-btn" id="btnInsights">
-                <i class="fas fa-brain"></i>
-                <span>Insights</span>
-            </button>
-            <button class="clinical-btn primary" id="btnExport">
-                <i class="fas fa-file-medical-alt"></i>
-                <span>Generate Report</span>
-            </button>
-            <button class="clinical-btn btn-icon" id="toggleSidebar">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="clinical-btn btn-icon" id="toggleDetails">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+        <div class="main-layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-section">
+                    <h3 style="color: var(--secondary); margin-bottom: 15px;">
+                        <i class="fas fa-disease"></i> Diseases
+                    </h3>
+                    <div class="disease-list" id="diseaseList">
+                        Loading diseases...
+                    </div>
+                </div>
+                
+                <div class="sidebar-section" style="flex: 1;">
+                    <h3 style="color: var(--secondary); margin-bottom: 15px;">
+                        <i class="fas fa-save"></i> Saved Networks
+                    </h3>
+                    <div id="savedNetworks" style="overflow-y: auto; max-height: 300px;">
+                        No saved networks
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <button class="btn btn-primary" id="btnSaveNetwork" style="width: 100%;">
+                        <i class="fas fa-save"></i> Save Current Network
+                    </button>
+                </div>
+            </aside>
+            
+            <!-- Canvas Area -->
+            <main class="canvas-area">
+                <div class="canvas-toolbar">
+                    <div class="canvas-title" id="canvasTitle">
+                        Select a disease to begin
+                    </div>
+                    <div class="toolbar-buttons">
+                        <button class="btn btn-outline" id="btnReset">
+                            <i class="fas fa-redo"></i> Reset Layout
+                        </button>
+                        <button class="btn btn-primary" id="btnAutoLayout">
+                            <i class="fas fa-network-wired"></i> Auto Layout
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="workspace" id="workspace">
+                    <svg class="connections-svg" id="connectionsSvg"></svg>
+                    <div style="padding: 50px; text-align: center; color: #718096;">
+                        <i class="fas fa-project-diagram" style="font-size: 48px; opacity: 0.3; margin-bottom: 20px;"></i>
+                        <h3>No Network Loaded</h3>
+                        <p>Select a disease from the sidebar to visualize its treatable traits</p>
+                    </div>
+                </div>
+            </main>
         </div>
-    </header>
-
-    <!-- Main Layout -->
-    <div class="clinical-layout">
-        <!-- Sidebar -->
-        <aside class="clinical-sidebar" id="clinicalSidebar">
-            <div class="p-6" style="border-bottom: 1px solid var(--border);">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <i class="fas fa-book-medical" style="color: var(--clinical-light-blue);"></i>
-                        <div>
-                            <div style="font-weight: 700; font-size: var(--text-lg);">Clinical Trait Library</div>
-                            <div style="font-size: var(--text-sm); color: var(--text-tertiary);">200+ evidence-based traits</div>
-                        </div>
-                    </div>
-                    <button class="clinical-btn btn-icon" id="collapseSidebar">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="p-6" style="border-bottom: 1px solid var(--border);">
-                <div style="position: relative;">
-                    <i class="fas fa-search" style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary);"></i>
-                    <input type="text" id="searchInput" placeholder="Search clinical traits..." 
-                           style="width: 100%; padding: 0.75rem 1rem 0.75rem 3rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); color: var(--text-primary); outline: none; font-family: 'Inter', sans-serif;">
-                </div>
-            </div>
-            
-            <div id="traitLibrary" style="flex: 1; overflow-y: auto; padding: var(--space-4);">
-                <!-- Dynamically populated -->
-            </div>
-        </aside>
-
-        <!-- Canvas -->
-        <main class="clinical-canvas">
-            <canvas id="networkCanvas"></canvas>
-            
-            <!-- Toolbar -->
-            <div class="clinical-toolbar">
-                <button class="clinical-tool active" data-tool="select">
-                    <i class="fas fa-mouse-pointer"></i>
-                </button>
-                <button class="clinical-tool" data-tool="multi">
-                    <i class="fas fa-object-group"></i>
-                </button>
-                <button class="clinical-tool" data-tool="connect">
-                    <i class="fas fa-link"></i>
-                </button>
-                <button class="clinical-tool" data-tool="analyze">
-                    <i class="fas fa-chart-network"></i>
-                </button>
-                <button class="clinical-tool" data-tool="layout">
-                    <i class="fas fa-sitemap"></i>
-                </button>
-                <button class="clinical-tool" data-tool="clear">
-                    <i class="fas fa-broom"></i>
-                </button>
-            </div>
-            
-            <!-- Dashboard -->
-            <div class="clinical-dashboard" id="clinicalDashboard">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-chart-network" style="color: var(--clinical-light-blue);"></i>
-                        <div style="font-weight: 700;">Network Analytics</div>
-                    </div>
-                    <button class="clinical-btn btn-icon" onclick="ClinicalNetwork.toggleDashboard()">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <div class="dashboard-metrics">
-                    <div class="clinical-metric" onclick="ClinicalNetwork.showDatabase()">
-                        <div class="metric-value" id="metricTraits">0</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-tertiary);">Traits</div>
-                    </div>
-                    <div class="clinical-metric" onclick="ClinicalNetwork.showInsights()">
-                        <div class="metric-value" id="metricConnections">0</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-tertiary);">Connections</div>
-                    </div>
-                    <div class="clinical-metric" onclick="ClinicalNetwork.showInsights()">
-                        <div class="metric-value" id="metricSeverity">0%</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-tertiary);">Avg Severity</div>
-                    </div>
-                    <div class="clinical-metric" onclick="ClinicalNetwork.showInsights()">
-                        <div class="metric-value" id="metricComplexity">0</div>
-                        <div style="font-size: var(--text-xs); color: var(--text-tertiary);">Complexity</div>
-                    </div>
-                </div>
-                
-                <div style="background: var(--bg-card); border-radius: var(--radius-lg); padding: var(--space-4); margin-top: var(--space-4);">
-                    <div style="font-weight: 600; margin-bottom: var(--space-2); color: var(--clinical-light-blue);">
-                        <i class="fas fa-lightbulb"></i> Network Insight
-                    </div>
-                    <div style="font-size: var(--text-sm); color: var(--text-secondary);" id="dashboardInsight">
-                        Add clinical traits to begin network analysis.
-                    </div>
-                </div>
-            </div>
-        </main>
-
-        <!-- Details Panel -->
-        <aside class="clinical-details" id="clinicalDetails">
-            <div class="p-6" style="border-bottom: 1px solid var(--border); background: linear-gradient(135deg, rgba(45, 108, 162, 0.2), transparent);">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div style="font-size: var(--text-xl); font-weight: 900;" id="selectedTraitTitle">No Trait Selected</div>
-                        <div style="font-size: var(--text-sm); color: var(--text-tertiary);" id="selectedTraitSubtitle">Select a trait to view details</div>
-                    </div>
-                    <button class="clinical-btn btn-icon" id="collapseDetails">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <div id="detailsContent" style="flex: 1; overflow-y: auto; padding: var(--space-6);">
-                <div style="text-align: center; padding: var(--space-16) var(--space-4); color: var(--text-tertiary);">
-                    <i class="fas fa-project-diagram" style="font-size: 3rem; margin-bottom: var(--space-4); opacity: 0.5;"></i>
-                    <div style="font-size: var(--text-xl); font-weight: 700; margin-bottom: var(--space-2);">Select Clinical Trait</div>
-                    <div>Click on any clinical trait in the network to view comprehensive information.</div>
-                </div>
-            </div>
-        </aside>
     </div>
-
-    <!-- Database Modal -->
-    <div class="clinical-modal" id="databaseModal">
+    
+    <!-- Save Network Modal -->
+    <div class="modal" id="saveModal">
         <div class="modal-content">
-            <div class="p-6" style="border-bottom: 1px solid var(--border);">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div style="font-size: var(--text-2xl); font-weight: 900;">Clinical Database</div>
-                        <div style="color: var(--text-tertiary);">Comprehensive library of 200+ evidence-based traits</div>
-                    </div>
-                    <button class="clinical-btn" onclick="ClinicalNetwork.hideDatabase()">
-                        <i class="fas fa-times"></i> Close
-                    </button>
-                </div>
+            <div class="modal-header">
+                <h2>Save Network to Database</h2>
+                <button class="btn" onclick="closeModal('saveModal')" style="background: none; border: none; font-size: 24px;">×</button>
             </div>
-            
-            <div style="flex: 1; overflow-y: auto; padding: var(--space-6);">
-                <div id="databaseContent">
-                    <!-- Dynamically populated -->
-                </div>
+            <div class="modal-body">
+                <input type="text" class="form-input" id="networkName" placeholder="Network Name" value="My Network">
+                <textarea class="form-input" id="networkDescription" placeholder="Description" rows="3"></textarea>
+                <button class="btn btn-primary" onclick="saveNetworkToDatabase()" style="width: 100%;">
+                    <i class="fas fa-database"></i> Save to Supabase
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-
-<script>
-class ClinicalGraphEngine {
-    constructor() {
-        console.log('Initializing Clinical Graph Engine v4.0...');
-        
-        // Core graph structure
-        this.graph = new ClinicalGraph();
-        
-        // Advanced algorithms
-        this.layout = new ForceDirectedLayout();
-        this.communityDetector = new LouvainCommunityDetector();
-        this.pathFinder = new ClinicalPathFinder();
-        this.patternDetector = new ClinicalPatternDetector();
-        this.centralityCalculator = new CentralityAnalyzer();
-        
-        // Performance optimization
-        this.cache = new GraphCache();
-        this.workerPool = new WorkerPool();
-        this.batchProcessor = new GraphBatchProcessor();
-        
-        // State management
-        this.state = {
-            layoutRunning: false,
-            analysisInProgress: false,
-            graphModified: false,
-            selectedNodes: new Set(),
-            selectedEdges: new Set()
-        };
-        
-        // Event system integration
-        this.eventSystem = window.clinicalEvents || this.createEventSystem();
-        
-        // Initialize
-        this.setupEventListeners();
-        this.initializeWorkerPool();
-        
-        console.log('Clinical Graph Engine v4.0 initialized successfully');
-    }
-    
-    // ============================================================================
-    // GRAPH STRUCTURE
-    // ============================================================================
-    
-    class ClinicalGraph {
-        constructor() {
-            this.nodes = new Map();           // nodeId -> Node
-            this.edges = new Map();           // edgeId -> Edge
-            this.adjacency = new Map();       // nodeId -> Set(neighborIds)
-            this.properties = new Map();      // nodeId -> Map(property -> value)
-            
-            // Indexes for fast lookup
-            this.nodeIndex = {
-                byCategory: new Map(),
-                bySeverity: new Map(),
-                byBiomarker: new Map(),
-                byTreatment: new Map()
-            };
-            
-            // Graph metrics cache
-            this.metricsCache = {
-                density: null,
-                diameter: null,
-                avgPathLength: null,
-                clusteringCoefficient: null,
-                lastCalculated: 0
-            };
-        }
-        
-        // Node operations
-        addNode(traitData) {
-            const node = this.createNode(traitData);
-            
-            this.nodes.set(node.id, node);
-            this.adjacency.set(node.id, new Set());
-            this.properties.set(node.id, new Map());
-            
-            // Index node
-            this.indexNode(node);
-            
-            // Invalidate cache
-            this.invalidateMetrics();
-            
-            return node;
-        }
-        
-        createNode(traitData) {
-            return {
-                id: traitData.id || `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                label: traitData.name || 'Unnamed Trait',
-                data: traitData,
-                
-                // Visual properties
-                x: Math.random() * 800 - 400,
-                y: Math.random() * 600 - 300,
-                size: this.calculateNodeSize(traitData),
-                color: this.getNodeColor(traitData.category),
-                
-                // Graph properties
-                degree: 0,
-                centrality: {
-                    degree: 0,
-                    betweenness: 0,
-                    closeness: 0,
-                    eigenvector: 0
-                },
-                community: -1,
-                
-                // State
-                fixed: false,
-                hidden: false,
-                selected: false,
-                highlighted: false
-            };
-        }
-        
-        calculateNodeSize(traitData) {
-            // Size based on severity and importance
-            const baseSize = 20;
-            const severityFactor = (traitData.severity || 50) / 100;
-            const importanceFactor = traitData.evidence?.level === 'A' ? 1.2 : 
-                                   traitData.evidence?.level === 'B' ? 1.1 : 1.0;
-            
-            return baseSize * (1 + severityFactor) * importanceFactor;
-        }
-        
-        getNodeColor(category) {
-            const colorMap = {
-                'pulmonary': '#2D6CA2',
-                'inflammatory': '#D64550',
-                'physiological': '#81B29A',
-                'radiological': '#7B6BA9',
-                'clinical': '#C4906A',
-                'comorbid': '#E39A9C',
-                'behavioral': '#4A7C8C',
-                'pharmacological': '#6A8D73'
-            };
-            return colorMap[category] || '#9FA8C7';
-        }
-        
-        indexNode(node) {
-            const data = node.data;
-            
-            // Index by category
-            if (!this.nodeIndex.byCategory.has(data.category)) {
-                this.nodeIndex.byCategory.set(data.category, new Set());
-            }
-            this.nodeIndex.byCategory.get(data.category).add(node.id);
-            
-            // Index by severity range
-            const severityRange = Math.floor((data.severity || 0) / 25) * 25;
-            if (!this.nodeIndex.bySeverity.has(severityRange)) {
-                this.nodeIndex.bySeverity.set(severityRange, new Set());
-            }
-            this.nodeIndex.bySeverity.get(severityRange).add(node.id);
-            
-            // Index by biomarkers
-            if (data.biomarkers) {
-                for (const biomarker of data.biomarkers) {
-                    if (!this.nodeIndex.byBiomarker.has(biomarker)) {
-                        this.nodeIndex.byBiomarker.set(biomarker, new Set());
-                    }
-                    this.nodeIndex.byBiomarker.get(biomarker).add(node.id);
-                }
-            }
-            
-            // Index by treatment
-            if (data.treatment) {
-                const treatmentStr = typeof data.treatment === 'string' 
-                    ? data.treatment 
-                    : JSON.stringify(data.treatment);
-                
-                // Extract medication classes
-                const medClasses = this.extractMedicationClasses(treatmentStr);
-                for (const medClass of medClasses) {
-                    if (!this.nodeIndex.byTreatment.has(medClass)) {
-                        this.nodeIndex.byTreatment.set(medClass, new Set());
-                    }
-                    this.nodeIndex.byTreatment.get(medClass).add(node.id);
-                }
-            }
-        }
-        
-        extractMedicationClasses(treatmentStr) {
-            const classes = [];
-            const lowerStr = treatmentStr.toLowerCase();
-            
-            if (lowerStr.includes('ics')) classes.push('corticosteroid');
-            if (lowerStr.includes('laba') || lowerStr.includes('beta')) classes.push('beta_agonist');
-            if (lowerStr.includes('lama')) classes.push('anticholinergic');
-            if (lowerStr.includes('theophylline')) classes.push('methylxanthine');
-            if (lowerStr.includes('biologic')) classes.push('biologic');
-            if (lowerStr.includes('antibiotic')) classes.push('antibiotic');
-            
-            return classes;
-        }
-        
-        // Edge operations
-        addEdge(sourceId, targetId, edgeData = {}) {
-            if (!this.nodes.has(sourceId) || !this.nodes.has(targetId)) {
-                throw new Error('Source or target node not found');
-            }
-            
-            const edge = this.createEdge(sourceId, targetId, edgeData);
-            this.edges.set(edge.id, edge);
-            
-            // Update adjacency
-            this.adjacency.get(sourceId).add(targetId);
-            this.adjacency.get(targetId).add(sourceId);
-            
-            // Update node degrees
-            this.nodes.get(sourceId).degree++;
-            this.nodes.get(targetId).degree++;
-            
-            // Invalidate cache
-            this.invalidateMetrics();
-            
-            return edge;
-        }
-        
-        createEdge(sourceId, targetId, edgeData) {
-            const strength = edgeData.strength || this.calculateEdgeStrength(
-                this.nodes.get(sourceId).data,
-                this.nodes.get(targetId).data
-            );
-            
-            return {
-                id: `${sourceId}-${targetId}-${Date.now()}`,
-                source: sourceId,
-                target: targetId,
-                label: edgeData.label || '',
-                type: edgeData.type || 'association',
-                data: edgeData,
-                
-                // Visual properties
-                strength,
-                width: this.calculateEdgeWidth(strength),
-                color: this.getEdgeColor(strength, edgeData.type),
-                dashes: edgeData.conflicts ? [5, 5] : false,
-                
-                // Direction
-                directed: edgeData.directed || false,
-                
-                // State
-                hidden: false,
-                selected: false,
-                highlighted: false
-            };
-        }
-        
-        calculateEdgeStrength(sourceData, targetData) {
-            let strength = 50; // Base strength
-            
-            // Category similarity
-            if (sourceData.category === targetData.category) {
-                strength += 20;
-            }
-            
-            // Severity correlation
-            const severityDiff = Math.abs((sourceData.severity || 0) - (targetData.severity || 0));
-            if (severityDiff < 10) strength += 15;
-            else if (severityDiff < 25) strength += 8;
-            
-            // Biomarker overlap
-            const biomarkers1 = sourceData.biomarkers || [];
-            const biomarkers2 = targetData.biomarkers || [];
-            const commonBiomarkers = biomarkers1.filter(b => biomarkers2.includes(b));
-            strength += Math.min(20, commonBiomarkers.length * 5);
-            
-            // Treatment similarity
-            if (this.treatmentsSimilar(sourceData.treatment, targetData.treatment)) {
-                strength += 10;
-            }
-            
-            // Evidence level
-            const evidence1 = sourceData.evidence?.level || 'C';
-            const evidence2 = targetData.evidence?.level || 'C';
-            if (evidence1 === 'A' && evidence2 === 'A') strength += 10;
-            
-            return Math.min(100, Math.max(10, strength));
-        }
-        
-        treatmentsSimilar(treatment1, treatment2) {
-            if (!treatment1 || !treatment2) return false;
-            
-            const t1 = typeof treatment1 === 'string' ? treatment1 : treatment1.firstLine || '';
-            const t2 = typeof treatment2 === 'string' ? treatment2 : treatment2.firstLine || '';
-            
-            const commonTerms = ['ics', 'laba', 'lama', 'corticosteroid', 'bronchodilator'];
-            const t1Lower = t1.toLowerCase();
-            const t2Lower = t2.toLowerCase();
-            
-            return commonTerms.some(term => 
-                t1Lower.includes(term) && t2Lower.includes(term)
-            );
-        }
-        
-        calculateEdgeWidth(strength) {
-            return 1 + (strength / 100) * 4; // Width from 1 to 5
-        }
-        
-        getEdgeColor(strength, type) {
-            if (type === 'conflict') return '#D64550';
-            if (type === 'enhancement') return '#81B29A';
-            if (type === 'required') return '#F2CC8F';
-            
-            // Gradient based on strength
-            if (strength >= 80) return '#D64550'; // Red
-            if (strength >= 65) return '#E07A5F'; // Orange
-            if (strength >= 50) return '#F2CC8F'; // Yellow
-            return '#2D6CA2'; // Blue
-        }
-        
-        // Graph algorithms
-        findShortestPath(startId, endId, algorithm = 'dijkstra') {
-            switch (algorithm) {
-                case 'dijkstra':
-                    return this.dijkstra(startId, endId);
-                case 'astar':
-                    return this.aStar(startId, endId);
-                case 'bfs':
-                    return this.bfsShortestPath(startId, endId);
-                default:
-                    return this.dijkstra(startId, endId);
-            }
-        }
-        
-        dijkstra(startId, endId) {
-            const distances = new Map();
-            const previous = new Map();
-            const unvisited = new Set();
-            
-            // Initialize
-            for (const nodeId of this.nodes.keys()) {
-                distances.set(nodeId, Infinity);
-                previous.set(nodeId, null);
-                unvisited.add(nodeId);
-            }
-            distances.set(startId, 0);
-            
-            while (unvisited.size > 0) {
-                // Get node with smallest distance
-                let current = null;
-                let smallestDistance = Infinity;
-                
-                for (const nodeId of unvisited) {
-                    if (distances.get(nodeId) < smallestDistance) {
-                        smallestDistance = distances.get(nodeId);
-                        current = nodeId;
-                    }
-                }
-                
-                if (current === null || current === endId) break;
-                unvisited.delete(current);
-                
-                // Update distances to neighbors
-                for (const neighbor of this.adjacency.get(current)) {
-                    if (unvisited.has(neighbor)) {
-                        // Weight based on inverse strength
-                        const edge = this.getEdgeBetween(current, neighbor);
-                        const weight = edge ? 100 - edge.strength : 50;
-                        
-                        const alt = distances.get(current) + weight;
-                        if (alt < distances.get(neighbor)) {
-                            distances.set(neighbor, alt);
-                            previous.set(neighbor, current);
-                        }
-                    }
-                }
-            }
-            
-            // Reconstruct path
-            const path = [];
-            let current = endId;
-            
-            while (current !== null) {
-                path.unshift(current);
-                current = previous.get(current);
-            }
-            
-            if (path.length === 1 && path[0] !== startId) {
-                return null;
-            }
-            
-            return {
-                path,
-                distance: distances.get(endId),
-                edges: this.getEdgesFromPath(path)
-            };
-        }
-        
-        aStar(startId, endId) {
-            // Heuristic function (Euclidean distance)
-            const heuristic = (nodeId1, nodeId2) => {
-                const node1 = this.nodes.get(nodeId1);
-                const node2 = this.nodes.get(nodeId2);
-                const dx = node1.x - node2.x;
-                const dy = node1.y - node2.y;
-                return Math.sqrt(dx * dx + dy * dy);
-            };
-            
-            const openSet = new Set([startId]);
-            const cameFrom = new Map();
-            
-            const gScore = new Map(); // Cost from start
-            const fScore = new Map(); // Estimated total cost
-            
-            for (const nodeId of this.nodes.keys()) {
-                gScore.set(nodeId, Infinity);
-                fScore.set(nodeId, Infinity);
-            }
-            
-            gScore.set(startId, 0);
-            fScore.set(startId, heuristic(startId, endId));
-            
-            while (openSet.size > 0) {
-                // Get node with lowest fScore
-                let current = null;
-                let lowestFScore = Infinity;
-                
-                for (const nodeId of openSet) {
-                    if (fScore.get(nodeId) < lowestFScore) {
-                        lowestFScore = fScore.get(nodeId);
-                        current = nodeId;
-                    }
-                }
-                
-                if (current === endId) {
-                    // Reconstruct path
-                    const path = [current];
-                    while (cameFrom.has(current)) {
-                        current = cameFrom.get(current);
-                        path.unshift(current);
-                    }
-                    
-                    return {
-                        path,
-                        distance: gScore.get(endId),
-                        edges: this.getEdgesFromPath(path)
-                    };
-                }
-                
-                openSet.delete(current);
-                
-                for (const neighbor of this.adjacency.get(current)) {
-                    // Edge weight
-                    const edge = this.getEdgeBetween(current, neighbor);
-                    const weight = edge ? 100 - edge.strength : 50;
-                    
-                    const tentativeGScore = gScore.get(current) + weight;
-                    
-                    if (tentativeGScore < gScore.get(neighbor)) {
-                        cameFrom.set(neighbor, current);
-                        gScore.set(neighbor, tentativeGScore);
-                        fScore.set(neighbor, tentativeGScore + heuristic(neighbor, endId));
-                        
-                        if (!openSet.has(neighbor)) {
-                            openSet.add(neighbor);
-                        }
-                    }
-                }
-            }
-            
-            return null;
-        }
-        
-        bfsShortestPath(startId, endId) {
-            const queue = [{ node: startId, path: [startId] }];
-            const visited = new Set([startId]);
-            
-            while (queue.length > 0) {
-                const { node, path } = queue.shift();
-                
-                if (node === endId) {
-                    return {
-                        path,
-                        distance: path.length - 1,
-                        edges: this.getEdgesFromPath(path)
-                    };
-                }
-                
-                for (const neighbor of this.adjacency.get(node)) {
-                    if (!visited.has(neighbor)) {
-                        visited.add(neighbor);
-                        queue.push({
-                            node: neighbor,
-                            path: [...path, neighbor]
-                        });
-                    }
-                }
-            }
-            
-            return null;
-        }
-        
-        getEdgeBetween(sourceId, targetId) {
-            const edgeId = `${sourceId}-${targetId}`;
-            return this.edges.get(edgeId) || this.edges.get(`${targetId}-${sourceId}`);
-        }
-        
-        getEdgesFromPath(path) {
-            const edges = [];
-            for (let i = 0; i < path.length - 1; i++) {
-                const edge = this.getEdgeBetween(path[i], path[i + 1]);
-                if (edge) edges.push(edge);
-            }
-            return edges;
-        }
-        
-        // Community detection
-        detectCommunities(method = 'louvain') {
-            switch (method) {
-                case 'louvain':
-                    return this.louvainCommunityDetection();
-                case 'label_propagation':
-                    return this.labelPropagation();
-                case 'girvan_newman':
-                    return this.girvanNewman();
-                default:
-                    return this.louvainCommunityDetection();
-            }
-        }
-        
-        louvainCommunityDetection() {
-            // Initialize each node in its own community
-            const communities = new Map();
-            let communityId = 0;
-            
-            for (const nodeId of this.nodes.keys()) {
-                communities.set(nodeId, communityId++);
-            }
-            
-            let improved = true;
-            let iterations = 0;
-            
-            while (improved && iterations < 10) {
-                improved = false;
-                
-                // Phase 1: Local moving of nodes
-                const nodes = Array.from(this.nodes.keys());
-                this.shuffleArray(nodes);
-                
-                for (const nodeId of nodes) {
-                    const bestCommunity = this.findBestCommunityLouvain(nodeId, communities);
-                    if (bestCommunity !== communities.get(nodeId)) {
-                        communities.set(nodeId, bestCommunity);
-                        improved = true;
-                    }
-                }
-                
-                iterations++;
-            }
-            
-            // Update nodes with community assignments
-            for (const [nodeId, community] of communities) {
-                const node = this.nodes.get(nodeId);
-                if (node) {
-                    node.community = community;
-                }
-            }
-            
-            return communities;
-        }
-        
-        findBestCommunityLouvain(nodeId, communities) {
-            const currentCommunity = communities.get(nodeId);
-            let bestCommunity = currentCommunity;
-            let bestModularityGain = 0;
-            
-            // Calculate modularity gain for each neighboring community
-            const neighborCommunities = new Set();
-            for (const neighbor of this.adjacency.get(nodeId)) {
-                neighborCommunities.add(communities.get(neighbor));
-            }
-            
-            for (const community of neighborCommunities) {
-                if (community !== currentCommunity) {
-                    const gain = this.calculateModularityGain(nodeId, currentCommunity, community, communities);
-                    if (gain > bestModularityGain) {
-                        bestModularityGain = gain;
-                        bestCommunity = community;
-                    }
-                }
-            }
-            
-            return bestModularityGain > 0 ? bestCommunity : currentCommunity;
-        }
-        
-        calculateModularityGain(nodeId, oldCommunity, newCommunity, communities) {
-            const edgesInOld = this.countEdgesToCommunity(nodeId, oldCommunity, communities);
-            const edgesInNew = this.countEdgesToCommunity(nodeId, newCommunity, communities);
-            const degree = this.adjacency.get(nodeId).size;
-            const totalEdges = this.edges.size;
-            
-            return (edgesInNew - edgesInOld) / (2 * totalEdges) - 
-                   (degree * degree) / (4 * totalEdges * totalEdges);
-        }
-        
-        countEdgesToCommunity(nodeId, community, communities) {
-            let count = 0;
-            for (const neighbor of this.adjacency.get(nodeId)) {
-                if (communities.get(neighbor) === community) {
-                    count++;
-                }
-            }
-            return count;
-        }
-        
-        labelPropagation() {
-            // Initialize each node with unique label
-            const labels = new Map();
-            let labelId = 0;
-            
-            for (const nodeId of this.nodes.keys()) {
-                labels.set(nodeId, labelId++);
-            }
-            
-            let changed = true;
-            let iterations = 0;
-            
-            while (changed && iterations < 100) {
-                changed = false;
-                const nodes = Array.from(this.nodes.keys());
-                this.shuffleArray(nodes);
-                
-                for (const nodeId of nodes) {
-                    // Count neighbor labels
-                    const neighborLabels = new Map();
-                    for (const neighbor of this.adjacency.get(nodeId)) {
-                        const label = labels.get(neighbor);
-                        neighborLabels.set(label, (neighborLabels.get(label) || 0) + 1);
-                    }
-                    
-                    // Find most frequent label
-                    let maxCount = 0;
-                    let bestLabel = labels.get(nodeId);
-                    
-                    for (const [label, count] of neighborLabels) {
-                        if (count > maxCount || (count === maxCount && Math.random() > 0.5)) {
-                            maxCount = count;
-                            bestLabel = label;
-                        }
-                    }
-                    
-                    if (bestLabel !== labels.get(nodeId)) {
-                        labels.set(nodeId, bestLabel);
-                        changed = true;
-                    }
-                }
-                
-                iterations++;
-            }
-            
-            return labels;
-        }
-        
-        girvanNewman() {
-            // Calculate edge betweenness
-            const edgeBetweenness = this.calculateEdgeBetweenness();
-            
-            // Sort edges by betweenness
-            const sortedEdges = Array.from(edgeBetweenness.entries())
-                .sort((a, b) => b[1] - a[1]);
-            
-            // Remove edges and detect communities
-            const communities = [];
-            const tempGraph = this.clone();
-            
-            for (const [edgeId, betweenness] of sortedEdges) {
-                // Remove edge
-                const edge = tempGraph.edges.get(edgeId);
-                if (edge) {
-                    tempGraph.removeEdge(edgeId);
-                    
-                    // Check if removal created new components
-                    const components = tempGraph.findConnectedComponents();
-                    if (components.length > communities.length) {
-                        communities.push(...components);
-                    }
-                }
-            }
-            
-            return communities;
-        }
-        
-        calculateEdgeBetweenness() {
-            const edgeBetweenness = new Map();
-            
-            for (const edge of this.edges.values()) {
-                edgeBetweenness.set(edge.id, 0);
-            }
-            
-            for (const startId of this.nodes.keys()) {
-                const { distances, predecessors, sigma } = this.brandesBFS(startId);
-                const delta = this.brandesAccumulation(startId, distances, predecessors, sigma);
-                
-                // Accumulate edge betweenness
-                for (const [edgeId, value] of delta) {
-                    edgeBetweenness.set(edgeId, (edgeBetweenness.get(edgeId) || 0) + value);
-                }
-            }
-            
-            // Normalize for undirected graph
-            for (const [edgeId, value] of edgeBetweenness) {
-                edgeBetweenness.set(edgeId, value / 2);
-            }
-            
-            return edgeBetweenness;
-        }
-        
-        brandesBFS(startId) {
-            const distances = new Map();
-            const predecessors = new Map();
-            const sigma = new Map();
-            const queue = [startId];
-            
-            // Initialize
-            for (const nodeId of this.nodes.keys()) {
-                distances.set(nodeId, -1);
-                predecessors.set(nodeId, []);
-                sigma.set(nodeId, 0);
-            }
-            
-            distances.set(startId, 0);
-            sigma.set(startId, 1);
-            
-            const stack = [];
-            
-            while (queue.length > 0) {
-                const current = queue.shift();
-                stack.push(current);
-                
-                for (const neighbor of this.adjacency.get(current)) {
-                    if (distances.get(neighbor) < 0) {
-                        queue.push(neighbor);
-                        distances.set(neighbor, distances.get(current) + 1);
-                    }
-                    
-                    if (distances.get(neighbor) === distances.get(current) + 1) {
-                        sigma.set(neighbor, sigma.get(neighbor) + sigma.get(current));
-                        predecessors.get(neighbor).push(current);
-                    }
-                }
-            }
-            
-            return { distances, predecessors, sigma, stack };
-        }
-        
-        brandesAccumulation(startId, distances, predecessors, sigma) {
-            const delta = new Map();
-            const dependency = new Map();
-            
-            // Initialize
-            for (const nodeId of this.nodes.keys()) {
-                delta.set(nodeId, 0);
-                dependency.set(nodeId, 0);
-            }
-            
-            // Process in reverse order
-            const stack = Array.from(this.nodes.keys()).reverse();
-            
-            for (const node of stack) {
-                for (const predecessor of predecessors.get(node)) {
-                    const edge = this.getEdgeBetween(predecessor, node);
-                    if (edge) {
-                        const coeff = (sigma.get(predecessor) / sigma.get(node)) * 
-                                    (1 + dependency.get(node));
-                        dependency.set(predecessor, dependency.get(predecessor) + coeff);
-                        delta.set(edge.id, (delta.get(edge.id) || 0) + coeff);
-                    }
-                }
-                
-                if (node !== startId) {
-                    delta.set(node, delta.get(node) + dependency.get(node));
-                }
-            }
-            
-            return delta;
-        }
-        
-        // Centrality calculations
-        calculateCentralities() {
-            return {
-                degree: this.calculateDegreeCentrality(),
-                betweenness: this.calculateBetweennessCentrality(),
-                closeness: this.calculateClosenessCentrality(),
-                eigenvector: this.calculateEigenvectorCentrality()
-            };
-        }
-        
-        calculateDegreeCentrality() {
-            const centrality = new Map();
-            const n = this.nodes.size;
-            
-            for (const [nodeId, node] of this.nodes) {
-                centrality.set(nodeId, {
-                    degree: node.degree,
-                    normalized: n > 1 ? node.degree / (n - 1) : 0
-                });
-            }
-            
-            return centrality;
-        }
-        
-        calculateBetweennessCentrality() {
-            const centrality = new Map();
-            
-            for (const nodeId of this.nodes.keys()) {
-                centrality.set(nodeId, 0);
-            }
-            
-            for (const startId of this.nodes.keys()) {
-                const { distances, predecessors, sigma, stack } = this.brandesBFS(startId);
-                const delta = this.brandesAccumulation(startId, distances, predecessors, sigma);
-                
-                for (const [nodeId, value] of delta) {
-                    if (this.nodes.has(nodeId)) {
-                        centrality.set(nodeId, centrality.get(nodeId) + value);
-                    }
-                }
-            }
-            
-            // Normalize
-            const n = this.nodes.size;
-            const factor = 2 / ((n - 1) * (n - 2));
-            
-            for (const [nodeId, value] of centrality) {
-                centrality.set(nodeId, value * factor);
-            }
-            
-            return centrality;
-        }
-        
-        calculateClosenessCentrality() {
-            const centrality = new Map();
-            const n = this.nodes.size;
-            
-            for (const startId of this.nodes.keys()) {
-                let totalDistance = 0;
-                let reachable = 0;
-                
-                const distances = this.calculateDistancesFrom(startId);
-                
-                for (const distance of distances.values()) {
-                    if (distance > 0 && distance < Infinity) {
-                        totalDistance += distance;
-                        reachable++;
-                    }
-                }
-                
-                if (reachable > 0) {
-                    centrality.set(startId, reachable / totalDistance);
-                } else {
-                    centrality.set(startId, 0);
-                }
-            }
-            
-            return centrality;
-        }
-        
-        calculateDistancesFrom(startId) {
-            const distances = new Map();
-            const queue = [{ node: startId, distance: 0 }];
-            const visited = new Set([startId]);
-            
-            for (const nodeId of this.nodes.keys()) {
-                distances.set(nodeId, Infinity);
-            }
-            distances.set(startId, 0);
-            
-            while (queue.length > 0) {
-                const { node, distance } = queue.shift();
-                
-                for (const neighbor of this.adjacency.get(node)) {
-                    if (!visited.has(neighbor)) {
-                        visited.add(neighbor);
-                        const edge = this.getEdgeBetween(node, neighbor);
-                        const weight = edge ? 100 - edge.strength : 50;
-                        
-                        const newDistance = distance + weight;
-                        if (newDistance < distances.get(neighbor)) {
-                            distances.set(neighbor, newDistance);
-                            queue.push({ node: neighbor, distance: newDistance });
-                        }
-                    }
-                }
-            }
-            
-            return distances;
-        }
-        
-        calculateEigenvectorCentrality(maxIterations = 100, epsilon = 0.0001) {
-            const n = this.nodes.size;
-            const nodeIds = Array.from(this.nodes.keys());
-            const indexMap = new Map();
-            
-            nodeIds.forEach((id, i) => indexMap.set(id, i));
-            
-            // Create adjacency matrix
-            const A = Array(n).fill().map(() => Array(n).fill(0));
-            for (const edge of this.edges.values()) {
-                const i = indexMap.get(edge.source);
-                const j = indexMap.get(edge.target);
-                const weight = edge.strength / 100;
-                
-                A[i][j] = weight;
-                A[j][i] = weight;
-            }
-            
-            // Power iteration
-            let x = Array(n).fill(1 / Math.sqrt(n));
-            let lambda = 0;
-            
-            for (let iter = 0; iter < maxIterations; iter++) {
-                // Ax = b
-                const b = Array(n).fill(0);
-                for (let i = 0; i < n; i++) {
-                    for (let j = 0; j < n; j++) {
-                        b[i] += A[i][j] * x[j];
-                    }
-                }
-                
-                const newLambda = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
-                
-                // Normalize
-                for (let i = 0; i < n; i++) {
-                    x[i] = b[i] / newLambda;
-                }
-                
-                // Check convergence
-                if (Math.abs(newLambda - lambda) < epsilon) {
-                    lambda = newLambda;
-                    break;
-                }
-                
-                lambda = newLambda;
-            }
-            
-            // Map back to node IDs
-            const centrality = new Map();
-            nodeIds.forEach((id, i) => {
-                centrality.set(id, x[i]);
-            });
-            
-            return centrality;
-        }
-        
-        // Graph metrics
-        calculateDensity() {
-            const n = this.nodes.size;
-            if (n < 2) return 0;
-            
-            const maxEdges = n * (n - 1) / 2;
-            return this.edges.size / maxEdges;
-        }
-        
-        calculateDiameter() {
-            if (this.nodes.size === 0) return 0;
-            
-            let diameter = 0;
-            const nodeIds = Array.from(this.nodes.keys());
-            
-            // Sample some nodes to approximate diameter
-            for (let i = 0; i < Math.min(20, nodeIds.length); i++) {
-                const startId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
-                const distances = this.calculateDistancesFrom(startId);
-                
-                for (const distance of distances.values()) {
-                    if (distance > diameter && distance < Infinity) {
-                        diameter = distance;
-                    }
-                }
-            }
-            
-            return diameter;
-        }
-        
-        calculateClusteringCoefficient() {
-            let totalCoefficient = 0;
-            let nodesWithNeighbors = 0;
-            
-            for (const [nodeId, neighbors] of this.adjacency) {
-                const k = neighbors.size;
-                if (k < 2) continue;
-                
-                // Count triangles
-                let triangles = 0;
-                const neighborArray = Array.from(neighbors);
-                
-                for (let i = 0; i < neighborArray.length; i++) {
-                    for (let j = i + 1; j < neighborArray.length; j++) {
-                        if (this.adjacency.get(neighborArray[i]).has(neighborArray[j])) {
-                            triangles++;
-                        }
-                    }
-                }
-                
-                const maxTriangles = k * (k - 1) / 2;
-                totalCoefficient += triangles / maxTriangles;
-                nodesWithNeighbors++;
-            }
-            
-            return nodesWithNeighbors > 0 ? totalCoefficient / nodesWithNeighbors : 0;
-        }
-        
-        findConnectedComponents() {
-            const visited = new Set();
-            const components = [];
-            
-            for (const nodeId of this.nodes.keys()) {
-                if (!visited.has(nodeId)) {
-                    const component = this.bfsComponent(nodeId, visited);
-                    components.push(component);
-                }
-            }
-            
-            return components;
-        }
-        
-        bfsComponent(startId, visited) {
-            const component = [];
-            const queue = [startId];
-            visited.add(startId);
-            
-            while (queue.length > 0) {
-                const nodeId = queue.shift();
-                component.push(nodeId);
-                
-                for (const neighbor of this.adjacency.get(nodeId)) {
-                    if (!visited.has(neighbor)) {
-                        visited.add(neighbor);
-                        queue.push(neighbor);
-                    }
-                }
-            }
-            
-            return component;
-        }
-        
-        // Pattern detection
-        findPatterns() {
-            const patterns = [];
-            
-            // Find star patterns (hubs)
-            patterns.push(...this.findStarPatterns());
-            
-            // Find chains
-            patterns.push(...this.findChainPatterns());
-            
-            // Find cliques
-            patterns.push(...this.findCliques());
-            
-            // Find bridges
-            patterns.push(...this.findBridgePatterns());
-            
-            return patterns;
-        }
-        
-        findStarPatterns(minDegree = 5) {
-            const stars = [];
-            
-            for (const [nodeId, node] of this.nodes) {
-                if (node.degree >= minDegree) {
-                    // Check if neighbors are not highly connected
-                    const neighbors = Array.from(this.adjacency.get(nodeId));
-                    let neighborConnections = 0;
-                    let maxPossible = neighbors.length * (neighbors.length - 1) / 2;
-                    
-                    for (let i = 0; i < neighbors.length; i++) {
-                        for (let j = i + 1; j < neighbors.length; j++) {
-                            if (this.adjacency.get(neighbors[i]).has(neighbors[j])) {
-                                neighborConnections++;
-                            }
-                        }
-                    }
-                    
-                    const density = maxPossible > 0 ? neighborConnections / maxPossible : 0;
-                    
-                    if (density < 0.3) {
-                        stars.push({
-                            type: 'star',
-                            center: nodeId,
-                            spokes: neighbors,
-                            degree: node.degree,
-                            density
-                        });
-                    }
-                }
-            }
-            
-            return stars;
-        }
-        
-        findChainPatterns(minLength = 3) {
-            const chains = [];
-            const visited = new Set();
-            
-            for (const nodeId of this.nodes.keys()) {
-                if (this.adjacency.get(nodeId).size === 1 && !visited.has(nodeId)) {
-                    const chain = this.traverseChain(nodeId, visited);
-                    if (chain.length >= minLength) {
-                        chains.push({
-                            type: 'chain',
-                            nodes: chain,
-                            length: chain.length
-                        });
-                    }
-                }
-            }
-            
-            return chains;
-        }
-        
-        traverseChain(startId, visited) {
-            const chain = [startId];
-            visited.add(startId);
-            
-            let current = startId;
-            let neighbors = Array.from(this.adjacency.get(current));
-            
-            while (neighbors.length === 2 || (chain.length === 1 && neighbors.length === 1)) {
-                let next = null;
-                for (const neighbor of neighbors) {
-                    if (!visited.has(neighbor)) {
-                        next = neighbor;
-                        break;
-                    }
-                }
-                
-                if (!next) break;
-                
-                chain.push(next);
-                visited.add(next);
-                current = next;
-                neighbors = Array.from(this.adjacency.get(current));
-            }
-            
-            return chain;
-        }
-        
-        findCliques(minSize = 3) {
-            const cliques = [];
-            const nodes = Array.from(this.nodes.keys());
-            
-            // Bron-Kerbosch algorithm
-            const bronKerbosch = (R, P, X) => {
-                if (P.size === 0 && X.size === 0) {
-                    if (R.size >= minSize) {
-                        cliques.push({
-                            type: 'clique',
-                            nodes: Array.from(R),
-                            size: R.size,
-                            density: 1.0
-                        });
-                    }
-                    return;
-                }
-                
-                // Choose pivot
-                const pivot = this.choosePivot(P, X);
-                const candidates = new Set(P);
-                
-                // Remove neighbors of pivot
-                for (const neighbor of this.adjacency.get(pivot)) {
-                    candidates.delete(neighbor);
-                }
-                
-                for (const v of candidates) {
-                    const neighbors = this.adjacency.get(v);
-                    
-                    const newR = new Set(R);
-                    newR.add(v);
-                    
-                    const newP = new Set(P);
-                    const newX = new Set(X);
-                    
-                    // Intersect with neighbors
-                    for (const item of newP) {
-                        if (!neighbors.has(item)) {
-                            newP.delete(item);
-                        }
-                    }
-                    for (const item of newX) {
-                        if (!neighbors.has(item)) {
-                            newX.delete(item);
-                        }
-                    }
-                    
-                    bronKerbosch(newR, newP, newX);
-                    
-                    P.delete(v);
-                    X.add(v);
-                }
-            };
-            
-            bronKerbosch(new Set(), new Set(nodes), new Set());
-            return cliques;
-        }
-        
-        choosePivot(P, X) {
-            let maxDegree = -1;
-            let pivot = null;
-            
-            for (const node of new Set([...P, ...X])) {
-                const degree = this.adjacency.get(node).size;
-                if (degree > maxDegree) {
-                    maxDegree = degree;
-                    pivot = node;
-                }
-            }
-            
-            return pivot || (P.values().next().value);
-        }
-        
-        findBridgePatterns() {
-            const bridges = [];
-            
-            for (const edge of this.edges.values()) {
-                // Temporarily remove edge
-                this.adjacency.get(edge.source).delete(edge.target);
-                this.adjacency.get(edge.target).delete(edge.source);
-                
-                // Check if graph becomes disconnected
-                const components = this.findConnectedComponents();
-                
-                // Restore edge
-                this.adjacency.get(edge.source).add(edge.target);
-                this.adjacency.get(edge.target).add(edge.source);
-                
-                if (components.length > 1) {
-                    bridges.push({
-                        type: 'bridge',
-                        edge: edge.id,
-                        source: edge.source,
-                        target: edge.target,
-                        strength: edge.strength
-                    });
-                }
-            }
-            
-            return bridges;
-        }
-        
-        // Utility methods
-        clone() {
-            const clone = new ClinicalGraph();
-            
-            // Clone nodes
-            for (const node of this.nodes.values()) {
-                clone.addNode({ ...node.data });
-                const clonedNode = clone.nodes.get(node.id);
-                if (clonedNode) {
-                    clonedNode.x = node.x;
-                    clonedNode.y = node.y;
-                }
-            }
-            
-            // Clone edges
-            for (const edge of this.edges.values()) {
-                clone.addEdge(edge.source, edge.target, edge.data);
-            }
-            
-            return clone;
-        }
-        
-        shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-        
-        invalidateMetrics() {
-            this.metricsCache.lastCalculated = 0;
-        }
-        
-        removeEdge(edgeId) {
-            const edge = this.edges.get(edgeId);
-            if (!edge) return;
-            
-            // Remove from adjacency
-            this.adjacency.get(edge.source).delete(edge.target);
-            this.adjacency.get(edge.target).delete(edge.source);
-            
-            // Update node degrees
-            this.nodes.get(edge.source).degree--;
-            this.nodes.get(edge.target).degree--;
-            
-            // Remove edge
-            this.edges.delete(edgeId);
-            
-            this.invalidateMetrics();
-        }
-        
-        // Serialization
-        toJSON() {
-            return {
-                nodes: Array.from(this.nodes.values()).map(node => ({
-                    id: node.id,
-                    label: node.label,
-                    data: node.data,
-                    position: { x: node.x, y: node.y },
-                    size: node.size,
-                    color: node.color,
-                    degree: node.degree,
-                    community: node.community
-                })),
-                edges: Array.from(this.edges.values()).map(edge => ({
-                    id: edge.id,
-                    source: edge.source,
-                    target: edge.target,
-                    label: edge.label,
-                    type: edge.type,
-                    strength: edge.strength,
-                    width: edge.width,
-                    color: edge.color,
-                    data: edge.data
-                }))
-            };
-        }
-        
-        fromJSON(data) {
-            this.nodes.clear();
-            this.edges.clear();
-            this.adjacency.clear();
-            this.properties.clear();
-            
-            // Add nodes
-            for (const nodeData of data.nodes) {
-                this.addNode(nodeData.data);
-                const node = this.nodes.get(nodeData.id);
-                if (node) {
-                    node.x = nodeData.position.x;
-                    node.y = nodeData.position.y;
-                    node.size = nodeData.size;
-                    node.color = nodeData.color;
-                    node.degree = nodeData.degree;
-                    node.community = nodeData.community;
-                }
-            }
-            
-            // Add edges
-            for (const edgeData of data.edges) {
-                this.addEdge(edgeData.source, edgeData.target, edgeData.data);
-            }
-        }
-        
-        // Visualization data
-        getVisualizationData() {
-            return {
-                nodes: Array.from(this.nodes.values()).map(node => ({
-                    id: node.id,
-                    label: node.label,
-                    title: `
-                        <div style="padding: 10px;">
-                            <strong>${node.label}</strong><br/>
-                            Category: ${node.data.category}<br/>
-                            Severity: ${node.data.severity || 'N/A'}%<br/>
-                            Degree: ${node.degree}<br/>
-                            ${node.data.evaluation ? `Evaluation: ${node.data.evaluation.substring(0, 100)}...` : ''}
-                        </div>
-                    `,
-                    x: node.x,
-                    y: node.y,
-                    size: node.size,
-                    color: node.color,
-                    borderWidth: node.selected ? 3 : 1,
-                    borderColor: node.highlighted ? '#FF6B6B' : '#2D3436',
-                    shape: 'dot'
-                })),
-                edges: Array.from(this.edges.values()).map(edge => ({
-                    id: edge.id,
-                    from: edge.source,
-                    to: edge.target,
-                    label: edge.label,
-                    title: `
-                        <div style="padding: 10px;">
-                            <strong>Connection</strong><br/>
-                            Type: ${edge.type}<br/>
-                            Strength: ${edge.strength.toFixed(1)}<br/>
-                            ${edge.data.conflicts ? '⚠️ Has conflicts' : ''}
-                        </div>
-                    `,
-                    width: edge.width,
-                    color: edge.color,
-                    dashes: edge.dashes,
-                    arrows: edge.directed ? 'to' : false
-                }))
-            };
-        }
-    }
-    
-    // ============================================================================
-    // LAYOUT ENGINE
-    // ============================================================================
-    
-    class ForceDirectedLayout {
-        constructor() {
-            this.config = {
-                repulsion: 200,
-                attraction: 0.1,
-                gravity: 0.01,
-                maxDistance: 1000,
-                minDistance: 10,
-                damping: 0.9,
-                maxSpeed: 50
-            };
-            
-            this.forces = new Map();
-            this.velocities = new Map();
-            this.running = false;
-            this.iteration = 0;
-        }
-        
-        initialize(graph) {
-            for (const nodeId of graph.nodes.keys()) {
-                this.forces.set(nodeId, { x: 0, y: 0 });
-                this.velocities.set(nodeId, { x: 0, y: 0 });
-            }
-        }
-        
-        calculateForces(graph) {
-            const nodes = Array.from(graph.nodes.values());
-            
-            // Reset forces
-            for (const force of this.forces.values()) {
-                force.x = 0;
-                force.y = 0;
-            }
-            
-            // Repulsion between all nodes
-            for (let i = 0; i < nodes.length; i++) {
-                const node1 = nodes[i];
-                
-                for (let j = i + 1; j < nodes.length; j++) {
-                    const node2 = nodes[j];
-                    
-                    const dx = node1.x - node2.x;
-                    const dy = node1.y - node2.y;
-                    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-                    
-                    // Coulomb's law repulsion
-                    const repulsionForce = this.config.repulsion / (distance * distance);
-                    const forceX = repulsionForce * dx / distance;
-                    const forceY = repulsionForce * dy / distance;
-                    
-                    this.forces.get(node1.id).x += forceX;
-                    this.forces.get(node1.id).y += forceY;
-                    this.forces.get(node2.id).x -= forceX;
-                    this.forces.get(node2.id).y -= forceY;
-                }
-            }
-            
-            // Attraction along edges
-            for (const edge of graph.edges.values()) {
-                const node1 = graph.nodes.get(edge.source);
-                const node2 = graph.nodes.get(edge.target);
-                
-                if (!node1 || !node2) continue;
-                
-                const dx = node1.x - node2.x;
-                const dy = node1.y - node2.y;
-                const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-                
-                // Hooke's law attraction
-                const idealLength = 100 + (100 - edge.strength);
-                const displacement = distance - idealLength;
-                const attractionForce = this.config.attraction * displacement;
-                
-                const forceX = attractionForce * dx / distance;
-                const forceY = attractionForce * dy / distance;
-                
-                this.forces.get(node1.id).x -= forceX;
-                this.forces.get(node1.id).y -= forceY;
-                this.forces.get(node2.id).x += forceX;
-                this.forces.get(node2.id).y += forceY;
-            }
-            
-            // Gravity towards center
-            const center = this.calculateCenter(nodes);
-            for (const node of nodes) {
-                const dx = node.x - center.x;
-                const dy = node.y - center.y;
-                const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-                
-                const gravityForce = this.config.gravity * distance;
-                this.forces.get(node.id).x -= gravityForce * dx / distance;
-                this.forces.get(node.id).y -= gravityForce * dy / distance;
-            }
-        }
-        
-        calculateCenter(nodes) {
-            if (nodes.length === 0) return { x: 0, y: 0 };
-            
-            let sumX = 0, sumY = 0;
-            for (const node of nodes) {
-                sumX += node.x;
-                sumY += node.y;
-            }
-            
-            return {
-                x: sumX / nodes.length,
-                y: sumY / nodes.length
-            };
-        }
-        
-        applyForces(graph, deltaTime = 0.1) {
-            for (const node of graph.nodes.values()) {
-                if (node.fixed) continue;
-                
-                const force = this.forces.get(node.id);
-                const velocity = this.velocities.get(node.id);
-                
-                if (!force || !velocity) continue;
-                
-                // Update velocity
-                velocity.x += force.x * deltaTime;
-                velocity.y += force.y * deltaTime;
-                
-                // Apply damping
-                velocity.x *= this.config.damping;
-                velocity.y *= this.config.damping;
-                
-                // Limit speed
-                const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
-                if (speed > this.config.maxSpeed) {
-                    velocity.x = (velocity.x / speed) * this.config.maxSpeed;
-                    velocity.y = (velocity.y / speed) * this.config.maxSpeed;
-                }
-                
-                // Update position
-                node.x += velocity.x * deltaTime;
-                node.y += velocity.y * deltaTime;
-            }
-        }
-        
-        step(graph) {
-            this.calculateForces(graph);
-            this.applyForces(graph);
-            this.iteration++;
-            
-            // Check convergence
-            const totalForce = this.calculateTotalForce();
-            return totalForce < 0.1;
-        }
-        
-        calculateTotalForce() {
-            let total = 0;
-            for (const force of this.forces.values()) {
-                total += Math.sqrt(force.x * force.x + force.y * force.y);
-            }
-            return total / this.forces.size;
-        }
-        
-        run(graph, maxIterations = 1000, callback = null) {
-            this.initialize(graph);
-            this.running = true;
-            
-            const stepFunction = () => {
-                if (!this.running || this.iteration >= maxIterations) {
-                    this.running = false;
-                    if (callback) callback(this.iteration);
-                    return;
-                }
-                
-                const converged = this.step(graph);
-                
-                if (callback) callback(this.iteration, converged);
-                
-                if (!converged) {
-                    requestAnimationFrame(stepFunction);
-                } else {
-                    this.running = false;
-                    if (callback) callback(this.iteration, true);
-                }
-            };
-            
-            requestAnimationFrame(stepFunction);
-        }
-        
-        stop() {
-            this.running = false;
-        }
-    }
-    
-    // ============================================================================
-    // COMMUNITY DETECTOR
-    // ============================================================================
-    
-    class LouvainCommunityDetector {
-        constructor() {
-            this.cache = new Map();
-        }
-        
-        detect(graph) {
-            // Use Louvain method from graph class
-            return graph.detectCommunities('louvain');
-        }
-        
-        calculateModularity(graph, communities) {
-            const m = graph.edges.size;
-            if (m === 0) return 0;
-            
-            let modularity = 0;
-            const degrees = new Map();
-            
-            // Calculate degrees
-            for (const [nodeId, node] of graph.nodes) {
-                degrees.set(nodeId, graph.adjacency.get(nodeId).size);
-            }
-            
-            // Group nodes by community
-            const communityMap = new Map();
-            for (const [nodeId, communityId] of communities) {
-                if (!communityMap.has(communityId)) {
-                    communityMap.set(communityId, []);
-                }
-                communityMap.get(communityId).push(nodeId);
-            }
-            
-            // Calculate modularity for each community
-            for (const [communityId, nodeIds] of communityMap) {
-                let edgesInside = 0;
-                let totalDegree = 0;
-                
-                // Count edges inside community
-                for (const nodeId of nodeIds) {
-                    totalDegree += degrees.get(nodeId);
-                    
-                    for (const neighbor of graph.adjacency.get(nodeId)) {
-                        if (nodeIds.includes(neighbor)) {
-                            edgesInside++;
-                        }
-                    }
-                }
-                
-                // Each edge counted twice
-                edgesInside /= 2;
-                
-                modularity += (edgesInside / m) - Math.pow(totalDegree / (2 * m), 2);
-            }
-            
-            return modularity;
-        }
-    }
-    
-    // ============================================================================
-    // PATH FINDER
-    // ============================================================================
-    
-    class ClinicalPathFinder {
-        constructor() {
-            this.cache = new Map();
-        }
-        
-        findPath(graph, startId, endId, options = {}) {
-            const cacheKey = `${startId}-${endId}-${JSON.stringify(options)}`;
-            
-            if (this.cache.has(cacheKey)) {
-                return this.cache.get(cacheKey);
-            }
-            
-            const path = graph.findShortestPath(startId, endId, options.algorithm || 'dijkstra');
-            
-            if (path) {
-                this.cache.set(cacheKey, path);
-            }
-            
-            return path;
-        }
-        
-        findAllPaths(graph, startId, endId, maxDepth = 6) {
-            const paths = [];
-            const visited = new Set();
-            
-            const dfs = (current, path, depth) => {
-                if (depth > maxDepth) return;
-                
-                visited.add(current);
-                path.push(current);
-                
-                if (current === endId) {
-                    paths.push([...path]);
-                } else {
-                    for (const neighbor of graph.adjacency.get(current)) {
-                        if (!visited.has(neighbor)) {
-                            dfs(neighbor, path, depth + 1);
-                        }
-                    }
-                }
-                
-                visited.delete(current);
-                path.pop();
-            };
-            
-            dfs(startId, [], 0);
-            return paths.sort((a, b) => a.length - b.length);
-        }
-    }
-    
-    // ============================================================================
-    // PATTERN DETECTOR
-    // ============================================================================
-    
-    class ClinicalPatternDetector {
-        detectAll(graph) {
-            const patterns = graph.findPatterns();
-            
-            // Add clinical-specific patterns
-            const clinicalPatterns = this.detectClinicalPatterns(graph);
-            
-            return {
-                structural: patterns,
-                clinical: clinicalPatterns,
-                insights: this.generateInsights(patterns, clinicalPatterns)
-            };
-        }
-        
-        detectClinicalPatterns(graph) {
-            const patterns = [];
-            
-            // Inflammation patterns
-            const inflammatoryNodes = this.getNodesByCategory(graph, 'inflammatory');
-            if (inflammatoryNodes.length >= 2) {
-                patterns.push({
-                    type: 'inflammatory_cluster',
-                    nodes: inflammatoryNodes.map(n => n.id),
-                    description: 'Cluster of inflammatory traits',
-                    severity: this.calculateAverageSeverity(inflammatoryNodes),
-                    implications: 'Consider anti-inflammatory therapy'
-                });
-            }
-            
-            // Treatment complexity patterns
-            const complexNodes = [];
-            for (const node of graph.nodes.values()) {
-                if (this.hasComplexTreatment(node.data.treatment)) {
-                    complexNodes.push(node.id);
-                }
-            }
-            
-            if (complexNodes.length >= 2) {
-                patterns.push({
-                    type: 'treatment_complexity',
-                    nodes: complexNodes,
-                    description: 'Multiple traits requiring complex treatments',
-                    implications: 'Risk of non-adherence, consider simplification'
-                });
-            }
-            
-            // Critical bridge patterns
-            const bridges = graph.findBridgePatterns();
-            for (const bridge of bridges) {
-                patterns.push({
-                    type: 'critical_bridge',
-                    edge: bridge.edge,
-                    description: 'Critical connection between network components',
-                    severity: 'high',
-                    implications: 'Monitor this connection carefully'
-                });
-            }
-            
-            return patterns;
-        }
-        
-        getNodesByCategory(graph, category) {
-            return Array.from(graph.nodes.values()).filter(node => 
-                node.data.category === category
-            );
-        }
-        
-        calculateAverageSeverity(nodes) {
-            if (nodes.length === 0) return 0;
-            const total = nodes.reduce((sum, node) => sum + (node.data.severity || 0), 0);
-            return total / nodes.length;
-        }
-        
-        hasComplexTreatment(treatment) {
-            if (!treatment) return false;
-            
-            const treatmentStr = typeof treatment === 'string' 
-                ? treatment 
-                : JSON.stringify(treatment);
-            
-            const complexityMarkers = [
-                'combination',
-                'multiple',
-                'add-on',
-                'step-up',
-                'rescue',
-                'maintenance'
-            ];
-            
-            return complexityMarkers.some(marker => 
-                treatmentStr.toLowerCase().includes(marker)
-            );
-        }
-        
-        generateInsights(structuralPatterns, clinicalPatterns) {
-            const insights = [];
-            
-            // Hub insights
-            const hubs = structuralPatterns.filter(p => p.type === 'star');
-            if (hubs.length > 0) {
-                const largestHub = hubs.reduce((max, hub) => 
-                    hub.degree > max.degree ? hub : max
-                );
-                
-                insights.push({
-                    type: 'hub_analysis',
-                    description: `Network has ${hubs.length} hub nodes`,
-                    detail: `Largest hub (${largestHub.center}) has ${largestHub.degree} connections`,
-                    implications: 'Hubs represent key clinical traits that influence many others'
-                });
-            }
-            
-            // Clique insights
-            const cliques = structuralPatterns.filter(p => p.type === 'clique');
-            if (cliques.length > 0) {
-                const largestClique = cliques.reduce((max, clique) => 
-                    clique.size > max.size ? clique : max
-                );
-                
-                insights.push({
-                    type: 'clique_analysis',
-                    description: `Found ${cliques.length} tightly connected groups`,
-                    detail: `Largest clique has ${largestClique.size} fully interconnected nodes`,
-                    implications: 'Cliques may represent clinical syndromes or co-occurring conditions'
-                });
-            }
-            
-            // Bridge insights
-            const bridges = structuralPatterns.filter(p => p.type === 'bridge');
-            if (bridges.length > 0) {
-                insights.push({
-                    type: 'bridge_analysis',
-                    description: `${bridges.length} critical bridge connections detected`,
-                    detail: 'These connections keep the network from fragmenting',
-                    implications: 'Bridge failures would disconnect major network components'
-                });
-            }
-            
-            return insights;
-        }
-    }
-    
-    // ============================================================================
-    // CENTRALITY ANALYZER
-    // ============================================================================
-    
-    class CentralityAnalyzer {
-        constructor() {
-            this.cache = new Map();
-        }
-        
-        calculateAll(graph) {
-            return graph.calculateCentralities();
-        }
-        
-        getTopNodes(graph, centralityType = 'degree', limit = 10) {
-            const centralities = graph.calculateCentralities();
-            const centrality = centralities[centralityType];
-            
-            if (!centrality) return [];
-            
-            return Array.from(centrality.entries())
-                .sort((a, b) => {
-                    const valA = typeof a[1] === 'object' ? a[1].normalized : a[1];
-                    const valB = typeof b[1] === 'object' ? b[1].normalized : b[1];
-                    return valB - valA;
-                })
-                .slice(0, limit)
-                .map(([nodeId, value]) => ({
-                    node: graph.nodes.get(nodeId),
-                    value,
-                    centrality: centralityType
-                }));
-        }
-        
-        identifyCriticalNodes(graph) {
-            const centralities = graph.calculateCentralities();
-            const criticalNodes = [];
-            
-            for (const [nodeId, degree] of centralities.degree) {
-                if (degree.normalized > 0.7) {
-                    const node = graph.nodes.get(nodeId);
-                    criticalNodes.push({
-                        node,
-                        reason: 'high_degree',
-                        score: degree.normalized,
-                        description: 'Highly connected hub node'
-                    });
-                }
-            }
-            
-            for (const [nodeId, betweenness] of centralities.betweenness) {
-                if (betweenness > 0.5) {
-                    const node = graph.nodes.get(nodeId);
-                    criticalNodes.push({
-                        node,
-                        reason: 'high_betweenness',
-                        score: betweenness,
-                        description: 'Critical intermediary node'
-                    });
-                }
-            }
-            
-            return criticalNodes;
-        }
-    }
-    
-    // ============================================================================
-    // PERFORMANCE OPTIMIZATION
-    // ============================================================================
-    
-    class GraphCache {
-        constructor() {
-            this.cache = new Map();
-            this.stats = {
-                hits: 0,
-                misses: 0,
-                size: 0
-            };
-            this.maxSize = 100;
-        }
-        
-        set(key, value, ttl = 60000) {
-            const entry = {
-                value,
-                expires: Date.now() + ttl,
-                lastAccessed: Date.now()
-            };
-            
-            this.cache.set(key, entry);
-            this.stats.size = this.cache.size;
-            
-            if (this.cache.size > this.maxSize) {
-                this.evictLRU();
-            }
-        }
-        
-        get(key) {
-            const entry = this.cache.get(key);
-            
-            if (!entry) {
-                this.stats.misses++;
-                return null;
-            }
-            
-            if (entry.expires < Date.now()) {
-                this.cache.delete(key);
-                this.stats.misses++;
-                this.stats.size = this.cache.size;
-                return null;
-            }
-            
-            entry.lastAccessed = Date.now();
-            this.stats.hits++;
-            return entry.value;
-        }
-        
-        delete(key) {
-            const existed = this.cache.delete(key);
-            if (existed) {
-                this.stats.size = this.cache.size;
-            }
-            return existed;
-        }
-        
-        clear() {
-            this.cache.clear();
-            this.stats.size = 0;
-        }
-        
-        evictLRU() {
-            let lruKey = null;
-            let lruTime = Infinity;
-            
-            for (const [key, entry] of this.cache) {
-                if (entry.lastAccessed < lruTime) {
-                    lruTime = entry.lastAccessed;
-                    lruKey = key;
-                }
-            }
-            
-            if (lruKey) {
-                this.delete(lruKey);
-            }
-        }
-    }
-    
-    class WorkerPool {
-        constructor() {
-            this.workers = new Map();
-            this.taskQueue = [];
-            this.maxWorkers = navigator.hardwareConcurrency || 4;
-        }
-        
-        async runTask(taskType, data) {
-            // Simplified - in real implementation would use Web Workers
-            // For now, run in main thread
-            
-            switch (taskType) {
-                case 'calculate_centralities':
-                    return this.calculateCentralitiesInThread(data.graph);
-                case 'detect_communities':
-                    return this.detectCommunitiesInThread(data.graph, data.method);
-                case 'find_patterns':
-                    return this.findPatternsInThread(data.graph);
-                default:
-                    throw new Error(`Unknown task type: ${taskType}`);
-            }
-        }
-        
-        calculateCentralitiesInThread(graph) {
-            // Simulate async calculation
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    const centralities = graph.calculateCentralities();
-                    resolve(centralities);
-                }, 100);
-            });
-        }
-        
-        detectCommunitiesInThread(graph, method) {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    const communities = graph.detectCommunities(method);
-                    resolve(communities);
-                }, 150);
-            });
-        }
-        
-        findPatternsInThread(graph) {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    const patterns = graph.findPatterns();
-                    resolve(patterns);
-                }, 200);
-            });
-        }
-        
-        terminate() {
-            // Clean up workers
-            this.workers.clear();
-        }
-    }
-    
-    class GraphBatchProcessor {
-        constructor() {
-            this.queue = [];
-            this.processing = false;
-            this.batchSize = 50;
-        }
-        
-        add(task) {
-            this.queue.push(task);
-            if (!this.processing) {
-                this.process();
-            }
-        }
-        
-        async process() {
-            this.processing = true;
-            
-            while (this.queue.length > 0) {
-                const batch = this.queue.splice(0, this.batchSize);
-                
-                await Promise.all(batch.map(async task => {
-                    try {
-                        await task();
-                    } catch (error) {
-                        console.error('Batch task error:', error);
-                    }
-                }));
-                
-                // Yield to prevent blocking
-                if (this.queue.length > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
-                }
-            }
-            
-            this.processing = false;
-        }
-        
-        clear() {
-            this.queue = [];
-            this.processing = false;
-        }
-    }
-    
-    // ============================================================================
-    // PUBLIC API
-    // ============================================================================
-    
-    async loadGraph(graphData) {
-        try {
-            this.graph = new ClinicalGraph();
-            
-            if (graphData) {
-                this.graph.fromJSON(graphData);
-            }
-            
-            // Initialize layout
-            this.layout = new ForceDirectedLayout();
-            this.layout.initialize(this.graph);
-            
-            // Run initial analysis
-            const analysis = await this.analyzeGraph();
-            
-            this.eventSystem.emit('graph:loaded', {
-                nodes: this.graph.nodes.size,
-                edges: this.graph.edges.size,
-                analysis
-            });
-            
-            return {
-                graph: this.graph,
-                layout: this.layout,
-                analysis
-            };
-            
-        } catch (error) {
-            console.error('Error loading graph:', error);
-            this.eventSystem.emit('graph:error', { error: error.message });
-            throw error;
-        }
-    }
-    
-    async analyzeGraph() {
-        if (!this.graph || this.graph.nodes.size === 0) {
-            return null;
-        }
-        
-        this.state.analysisInProgress = true;
-        this.eventSystem.emit('analysis:started');
-        
-        try {
-            // Run analyses in parallel
-            const [metrics, communities, centralities, patterns] = await Promise.all([
-                this.calculateMetrics(),
-                this.detectCommunities(),
-                this.calculateCentralities(),
-                this.detectPatterns()
-            ]);
-            
-            const analysis = {
-                metrics,
-                communities,
-                centralities,
-                patterns,
-                timestamp: new Date().toISOString()
-            };
-            
-            this.cache.set('last_analysis', analysis, 30000); // Cache for 30 seconds
-            
-            this.eventSystem.emit('analysis:complete', analysis);
-            return analysis;
-            
-        } catch (error) {
-            console.error('Analysis error:', error);
-            this.eventSystem.emit('analysis:error', { error: error.message });
-            throw error;
-        } finally {
-            this.state.analysisInProgress = false;
-        }
-    }
-    
-    async calculateMetrics() {
-        if (!this.graph) return null;
-        
-        return {
-            nodes: this.graph.nodes.size,
-            edges: this.graph.edges.size,
-            density: this.graph.calculateDensity(),
-            diameter: this.graph.calculateDiameter(),
-            clusteringCoefficient: this.graph.calculateClusteringCoefficient(),
-            components: this.graph.findConnectedComponents().length
-        };
-    }
-    
-    async detectCommunities(method = 'louvain') {
-        if (!this.graph) return null;
-        
-        const communities = this.graph.detectCommunities(method);
-        const communityDetector = new LouvainCommunityDetector();
-        const modularity = communityDetector.calculateModularity(this.graph, communities);
-        
-        return {
-            method,
-            assignments: communities,
-            count: new Set(Array.from(communities.values())).size,
-            modularity
-        };
-    }
-    
-    async calculateCentralities() {
-        if (!this.graph) return null;
-        
-        return this.graph.calculateCentralities();
-    }
-    
-    async detectPatterns() {
-        if (!this.graph) return null;
-        
-        const patternDetector = new ClinicalPatternDetector();
-        return patternDetector.detectAll(this.graph);
-    }
-    
-    async findPath(startId, endId, options = {}) {
-        if (!this.graph) return null;
-        
-        const pathFinder = new ClinicalPathFinder();
-        return pathFinder.findPath(this.graph, startId, endId, options);
-    }
-    
-    async findAllPaths(startId, endId, maxDepth = 6) {
-        if (!this.graph) return null;
-        
-        const pathFinder = new ClinicalPathFinder();
-        return pathFinder.findAllPaths(this.graph, startId, endId, maxDepth);
-    }
-    
-    async runLayout(iterations = 500) {
-        if (!this.graph || !this.layout) return;
-        
-        return new Promise((resolve) => {
-            this.layout.run(this.graph, iterations, (iteration, converged) => {
-                if (converged || iteration >= iterations) {
-                    resolve({ iteration, converged });
-                }
-            });
-        });
-    }
-    
-    async exportGraph(format = 'json') {
-        if (!this.graph) return null;
-        
-        switch (format) {
-            case 'json':
-                return this.graph.toJSON();
-            case 'csv':
-                return this.exportToCSV();
-            case 'gexf':
-                return this.exportToGEXF();
-            default:
-                return this.graph.toJSON();
-        }
-    }
-    
-    exportToCSV() {
-        if (!this.graph) return '';
-        
-        let csv = 'Node ID,Label,Category,Severity,Degree,X,Y\n';
-        
-        for (const node of this.graph.nodes.values()) {
-            csv += `"${node.id}","${node.label}","${node.data.category}",${node.data.severity || 0},${node.degree},${node.x},${node.y}\n`;
-        }
-        
-        csv += '\nEdge ID,Source,Target,Type,Strength\n';
-        
-        for (const edge of this.graph.edges.values()) {
-            csv += `"${edge.id}","${edge.source}","${edge.target}","${edge.type}",${edge.strength}\n`;
-        }
-        
-        return csv;
-    }
-    
-    exportToGEXF() {
-        if (!this.graph) return '';
-        
-        const nodes = Array.from(this.graph.nodes.values());
-        const edges = Array.from(this.graph.edges.values());
-        
-        return `<?xml version="1.0" encoding="UTF-8"?>
-<gexf xmlns="http://www.gexf.net/1.2draft" version="1.2">
-    <graph mode="static" defaultedgetype="undirected">
-        <nodes>
-            ${nodes.map(node => `
-            <node id="${node.id}" label="${node.label}">
-                <attvalues>
-                    <attvalue for="category" value="${node.data.category}"/>
-                    <attvalue for="severity" value="${node.data.severity || 0}"/>
-                    <attvalue for="degree" value="${node.degree}"/>
-                </attvalues>
-                <viz:position x="${node.x}" y="${node.y}" z="0"/>
-                <viz:size value="${node.size}"/>
-                <viz:color r="${parseInt(node.color.slice(1, 3), 16)}" 
-                          g="${parseInt(node.color.slice(3, 5), 16)}" 
-                          b="${parseInt(node.color.slice(5, 7), 16)}"/>
-            </node>`).join('')}
-        </nodes>
-        <edges>
-            ${edges.map(edge => `
-            <edge id="${edge.id}" source="${edge.source}" target="${edge.target}" weight="${edge.strength / 100}">
-                <attvalues>
-                    <attvalue for="type" value="${edge.type}"/>
-                </attvalues>
-                <viz:thickness value="${edge.width}"/>
-                <viz:color r="${parseInt(edge.color.slice(1, 3), 16)}" 
-                          g="${parseInt(edge.color.slice(3, 5), 16)}" 
-                          b="${parseInt(edge.color.slice(5, 7), 16)}"/>
-            </edge>`).join('')}
-        </edges>
-    </graph>
-</gexf>`;
-    }
-    
-    // ============================================================================
-    // EVENT SYSTEM
-    // ============================================================================
-    
-    createEventSystem() {
-        return {
-            listeners: new Map(),
-            
-            subscribe(event, callback) {
-                if (!this.listeners.has(event)) {
-                    this.listeners.set(event, new Set());
-                }
-                this.listeners.get(event).add(callback);
-                return () => this.unsubscribe(event, callback);
-            },
-            
-            unsubscribe(event, callback) {
-                if (this.listeners.has(event)) {
-                    this.listeners.get(event).delete(callback);
-                }
-            },
-            
-            emit(event, data) {
-                if (this.listeners.has(event)) {
-                    this.listeners.get(event).forEach(callback => {
-                        try {
-                            callback(data);
-                        } catch (error) {
-                            console.error(`Event listener error for ${event}:`, error);
-                        }
-                    });
-                }
-            }
-        };
-    }
-    
-    setupEventListeners() {
-        // Listen for node selection
-        this.eventSystem.subscribe('node:selected', (data) => {
-            this.state.selectedNodes.add(data.node.id);
-            this.highlightNeighbors(data.node.id);
-        });
-        
-        // Listen for node deselection
-        this.eventSystem.subscribe('node:deselected', (data) => {
-            this.state.selectedNodes.delete(data.node.id);
-            this.clearHighlights();
-        });
-        
-        // Listen for graph modifications
-        this.eventSystem.subscribe('graph:modified', () => {
-            this.state.graphModified = true;
-            this.cache.clear(); // Clear cache when graph changes
-        });
-    }
-    
-    highlightNeighbors(nodeId) {
-        if (!this.graph) return;
-        
-        const neighbors = this.graph.adjacency.get(nodeId);
-        if (!neighbors) return;
-        
-        for (const neighborId of neighbors) {
-            const neighbor = this.graph.nodes.get(neighborId);
-            if (neighbor) {
-                neighbor.highlighted = true;
-            }
-        }
-    }
-    
-    clearHighlights() {
-        if (!this.graph) return;
-        
-        for (const node of this.graph.nodes.values()) {
-            node.highlighted = false;
-        }
-    }
-    
-    initializeWorkerPool() {
-        this.workerPool = new WorkerPool();
-    }
-    
-    // ============================================================================
-    // CLEANUP
-    // ============================================================================
-    
-    destroy() {
-        if (this.layout) {
-            this.layout.stop();
-        }
-        
-        if (this.workerPool) {
-            this.workerPool.terminate();
-        }
-        
-        this.cache.clear();
-        this.batchProcessor.clear();
-        
-        this.graph = null;
-        this.layout = null;
-        this.communityDetector = null;
-        this.pathFinder = null;
-        this.patternDetector = null;
-        this.centralityCalculator = null;
-        this.workerPool = null;
-        this.batchProcessor = null;
-        
-        console.log('Clinical Graph Engine destroyed');
-    }
-}
-
-// ============================================================================
-// GLOBAL EXPORT
-// ============================================================================
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        ClinicalGraphEngine,
-        ClinicalGraph,
-        ForceDirectedLayout,
-        LouvainCommunityDetector,
-        ClinicalPathFinder,
-        ClinicalPatternDetector,
-        CentralityAnalyzer,
-        GraphCache,
-        WorkerPool,
-        GraphBatchProcessor
-    };
-}
-
-if (typeof window !== 'undefined') {
-    window.ClinicalGraphEngine = ClinicalGraphEngine;
-}
-
-console.log('Clinical Graph Engine v4.0 - Complete implementation loaded');
-
-// ============================================================================
-// CLINICAL NETWORK INTELLIGENCE v4.0
-// ============================================================================
-
-'use strict';
-
-class ClinicalNetwork {
-    constructor() {
-        console.log('Initializing Clinical Network Intelligence v4.0...');
-        
-        // Core Components
-        this.canvas = document.getElementById('networkCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        
-        // Initialize database and graph engine
-        this.database = new ClinicalDatabase();
-        this.graphEngine = new ClinicalGraphEngine(); // Now using the complete implementation
-        
-        // State management
-        this.state = {
+    <!-- SINGLE SCRIPT - NO DUPLICATION -->
+    <script>
+        // ====== CONFIGURATION ======
+        const SUPABASE_URL = 'https://xwcpdmmnetbkybvwzqhi.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_0l8CRvQcizRJF13mdaFF9Q_cZpeuWL_';
+        
+        // ====== GLOBAL STATE ======
+        const AppState = {
+            supabase: null,
+            currentDisease: null,
             traits: [],
             connections: [],
-            selected: new Set(),
-            currentTool: 'select',
-            dragging: null,
-            dragOffset: { x: 0, y: 0 },
-            lastMouse: { x: 0, y: 0 },
-            multiSelect: false,
-            graphData: null,
-            graphMetrics: null
+            nodePositions: new Map(),
+            isInitialized: false
         };
         
-        // Network visualization state
-        this.visualization = {
-            nodes: new Map(),
-            edges: new Map(),
-            selectedNode: null,
-            highlightedNodes: new Set(),
-            layoutIterations: 0
-        };
+        // ====== INITIALIZATION ======
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing application...');
+            initializeApplication();
+        });
         
-        // Initialize
-        this.init();
-    }
-    
-    async init() {
-        try {
-            // Setup canvas
-            this.setupCanvas();
+        async function initializeApplication() {
+            if (AppState.isInitialized) {
+                console.log('Already initialized, skipping...');
+                return;
+            }
             
-            // Setup event listeners
-            this.setupEvents();
-            
-            // Show loading progress
-            this.showLoading();
-            
-            // Initialize database
-            await this.database.initialize();
-            
-            // Load initial data
-            this.loadInitialData();
-            
-            // Start render loop
-            this.startRenderLoop();
-            
-            // Hide loading
-            setTimeout(() => this.hideLoading(), 500);
-            
-            // Show success message
-            this.showToast('System Ready', 'Clinical Network Intelligence initialized successfully', 'success');
-            
-        } catch (error) {
-            console.error('Initialization error:', error);
-            this.showToast('Initialization Failed', error.message, 'error');
+            try {
+                // Initialize Supabase client
+                if (!window.supabase) {
+                    throw new Error('Supabase library not loaded');
+                }
+                
+                AppState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('✅ Supabase client created');
+                
+                // Update connection status
+                document.getElementById('connectionStatus').innerHTML = 
+                    '<i class="fas fa-circle" style="color: #4ade80;"></i> Connected to Supabase';
+                
+                // Load initial data
+                await loadDiseases();
+                await loadSavedNetworks();
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                AppState.isInitialized = true;
+                
+            } catch (error) {
+                console.error('❌ Initialization error:', error);
+                document.getElementById('connectionStatus').innerHTML = 
+                    `<i class="fas fa-circle" style="color: #ef476f;"></i> Error: ${error.message}`;
+            }
         }
-    }
-    
-    setupCanvas() {
-        this.resizeCanvas();
-        window.addEventListener('resize', () => this.resizeCanvas());
-    }
-    
-    resizeCanvas() {
-        const rect = this.canvas.parentElement.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = rect.height * dpr;
-        this.canvas.style.width = `${rect.width}px`;
-        this.canvas.style.height = `${rect.height}px`;
-        this.ctx.scale(dpr, dpr);
-    }
-    
-    setupEvents() {
-        // Canvas events
-        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
-        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
-        this.canvas.addEventListener('mouseup', () => this.onMouseUp());
-        this.canvas.addEventListener('wheel', (e) => this.onMouseWheel(e));
         
-        // Toolbar events
-        document.querySelectorAll('.clinical-tool').forEach(tool => {
-            tool.addEventListener('click', (e) => {
-                const toolName = e.currentTarget.dataset.tool;
-                this.setTool(toolName);
-            });
-        });
+        // ====== DATA LOADING ======
+        async function loadDiseases() {
+            try {
+                const { data, error } = await AppState.supabase
+                    .from('diseases')
+                    .select('*')
+                    .order('disease_name');
+                
+                if (error) throw error;
+                
+                renderDiseaseList(data);
+                
+            } catch (error) {
+                console.error('Error loading diseases:', error);
+                document.getElementById('diseaseList').innerHTML = 
+                    `<div style="color: #ef476f; padding: 10px;">Error: ${error.message}</div>`;
+            }
+        }
         
-        // Header buttons
-        document.getElementById('btnDatabase').addEventListener('click', () => this.showDatabase());
-        document.getElementById('btnCreateTrait').addEventListener('click', () => this.showCreateTraitModal());
-        document.getElementById('btnInsights').addEventListener('click', () => this.showInsights());
-        document.getElementById('btnExport').addEventListener('click', () => this.generateReport());
+        async function loadTraits(disease) {
+            try {
+                AppState.currentDisease = disease;
+                AppState.traits = [];
+                AppState.connections = [];
+                AppState.nodePositions.clear();
+                
+                // Update UI
+                document.getElementById('canvasTitle').innerHTML = 
+                    `<i class="fas fa-spinner fa-spin"></i> Loading ${disease.disease_name}...`;
+                
+                // Clear workspace
+                const workspace = document.getElementById('workspace');
+                workspace.innerHTML = '<svg class="connections-svg" id="connectionsSvg"></svg>';
+                
+                // Load disease traits with positions
+                const { data: diseaseTraits, error } = await AppState.supabase
+                    .from('disease_traits')
+                    .select(`
+                        default_x,
+                        default_y,
+                        treatable_traits(*)
+                    `)
+                    .eq('disease_id', disease.id);
+                
+                if (error) throw error;
+                
+                AppState.traits = diseaseTraits.map(dt => dt.treatable_traits);
+                
+                // Load network connections
+                const traitIds = AppState.traits.map(t => t.id);
+                if (traitIds.length > 0) {
+                    const { data: networkData, error: networkError } = await AppState.supabase
+                        .from('trait_networks')
+                        .select('*')
+                        .in('source_trait_id', traitIds)
+                        .in('target_trait_id', traitIds);
+                    
+                    if (!networkError) {
+                        AppState.connections = networkData;
+                    }
+                }
+                
+                // Render the network
+                renderNetwork();
+                document.getElementById('canvasTitle').textContent = 
+                    `${disease.disease_name} - Treatable Traits`;
+                
+            } catch (error) {
+                console.error('Error loading traits:', error);
+                document.getElementById('workspace').innerHTML = `
+                    <div style="padding: 50px; text-align: center; color: #ef476f;">
+                        <h3>Error Loading Data</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
         
-        // Collapse buttons
-        document.getElementById('toggleSidebar').addEventListener('click', () => this.toggleSidebar());
-        document.getElementById('toggleDetails').addEventListener('click', () => this.toggleDetails());
-        document.getElementById('collapseSidebar').addEventListener('click', () => this.toggleSidebar());
-        document.getElementById('collapseDetails').addEventListener('click', () => this.toggleDetails());
+        async function loadSavedNetworks() {
+            try {
+                const { data, error } = await AppState.supabase
+                    .from('saved_networks')
+                    .select(`
+                        *,
+                        diseases(disease_name)
+                    `)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                renderSavedNetworks(data);
+                
+            } catch (error) {
+                console.error('Error loading saved networks:', error);
+            }
+        }
         
-        // Search
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            this.searchTraits(e.target.value);
-        });
-        
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => this.onKeyDown(e));
-        document.addEventListener('keyup', (e) => this.onKeyUp(e));
-    }
-    
-    // ===================================================
-    // NETWORK ENGINE INTEGRATION
-    // ===================================================
-    
-    async loadInitialData() {
-        try {
-            // Load some default traits
-            const defaultTraits = this.database.getRandomTraits(8);
+        // ====== RENDERING ======
+        function renderDiseaseList(diseases) {
+            const container = document.getElementById('diseaseList');
+            container.innerHTML = '';
             
-            // Create graph data structure
-            const graphData = {
-                nodes: [],
-                edges: []
+            diseases.forEach(disease => {
+                const button = document.createElement('button');
+                button.className = 'disease-btn';
+                button.innerHTML = `
+                    <div style="font-weight: 600;">${disease.disease_name}</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 3px;">${disease.icd10_code || ''}</div>
+                `;
+                
+                button.addEventListener('click', () => {
+                    // Update active state
+                    document.querySelectorAll('.disease-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    button.classList.add('active');
+                    
+                    // Load traits
+                    loadTraits(disease);
+                });
+                
+                container.appendChild(button);
+            });
+        }
+        
+        function renderNetwork() {
+            const workspace = document.getElementById('workspace');
+            
+            // Clear existing nodes (keep SVG)
+            const existingNodes = workspace.querySelectorAll('.trait-node');
+            existingNodes.forEach(node => node.remove());
+            
+            // Create trait nodes
+            AppState.traits.forEach((trait, index) => {
+                createTraitNode(trait, index);
+            });
+            
+            // Draw connections
+            drawConnections();
+            
+            // Make nodes draggable
+            setupDraggableNodes();
+        }
+        
+        function createTraitNode(trait, index) {
+            const workspace = document.getElementById('workspace');
+            
+            // Get saved position or calculate
+            let pos = AppState.nodePositions.get(trait.id);
+            if (!pos) {
+                // Try to get from database
+                const diseaseTrait = AppState.traits.find(t => t.id === trait.id);
+                if (diseaseTrait && diseaseTrait.default_x && diseaseTrait.default_y) {
+                    pos = { x: diseaseTrait.default_x, y: diseaseTrait.default_y };
+                } else {
+                    // Calculate position
+                    const cols = Math.ceil(Math.sqrt(AppState.traits.length));
+                    const col = index % cols;
+                    const row = Math.floor(index / cols);
+                    pos = {
+                        x: 100 + col * 220,
+                        y: 100 + row * 180
+                    };
+                }
+                AppState.nodePositions.set(trait.id, pos);
+            }
+            
+            // Create node element
+            const node = document.createElement('div');
+            node.className = `trait-node ${trait.category.toLowerCase()}`;
+            node.dataset.id = trait.id;
+            node.style.left = `${pos.x}px`;
+            node.style.top = `${pos.y}px`;
+            
+            // Determine category class
+            const categoryClass = trait.category.toLowerCase();
+            const categoryColors = {
+                'inflammatory': '#ef476f',
+                'physiological': '#06d6a0',
+                'behavioral': '#ffd166',
+                'comorbid': '#118ab2',
+                'environmental': '#9d4edd'
             };
             
-            // Add nodes to graph
-            defaultTraits.forEach((trait, index) => {
-                const node = {
-                    id: trait.id,
-                    label: trait.name,
-                    data: trait,
-                    x: Math.random() * 600 + 100,
-                    y: Math.random() * 400 + 100,
-                    size: 40 + (trait.severity * 0.3),
-                    color: this.getCategoryColor(trait.category),
-                    type: 'trait'
+            node.innerHTML = `
+                <div class="node-header">
+                    <div class="node-title">${trait.trait_name}</div>
+                    <span class="node-category" style="background: ${categoryColors[categoryClass] || '#e2e8f0'}; color: white;">
+                        ${trait.category}
+                    </span>
+                </div>
+                <div class="node-content">
+                    ${trait.description || 'No description available'}
+                    <div style="font-size: 11px; color: #718096; margin-top: 8px;">
+                        <i class="fas fa-stethoscope"></i> ${trait.measurement_method || 'Various methods'}
+                    </div>
+                </div>
+            `;
+            
+            // Double-click for details
+            node.addEventListener('dblclick', () => showTraitDetails(trait));
+            
+            workspace.appendChild(node);
+        }
+        
+        function drawConnections() {
+            const svg = document.getElementById('connectionsSvg');
+            svg.innerHTML = '';
+            
+            AppState.connections.forEach(conn => {
+                const sourceNode = document.querySelector(`[data-id="${conn.source_trait_id}"]`);
+                const targetNode = document.querySelector(`[data-id="${conn.target_trait_id}"]`);
+                
+                if (!sourceNode || !targetNode) return;
+                
+                const sourceRect = sourceNode.getBoundingClientRect();
+                const targetRect = targetNode.getBoundingClientRect();
+                const workspaceRect = document.getElementById('workspace').getBoundingClientRect();
+                
+                const x1 = sourceRect.left - workspaceRect.left + sourceRect.width / 2;
+                const y1 = sourceRect.top - workspaceRect.top + sourceRect.height / 2;
+                const x2 = targetRect.left - workspaceRect.left + targetRect.width / 2;
+                const y2 = targetRect.top - workspaceRect.top + targetRect.height / 2;
+                
+                // Create SVG path
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const dx = x2 - x1;
+                const dy = y2 - y1;
+                const controlX = x1 + dx * 0.5;
+                const controlY = y1 + dy * 0.5 - 30;
+                
+                path.setAttribute('d', `M ${x1} ${y1} Q ${controlX} ${controlY} ${x2} ${y2}`);
+                path.setAttribute('stroke', '#4361ee');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('opacity', '0.6');
+                
+                // Add arrowhead
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', `arrow-${conn.id}`);
+                marker.setAttribute('viewBox', '0 0 10 10');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '5');
+                marker.setAttribute('markerWidth', '6');
+                marker.setAttribute('markerHeight', '6');
+                marker.setAttribute('orient', 'auto');
+                
+                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                arrow.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+                arrow.setAttribute('fill', '#4361ee');
+                marker.appendChild(arrow);
+                
+                svg.appendChild(marker);
+                path.setAttribute('marker-end', `url(#arrow-${conn.id})`);
+                svg.appendChild(path);
+            });
+        }
+        
+        function renderSavedNetworks(networks) {
+            const container = document.getElementById('savedNetworks');
+            
+            if (!networks || networks.length === 0) {
+                container.innerHTML = '<div style="padding: 10px; color: #718096;">No saved networks</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            networks.forEach(network => {
+                const div = document.createElement('div');
+                div.className = 'disease-btn';
+                div.style.marginBottom = '8px';
+                div.innerHTML = `
+                    <div style="font-weight: 600;">${network.network_name}</div>
+                    <div style="font-size: 12px; color: #718096;">
+                        ${network.diseases?.disease_name || 'Unknown'} • 
+                        ${new Date(network.created_at).toLocaleDateString()}
+                    </div>
+                `;
+                
+                div.addEventListener('click', async () => {
+                    await loadSavedNetwork(network);
+                });
+                
+                container.appendChild(div);
+            });
+        }
+        
+        // ====== INTERACTIVITY ======
+        function setupDraggableNodes() {
+            const nodes = document.querySelectorAll('.trait-node');
+            const workspace = document.getElementById('workspace');
+            
+            nodes.forEach(node => {
+                let isDragging = false;
+                let offsetX, offsetY;
+                
+                node.addEventListener('mousedown', startDrag);
+                
+                function startDrag(e) {
+                    if (e.button !== 0) return;
+                    
+                    isDragging = true;
+                    offsetX = e.clientX - node.getBoundingClientRect().left;
+                    offsetY = e.clientY - node.getBoundingClientRect().top;
+                    node.style.cursor = 'grabbing';
+                    
+                    document.addEventListener('mousemove', drag);
+                    document.addEventListener('mouseup', stopDrag);
+                    
+                    e.preventDefault();
+                }
+                
+                function drag(e) {
+                    if (!isDragging) return;
+                    
+                    const workspaceRect = workspace.getBoundingClientRect();
+                    let x = e.clientX - workspaceRect.left - offsetX;
+                    let y = e.clientY - workspaceRect.top - offsetY;
+                    
+                    // Constrain to workspace
+                    x = Math.max(0, Math.min(x, workspace.offsetWidth - node.offsetWidth));
+                    y = Math.max(0, Math.min(y, workspace.offsetHeight - node.offsetHeight));
+                    
+                    node.style.left = `${x}px`;
+                    node.style.top = `${y}px`;
+                    
+                    // Update connections
+                    drawConnections();
+                }
+                
+                function stopDrag() {
+                    if (!isDragging) return;
+                    
+                    isDragging = false;
+                    node.style.cursor = 'move';
+                    
+                    // Save position
+                    const traitId = parseInt(node.dataset.id);
+                    const x = parseInt(node.style.left);
+                    const y = parseInt(node.style.top);
+                    
+                    AppState.nodePositions.set(traitId, { x, y });
+                    
+                    document.removeEventListener('mousemove', drag);
+                    document.removeEventListener('mouseup', stopDrag);
+                }
+            });
+        }
+        
+        function setupEventListeners() {
+            // Save network button
+            document.getElementById('btnSaveNetwork').addEventListener('click', () => {
+                if (!AppState.currentDisease) {
+                    alert('Please select a disease first');
+                    return;
+                }
+                document.getElementById('saveModal').classList.add('active');
+            });
+            
+            // Reset layout button
+            document.getElementById('btnReset').addEventListener('click', () => {
+                AppState.nodePositions.clear();
+                renderNetwork();
+            });
+            
+            // Auto layout button
+            document.getElementById('btnAutoLayout').addEventListener('click', autoLayout);
+        }
+        
+        function autoLayout() {
+            const workspace = document.getElementById('workspace');
+            const centerX = workspace.offsetWidth / 2;
+            const centerY = workspace.offsetHeight / 2;
+            const radius = Math.min(workspace.offsetWidth, workspace.offsetHeight) * 0.3;
+            
+            AppState.traits.forEach((trait, index) => {
+                const angle = (index / AppState.traits.length) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * radius - 100;
+                const y = centerY + Math.sin(angle) * radius - 75;
+                
+                AppState.nodePositions.set(trait.id, { 
+                    x: Math.max(50, Math.min(x, workspace.offsetWidth - 200)),
+                    y: Math.max(50, Math.min(y, workspace.offsetHeight - 150))
+                });
+            });
+            
+            renderNetwork();
+        }
+        
+        // ====== DATABASE OPERATIONS ======
+        async function saveNetworkToDatabase() {
+            try {
+                const networkName = document.getElementById('networkName').value;
+                const description = document.getElementById('networkDescription').value;
+                
+                if (!networkName.trim()) {
+                    alert('Please enter a network name');
+                    return;
+                }
+                
+                // Collect node positions
+                const nodes = [];
+                document.querySelectorAll('.trait-node').forEach(node => {
+                    const traitId = parseInt(node.dataset.id);
+                    nodes.push({
+                        id: traitId,
+                        x: parseInt(node.style.left),
+                        y: parseInt(node.style.top)
+                    });
+                });
+                
+                // Prepare layout data
+                const layoutData = {
+                    nodes: nodes,
+                    connections: AppState.connections,
+                    metadata: {
+                        created: new Date().toISOString(),
+                        trait_count: AppState.traits.length
+                    }
                 };
                 
-                graphData.nodes.push(node);
-                this.visualization.nodes.set(trait.id, node);
-            });
-            
-            // Create some initial connections using graph algorithms
-            for (let i = 0; i < graphData.nodes.length; i++) {
-                for (let j = i + 1; j < graphData.nodes.length; j++) {
-                    // Calculate connection strength based on trait similarity
-                    const similarity = this.calculateTraitSimilarity(
-                        graphData.nodes[i].data,
-                        graphData.nodes[j].data
-                    );
+                // Save to database
+                const { data, error } = await AppState.supabase
+                    .from('saved_networks')
+                    .insert([{
+                        network_name: networkName,
+                        disease_id: AppState.currentDisease.id,
+                        description: description,
+                        layout_data: layoutData,
+                        is_public: true,
+                        created_by: 'user_' + Date.now()
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                alert('✅ Network saved successfully!');
+                closeModal('saveModal');
+                
+                // Reload saved networks
+                await loadSavedNetworks();
+                
+            } catch (error) {
+                console.error('Error saving network:', error);
+                alert(`Error saving network: ${error.message}`);
+            }
+        }
+        
+        async function loadSavedNetwork(network) {
+            try {
+                // Load the disease first
+                const diseaseBtn = Array.from(document.querySelectorAll('.disease-btn'))
+                    .find(btn => btn.textContent.includes(network.diseases?.disease_name || ''));
+                
+                if (diseaseBtn) {
+                    diseaseBtn.click();
                     
-                    if (similarity > 0.6) { // Only create strong connections
-                        const edge = {
-                            id: `${graphData.nodes[i].id}-${graphData.nodes[j].id}`,
-                            source: graphData.nodes[i].id,
-                            target: graphData.nodes[j].id,
-                            strength: similarity * 100,
-                            type: 'association'
-                        };
-                        
-                        graphData.edges.push(edge);
-                        this.visualization.edges.set(edge.id, edge);
-                        
-                        // Store in state
-                        this.state.connections.push(edge);
-                    }
+                    // Wait a bit for traits to load
+                    setTimeout(() => {
+                        // Apply saved layout
+                        if (network.layout_data && network.layout_data.nodes) {
+                            network.layout_data.nodes.forEach(node => {
+                                AppState.nodePositions.set(node.id, { x: node.x, y: node.y });
+                            });
+                            
+                            // Re-render with saved positions
+                            renderNetwork();
+                            document.getElementById('canvasTitle').textContent = network.network_name;
+                        }
+                    }, 500);
                 }
-            }
-            
-            // Load into graph engine
-            await this.graphEngine.loadGraph(graphData);
-            
-            // Run initial graph analysis
-            await this.analyzeGraph();
-            
-            // Update metrics
-            this.updateMetrics();
-            
-            // Load trait library
-            this.loadTraitLibrary();
-            
-        } catch (error) {
-            console.error('Error loading initial data:', error);
-            this.showToast('Data Load Error', 'Failed to load initial data', 'error');
-        }
-    }
-    
-    calculateTraitSimilarity(trait1, trait2) {
-        let similarity = 0;
-        let factors = 0;
-        
-        // Category similarity
-        if (trait1.category === trait2.category) {
-            similarity += 0.3;
-        }
-        factors += 0.3;
-        
-        // Severity proximity
-        const severityDiff = Math.abs(trait1.severity - trait2.severity);
-        similarity += (1 - (severityDiff / 100)) * 0.3;
-        factors += 0.3;
-        
-        // Biomarker overlap
-        const biomarkers1 = trait1.biomarkers || [];
-        const biomarkers2 = trait2.biomarkers || [];
-        if (biomarkers1.length > 0 && biomarkers2.length > 0) {
-            const overlap = biomarkers1.filter(b => biomarkers2.includes(b)).length;
-            const max = Math.max(biomarkers1.length, biomarkers2.length);
-            similarity += (overlap / max) * 0.2;
-        }
-        factors += 0.2;
-        
-        // Treatment similarity
-        if (trait1.treatment && trait2.treatment) {
-            const treatment1 = typeof trait1.treatment === 'string' ? trait1.treatment : 
-                              trait1.treatment.firstLine || '';
-            const treatment2 = typeof trait2.treatment === 'string' ? trait2.treatment : 
-                              trait2.treatment.firstLine || '';
-            
-            if (treatment1 && treatment2) {
-                const commonTerms = ['ics', 'laba', 'corticosteroid', 'bronchodilator', 'antibiotic'];
-                let matches = 0;
-                commonTerms.forEach(term => {
-                    if (treatment1.toLowerCase().includes(term) && 
-                        treatment2.toLowerCase().includes(term)) {
-                        matches++;
-                    }
-                });
-                similarity += (matches / commonTerms.length) * 0.2;
-            }
-        }
-        factors += 0.2;
-        
-        return factors > 0 ? similarity / factors : 0;
-    }
-    
-    async analyzeGraph() {
-        if (!this.graphEngine.graph || this.visualization.nodes.size === 0) {
-            return;
-        }
-        
-        try {
-            // Run comprehensive graph analysis
-            const analysis = await this.graphEngine.analyzeGraph();
-            
-            if (analysis) {
-                this.state.graphMetrics = analysis;
                 
-                // Update visualization based on analysis
-                this.updateVisualizationFromAnalysis(analysis);
-                
-                // Show insights
-                this.showAnalysisInsights(analysis);
-            }
-            
-        } catch (error) {
-            console.error('Graph analysis error:', error);
-        }
-    }
-    
-    updateVisualizationFromAnalysis(analysis) {
-        // Update node colors based on community detection
-        if (analysis.communities && analysis.communities.assignments) {
-            for (const [nodeId, community] of analysis.communities.assignments) {
-                const node = this.visualization.nodes.get(nodeId);
-                if (node) {
-                    // Different color for each community
-                    const communityColors = [
-                        '#2D6CA2', '#4A8BC9', '#417B8C', '#81B29A',
-                        '#F2CC8F', '#E07A5F', '#D64550', '#7B6BA9'
-                    ];
-                    node.color = communityColors[community % communityColors.length];
-                }
+            } catch (error) {
+                console.error('Error loading network:', error);
+                alert(`Error loading network: ${error.message}`);
             }
         }
         
-        // Update node sizes based on centrality
-        if (analysis.centralities) {
-            const centralityScores = [];
-            for (const [nodeId, centrality] of analysis.centralities.degree || new Map()) {
-                centralityScores.push(centrality.normalized || 0);
-            }
-            
-            const maxCentrality = Math.max(...centralityScores);
-            
-            for (const [nodeId, centrality] of analysis.centralities.degree || new Map()) {
-                const node = this.visualization.nodes.get(nodeId);
-                if (node && maxCentrality > 0) {
-                    // Scale size based on centrality
-                    const centralityNormalized = (centrality.normalized || 0) / maxCentrality;
-                    node.size = 30 + (centralityNormalized * 40);
-                }
-            }
-        }
-    }
-    
-    showAnalysisInsights(analysis) {
-        const insights = [];
-        
-        // Network density insight
-        if (analysis.metrics && analysis.metrics.density > 0.3) {
-            insights.push({
-                type: 'network_density',
-                message: `Network density is ${(analysis.metrics.density * 100).toFixed(1)}%, indicating high interconnectivity`,
-                severity: 'info'
-            });
+        // ====== UTILITY FUNCTIONS ======
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
         }
         
-        // Community structure insight
-        if (analysis.communities && analysis.communities.count > 1) {
-            insights.push({
-                type: 'communities',
-                message: `Detected ${analysis.communities.count} distinct clinical clusters`,
-                severity: analysis.communities.modularity > 0.3 ? 'success' : 'info'
-            });
+        function showTraitDetails(trait) {
+            alert(`Trait: ${trait.trait_name}\n\nCategory: ${trait.category}\n\nDescription: ${trait.description || 'No description'}\n\nMeasurement: ${trait.measurement_method || 'Various methods'}`);
         }
         
-        // Central nodes insight
-        if (analysis.centralities && analysis.centralities.degree) {
-            const centralNodes = [];
-            for (const [nodeId, centrality] of analysis.centralities.degree) {
-                if (centrality.normalized > 0.6) {
-                    const node = this.visualization.nodes.get(nodeId);
-                    if (node) centralNodes.push(node.label);
-                }
-            }
-            
-            if (centralNodes.length > 0) {
-                insights.push({
-                    type: 'central_nodes',
-                    message: `Central nodes: ${centralNodes.slice(0, 3).join(', ')}${centralNodes.length > 3 ? '...' : ''}`,
-                    severity: 'warning'
-                });
-            }
-        }
-        
-        // Pattern insights
-        if (analysis.patterns) {
-            if (analysis.patterns.bridges && analysis.patterns.bridges.length > 0) {
-                insights.push({
-                    type: 'critical_connections',
-                    message: `${analysis.patterns.bridges.length} critical bridge connections detected`,
-                    severity: 'warning'
-                });
-            }
-            
-            if (analysis.patterns.cliques && analysis.patterns.cliques.length > 0) {
-                insights.push({
-                    type: 'cliques',
-                    message: `${analysis.patterns.cliques.length} tightly connected trait groups found`,
-                    severity: 'info'
-                });
-            }
-        }
-        
-        // Update dashboard insight
-        if (insights.length > 0) {
-            const insightDiv = document.getElementById('dashboardInsight');
-            insightDiv.innerHTML = insights.map(insight => 
-                `<div style="margin-bottom: var(--space-2);">
-                    <i class="fas fa-${this.getInsightIcon(insight.type)}" 
-                       style="color: ${this.getSeverityColor(insight.severity)};"></i>
-                    ${insight.message}
-                </div>`
-            ).join('');
-        }
-    }
-    
-    getInsightIcon(type) {
-        const icons = {
-            'network_density': 'project-diagram',
-            'communities': 'users',
-            'central_nodes': 'bullseye',
-            'critical_connections': 'link',
-            'cliques': 'circle-nodes'
-        };
-        return icons[type] || 'info-circle';
-    }
-    
-    // ... [rest of your existing ClinicalNetwork class methods] ...
-}
-
-// ============================================================================
-// CLINICAL DATABASE
-// ============================================================================
-
-class ClinicalDatabase {
-    constructor() {
-        console.log('Initializing Clinical Database v4.0...');
-        this.systemTraits = [];
-        this.userTraits = [];
-        this.connections = [];
-        this.favorites = new Set();
-        
-        this.initialize();
-    }
-    
-    initialize() {
-        console.log('Loading clinical database...');
-        
-        // Load system traits
-        this.systemTraits = this.loadSystemTraits();
-        
-        // Load user traits from localStorage
-        this.loadUserTraits();
-        
-        // Load connections
-        this.loadConnections();
-        
-        // Load favorites
-        this.loadFavorites();
-        
-        console.log(`Database loaded: ${this.getAllTraits().length} traits`);
-    }
-    
-    loadSystemTraits() {
-        return [
-            {
-                id: 'PULM-001',
-                name: 'Airflow Limitation (Obstructive)',
-                spanishName: 'Limitación al Flujo Aéreo (Obstructiva)',
-                category: 'pulmonary',
-                evaluation: 'Post-bronchodilator FEV1/FVC < 0.70 confirms persistent airflow obstruction.',
-                severity: 85,
-                biomarkers: ['FEV1', 'FVC', 'FEV1/FVC', 'PEF'],
-                treatment: {
-                    firstLine: 'LAMA/LABA combination therapy',
-                    nonPharmacological: 'Smoking cessation, Pulmonary rehabilitation'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'INFL-001',
-                name: 'Eosinophilic Airway Inflammation',
-                spanishName: 'Inflamación Eosinofílica de Vías Aéreas',
-                category: 'inflammatory',
-                evaluation: 'Blood eosinophils ≥300 cells/μL or FeNO ≥50 ppb.',
-                severity: 78,
-                biomarkers: ['Blood eosinophils', 'FeNO', 'IgE'],
-                treatment: {
-                    firstLine: 'High-dose ICS ± LABA',
-                    secondLine: 'Biologics targeting IL-5/IL-5R'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHYS-001',
-                name: 'Exercise Intolerance',
-                spanishName: 'Intolerancia al Ejercicio',
-                category: 'physiological',
-                evaluation: '6MWD < 350 meters or VO2 max < 65% predicted.',
-                severity: 70,
-                biomarkers: ['6MWD', 'VO2 max', 'VE/VCO2 slope'],
-                treatment: {
-                    firstLine: 'Pulmonary rehabilitation (8+ weeks)',
-                    nonPharmacological: 'Gradual exercise program, Interval training'
-                },
-                evidence: { level: 'A' }
-            }
-        ];
-    }
-    
-    loadUserTraits() {
-        try {
-            const saved = localStorage.getItem('clinical_user_traits');
-            this.userTraits = saved ? JSON.parse(saved) : [];
-        } catch (error) {
-            console.error('Error loading user traits:', error);
-            this.userTraits = [];
-        }
-    }
-    
-    loadConnections() {
-        try {
-            const saved = localStorage.getItem('clinical_connections');
-            this.connections = saved ? JSON.parse(saved) : [];
-        } catch (error) {
-            console.error('Error loading connections:', error);
-            this.connections = [];
-        }
-    }
-    
-    loadFavorites() {
-        try {
-            const saved = localStorage.getItem('clinical_favorites');
-            const favorites = saved ? JSON.parse(saved) : [];
-            this.favorites = new Set(favorites);
-        } catch (error) {
-            console.error('Error loading favorites:', error);
-            this.favorites = new Set();
-        }
-    }
-    
-    getAllTraits() {
-        return [...this.systemTraits, ...this.userTraits];
-    }
-    
-    getTraitById(id) {
-        return this.getAllTraits().find(trait => trait.id === id);
-    }
-    
-    getRandomTraits(count) {
-        const allTraits = this.getAllTraits();
-        const shuffled = [...allTraits].sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, Math.min(count, shuffled.length));
-    }
-    
-    searchTraits(query) {
-        if (!query || query.trim() === '') return this.getRandomTraits(20);
-        
-        const searchTerm = query.toLowerCase().trim();
-        return this.getAllTraits().filter(trait => {
-            return (
-                trait.name.toLowerCase().includes(searchTerm) ||
-                (trait.spanishName && trait.spanishName.toLowerCase().includes(searchTerm)) ||
-                trait.category.toLowerCase().includes(searchTerm) ||
-                trait.evaluation.toLowerCase().includes(searchTerm)
-            );
-        });
-    }
-    
-    getStatistics() {
-        const allTraits = this.getAllTraits();
-        return {
-            totalTraits: allTraits.length,
-            systemTraits: this.systemTraits.length,
-            userTraits: this.userTraits.length,
-            connections: this.connections.length,
-            favorites: this.favorites.size
-        };
-    }
-}
-
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
-
-window.addEventListener('DOMContentLoaded', () => {
-    ClinicalNetwork = new ClinicalNetwork();
-    window.ClinicalNetwork = ClinicalNetwork;
-});
-
-// ============================================================================
-// GLOBAL EXPORTS
-// ============================================================================
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { ClinicalNetwork, ClinicalDatabase };
-}
-
-if (typeof window !== 'undefined') {
-    window.ClinicalNetworkIntelligence = { ClinicalNetwork, ClinicalDatabase };
-}
-
-console.log('Clinical Network Intelligence v4.0 - Advanced Trait Mapping System Loaded');
-</script>
+        // Expose needed functions to global scope for HTML onclick handlers
+        window.saveNetworkToDatabase = saveNetworkToDatabase;
+        window.closeModal = closeModal;
+    </script>
 </body>
 </html>
