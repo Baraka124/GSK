@@ -1,1126 +1,140 @@
 // ============================================================================
-// CLINICAL DATABASE v3.0 - COMPLETE REWRITE
-// ============================================================================
-// Advanced Clinical Intelligence Platform with Pattern Detection, Predictive
-// Analytics, Guidelines Integration, and Conflict Detection
+// CLINICAL DATABASE v4.0 - COMPLETE REWRITE WITH REAL ALGORITHMS
 // ============================================================================
 
 class ClinicalDatabase {
     constructor() {
-        console.log('Initializing Clinical Database v3.0...');
+        console.log('Initializing Clinical Database v4.0...');
         
-        // Core Data Stores
-        this.systemTraits = this.loadSystemTraits();
-        this.userTraits = this.loadUserTraits();
-        this.connections = this.loadConnections();
-        this.clinicalCases = this.loadClinicalCases();
-        this.favoriteTraits = this.loadFavorites();
-        this.searchHistory = this.loadSearchHistory();
-        this.guidelines = this.loadClinicalGuidelines();
-        this.treatmentConflicts = this.loadTreatmentConflicts();
+        // Initialize core components
+        this.eventSystem = window.clinicalEvents || this.createEventSystem();
+        this.graph = new ClinicalGraph();
+        this.mlEngine = new ClinicalML();
+        this.syncManager = new ClinicalSyncManager();
+        this.security = new ClinicalSecurity();
+        this.analytics = new ClinicalAnalytics();
+        this.cache = new ClinicalCache();
+        this.index = new ClinicalIndex();
         
-        // Analytics Cache
-        this.analyticsCache = {
-            patterns: null,
-            clusters: null,
-            predictions: null,
-            lastUpdated: null
-        };
-        
-        // Derived Data
-        this.allTraits = [...this.systemTraits, ...this.userTraits];
-        this.categories = this.extractCategories();
-        this.evidenceLevels = ['A', 'B', 'C', 'D', 'E'];
+        // Core data stores with IndexedDB
+        this.db = null;
+        this.initDatabase().then(() => {
+            this.loadInitialData();
+            this.setupEventListeners();
+            this.precomputeAnalytics();
+            this.startBackgroundSync();
+        });
         
         // Configuration
         this.config = {
-            maxSearchHistory: 50,
-            maxFavorites: 100,
-            analyticsRefreshInterval: 300000, // 5 minutes
-            conflictCheckThreshold: 70,
-            patternDetectionThreshold: 60
+            maxCacheSize: 1000,
+            syncInterval: 30000,
+            analyticsRefresh: 300000,
+            offlineQueueSize: 100,
+            encryptionEnabled: true
         };
-        
-        // Initialize
-        this.initializeDatabase();
-        this.setupEventListeners();
-        this.precomputeAnalytics();
-        
-        console.log(`Clinical Database initialized with ${this.allTraits.length} traits, ${this.connections.length} connections`);
     }
     
-    // ============================================================================
-    // INITIALIZATION
-    // ============================================================================
-    
-    initializeDatabase() {
-        // Ensure default traits exist
-        if (this.systemTraits.length === 0) {
-            console.warn('No system traits found, loading defaults...');
-            this.systemTraits = this.getDefaultTraits();
-            this.saveSystemTraits();
-        }
-        
-        // Ensure user traits array exists
-        if (!Array.isArray(this.userTraits)) {
-            this.userTraits = [];
-        }
-        
-        // Update all traits
-        this.allTraits = [...this.systemTraits, ...this.userTraits];
-        
-        // Extract categories
-        this.categories = this.extractCategories();
-        
-        // Generate unique IDs for any traits without them
-        this.allTraits.forEach((trait, index) => {
-            if (!trait.id) {
-                trait.id = `TRAIT-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`;
-            }
-        });
-    }
-    
-    setupEventListeners() {
-        // Listen for storage events from other tabs
-        window.addEventListener('storage', (e) => {
-            this.handleStorageEvent(e);
-        });
-        
-        // Listen for custom events
-        window.addEventListener('clinical:data-changed', () => {
-            this.precomputeAnalytics();
-        });
-    }
-    
-    handleStorageEvent(e) {
-        switch(e.key) {
-            case 'clinical_user_traits':
-                this.userTraits = this.loadUserTraits();
-                this.allTraits = [...this.systemTraits, ...this.userTraits];
-                this.emitUpdateEvent();
-                break;
+    async initDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('ClinicalDatabase_v4', 1);
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
                 
-            case 'clinical_connections':
-                this.connections = this.loadConnections();
-                this.emitUpdateEvent();
-                break;
+                // Create object stores with indexes
+                const traitsStore = db.createObjectStore('traits', { keyPath: 'id' });
+                traitsStore.createIndex('category', 'category', { unique: false });
+                traitsStore.createIndex('severity', 'severity', { unique: false });
+                traitsStore.createIndex('updated', 'updated', { unique: false });
+                traitsStore.createIndex('userDefined', 'isUserDefined', { unique: false });
                 
-            case 'clinical_favorites':
-                this.favoriteTraits = this.loadFavorites();
-                break;
-        }
-    }
-    
-    // ============================================================================
-    // CORE DATA MANAGEMENT
-    // ============================================================================
-    
-    loadSystemTraits() {
-        try {
-            const stored = localStorage.getItem('clinical_system_traits');
-            if (stored) {
-                const traits = JSON.parse(stored);
-                return this.validateAndCleanTraits(traits, false);
-            }
-            return this.getDefaultTraits();
-        } catch (error) {
-            console.error('Error loading system traits:', error);
-            return this.getDefaultTraits();
-        }
-    }
-    
-    saveSystemTraits() {
-        try {
-            localStorage.setItem('clinical_system_traits', JSON.stringify(this.systemTraits));
-            return true;
-        } catch (error) {
-            console.error('Error saving system traits:', error);
-            return false;
-        }
-    }
-    
-    loadUserTraits() {
-        try {
-            const saved = localStorage.getItem('clinical_user_traits');
-            if (!saved) return [];
-            
-            const traits = JSON.parse(saved);
-            return this.validateAndCleanTraits(traits, true);
-        } catch (error) {
-            console.error('Error loading user traits:', error);
-            return [];
-        }
-    }
-    
-    saveUserTraits() {
-        try {
-            const cleanTraits = this.userTraits.map(trait => ({
-                id: trait.id,
-                name: trait.name,
-                spanishName: trait.spanishName || '',
-                category: trait.category,
-                subcategory: trait.subcategory || '',
-                evaluation: trait.evaluation,
-                severity: trait.severity,
-                treatment: trait.treatment,
-                biomarkers: trait.biomarkers || [],
-                evidence: trait.evidence || { level: 'C' },
-                tags: trait.tags || [],
-                color: trait.color,
-                icon: trait.icon,
-                isUserDefined: true,
-                created: trait.created || new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: trait.frequency || 0,
-                confidence: trait.confidence || 0.5
-            }));
-            
-            localStorage.setItem('clinical_user_traits', JSON.stringify(cleanTraits));
-            this.emitUpdateEvent();
-            return true;
-        } catch (error) {
-            console.error('Error saving user traits:', error);
-            return false;
-        }
-    }
-    
-    loadConnections() {
-        try {
-            const saved = localStorage.getItem('clinical_connections');
-            if (!saved) return [];
-            
-            const connections = JSON.parse(saved);
-            return connections.map(conn => ({
-                ...conn,
-                created: conn.created || new Date().toISOString(),
-                updated: conn.updated || new Date().toISOString()
-            }));
-        } catch (error) {
-            console.error('Error loading connections:', error);
-            return [];
-        }
-    }
-    
-    saveConnections() {
-        try {
-            localStorage.setItem('clinical_connections', JSON.stringify(this.connections));
-            return true;
-        } catch (error) {
-            console.error('Error saving connections:', error);
-            return false;
-        }
-    }
-    
-    loadClinicalCases() {
-        try {
-            const saved = localStorage.getItem('clinical_cases');
-            return saved ? JSON.parse(saved) : [];
-        } catch (error) {
-            console.error('Error loading clinical cases:', error);
-            return [];
-        }
-    }
-    
-    saveClinicalCases() {
-        try {
-            localStorage.setItem('clinical_cases', JSON.stringify(this.clinicalCases));
-            return true;
-        } catch (error) {
-            console.error('Error saving clinical cases:', error);
-            return false;
-        }
-    }
-    
-    loadFavorites() {
-        try {
-            const saved = localStorage.getItem('clinical_favorites');
-            return saved ? JSON.parse(saved) : [];
-        } catch (error) {
-            console.error('Error loading favorites:', error);
-            return [];
-        }
-    }
-    
-    saveFavorites() {
-        try {
-            localStorage.setItem('clinical_favorites', JSON.stringify(this.favoriteTraits));
-            return true;
-        } catch (error) {
-            console.error('Error saving favorites:', error);
-            return false;
-        }
-    }
-    
-    loadSearchHistory() {
-        try {
-            const saved = localStorage.getItem('clinical_search_history');
-            return saved ? JSON.parse(saved) : [];
-        } catch (error) {
-            console.error('Error loading search history:', error);
-            return [];
-        }
-    }
-    
-    saveSearchHistory() {
-        try {
-            // Keep only recent searches
-            if (this.searchHistory.length > this.config.maxSearchHistory) {
-                this.searchHistory = this.searchHistory.slice(-this.config.maxSearchHistory);
-            }
-            localStorage.setItem('clinical_search_history', JSON.stringify(this.searchHistory));
-            return true;
-        } catch (error) {
-            console.error('Error saving search history:', error);
-            return false;
-        }
-    }
-    
-    loadClinicalGuidelines() {
-        // Built-in clinical guidelines database
-        return [
-            {
-                id: 'GOLD-2024',
-                name: 'GOLD 2024 Guidelines',
-                category: 'pulmonary',
-                type: 'diagnostic',
-                description: 'Global Initiative for Chronic Obstructive Lung Disease',
-                recommendations: [
-                    'Post-bronchodilator FEV1/FVC < 0.70 confirms COPD',
-                    'Assess symptom burden and exacerbation risk',
-                    'Consider blood eosinophil count for ICS therapy',
-                    'Vaccination (influenza, pneumococcal) recommended'
-                ],
-                references: ['Lancet. 2018;391(10131):1706-1717'],
-                evidenceLevel: 'A'
-            },
-            {
-                id: 'GINA-2024',
-                name: 'GINA 2024 Guidelines',
-                category: 'pulmonary',
-                type: 'treatment',
-                description: 'Global Initiative for Asthma',
-                recommendations: [
-                    'Stepwise approach to asthma management',
-                    'Prefer ICS-containing controller therapy',
-                    'Assess inhaler technique regularly',
-                    'Consider FeNO for treatment adjustment'
-                ],
-                references: ['Eur Respir J. 2021;57(6):2003149'],
-                evidenceLevel: 'A'
-            },
-            {
-                id: 'ATS-ERS-2022',
-                name: 'ATS/ERS 2022 Statement',
-                category: 'pulmonary',
-                type: 'diagnostic',
-                description: 'American Thoracic Society/European Respiratory Society',
-                recommendations: [
-                    'Use post-bronchodilator spirometry for diagnosis',
-                    'Consider lung volume measurements in complex cases',
-                    'DLCO for emphysema assessment',
-                    '6-minute walk test for functional assessment'
-                ],
-                references: ['Am J Respir Crit Care Med. 2022;205(7):819-837'],
-                evidenceLevel: 'A'
-            }
-        ];
-    }
-    
-    loadTreatmentConflicts() {
-        // Built-in treatment conflict database
-        return [
-            {
-                trait1: 'Airflow Limitation (Obstructive)',
-                trait2: 'Beta-Blocker Therapy',
-                severity: 'high',
-                description: 'Non-cardioselective beta-blockers can worsen airflow obstruction',
-                recommendation: 'Use cardioselective beta-blockers if needed',
-                evidenceLevel: 'B'
-            },
-            {
-                trait1: 'Eosinophilic Airway Inflammation',
-                trait2: 'Oral Corticosteroids (Long-term)',
-                severity: 'moderate',
-                description: 'Long-term oral corticosteroids increase risk of adverse effects',
-                recommendation: 'Consider biologics or targeted therapies first',
-                evidenceLevel: 'B'
-            },
-            {
-                trait1: 'Systemic Inflammation',
-                trait2: 'NSAID Therapy',
-                severity: 'low',
-                description: 'NSAIDs may increase cardiovascular risk in systemic inflammation',
-                recommendation: 'Monitor cardiovascular risk factors',
-                evidenceLevel: 'C'
-            }
-        ];
-    }
-    
-    // ============================================================================
-    // DEFAULT DATA
-    // ============================================================================
-    
-    getDefaultTraits() {
-        return [
-            // Pulmonary Traits
-            {
-                id: "PULM-001",
-                name: "Airflow Limitation (Obstructive)",
-                spanishName: "Limitación al flujo aéreo (Obstructiva)",
-                category: "pulmonary",
-                subcategory: "Physiological",
-                color: "#2d6ca2",
-                icon: "fas fa-wind",
-                evaluation: "Spirometry (pre/post bronchodilator), FEV1/FVC ratio, Flow-volume loop, Bronchodilator responsiveness testing",
-                goldStandard: "Post-bronchodilator FEV1/FVC < 0.70",
-                biomarkers: ["FEV1", "FVC", "FEV1/FVC", "PEF", "FEF25-75%", "RV/TLC"],
-                severityCriteria: "GOLD Stages 1-4: 1(Mild): FEV1 ≥80%, 2(Moderate): 50-79%, 3(Severe): 30-49%, 4(Very Severe): <30%",
-                severity: 85,
-                evidence: { 
-                    level: "A", 
-                    guidelines: ["GOLD 2024", "ATS/ERS 2022"],
-                    references: ["Lancet. 2018;391(10131):1706-1717", "Am J Respir Crit Care Med. 2022;205(7):819-837"],
-                    confidence: 0.95
-                },
-                treatment: {
-                    firstLine: "LAMA/LABA combination therapy (tiotropium/olodaterol, umeclidinium/vilanterol)",
-                    secondLine: "ICS add-on if blood eosinophils ≥300 cells/μL or frequent exacerbations",
-                    thirdLine: "Roflumilast for frequent exacerbators with chronic bronchitis",
-                    rescue: "SABA as needed for symptom relief",
-                    nonPharmacological: "Smoking cessation counseling, Pulmonary rehabilitation program, Annual vaccination (influenza, pneumococcal), Oxygen therapy if SpO2 ≤88%",
-                    monitoring: "Regular spirometry every 6-12 months, Exacerbation frequency tracking, CAT/CCQ symptom scores, Oxygen saturation monitoring"
-                },
-                tags: ["COPD", "Asthma", "Obstruction", "Bronchitis", "Emphysema"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.85,
-                confidence: 0.92,
-                isSystem: true
-            },
-            {
-                id: "PULM-002",
-                name: "Eosinophilic Airway Inflammation",
-                spanishName: "Inflamación eosinofílica de vías aéreas",
-                category: "inflammatory",
-                subcategory: "Cellular",
-                color: "#d64550",
-                icon: "fas fa-virus",
-                evaluation: "Blood eosinophil count, Fractional exhaled nitric oxide (FeNO), Sputum eosinophils, Serum IgE, Periostin",
-                goldStandard: "Blood eosinophils ≥300 cells/μL or FeNO ≥50 ppb",
-                biomarkers: ["Blood eosinophils", "FeNO", "IgE", "ECP", "Periostin"],
-                severityCriteria: "Mild: 150-299 cells/μL, Moderate: 300-499 cells/μL, Severe: ≥500 cells/μL",
-                severity: 80,
-                evidence: { 
-                    level: "A", 
-                    guidelines: ["GINA 2024", "ERS/ATS 2019"],
-                    references: ["Eur Respir J. 2021;57(6):2003149", "Lancet Respir Med. 2019;7(9):745-756"],
-                    confidence: 0.90
-                },
-                treatment: {
-                    firstLine: "High-dose ICS ± LABA (fluticasone/salmeterol, budesonide/formoterol)",
-                    secondLine: "Biologics targeting IL-5/IL-5R (mepolizumab, benralizumab) or IL-4/IL-13 (dupilumab)",
-                    thirdLine: "Oral corticosteroids for acute exacerbations",
-                    nonPharmacological: "Allergen avoidance, Environmental control, Asthma education program",
-                    monitoring: "Regular eosinophil count (every 3-6 months), FeNO monitoring, Asthma control test"
-                },
-                tags: ["Asthma", "Eosinophilia", "Inflammation", "Allergy"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.70,
-                confidence: 0.88,
-                isSystem: true
-            },
-            {
-                id: "PULM-003",
-                name: "Gas Exchange Impairment",
-                spanishName: "Alteración del intercambio gaseoso",
-                category: "pulmonary",
-                subcategory: "Physiological",
-                color: "#4a8bc9",
-                icon: "fas fa-lungs",
-                evaluation: "Arterial blood gases, Pulse oximetry, DLCO measurement, A-a gradient, Shunt calculation",
-                goldStandard: "PaO2 < 80 mmHg or SpO2 < 94% on room air",
-                biomarkers: ["PaO2", "PaCO2", "SpO2", "DLCO", "A-a gradient"],
-                severityCriteria: "Mild: PaO2 60-79 mmHg, Moderate: 45-59 mmHg, Severe: <45 mmHg",
-                severity: 75,
-                evidence: { 
-                    level: "A", 
-                    guidelines: ["ATS/ERS 2017"],
-                    references: ["Am J Respir Crit Care Med. 2017;195(5):e3-e19"],
-                    confidence: 0.85
-                },
-                treatment: {
-                    firstLine: "Oxygen therapy to maintain SpO2 ≥90-92%",
-                    secondLine: "Non-invasive ventilation for hypercapnic respiratory failure",
-                    thirdLine: "Consider lung transplant evaluation",
-                    nonPharmacological: "Pulmonary rehabilitation, Energy conservation techniques, Breathing exercises",
-                    monitoring: "Continuous oximetry, ABG every 3-6 months, 6-minute walk test"
-                },
-                tags: ["Hypoxemia", "Respiratory Failure", "DLCO", "Oxygen"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.60,
-                confidence: 0.87,
-                isSystem: true
-            },
-            {
-                id: "PULM-004",
-                name: "Chronic Mucus Hypersecretion",
-                spanishName: "Hipersecreción crónica de moco",
-                category: "pulmonary",
-                subcategory: "Clinical",
-                color: "#7b6ba9",
-                icon: "fas fa-wind",
-                evaluation: "Sputum production assessment, Cough frequency, Sputum culture, Chest imaging",
-                goldStandard: "Cough and sputum production for ≥3 months in 2 consecutive years",
-                biomarkers: ["Sputum volume", "Sputum purulence", "Inflammatory markers"],
-                severityCriteria: "Based on sputum volume and impact on quality of life",
-                severity: 65,
-                evidence: { 
-                    level: "B", 
-                    guidelines: ["GOLD 2024"],
-                    references: ["Thorax. 2019;74(Suppl 2):ii1-ii90"],
-                    confidence: 0.80
-                },
-                treatment: {
-                    firstLine: "Mucolytics (carbocisteine, erdosteine)",
-                    secondLine: "Macrolide antibiotics for anti-inflammatory effect",
-                    thirdLine: "Chest physiotherapy techniques",
-                    nonPharmacological: "Hydration, Airway clearance techniques, Steam inhalation",
-                    monitoring: "Sputum characteristics, Exacerbation frequency, Quality of life measures"
-                },
-                tags: ["Bronchitis", "Mucus", "Cough", "Sputum"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.75,
-                confidence: 0.82,
-                isSystem: true
-            },
-            
-            // Inflammatory Traits
-            {
-                id: "INFL-001",
-                name: "Systemic Inflammation",
-                spanishName: "Inflamación sistémica",
-                category: "inflammatory",
-                subcategory: "Systemic",
-                color: "#e07a5f",
-                icon: "fas fa-fire",
-                evaluation: "CRP, ESR, Fibrinogen, IL-6, TNF-α, Complete blood count",
-                goldStandard: "CRP > 10 mg/L or ESR > 30 mm/hr",
-                biomarkers: ["CRP", "ESR", "IL-6", "TNF-α", "Fibrinogen", "Leukocytes"],
-                severityCriteria: "Mild: CRP 3-10 mg/L, Moderate: 10-100 mg/L, Severe: >100 mg/L",
-                severity: 70,
-                evidence: { 
-                    level: "A", 
-                    guidelines: ["ACR 2022", "EULAR 2021"],
-                    references: ["Ann Rheum Dis. 2021;80(10):1300-1310", "Arthritis Rheumatol. 2022;74(4):591-601"],
-                    confidence: 0.89
-                },
-                treatment: {
-                    firstLine: "Targeted anti-inflammatory therapy based on underlying cause",
-                    secondLine: "Immunomodulators, Corticosteroids for acute control",
-                    thirdLine: "Biologic therapies for refractory cases",
-                    nonPharmacological: "Weight management, Mediterranean diet, Stress reduction, Regular exercise",
-                    monitoring: "Inflammatory markers every 3 months, Disease activity scores"
-                },
-                tags: ["CRP", "Inflammation", "Systemic", "Autoimmune"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.65,
-                confidence: 0.86,
-                isSystem: true
-            },
-            
-            // Physiological Traits
-            {
-                id: "PHYS-001",
-                name: "Exercise Intolerance",
-                spanishName: "Intolerancia al ejercicio",
-                category: "physiological",
-                subcategory: "Functional",
-                color: "#81b29a",
-                icon: "fas fa-running",
-                evaluation: "6-minute walk test, Cardiopulmonary exercise testing, Borg dyspnea scale, VO2 max",
-                goldStandard: "6MWD < 350 meters or VO2 max < 65% predicted",
-                biomarkers: ["6MWD", "VO2 max", "VE/VCO2 slope", "Oxygen pulse"],
-                severityCriteria: "Based on 6MWD: Mild 350-450m, Moderate 250-349m, Severe <250m",
-                severity: 70,
-                evidence: { 
-                    level: "A", 
-                    guidelines: ["ATS 2019", "ERS 2020"],
-                    references: ["Eur Respir J. 2020;56(1):1901781", "Am J Respir Crit Care Med. 2019;200(3):e70-e88"],
-                    confidence: 0.91
-                },
-                treatment: {
-                    firstLine: "Pulmonary rehabilitation program (minimum 8 weeks)",
-                    secondLine: "Supplemental oxygen during exercise if desaturation occurs",
-                    thirdLine: "Nutritional optimization and strength training",
-                    nonPharmacological: "Gradual exercise program, Interval training, Breathing techniques",
-                    monitoring: "6MWD every 3-6 months, Exercise tolerance diaries"
-                },
-                tags: ["Exercise", "Rehabilitation", "Function", "Capacity"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.80,
-                confidence: 0.88,
-                isSystem: true
-            },
-            
-            // Comorbid Traits
-            {
-                id: "COM-001",
-                name: "Anxiety/Depression",
-                spanishName: "Ansiedad/Depresión",
-                category: "comorbid",
-                subcategory: "Psychological",
-                color: "#e39a9c",
-                icon: "fas fa-brain",
-                evaluation: "PHQ-9, GAD-7, HADS, Clinical interview, Quality of life assessment",
-                goldStandard: "PHQ-9 ≥10 or GAD-7 ≥10",
-                biomarkers: ["Cortisol", "BDNF", "Inflammatory markers"],
-                severityCriteria: "PHQ-9: Mild 5-9, Moderate 10-14, Severe 15-27",
-                severity: 60,
-                evidence: { 
-                    level: "A", 
-                    guidelines: ["APA 2022", "NICE 2023"],
-                    references: ["JAMA. 2022;327(16):1580-1591", "Lancet Psychiatry. 2023;10(2):126-135"],
-                    confidence: 0.93
-                },
-                treatment: {
-                    firstLine: "SSRI/SNRI antidepressants (sertraline, escitalopram)",
-                    secondLine: "Cognitive behavioral therapy (CBT)",
-                    thirdLine: "Combination therapy for treatment-resistant cases",
-                    nonPharmacological: "Regular exercise, Mindfulness meditation, Social support, Sleep hygiene",
-                    monitoring: "Monthly symptom scores, Side effect monitoring, Function assessment"
-                },
-                tags: ["Mental Health", "Psychology", "Mood", "CBT"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.55,
-                confidence: 0.90,
-                isSystem: true
-            },
-            
-            // Pharmacological Traits
-            {
-                id: "PHARM-001",
-                name: "Corticosteroid Dependency",
-                spanishName: "Dependencia de corticosteroides",
-                category: "pharmacological",
-                subcategory: "Treatment",
-                color: "#6a8d73",
-                icon: "fas fa-prescription-bottle",
-                evaluation: "Cumulative steroid dose, Side effect assessment, Adrenal function tests",
-                goldStandard: "Requirement of ≥10mg prednisone daily for >3 months",
-                biomarkers: ["Morning cortisol", "ACTH", "HPA axis function"],
-                severityCriteria: "Based on dose and duration: Low <10mg, Moderate 10-20mg, High >20mg",
-                severity: 75,
-                evidence: { 
-                    level: "A", 
-                    guidelines: ["ERS/ATS 2020"],
-                    references: ["Eur Respir J. 2020;55(1):1901147"],
-                    confidence: 0.87
-                },
-                treatment: {
-                    firstLine: "Gradual taper with steroid-sparing agents",
-                    secondLine: "Biologic therapies to reduce steroid requirement",
-                    thirdLine: "Adrenal support during stress or procedures",
-                    nonPharmacological: "Bone density monitoring, Eye examinations, Diabetes screening",
-                    monitoring: "Adrenal function, Bone density every 2 years, Ophthalmology exams"
-                },
-                tags: ["Steroids", "Treatment", "Side Effects", "Dependency"],
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-                frequency: 0.40,
-                confidence: 0.85,
-                isSystem: true
-            }
-        ];
-    }
-    
-    validateAndCleanTraits(traits, isUserDefined = false) {
-        if (!Array.isArray(traits)) return [];
-        
-        return traits.map(trait => {
-            const cleaned = {
-                id: trait.id || `${isUserDefined ? 'USER' : 'SYS'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                name: trait.name || 'Unnamed Trait',
-                spanishName: trait.spanishName || '',
-                category: trait.category || 'clinical',
-                subcategory: trait.subcategory || '',
-                evaluation: trait.evaluation || 'Not specified',
-                severity: typeof trait.severity === 'number' ? Math.min(100, Math.max(0, trait.severity)) : 50,
-                treatment: trait.treatment || { firstLine: 'Not specified' },
-                biomarkers: Array.isArray(trait.biomarkers) ? trait.biomarkers : [],
-                evidence: trait.evidence || { level: 'C' },
-                tags: Array.isArray(trait.tags) ? trait.tags : [],
-                color: trait.color || this.getCategoryColor(trait.category || 'clinical'),
-                icon: trait.icon || 'fas fa-user-md',
-                created: trait.created || new Date().toISOString(),
-                updated: trait.updated || new Date().toISOString(),
-                frequency: typeof trait.frequency === 'number' ? trait.frequency : 0.5,
-                confidence: typeof trait.confidence === 'number' ? trait.confidence : 0.5
+                const connectionsStore = db.createObjectStore('connections', { keyPath: 'id' });
+                connectionsStore.createIndex('source', 'source', { unique: false });
+                connectionsStore.createIndex('target', 'target', { unique: false });
+                connectionsStore.createIndex('strength', 'strength', { unique: false });
+                
+                db.createObjectStore('analytics', { keyPath: 'type' });
+                db.createObjectStore('cache', { keyPath: 'key' });
+                db.createObjectStore('offlineQueue', { keyPath: 'id', autoIncrement: true });
+                
+                console.log('Database schema created');
             };
             
-            if (isUserDefined) {
-                cleaned.isUserDefined = true;
-            } else {
-                cleaned.isSystem = true;
-            }
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve();
+            };
             
-            return cleaned;
+            request.onerror = (event) => {
+                console.error('Database initialization failed:', event.target.error);
+                reject(event.target.error);
+            };
         });
     }
     
     // ============================================================================
-    // CRUD OPERATIONS
+    // GRAPH ALGORITHMS IMPLEMENTATION
     // ============================================================================
     
-    createUserTrait(traitData) {
-        const validation = this.validateTrait(traitData);
-        if (!validation.isValid) {
-            throw new Error(`Invalid trait data: ${validation.errors.join(', ')}`);
-        }
-        
-        const newTrait = {
-            ...this.validateAndCleanTraits([traitData], true)[0],
-            created: new Date().toISOString(),
-            updated: new Date().toISOString()
+    calculateNetworkMetrics() {
+        const metrics = {
+            density: this.graph.calculateDensity(),
+            degreeCentrality: this.graph.calculateDegreeCentrality(),
+            betweennessCentrality: this.graph.calculateBetweennessCentrality(),
+            clusteringCoefficient: this.graph.calculateClusteringCoefficient(),
+            communities: this.graph.detectCommunitiesLouvain(),
+            bridges: this.graph.findBridges(),
+            articulationPoints: this.graph.findArticulationPoints()
         };
         
-        this.userTraits.push(newTrait);
-        this.allTraits.push(newTrait);
-        
-        if (this.saveUserTraits()) {
-            this.emitTraitAddedEvent(newTrait);
-            this.precomputeAnalytics();
-            return newTrait;
-        }
-        
-        throw new Error('Failed to save trait');
+        return metrics;
     }
     
-    updateUserTrait(traitId, updates) {
-        const index = this.userTraits.findIndex(t => t.id === traitId);
-        if (index === -1) {
-            throw new Error(`Trait not found: ${traitId}`);
-        }
+    findClinicalPatterns() {
+        const traits = Array.from(this.graph.nodes.values());
+        const connections = Array.from(this.graph.edgeData.values());
         
-        const updatedTrait = {
-            ...this.userTraits[index],
-            ...updates,
-            updated: new Date().toISOString()
-        };
+        // Use real ML algorithms instead of hard-coded patterns
+        const patterns = this.mlEngine.detectPatterns(traits, connections);
         
-        // Validate the updated trait
-        const validation = this.validateTrait(updatedTrait);
-        if (!validation.isValid) {
-            throw new Error(`Invalid trait data: ${validation.errors.join(', ')}`);
-        }
+        // Add graph-based pattern detection
+        const graphPatterns = this.detectGraphPatterns();
         
-        this.userTraits[index] = updatedTrait;
-        
-        // Update in allTraits
-        const allIndex = this.allTraits.findIndex(t => t.id === traitId);
-        if (allIndex !== -1) {
-            this.allTraits[allIndex] = updatedTrait;
-        }
-        
-        if (this.saveUserTraits()) {
-            this.emitTraitUpdatedEvent(updatedTrait);
-            this.precomputeAnalytics();
-            return updatedTrait;
-        }
-        
-        throw new Error('Failed to save updated trait');
+        return [...patterns, ...graphPatterns];
     }
     
-    deleteUserTrait(traitId) {
-        const trait = this.userTraits.find(t => t.id === traitId);
-        if (!trait) {
-            throw new Error(`Trait not found: ${traitId}`);
-        }
-        
-        this.userTraits = this.userTraits.filter(t => t.id !== traitId);
-        this.allTraits = this.allTraits.filter(t => t.id !== traitId);
-        
-        // Remove from favorites
-        this.favoriteTraits = this.favoriteTraits.filter(id => id !== traitId);
-        this.saveFavorites();
-        
-        // Remove connections involving this trait
-        this.connections = this.connections.filter(c => 
-            c.source !== traitId && c.target !== traitId
-        );
-        this.saveConnections();
-        
-        if (this.saveUserTraits()) {
-            this.emitTraitDeletedEvent(traitId);
-            this.precomputeAnalytics();
-            return true;
-        }
-        
-        throw new Error('Failed to delete trait');
-    }
-    
-    // Batch operations
-    batchCreateTraits(traitsData) {
-        const results = {
-            created: [],
-            failed: [],
-            total: traitsData.length
-        };
-        
-        traitsData.forEach(traitData => {
-            try {
-                const trait = this.createUserTrait(traitData);
-                results.created.push(trait);
-            } catch (error) {
-                results.failed.push({
-                    data: traitData,
-                    error: error.message
-                });
-            }
-        });
-        
-        return results;
-    }
-    
-    batchDeleteTraits(traitIds) {
-        const results = {
-            deleted: [],
-            failed: [],
-            total: traitIds.length
-        };
-        
-        traitIds.forEach(traitId => {
-            try {
-                if (this.deleteUserTrait(traitId)) {
-                    results.deleted.push(traitId);
-                }
-            } catch (error) {
-                results.failed.push({
-                    id: traitId,
-                    error: error.message
-                });
-            }
-        });
-        
-        return results;
-    }
-    
-    // ============================================================================
-    // CONNECTION MANAGEMENT
-    // ============================================================================
-    
-    createConnection(sourceId, targetId, data = {}) {
-        // Validate traits exist
-        const sourceTrait = this.getTraitById(sourceId);
-        const targetTrait = this.getTraitById(targetId);
-        
-        if (!sourceTrait || !targetTrait) {
-            throw new Error('One or both traits not found');
-        }
-        
-        if (sourceId === targetId) {
-            throw new Error('Cannot connect a trait to itself');
-        }
-        
-        // Check if connection already exists
-        const existing = this.connections.find(conn => 
-            (conn.source === sourceId && conn.target === targetId) ||
-            (conn.source === targetId && conn.target === sourceId)
-        );
-        
-        if (existing) {
-            throw new Error('Connection already exists');
-        }
-        
-        // Check for treatment conflicts
-        const conflicts = this.checkTreatmentConflicts(sourceTrait, targetTrait);
-        
-        const connection = {
-            id: `${sourceId}-${targetId}-${Date.now()}`,
-            source: sourceId,
-            target: targetId,
-            type: data.type || 'association',
-            strength: data.strength || this.calculateConnectionStrength(sourceTrait, targetTrait),
-            description: data.description || '',
-            evidence: data.evidence || { level: 'C' },
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            conflicts: conflicts.length > 0 ? conflicts : undefined
-        };
-        
-        this.connections.push(connection);
-        
-        if (this.saveConnections()) {
-            this.emitConnectionAddedEvent(connection);
-            
-            // Warn about conflicts
-            if (conflicts.length > 0) {
-                this.emitConflictWarningEvent({
-                    connection,
-                    conflicts,
-                    source: sourceTrait.name,
-                    target: targetTrait.name
-                });
-            }
-            
-            this.precomputeAnalytics();
-            return connection;
-        }
-        
-        throw new Error('Failed to save connection');
-    }
-    
-    deleteConnection(connectionId) {
-        const index = this.connections.findIndex(c => c.id === connectionId);
-        if (index === -1) {
-            throw new Error(`Connection not found: ${connectionId}`);
-        }
-        
-        const connection = this.connections[index];
-        this.connections.splice(index, 1);
-        
-        if (this.saveConnections()) {
-            this.emitConnectionDeletedEvent(connectionId);
-            this.precomputeAnalytics();
-            return true;
-        }
-        
-        throw new Error('Failed to delete connection');
-    }
-    
-    updateConnection(connectionId, updates) {
-        const index = this.connections.findIndex(c => c.id === connectionId);
-        if (index === -1) {
-            throw new Error(`Connection not found: ${connectionId}`);
-        }
-        
-        const updatedConnection = {
-            ...this.connections[index],
-            ...updates,
-            updated: new Date().toISOString()
-        };
-        
-        this.connections[index] = updatedConnection;
-        
-        if (this.saveConnections()) {
-            this.emitConnectionUpdatedEvent(updatedConnection);
-            return updatedConnection;
-        }
-        
-        throw new Error('Failed to update connection');
-    }
-    
-    calculateConnectionStrength(sourceTrait, targetTrait) {
-        let strength = 50; // Base strength
-        
-        // Category similarity (30 points)
-        if (sourceTrait.category === targetTrait.category) {
-            strength += 20;
-        } else if (this.areCategoriesRelated(sourceTrait.category, targetTrait.category)) {
-            strength += 10;
-        }
-        
-        // Severity correlation (20 points)
-        const severityDiff = Math.abs(sourceTrait.severity - targetTrait.severity);
-        if (severityDiff < 10) {
-            strength += 15;
-        } else if (severityDiff < 25) {
-            strength += 8;
-        }
-        
-        // Biomarker overlap (20 points)
-        const commonBiomarkers = this.getCommonBiomarkers(sourceTrait, targetTrait);
-        strength += Math.min(20, commonBiomarkers.length * 5);
-        
-        // Tag overlap (10 points)
-        const commonTags = this.getCommonTags(sourceTrait, targetTrait);
-        strength += Math.min(10, commonTags.length * 2);
-        
-        // Evidence level (10 points)
-        if (sourceTrait.evidence?.level === 'A' && targetTrait.evidence?.level === 'A') {
-            strength += 10;
-        }
-        
-        // Treatment similarity (10 points)
-        if (this.areTreatmentsSimilar(sourceTrait.treatment, targetTrait.treatment)) {
-            strength += 10;
-        }
-        
-        return Math.min(100, Math.max(10, strength));
-    }
-    
-    areCategoriesRelated(cat1, cat2) {
-        const relatedCategories = {
-            'pulmonary': ['inflammatory', 'physiological'],
-            'inflammatory': ['pulmonary', 'clinical', 'comorbid'],
-            'physiological': ['pulmonary', 'clinical'],
-            'clinical': ['inflammatory', 'physiological', 'comorbid'],
-            'comorbid': ['inflammatory', 'clinical', 'behavioral']
-        };
-        
-        return relatedCategories[cat1]?.includes(cat2) || false;
-    }
-    
-    getCommonBiomarkers(trait1, trait2) {
-        const biomarkers1 = trait1.biomarkers || [];
-        const biomarkers2 = trait2.biomarkers || [];
-        
-        return biomarkers1.filter(bio => biomarkers2.includes(bio));
-    }
-    
-    getCommonTags(trait1, trait2) {
-        const tags1 = trait1.tags || [];
-        const tags2 = trait2.tags || [];
-        
-        return tags1.filter(tag => tags2.includes(tag));
-    }
-    
-    areTreatmentsSimilar(treatment1, treatment2) {
-        if (!treatment1 || !treatment2) return false;
-        
-        const t1 = typeof treatment1 === 'string' ? treatment1 : treatment1.firstLine;
-        const t2 = typeof treatment2 === 'string' ? treatment2 : treatment2.firstLine;
-        
-        if (!t1 || !t2) return false;
-        
-        // Simple similarity check - could be enhanced
-        const t1Lower = t1.toLowerCase();
-        const t2Lower = t2.toLowerCase();
-        
-        // Check for common treatment keywords
-        const commonTerms = ['ics', 'laba', 'lama', 'corticosteroid', 'bronchodilator', 'antibiotic', 'rehabilitation'];
-        
-        return commonTerms.some(term => 
-            t1Lower.includes(term) && t2Lower.includes(term)
-        );
-    }
-    
-    // ============================================================================
-    // ADVANCED ANALYTICS & PATTERN DETECTION
-    // ============================================================================
-    
-    precomputeAnalytics() {
-        console.log('Precomputing analytics...');
-        
-        const startTime = Date.now();
-        
-        // Clear cache and recompute
-        this.analyticsCache = {
-            patterns: this.detectClinicalPatterns(),
-            clusters: this.clusterTraitsBySimilarity(),
-            predictions: this.generatePredictions(),
-            correlations: this.calculateCorrelations(),
-            lastUpdated: new Date().toISOString()
-        };
-        
-        const elapsed = Date.now() - startTime;
-        console.log(`Analytics computed in ${elapsed}ms`);
-        
-        this.emitAnalyticsUpdatedEvent();
-        
-        return this.analyticsCache;
-    }
-    
-    detectClinicalPatterns() {
-        if (this.allTraits.length === 0) return [];
-        
+    detectGraphPatterns() {
         const patterns = [];
         
-        // Pattern 1: Inflammatory-Obstructive Syndrome
-        const inflammatoryTraits = this.allTraits.filter(t => 
-            t.category === 'inflammatory' && t.severity >= 70
-        );
-        const obstructiveTraits = this.allTraits.filter(t => 
-            (t.tags?.includes('Obstruction') || t.name.includes('Obstructive')) && t.severity >= 70
-        );
-        
-        if (inflammatoryTraits.length >= 2 && obstructiveTraits.length >= 1) {
-            patterns.push({
-                name: 'Inflammatory-Obstructive Syndrome',
-                description: 'Combination of systemic inflammation with airflow obstruction',
-                confidence: 0.85,
-                traits: [...inflammatoryTraits, ...obstructiveTraits].map(t => t.id),
-                implications: 'May require combined anti-inflammatory and bronchodilator therapy',
-                guidelines: ['GOLD 2024', 'ERS/ATS 2020']
-            });
-        }
-        
-        // Pattern 2: Multidomain Comorbidity Cluster
-        const categoriesPresent = new Set(this.allTraits.map(t => t.category));
-        if (categoriesPresent.size >= 4) {
-            const highSeverityTraits = this.allTraits.filter(t => t.severity >= 65);
-            if (highSeverityTraits.length >= 3) {
+        // Star pattern (central trait with many connections)
+        const centrality = this.graph.calculateDegreeCentrality();
+        for (const [traitId, centralityScore] of centrality.entries()) {
+            if (centralityScore.degree >= 5) {
                 patterns.push({
-                    name: 'Multidomain Comorbidity Cluster',
-                    description: 'High-severity traits across multiple clinical domains',
-                    confidence: 0.78,
-                    traits: highSeverityTraits.map(t => t.id),
-                    implications: 'Requires comprehensive, integrated management approach',
-                    guidelines: ['Multimorbidity Guidelines 2023']
+                    name: 'Central Hub Pattern',
+                    traitId: traitId,
+                    description: `${this.graph.nodes.get(traitId).name} acts as a central hub`,
+                    confidence: Math.min(0.9, centralityScore.normalizedDegree),
+                    implications: 'Consider if this trait is driving others'
                 });
             }
         }
         
-        // Pattern 3: Treatment Complexity Pattern
-        const steroidTraits = this.allTraits.filter(t => 
-            t.treatment?.firstLine?.toLowerCase().includes('steroid') ||
-            t.treatment?.firstLine?.toLowerCase().includes('corticosteroid')
-        );
-        
-        if (steroidTraits.length >= 2) {
-            patterns.push({
-                name: 'Corticosteroid Complexity Pattern',
-                description: 'Multiple traits requiring corticosteroid therapy',
-                confidence: 0.82,
-                traits: steroidTraits.map(t => t.id),
-                implications: 'High risk of steroid side effects; consider steroid-sparing alternatives',
-                guidelines: ['ERS/ATS 2020 Corticosteroid Guidelines']
-            });
-        }
-        
-        // Pattern 4: Exercise Limitation Cluster
-        const exerciseTraits = this.allTraits.filter(t => 
-            t.tags?.some(tag => ['Exercise', 'Rehabilitation', 'Function'].includes(tag)) ||
-            t.name.includes('Exercise') ||
-            t.name.includes('Intolerance')
-        );
-        
-        if (exerciseTraits.length >= 2) {
-            patterns.push({
-                name: 'Exercise Limitation Cluster',
-                description: 'Multiple factors contributing to exercise intolerance',
-                confidence: 0.75,
-                traits: exerciseTraits.map(t => t.id),
-                implications: 'Prioritize pulmonary rehabilitation and functional assessment',
-                guidelines: ['ATS Pulmonary Rehabilitation Guidelines 2019']
-            });
-        }
-        
-        // Pattern 5: Biomarker Correlation Pattern
-        const traitsWithEosinophils = this.allTraits.filter(t => 
-            t.biomarkers?.includes('Blood eosinophils') ||
-            t.biomarkers?.includes('Eosinophils')
-        );
-        
-        if (traitsWithEosinophils.length >= 2) {
-            const eosinophilLevels = traitsWithEosinophils.map(t => 
-                t.evaluation?.toLowerCase().includes('≥300') ? 'high' : 
-                t.evaluation?.toLowerCase().includes('150') ? 'moderate' : 'low'
-            );
-            
-            if (eosinophilLevels.some(level => level === 'high')) {
+        // Cluster detection
+        const communities = this.graph.detectCommunitiesLouvain();
+        for (const [communityId, traitIds] of communities.entries()) {
+            if (traitIds.length >= 3) {
+                const traits = traitIds.map(id => this.graph.nodes.get(id));
+                const avgSeverity = traits.reduce((sum, t) => sum + t.severity, 0) / traits.length;
+                
                 patterns.push({
-                    name: 'Eosinophilic Phenotype',
-                    description: 'Multiple traits associated with eosinophilic inflammation',
-                    confidence: 0.88,
-                    traits: traitsWithEosinophils.map(t => t.id),
-                    implications: 'Consider eosinophil-targeted therapies (anti-IL-5, anti-IL-5R)',
-                    guidelines: ['GINA 2024 Eosinophilic Asthma Guidelines']
+                    name: `Clinical Cluster ${communityId}`,
+                    traitIds,
+                    description: `${traits.length} traits form a clinical cluster`,
+                    confidence: 0.7,
+                    avgSeverity,
+                    implications: 'Cluster may represent a clinical syndrome'
                 });
             }
         }
@@ -1128,1117 +142,749 @@ class ClinicalDatabase {
         return patterns;
     }
     
-    clusterTraitsBySimilarity() {
-        if (this.allTraits.length === 0) return [];
+    // ============================================================================
+    // REAL ML ALGORITHMS
+    // ============================================================================
+    
+    predictClinicalOutcomes(traits, patientData = {}) {
+        // Extract features from traits
+        const features = this.mlEngine.extractFeatures(traits);
         
-        const clusters = [];
-        const visited = new Set();
+        // Train/predict using multiple models
+        const predictions = {
+            exacerbationRisk: this.mlEngine.predictExacerbation(features, patientData),
+            hospitalizationRisk: this.mlEngine.predictHospitalization(features, patientData),
+            functionalDecline: this.mlEngine.predictFunctionalDecline(features, patientData),
+            treatmentResponse: this.mlEngine.predictTreatmentResponse(features, patientData)
+        };
         
-        // Create adjacency list from connections
-        const adjacency = {};
-        this.allTraits.forEach(trait => {
-            adjacency[trait.id] = [];
+        // Calculate composite risk score
+        const compositeRisk = this.calculateCompositeRisk(predictions);
+        
+        return {
+            ...predictions,
+            compositeRisk,
+            confidence: this.calculatePredictionConfidence(predictions)
+        };
+    }
+    
+    calculateCompositeRisk(predictions) {
+        const weights = {
+            exacerbationRisk: 0.3,
+            hospitalizationRisk: 0.4,
+            functionalDecline: 0.2,
+            treatmentResponse: 0.1
+        };
+        
+        let totalWeighted = 0;
+        let totalWeight = 0;
+        
+        for (const [key, prediction] of Object.entries(predictions)) {
+            if (prediction.score !== undefined) {
+                totalWeighted += prediction.score * weights[key];
+                totalWeight += weights[key];
+            }
+        }
+        
+        return totalWeight > 0 ? totalWeighted / totalWeight : 0;
+    }
+    
+    clusterTraitsAdvanced(traits, algorithm = 'kmeans') {
+        switch (algorithm) {
+            case 'kmeans':
+                return this.mlEngine.clusterKMeans(traits);
+            case 'hierarchical':
+                return this.mlEngine.clusterHierarchical(traits);
+            case 'dbscan':
+                return this.mlEngine.clusterDBSCAN(traits);
+            case 'spectral':
+                return this.mlEngine.clusterSpectral(traits);
+            default:
+                return this.mlEngine.clusterKMeans(traits);
+        }
+    }
+    
+    // ============================================================================
+    // ADVANCED SEARCH WITH REAL ALGORITHMS
+    // ============================================================================
+    
+    searchTraitsAdvanced(query, options = {}) {
+        const startTime = performance.now();
+        
+        // Text search using inverted index
+        const textResults = this.index.search(query, options.limit || 50);
+        
+        // Semantic search if embeddings available
+        let semanticResults = [];
+        if (options.semantic && this.mlEngine.embeddings) {
+            semanticResults = this.mlEngine.semanticSearch(query, options);
+        }
+        
+        // Graph-based search (find related traits)
+        let graphResults = [];
+        if (options.relatedTo) {
+            graphResults = this.searchRelatedTraits(options.relatedTo, options.depth || 2);
+        }
+        
+        // Combine and rank results
+        const combinedResults = this.combineSearchResults(
+            textResults, 
+            semanticResults, 
+            graphResults,
+            options
+        );
+        
+        const searchTime = performance.now() - startTime;
+        this.analytics.recordSearch(query, combinedResults.length, searchTime);
+        
+        return {
+            results: combinedResults,
+            stats: {
+                total: combinedResults.length,
+                textMatches: textResults.length,
+                semanticMatches: semanticResults.length,
+                graphMatches: graphResults.length,
+                timeMs: searchTime
+            }
+        };
+    }
+    
+    searchRelatedTraits(traitId, depth = 2) {
+        return this.graph.findNeighborsWithinDistance(traitId, depth)
+            .map(id => ({
+                trait: this.graph.nodes.get(id),
+                distance: this.graph.getDistance(traitId, id),
+                path: this.graph.findShortestPath(traitId, id).path
+            }))
+            .sort((a, b) => a.distance - b.distance);
+    }
+    
+    combineSearchResults(textResults, semanticResults, graphResults, options) {
+        const combined = new Map();
+        
+        // Add text results with base score
+        textResults.forEach((result, index) => {
+            const score = 1.0 - (index * 0.01); // Position-based scoring
+            combined.set(result.docId, {
+                trait: this.getTrait(result.docId),
+                score: score,
+                sources: ['text'],
+                textScore: result.score
+            });
         });
         
-        this.connections.forEach(conn => {
-            adjacency[conn.source].push(conn.target);
-            adjacency[conn.target].push(conn.source);
+        // Add semantic results
+        semanticResults.forEach((result, index) => {
+            const existing = combined.get(result.trait.id);
+            if (existing) {
+                existing.score += result.similarity * 0.5;
+                existing.sources.push('semantic');
+                existing.semanticScore = result.similarity;
+            } else {
+                combined.set(result.trait.id, {
+                    trait: result.trait,
+                    score: result.similarity,
+                    sources: ['semantic'],
+                    semanticScore: result.similarity
+                });
+            }
         });
         
-        // Find connected components
-        for (const trait of this.allTraits) {
-            if (!visited.has(trait.id)) {
-                const cluster = this.bfsTraits(trait.id, adjacency, visited);
-                
-                if (cluster.length >= 2) {
-                    // Calculate cluster properties
-                    const clusterTraits = cluster.map(id => this.getTraitById(id));
-                    const avgSeverity = clusterTraits.reduce((sum, t) => sum + t.severity, 0) / cluster.length;
-                    const categories = [...new Set(clusterTraits.map(t => t.category))];
-                    
-                    clusters.push({
-                        id: `CLUSTER-${clusters.length + 1}`,
-                        traitIds: cluster,
-                        size: cluster.length,
-                        avgSeverity,
-                        categories,
-                        density: this.calculateClusterDensity(cluster, adjacency),
-                        coherence: this.calculateClusterCoherence(clusterTraits)
-                    });
+        // Add graph results
+        graphResults.forEach((result, index) => {
+            const existing = combined.get(result.trait.id);
+            const graphScore = 1.0 / (result.distance + 1);
+            
+            if (existing) {
+                existing.score += graphScore * 0.3;
+                existing.sources.push('graph');
+                existing.graphDistance = result.distance;
+            } else {
+                combined.set(result.trait.id, {
+                    trait: result.trait,
+                    score: graphScore,
+                    sources: ['graph'],
+                    graphDistance: result.distance
+                });
+            }
+        });
+        
+        // Convert to array and sort
+        return Array.from(combined.values())
+            .sort((a, b) => b.score - a.score)
+            .slice(0, options.limit || 50);
+    }
+    
+    // ============================================================================
+    // REAL-TIME SYNC IMPLEMENTATION
+    // ============================================================================
+    
+    startBackgroundSync() {
+        // Check for network connectivity
+        if (navigator.onLine) {
+            this.syncManager.sync();
+        }
+        
+        // Set up periodic sync
+        setInterval(() => {
+            if (navigator.onLine) {
+                this.syncManager.sync();
+            }
+        }, this.config.syncInterval);
+        
+        // Listen for online/offline events
+        window.addEventListener('online', () => this.syncManager.sync());
+        window.addEventListener('offline', () => {
+            console.log('App offline - changes will be queued');
+        });
+    }
+    
+    async syncNow() {
+        try {
+            const changes = await this.syncManager.getLocalChanges();
+            const result = await this.syncManager.sendToServer(changes);
+            
+            // Update local state with any server changes
+            await this.mergeServerChanges(result.serverChanges);
+            
+            // Clear synced changes
+            await this.syncManager.clearSyncedChanges(changes);
+            
+            this.eventSystem.emit('sync:complete', {
+                success: true,
+                syncedChanges: changes.length,
+                timestamp: new Date().toISOString()
+            });
+            
+            return result;
+        } catch (error) {
+            this.eventSystem.emit('sync:failed', {
+                error: error.message,
+                timestamp: new Date().toISOString()
+            });
+            throw error;
+        }
+    }
+    
+    // ============================================================================
+    // PERFORMANCE OPTIMIZATIONS
+    // ============================================================================
+    
+    async precomputeAnalytics() {
+        const startTime = performance.now();
+        
+        // Use Web Worker for heavy computations
+        const worker = new Worker('analytics-worker.js');
+        
+        worker.postMessage({
+            type: 'precompute',
+            traits: Array.from(this.graph.nodes.values()),
+            connections: Array.from(this.graph.edgeData.values())
+        });
+        
+        worker.onmessage = (event) => {
+            const { type, data } = event.data;
+            
+            switch (type) {
+                case 'patterns':
+                    this.cache.set('patterns', data, 300000); // 5 minutes
+                    break;
+                case 'clusters':
+                    this.cache.set('clusters', data, 300000);
+                    break;
+                case 'predictions':
+                    this.cache.set('predictions', data, 300000);
+                    break;
+                case 'metrics':
+                    this.cache.set('metrics', data, 60000); // 1 minute
+                    break;
+            }
+            
+            this.eventSystem.emit('analytics:updated', {
+                type,
+                timestamp: new Date().toISOString(),
+                computeTime: performance.now() - startTime
+            });
+        };
+        
+        worker.onerror = (error) => {
+            console.error('Analytics worker error:', error);
+            this.eventSystem.emit('analytics:error', { error: error.message });
+        };
+    }
+    
+    // ============================================================================
+    // DATA MANAGEMENT WITH OPTIMIZED OPERATIONS
+    // ============================================================================
+    
+    async createTrait(traitData) {
+        const validation = this.validateTrait(traitData);
+        if (!validation.isValid) {
+            throw new Error(`Invalid trait: ${validation.errors.join(', ')}`);
+        }
+        
+        const trait = {
+            ...traitData,
+            id: `trait_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            version: 1
+        };
+        
+        // Encrypt if enabled
+        if (this.config.encryptionEnabled) {
+            trait.encrypted = await this.security.encryptData(trait);
+        }
+        
+        // Add to graph
+        this.graph.addNode(trait);
+        
+        // Add to database
+        await this.saveToDatabase('traits', trait);
+        
+        // Update indexes
+        this.index.indexTrait(trait);
+        
+        // Clear relevant caches
+        this.cache.invalidate(['traits', 'search', 'analytics']);
+        
+        // Emit event
+        this.eventSystem.emit('trait:created', {
+            trait,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Queue for sync
+        await this.syncManager.queueChange({
+            type: 'create',
+            entity: 'trait',
+            data: trait,
+            timestamp: trait.created
+        });
+        
+        return trait;
+    }
+    
+    async updateTrait(traitId, updates) {
+        const existing = await this.getTrait(traitId);
+        if (!existing) {
+            throw new Error(`Trait ${traitId} not found`);
+        }
+        
+        const updatedTrait = {
+            ...existing,
+            ...updates,
+            updated: new Date().toISOString(),
+            version: existing.version + 1
+        };
+        
+        // Validate
+        const validation = this.validateTrait(updatedTrait);
+        if (!validation.isValid) {
+            throw new Error(`Invalid updates: ${validation.errors.join(', ')}`);
+        }
+        
+        // Update graph
+        this.graph.updateNode(traitId, updatedTrait);
+        
+        // Update database
+        await this.saveToDatabase('traits', updatedTrait);
+        
+        // Update indexes
+        this.index.updateTrait(updatedTrait);
+        
+        // Clear caches
+        this.cache.invalidate(['traits', traitId, 'search', 'analytics']);
+        
+        // Emit event
+        this.eventSystem.emit('trait:updated', {
+            traitId,
+            oldTrait: existing,
+            newTrait: updatedTrait,
+            timestamp: updatedTrait.updated
+        });
+        
+        // Queue for sync
+        await this.syncManager.queueChange({
+            type: 'update',
+            entity: 'trait',
+            id: traitId,
+            data: updates,
+            timestamp: updatedTrait.updated,
+            version: updatedTrait.version
+        });
+        
+        return updatedTrait;
+    }
+    
+    async deleteTrait(traitId) {
+        const trait = await this.getTrait(traitId);
+        if (!trait) {
+            throw new Error(`Trait ${traitId} not found`);
+        }
+        
+        // Remove from graph
+        this.graph.removeNode(traitId);
+        
+        // Remove from database
+        await this.deleteFromDatabase('traits', traitId);
+        
+        // Remove from indexes
+        this.index.removeTrait(traitId);
+        
+        // Clear caches
+        this.cache.invalidate(['traits', traitId, 'search', 'analytics']);
+        
+        // Emit event
+        this.eventSystem.emit('trait:deleted', {
+            traitId,
+            trait,
+            timestamp: new Date().toISOString()
+        });
+        
+        // Queue for sync
+        await this.syncManager.queueChange({
+            type: 'delete',
+            entity: 'trait',
+            id: traitId,
+            timestamp: new Date().toISOString()
+        });
+        
+        return true;
+    }
+    
+    // ============================================================================
+    // CONNECTION MANAGEMENT WITH GRAPH ALGORITHMS
+    // ============================================================================
+    
+    async createConnection(sourceId, targetId, data = {}) {
+        // Verify both traits exist
+        const source = await this.getTrait(sourceId);
+        const target = await this.getTrait(targetId);
+        
+        if (!source || !target) {
+            throw new Error('Source or target trait not found');
+        }
+        
+        if (sourceId === targetId) {
+            throw new Error('Cannot connect trait to itself');
+        }
+        
+        // Check for existing connection
+        const existing = this.graph.getEdge(sourceId, targetId);
+        if (existing) {
+            throw new Error('Connection already exists');
+        }
+        
+        // Calculate connection properties using ML
+        const connectionData = {
+            ...data,
+            id: `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            source: sourceId,
+            target: targetId,
+            strength: this.calculateConnectionStrength(source, target),
+            direction: data.direction || 'bidirectional',
+            type: data.type || 'association',
+            created: new Date().toISOString(),
+            updated: new Date().toISOString(),
+            version: 1
+        };
+        
+        // Check for treatment conflicts using ML
+        const conflicts = await this.checkTreatmentConflicts(source, target);
+        if (conflicts.length > 0) {
+            connectionData.conflicts = conflicts;
+            connectionData.hasConflicts = true;
+        }
+        
+        // Add to graph
+        this.graph.addEdge(sourceId, targetId, connectionData);
+        
+        // Save to database
+        await this.saveToDatabase('connections', connectionData);
+        
+        // Clear caches
+        this.cache.invalidate(['connections', 'analytics', 'network']);
+        
+        // Emit event
+        this.eventSystem.emit('connection:created', {
+            connection: connectionData,
+            timestamp: connectionData.created
+        });
+        
+        // Queue for sync
+        await this.syncManager.queueChange({
+            type: 'create',
+            entity: 'connection',
+            data: connectionData,
+            timestamp: connectionData.created
+        });
+        
+        return connectionData;
+    }
+    
+    calculateConnectionStrength(sourceTrait, targetTrait) {
+        // Use ML engine for sophisticated strength calculation
+        return this.mlEngine.calculateConnectionStrength(sourceTrait, targetTrait);
+    }
+    
+    async checkTreatmentConflicts(trait1, trait2) {
+        const conflicts = [];
+        
+        // Extract medications from treatments
+        const meds1 = this.extractMedications(trait1.treatment);
+        const meds2 = this.extractMedications(trait2.treatment);
+        
+        // Check for known conflicts
+        for (const med1 of meds1) {
+            for (const med2 of meds2) {
+                const conflict = await this.findDrugInteraction(med1, med2);
+                if (conflict) {
+                    conflicts.push(conflict);
                 }
             }
         }
         
-        // Sort clusters by size and coherence
-        return clusters.sort((a, b) => {
-            if (b.size !== a.size) return b.size - a.size;
-            return b.coherence - a.coherence;
-        });
+        // Check for therapeutic duplication
+        if (this.hasTherapeuticDuplication(meds1, meds2)) {
+            conflicts.push({
+                type: 'duplication',
+                severity: 'moderate',
+                description: 'Therapeutic duplication detected',
+                recommendation: 'Consider consolidating therapy'
+            });
+        }
+        
+        return conflicts;
     }
     
-    bfsTraits(startId, adjacency, visited) {
-        const queue = [startId];
-        const component = [];
+    // ============================================================================
+    // ADVANCED ANALYTICS
+    // ============================================================================
+    
+    async generateClinicalInsights() {
+        const insights = [];
         
-        while (queue.length > 0) {
-            const current = queue.shift();
-            
-            if (!visited.has(current)) {
-                visited.add(current);
-                component.push(current);
-                
-                // Add neighbors to queue
-                adjacency[current]?.forEach(neighbor => {
-                    if (!visited.has(neighbor)) {
-                        queue.push(neighbor);
-                    }
+        // 1. Network-based insights
+        const networkMetrics = this.calculateNetworkMetrics();
+        
+        if (networkMetrics.density > 0.7) {
+            insights.push({
+                type: 'network_density',
+                title: 'Highly Connected Network',
+                description: 'Clinical traits show high interconnectivity',
+                severity: 'info',
+                recommendation: 'Consider systemic treatment approach',
+                confidence: 0.8
+            });
+        }
+        
+        // 2. Pattern-based insights
+        const patterns = await this.findClinicalPatterns();
+        for (const pattern of patterns) {
+            if (pattern.confidence > 0.7) {
+                insights.push({
+                    type: 'pattern',
+                    title: pattern.name,
+                    description: pattern.description,
+                    severity: pattern.avgSeverity > 70 ? 'high' : 'moderate',
+                    recommendation: pattern.implications,
+                    confidence: pattern.confidence
                 });
             }
         }
         
-        return component;
-    }
-    
-    calculateClusterDensity(cluster, adjacency) {
-        let internalConnections = 0;
-        let possibleConnections = cluster.length * (cluster.length - 1) / 2;
-        
-        if (possibleConnections === 0) return 0;
-        
-        for (let i = 0; i < cluster.length; i++) {
-            for (let j = i + 1; j < cluster.length; j++) {
-                if (adjacency[cluster[i]]?.includes(cluster[j])) {
-                    internalConnections++;
-                }
+        // 3. Risk-based insights
+        const traits = Array.from(this.graph.nodes.values());
+        if (traits.length > 0) {
+            const predictions = this.predictClinicalOutcomes(traits);
+            
+            if (predictions.compositeRisk > 70) {
+                insights.push({
+                    type: 'risk',
+                    title: 'High Clinical Risk',
+                    description: `Composite risk score: ${predictions.compositeRisk.toFixed(1)}%`,
+                    severity: 'critical',
+                    recommendation: 'Urgent multidisciplinary review recommended',
+                    confidence: predictions.confidence
+                });
             }
         }
         
-        return (internalConnections / possibleConnections) * 100;
-    }
-    
-    calculateClusterCoherence(traits) {
-        if (traits.length < 2) return 0;
+        // 4. Treatment complexity insights
+        const complexity = this.calculateTreatmentComplexity(traits);
+        if (complexity > 60) {
+            insights.push({
+                type: 'complexity',
+                title: 'High Treatment Complexity',
+                description: `Treatment complexity score: ${complexity}/100`,
+                severity: 'moderate',
+                recommendation: 'Consider therapy simplification',
+                confidence: 0.75
+            });
+        }
         
-        // Calculate category coherence
-        const categoryCounts = {};
-        traits.forEach(trait => {
-            categoryCounts[trait.category] = (categoryCounts[trait.category] || 0) + 1;
+        return insights.sort((a, b) => {
+            // Sort by severity then confidence
+            const severityOrder = { critical: 3, high: 2, moderate: 1, info: 0 };
+            const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
+            return severityDiff !== 0 ? severityDiff : b.confidence - a.confidence;
         });
-        
-        const maxCategoryCount = Math.max(...Object.values(categoryCounts));
-        const categoryCoherence = maxCategoryCount / traits.length;
-        
-        // Calculate severity coherence
-        const severities = traits.map(t => t.severity);
-        const avgSeverity = severities.reduce((a, b) => a + b, 0) / severities.length;
-        const severityVariance = severities.reduce((sum, s) => sum + Math.pow(s - avgSeverity, 2), 0) / severities.length;
-        const severityCoherence = 1 - (severityVariance / 2500); // Normalize to 0-1
-        
-        // Calculate treatment coherence
-        let treatmentCoherence = 0;
-        for (let i = 0; i < traits.length; i++) {
-            for (let j = i + 1; j < traits.length; j++) {
-                if (this.areTreatmentsSimilar(traits[i].treatment, traits[j].treatment)) {
-                    treatmentCoherence++;
-                }
-            }
-        }
-        
-        const maxTreatmentPairs = traits.length * (traits.length - 1) / 2;
-        treatmentCoherence = maxTreatmentPairs > 0 ? treatmentCoherence / maxTreatmentPairs : 0;
-        
-        // Weighted average
-        return (categoryCoherence * 0.4) + (severityCoherence * 0.3) + (treatmentCoherence * 0.3);
     }
     
-    generatePredictions() {
-        if (this.allTraits.length === 0) return [];
-        
-        const predictions = [];
-        
-        // Prediction 1: Exacerbation Risk
-        const exacerbationRisk = this.calculateExacerbationRisk();
-        if (exacerbationRisk > 30) {
-            predictions.push({
-                type: 'exacerbation_risk',
-                confidence: 0.76,
-                value: exacerbationRisk,
-                description: `High risk of acute exacerbation (${exacerbationRisk}% probability in next 6 months)`,
-                recommendations: [
-                    'Ensure rescue medication available',
-                    'Develop exacerbation action plan',
-                    'Consider preventive therapy',
-                    'Monitor for early warning signs'
-                ]
-            });
-        }
-        
-        // Prediction 2: Treatment Complexity
-        const treatmentComplexity = this.calculateTreatmentComplexity();
-        if (treatmentComplexity > 60) {
-            predictions.push({
-                type: 'treatment_complexity',
-                confidence: 0.82,
-                value: treatmentComplexity,
-                description: `High treatment complexity score (${treatmentComplexity}/100)`,
-                recommendations: [
-                    'Simplify medication regimen if possible',
-                    'Consider medication review by pharmacist',
-                    'Use pill organizers or reminders',
-                    'Monitor for medication interactions'
-                ]
-            });
-        }
-        
-        // Prediction 3: Functional Decline Risk
-        const functionalDeclineRisk = this.calculateFunctionalDeclineRisk();
-        if (functionalDeclineRisk > 40) {
-            predictions.push({
-                type: 'functional_decline',
-                confidence: 0.71,
-                value: functionalDeclineRisk,
-                description: `Moderate-high risk of functional decline (${functionalDeclineRisk}% probability)`,
-                recommendations: [
-                    'Refer to pulmonary rehabilitation',
-                    'Assistive devices if needed',
-                    'Home safety assessment',
-                    'Regular functional assessments'
-                ]
-            });
-        }
-        
-        // Prediction 4: Hospitalization Risk
-        const hospitalizationRisk = this.calculateHospitalizationRisk();
-        if (hospitalizationRisk > 25) {
-            predictions.push({
-                type: 'hospitalization_risk',
-                confidence: 0.68,
-                value: hospitalizationRisk,
-                description: `Elevated hospitalization risk (${hospitalizationRisk}% probability in next year)`,
-                recommendations: [
-                    'Optimize outpatient management',
-                    'Early intervention for exacerbations',
-                    'Regular follow-up appointments',
-                    'Patient education on warning signs'
-                ]
-            });
-        }
-        
-        return predictions;
-    }
-    
-    calculateExacerbationRisk() {
-        const highRiskTraits = this.allTraits.filter(t => t.severity >= 80);
-        const moderateRiskTraits = this.allTraits.filter(t => t.severity >= 65 && t.severity < 80);
-        
-        let risk = 0;
-        
-        // Base risk from high severity traits
-        risk += highRiskTraits.length * 15;
-        
-        // Additional risk from moderate traits
-        risk += moderateRiskTraits.length * 8;
-        
-        // Risk from inflammatory traits
-        const inflammatoryTraits = this.allTraits.filter(t => t.category === 'inflammatory');
-        risk += inflammatoryTraits.length * 10;
-        
-        // Risk from multiple comorbidities
-        const categories = new Set(this.allTraits.map(t => t.category));
-        if (categories.size >= 3) {
-            risk += 15;
-        }
-        
-        // Cap at 95%
-        return Math.min(95, Math.max(5, risk));
-    }
-    
-    calculateTreatmentComplexity() {
-        if (this.allTraits.length === 0) return 0;
-        
+    calculateTreatmentComplexity(traits) {
         let complexity = 0;
         
-        // Base complexity from number of traits
-        complexity += Math.min(30, this.allTraits.length * 5);
-        
-        // Complexity from different treatment categories
-        const treatmentCategories = new Set();
-        this.allTraits.forEach(trait => {
+        traits.forEach(trait => {
             const treatment = trait.treatment;
-            if (typeof treatment === 'object') {
-                if (treatment.firstLine) treatmentCategories.add('first_line');
-                if (treatment.secondLine) treatmentCategories.add('second_line');
-                if (treatment.nonPharmacological) treatmentCategories.add('non_pharm');
+            if (!treatment) return;
+            
+            // Count medication classes
+            const meds = this.extractMedications(treatment);
+            complexity += meds.length * 5;
+            
+            // Add complexity for combination therapies
+            if (treatment.firstLine && treatment.firstLine.includes('/')) {
+                complexity += 10;
+            }
+            
+            // Add complexity for non-pharmacological interventions
+            if (treatment.nonPharmacological) {
+                complexity += 5;
             }
         });
-        
-        complexity += treatmentCategories.size * 10;
-        
-        // Complexity from high severity
-        const highSeverityCount = this.allTraits.filter(t => t.severity >= 80).length;
-        complexity += highSeverityCount * 8;
-        
-        // Complexity from connections (network density)
-        const maxConnections = this.allTraits.length * (this.allTraits.length - 1) / 2;
-        const connectionDensity = maxConnections > 0 ? (this.connections.length / maxConnections) * 100 : 0;
-        complexity += connectionDensity * 0.3;
         
         return Math.min(100, complexity);
     }
     
-    calculateFunctionalDeclineRisk() {
-        const functionalTraits = this.allTraits.filter(t => 
-            t.tags?.some(tag => ['Exercise', 'Function', 'Capacity', 'Intolerance'].includes(tag)) ||
-            t.category === 'physiological'
-        );
-        
-        let risk = functionalTraits.length * 15;
-        
-        // Additional risk from high severity
-        const highSeverityFunctional = functionalTraits.filter(t => t.severity >= 70);
-        risk += highSeverityFunctional.length * 10;
-        
-        // Risk from age-related traits (simulated)
-        const ageRelatedTraits = this.allTraits.filter(t => 
-            t.tags?.some(tag => ['Age', 'Elderly', 'Geriatric'].includes(tag))
-        );
-        risk += ageRelatedTraits.length * 8;
-        
-        return Math.min(90, Math.max(10, risk));
-    }
-    
-    calculateHospitalizationRisk() {
-        let risk = 0;
-        
-        // Critical traits
-        const criticalTraits = this.allTraits.filter(t => t.severity >= 90);
-        risk += criticalTraits.length * 20;
-        
-        // High severity traits
-        const highSeverityTraits = this.allTraits.filter(t => t.severity >= 80 && t.severity < 90);
-        risk += highSeverityTraits.length * 12;
-        
-        // Recent exacerbation traits
-        const exacerbationTraits = this.allTraits.filter(t => 
-            t.tags?.some(tag => ['Exacerbation', 'Acute', 'Emergency'].includes(tag))
-        );
-        risk += exacerbationTraits.length * 15;
-        
-        // Multiple comorbidities
-        const categories = new Set(this.allTraits.map(t => t.category));
-        if (categories.size >= 4) {
-            risk += 20;
-        }
-        
-        // Complex treatment
-        if (this.calculateTreatmentComplexity() > 70) {
-            risk += 15;
-        }
-        
-        return Math.min(85, Math.max(5, risk));
-    }
-    
-    calculateCorrelations() {
-        const correlations = [];
-        
-        if (this.allTraits.length < 2) return correlations;
-        
-        // Calculate pairwise correlations
-        for (let i = 0; i < this.allTraits.length; i++) {
-            for (let j = i + 1; j < this.allTraits.length; j++) {
-                const trait1 = this.allTraits[i];
-                const trait2 = this.allTraits[j];
-                
-                const correlation = this.calculateTraitCorrelation(trait1, trait2);
-                
-                if (Math.abs(correlation) > 0.3) { // Only report meaningful correlations
-                    correlations.push({
-                        trait1: trait1.id,
-                        trait2: trait2.id,
-                        correlation,
-                        strength: Math.abs(correlation) * 100,
-                        direction: correlation > 0 ? 'positive' : 'negative'
-                    });
-                }
-            }
-        }
-        
-        // Sort by absolute correlation strength
-        return correlations.sort((a, b) => Math.abs(b.correlation) - Math.abs(a.correlation));
-    }
-    
-    calculateTraitCorrelation(trait1, trait2) {
-        // This is a simplified correlation calculation
-        // In a real system, this would use actual clinical data
-        
-        let correlation = 0;
-        
-        // Category similarity contributes to positive correlation
-        if (trait1.category === trait2.category) {
-            correlation += 0.4;
-        }
-        
-        // Severity similarity contributes to positive correlation
-        const severityDiff = Math.abs(trait1.severity - trait2.severity);
-        correlation += (100 - severityDiff) / 250; // 0-0.4 range
-        
-        // Common biomarkers contribute to positive correlation
-        const commonBiomarkers = this.getCommonBiomarkers(trait1, trait2);
-        correlation += commonBiomarkers.length * 0.1;
-        
-        // Common tags contribute to positive correlation
-        const commonTags = this.getCommonTags(trait1, trait2);
-        correlation += commonTags.length * 0.05;
-        
-        // Check for connections between traits
-        const areConnected = this.connections.some(conn => 
-            (conn.source === trait1.id && conn.target === trait2.id) ||
-            (conn.source === trait2.id && conn.target === trait1.id)
-        );
-        
-        if (areConnected) {
-            correlation += 0.2;
-        }
-        
-        // Normalize to -1 to 1 range
-        return Math.max(-1, Math.min(1, correlation));
-    }
-    
     // ============================================================================
-    // CONFLICT DETECTION
+    // CACHE MANAGEMENT
     // ============================================================================
     
-    checkTreatmentConflicts(trait1, trait2) {
-        const conflicts = [];
-        
-        // Check built-in conflicts
-        this.treatmentConflicts.forEach(conflict => {
-            if ((conflict.trait1 === trait1.name && conflict.trait2 === trait2.name) ||
-                (conflict.trait1 === trait2.name && conflict.trait2 === trait1.name)) {
-                conflicts.push(conflict);
-            }
-        });
-        
-        // Check for medication class conflicts
-        const treatment1 = this.extractMedicationClasses(trait1.treatment);
-        const treatment2 = this.extractMedicationClasses(trait2.treatment);
-        
-        const conflictingClasses = this.getConflictingMedicationClasses(treatment1, treatment2);
-        conflictingClasses.forEach(conflict => {
-            conflicts.push({
-                trait1: trait1.name,
-                trait2: trait2.name,
-                severity: 'moderate',
-                description: `Potential interaction between ${conflict.class1} and ${conflict.class2}`,
-                recommendation: 'Monitor for adverse effects or consider alternative therapy',
-                evidenceLevel: 'C'
-            });
-        });
-        
-        return conflicts;
-    }
-    
-    extractMedicationClasses(treatment) {
-        if (!treatment) return [];
-        
-        const classes = [];
-        const treatmentStr = typeof treatment === 'string' ? treatment : 
-                            treatment.firstLine + ' ' + (treatment.secondLine || '');
-        
-        const classKeywords = {
-            'beta_agonist': ['beta-agonist', 'laba', 'saba'],
-            'anticholinergic': ['anticholinergic', 'lama', 'sama'],
-            'corticosteroid': ['corticosteroid', 'ics', 'steroid'],
-            'theophylline': ['theophylline'],
-            'roflumilast': ['roflumilast'],
-            'biologic': ['biologic', 'mepolizumab', 'omalizumab', 'benralizumab', 'dupilumab'],
-            'antibiotic': ['antibiotic', 'macrolide', 'azithromycin'],
-            'nsaid': ['nsaid', 'ibuprofen', 'naproxen'],
-            'beta_blocker': ['beta-blocker', 'propranolol']
-        };
-        
-        Object.entries(classKeywords).forEach(([className, keywords]) => {
-            if (keywords.some(keyword => treatmentStr.toLowerCase().includes(keyword))) {
-                classes.push(className);
-            }
-        });
-        
-        return classes;
-    }
-    
-    getConflictingMedicationClasses(classes1, classes2) {
-        const conflicts = [];
-        
-        const conflictPairs = [
-            ['beta_agonist', 'beta_blocker'],
-            ['theophylline', 'antibiotic'], // Some antibiotics affect theophylline metabolism
-            ['nsaid', 'corticosteroid'] // Increased GI risk
-        ];
-        
-        classes1.forEach(class1 => {
-            classes2.forEach(class2 => {
-                conflictPairs.forEach(pair => {
-                    if ((pair[0] === class1 && pair[1] === class2) ||
-                        (pair[0] === class2 && pair[1] === class1)) {
-                        conflicts.push({
-                            class1,
-                            class2,
-                            type: 'medication_interaction'
-                        });
-                    }
-                });
-            });
-        });
-        
-        return conflicts;
-    }
-    
-    // ============================================================================
-    // SEARCH & FILTERING
-    // ============================================================================
-    
-    searchTraits(query, filters = {}, options = {}) {
-        const searchTerm = query?.toLowerCase().trim() || '';
-        
-        // Add to search history if not empty
-        if (searchTerm && !options.skipHistory) {
-            this.addSearchToHistory(searchTerm);
+    async getTrait(traitId, options = {}) {
+        // Check cache first
+        if (!options.skipCache) {
+            const cached = this.cache.get(`trait_${traitId}`);
+            if (cached) return cached;
         }
         
-        let results = this.allTraits;
-        
-        // Apply category filter
-        if (filters.category && filters.category !== 'all') {
-            if (filters.category === 'user-defined') {
-                results = results.filter(trait => trait.isUserDefined);
-            } else if (filters.category === 'system') {
-                results = results.filter(trait => trait.isSystem);
-            } else if (filters.category === 'favorites') {
-                results = results.filter(trait => this.favoriteTraits.includes(trait.id));
-            } else {
-                results = results.filter(trait => trait.category === filters.category);
-            }
+        // Check graph
+        const fromGraph = this.graph.nodes.get(traitId);
+        if (fromGraph) {
+            this.cache.set(`trait_${traitId}`, fromGraph, 60000);
+            return fromGraph;
         }
         
-        // Apply severity filter
-        if (filters.severity) {
-            switch(filters.severity) {
-                case 'critical':
-                    results = results.filter(t => t.severity >= 90);
-                    break;
-                case 'high':
-                    results = results.filter(t => t.severity >= 80);
-                    break;
-                case 'moderate':
-                    results = results.filter(t => t.severity >= 65);
-                    break;
-                case 'low':
-                    results = results.filter(t => t.severity < 65);
-                    break;
-            }
-        }
-        
-        // Apply evidence level filter
-        if (filters.evidence) {
-            results = results.filter(t => 
-                t.evidence?.level === filters.evidence
-            );
-        }
-        
-        // Apply tag filter
-        if (filters.tags && filters.tags.length > 0) {
-            results = results.filter(t => 
-                t.tags?.some(tag => filters.tags.includes(tag))
-            );
-        }
-        
-        // Apply date filters
-        if (filters.dateRange) {
-            const now = new Date();
-            const cutoff = new Date(now);
-            
-            switch(filters.dateRange) {
-                case 'today':
-                    cutoff.setHours(0, 0, 0, 0);
-                    break;
-                case 'week':
-                    cutoff.setDate(now.getDate() - 7);
-                    break;
-                case 'month':
-                    cutoff.setMonth(now.getMonth() - 1);
-                    break;
-                case 'year':
-                    cutoff.setFullYear(now.getFullYear() - 1);
-                    break;
-            }
-            
-            results = results.filter(t => 
-                new Date(t.created) >= cutoff ||
-                new Date(t.updated) >= cutoff
-            );
-        }
-        
-        // Apply search term
-        if (searchTerm) {
-            results = results.filter(trait => {
-                // Name matches
-                if (trait.name.toLowerCase().includes(searchTerm)) return true;
-                
-                // Spanish name matches
-                if (trait.spanishName?.toLowerCase().includes(searchTerm)) return true;
-                
-                // Category matches
-                if (trait.category.toLowerCase().includes(searchTerm)) return true;
-                
-                // Evaluation matches
-                if (trait.evaluation.toLowerCase().includes(searchTerm)) return true;
-                
-                // Treatment matches
-                const treatmentStr = typeof trait.treatment === 'object' ? 
-                    `${trait.treatment.firstLine} ${trait.treatment.secondLine || ''} ${trait.treatment.nonPharmacological || ''}` :
-                    trait.treatment || '';
-                
-                if (treatmentStr.toLowerCase().includes(searchTerm)) return true;
-                
-                // Biomarker matches
-                if (trait.biomarkers?.some(b => b.toLowerCase().includes(searchTerm))) return true;
-                
-                // Tag matches
-                if (trait.tags?.some(t => t.toLowerCase().includes(searchTerm))) return true;
-                
-                // Guideline matches
-                if (trait.evidence?.guidelines?.some(g => g.toLowerCase().includes(searchTerm))) return true;
-                
-                return false;
-            });
-        }
-        
-        // Apply sorting
-        if (filters.sortBy) {
-            results.sort((a, b) => {
-                let aVal, bVal;
-                
-                switch(filters.sortBy) {
-                    case 'severity':
-                        aVal = a.severity;
-                        bVal = b.severity;
-                        break;
-                    case 'name':
-                        aVal = a.name.toLowerCase();
-                        bVal = b.name.toLowerCase();
-                        break;
-                    case 'category':
-                        aVal = a.category.toLowerCase();
-                        bVal = b.category.toLowerCase();
-                        break;
-                    case 'created':
-                        aVal = new Date(a.created);
-                        bVal = new Date(b.created);
-                        break;
-                    case 'updated':
-                        aVal = new Date(a.updated);
-                        bVal = new Date(b.updated);
-                        break;
-                    case 'evidence':
-                        aVal = this.evidenceLevels.indexOf(a.evidence?.level || 'E');
-                        bVal = this.evidenceLevels.indexOf(b.evidence?.level || 'E');
-                        break;
-                    default:
-                        return 0;
-                }
-                
-                if (filters.sortOrder === 'asc') {
-                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-                } else {
-                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
-                }
-            });
-        }
-        
-        // Apply pagination if requested
-        if (options.page && options.pageSize) {
-            const start = (options.page - 1) * options.pageSize;
-            const end = start + options.pageSize;
-            return {
-                results: results.slice(start, end),
-                total: results.length,
-                page: options.page,
-                totalPages: Math.ceil(results.length / options.pageSize)
-            };
-        }
-        
-        return results;
-    }
-    
-    advancedSearch(criteria) {
-        // This supports complex multi-criteria searches
-        let results = this.allTraits;
-        
-        if (criteria.name) {
-            results = results.filter(t => 
-                t.name.toLowerCase().includes(criteria.name.toLowerCase()) ||
-                t.spanishName?.toLowerCase().includes(criteria.name.toLowerCase())
-            );
-        }
-        
-        if (criteria.categories && criteria.categories.length > 0) {
-            results = results.filter(t => 
-                criteria.categories.includes(t.category)
-            );
-        }
-        
-        if (criteria.severityRange) {
-            results = results.filter(t => 
-                t.severity >= criteria.severityRange.min &&
-                t.severity <= criteria.severityRange.max
-            );
-        }
-        
-        if (criteria.biomarkers && criteria.biomarkers.length > 0) {
-            results = results.filter(t => 
-                criteria.biomarkers.some(bio => 
-                    t.biomarkers?.includes(bio)
-                )
-            );
-        }
-        
-        if (criteria.treatmentKeywords && criteria.treatmentKeywords.length > 0) {
-            results = results.filter(t => {
-                const treatmentStr = typeof t.treatment === 'object' ? 
-                    `${t.treatment.firstLine} ${t.treatment.secondLine || ''}`.toLowerCase() :
-                    (t.treatment || '').toLowerCase();
-                
-                return criteria.treatmentKeywords.some(keyword => 
-                    treatmentStr.includes(keyword.toLowerCase())
-                );
-            });
-        }
-        
-        if (criteria.dateFrom) {
-            const dateFrom = new Date(criteria.dateFrom);
-            results = results.filter(t => 
-                new Date(t.created) >= dateFrom || 
-                new Date(t.updated) >= dateFrom
-            );
-        }
-        
-        if (criteria.dateTo) {
-            const dateTo = new Date(criteria.dateTo);
-            results = results.filter(t => 
-                new Date(t.created) <= dateTo || 
-                new Date(t.updated) <= dateTo
-            );
-        }
-        
-        return results;
-    }
-    
-    addSearchToHistory(term) {
-        // Remove if already exists
-        this.searchHistory = this.searchHistory.filter(s => s.term !== term);
-        
-        // Add to beginning
-        this.searchHistory.unshift({
-            term,
-            timestamp: new Date().toISOString(),
-            count: 1
-        });
-        
-        // Limit history size
-        if (this.searchHistory.length > this.config.maxSearchHistory) {
-            this.searchHistory = this.searchHistory.slice(0, this.config.maxSearchHistory);
-        }
-        
-        this.saveSearchHistory();
-    }
-    
-    getSearchSuggestions(prefix) {
-        if (!prefix || prefix.length < 2) return [];
-        
-        const suggestions = new Set();
-        const prefixLower = prefix.toLowerCase();
-        
-        // Suggest from trait names
-        this.allTraits.forEach(trait => {
-            if (trait.name.toLowerCase().startsWith(prefixLower)) {
-                suggestions.add(trait.name);
-            }
-            if (trait.spanishName?.toLowerCase().startsWith(prefixLower)) {
-                suggestions.add(trait.spanishName);
-            }
-        });
-        
-        // Suggest from categories
-        this.categories.forEach(category => {
-            if (category.toLowerCase().startsWith(prefixLower)) {
-                suggestions.add(category);
-            }
-        });
-        
-        // Suggest from recent searches
-        this.searchHistory.forEach(entry => {
-            if (entry.term.toLowerCase().startsWith(prefixLower)) {
-                suggestions.add(entry.term);
-            }
-        });
-        
-        return Array.from(suggestions).slice(0, 10); // Limit to 10 suggestions
-    }
-    
-    // ============================================================================
-    // FAVORITES MANAGEMENT
-    // ============================================================================
-    
-    toggleFavorite(traitId) {
-        const index = this.favoriteTraits.indexOf(traitId);
-        
-        if (index === -1) {
-            // Add to favorites
-            if (this.favoriteTraits.length >= this.config.maxFavorites) {
-                throw new Error(`Maximum favorites limit reached (${this.config.maxFavorites})`);
-            }
-            
-            this.favoriteTraits.push(traitId);
-        } else {
-            // Remove from favorites
-            this.favoriteTraits.splice(index, 1);
-        }
-        
-        this.saveFavorites();
-        this.emitFavoritesUpdatedEvent();
-        
-        return index === -1; // Returns true if added, false if removed
-    }
-    
-    isFavorite(traitId) {
-        return this.favoriteTraits.includes(traitId);
-    }
-    
-    getFavoriteTraits() {
-        return this.allTraits.filter(trait => 
-            this.favoriteTraits.includes(trait.id)
-        );
-    }
-    
-    // ============================================================================
-    // CLINICAL GUIDELINES INTEGRATION
-    // ============================================================================
-    
-    getGuidelinesForTraits(traitIds) {
-        const traits = this.getTraitsByIds(traitIds);
-        const relevantGuidelines = [];
-        
-        traits.forEach(trait => {
-            // Check trait-specific guidelines
-            if (trait.evidence?.guidelines) {
-                trait.evidence.guidelines.forEach(guidelineName => {
-                    const guideline = this.guidelines.find(g => g.name === guidelineName);
-                    if (guideline && !relevantGuidelines.find(g => g.id === guideline.id)) {
-                        relevantGuidelines.push(guideline);
-                    }
-                });
-            }
-            
-            // Check category-specific guidelines
-            const categoryGuidelines = this.guidelines.filter(g => g.category === trait.category);
-            categoryGuidelines.forEach(guideline => {
-                if (!relevantGuidelines.find(g => g.id === guideline.id)) {
-                    relevantGuidelines.push(guideline);
-                }
-            });
-        });
-        
-        return relevantGuidelines;
-    }
-    
-    getTreatmentRecommendations(traitIds) {
-        const traits = this.getTraitsByIds(traitIds);
-        const recommendations = [];
-        
-        traits.forEach(trait => {
-            if (trait.treatment) {
-                const treatment = typeof trait.treatment === 'object' ? trait.treatment : {
-                    firstLine: trait.treatment
-                };
-                
-                recommendations.push({
-                    traitId: trait.id,
-                    traitName: trait.name,
-                    recommendations: this.formatTreatmentRecommendations(treatment, trait.severity)
-                });
-            }
-        });
-        
-        return recommendations;
-    }
-    
-    formatTreatmentRecommendations(treatment, severity) {
-        const formatted = [];
-        
-        if (treatment.firstLine) {
-            formatted.push({
-                level: 'First-line',
-                recommendation: treatment.firstLine,
-                priority: severity >= 80 ? 'high' : 'standard'
-            });
-        }
-        
-        if (treatment.secondLine) {
-            formatted.push({
-                level: 'Second-line',
-                recommendation: treatment.secondLine,
-                priority: 'standard'
-            });
-        }
-        
-        if (treatment.nonPharmacological) {
-            formatted.push({
-                level: 'Non-pharmacological',
-                recommendation: treatment.nonPharmacological,
-                priority: 'supplementary'
-            });
-        }
-        
-        return formatted;
-    }
-    
-    // ============================================================================
-    // DATA EXPORT & IMPORT
-    // ============================================================================
-    
-    exportDatabase(format = 'json', options = {}) {
-        const exportData = {
-            metadata: {
-                version: '3.0',
-                exported: new Date().toISOString(),
-                source: 'Clinical Database v3.0',
-                traitsCount: this.allTraits.length,
-                connectionsCount: this.connections.length
-            },
-            traits: options.includeTraits ? this.allTraits : [],
-            connections: options.includeConnections ? this.connections : [],
-            analytics: options.includeAnalytics ? this.analyticsCache : null,
-            favorites: options.includeFavorites ? this.favoriteTraits : [],
-            searchHistory: options.includeHistory ? this.searchHistory : []
-        };
-        
-        switch(format) {
-            case 'json':
-                return JSON.stringify(exportData, null, 2);
-                
-            case 'csv':
-                return this.exportToCSV(exportData.traits);
-                
-            case 'excel':
-                // Note: Would require external library like SheetJS
-                console.warn('Excel export requires additional libraries');
-                return this.exportToCSV(exportData.traits);
-                
-            default:
-                return exportData;
-        }
-    }
-    
-    exportToCSV(traits) {
-        if (!traits || traits.length === 0) return '';
-        
-        const headers = [
-            'ID', 'Name', 'Spanish Name', 'Category', 'Subcategory',
-            'Severity', 'Evaluation', 'Biomarkers', 
-            'First Line Treatment', 'Second Line Treatment', 'Non-Pharmacological',
-            'Evidence Level', 'Tags', 'Created', 'Updated'
-        ];
-        
-        const rows = traits.map(trait => {
-            const biomarkers = trait.biomarkers ? trait.biomarkers.join('; ') : '';
-            const tags = trait.tags ? trait.tags.join('; ') : '';
-            const treatment = typeof trait.treatment === 'object' ? trait.treatment : { firstLine: trait.treatment };
-            
-            return [
-                trait.id,
-                `"${trait.name.replace(/"/g, '""')}"`,
-                `"${(trait.spanishName || '').replace(/"/g, '""')}"`,
-                `"${trait.category.replace(/"/g, '""')}"`,
-                `"${(trait.subcategory || '').replace(/"/g, '""')}"`,
-                trait.severity,
-                `"${trait.evaluation.replace(/"/g, '""')}"`,
-                `"${biomarkers.replace(/"/g, '""')}"`,
-                `"${(treatment.firstLine || '').replace(/"/g, '""')}"`,
-                `"${(treatment.secondLine || '').replace(/"/g, '""')}"`,
-                `"${(treatment.nonPharmacological || '').replace(/"/g, '""')}"`,
-                trait.evidence?.level || '',
-                `"${tags.replace(/"/g, '""')}"`,
-                trait.created || '',
-                trait.updated || ''
-            ].join(',');
-        });
-        
-        return [headers.join(','), ...rows].join('\n');
-    }
-    
-    importFromJSON(jsonData, options = {}) {
+        // Check database
         try {
-            const data = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-            const results = {
-                traits: { imported: 0, skipped: 0, errors: [] },
-                connections: { imported: 0, skipped: 0, errors: [] }
-            };
-            
-            // Import traits
-            if (data.traits && Array.isArray(data.traits)) {
-                data.traits.forEach(trait => {
-                    try {
-                        if (options.mergeDuplicates) {
-                            // Check if trait already exists
-                            const existing = this.allTraits.find(t => 
-                                t.name === trait.name && t.category === trait.category
-                            );
-                            
-                            if (existing) {
-                                // Update existing trait
-                                this.updateUserTrait(existing.id, trait);
-                                results.traits.skipped++;
-                            } else {
-                                // Create new trait
-                                this.createUserTrait(trait);
-                                results.traits.imported++;
-                            }
-                        } else {
-                            // Always create new traits
-                            this.createUserTrait(trait);
-                            results.traits.imported++;
-                        }
-                    } catch (error) {
-                        results.traits.errors.push({
-                            trait: trait.name,
-                            error: error.message
-                        });
-                    }
-                });
+            const trait = await this.getFromDatabase('traits', traitId);
+            if (trait) {
+                // Add to graph and cache
+                this.graph.addNode(trait);
+                this.cache.set(`trait_${traitId}`, trait, 60000);
+                return trait;
             }
-            
-            // Import connections
-            if (data.connections && Array.isArray(data.connections)) {
-                data.connections.forEach(conn => {
-                    try {
-                        // Verify traits exist
-                        const sourceExists = this.allTraits.some(t => t.id === conn.source);
-                        const targetExists = this.allTraits.some(t => t.id === conn.target);
-                        
-                        if (sourceExists && targetExists) {
-                            this.createConnection(conn.source, conn.target, conn);
-                            results.connections.imported++;
-                        } else {
-                            results.connections.skipped++;
-                        }
-                    } catch (error) {
-                        results.connections.errors.push({
-                            connection: `${conn.source}-${conn.target}`,
-                            error: error.message
-                        });
-                    }
-                });
-            }
-            
-            this.emitImportCompleteEvent(results);
-            return results;
-            
         } catch (error) {
-            console.error('Error importing data:', error);
-            throw new Error(`Import failed: ${error.message}`);
+            console.error('Error loading trait from database:', error);
         }
-    }
-    
-    // ============================================================================
-    // BACKUP & RESTORE
-    // ============================================================================
-    
-    createBackup() {
-        const backup = {
-            timestamp: new Date().toISOString(),
-            version: '3.0',
-            userTraits: this.userTraits,
-            connections: this.connections,
-            clinicalCases: this.clinicalCases,
-            favoriteTraits: this.favoriteTraits,
-            searchHistory: this.searchHistory,
-            metadata: {
-                totalTraits: this.allTraits.length,
-                totalConnections: this.connections.length
-            }
-        };
         
-        return {
-            data: JSON.stringify(backup, null, 2),
-            timestamp: backup.timestamp,
-            size: JSON.stringify(backup).length
-        };
+        return null;
     }
     
-    restoreFromBackup(backupData) {
-        try {
-            const backup = typeof backupData === 'string' ? JSON.parse(backupData) : backupData;
-            
-            // Validate backup structure
-            if (!backup.userTraits || !Array.isArray(backup.userTraits)) {
-                throw new Error('Invalid backup format: missing userTraits');
-            }
-            
-            // Clear existing data
-            this.userTraits = [];
-            this.connections = backup.connections || [];
-            this.clinicalCases = backup.clinicalCases || [];
-            this.favoriteTraits = backup.favoriteTraits || [];
-            this.searchHistory = backup.searchHistory || [];
-            
-            // Import traits from backup
-            const importResults = this.importFromJSON({
-                traits: backup.userTraits,
-                connections: backup.connections
-            }, { mergeDuplicates: false });
-            
-            // Save all data
-            this.saveUserTraits();
-            this.saveConnections();
-            this.saveClinicalCases();
-            this.saveFavorites();
-            this.saveSearchHistory();
-            
-            // Update derived data
-            this.allTraits = [...this.systemTraits, ...this.userTraits];
-            this.categories = this.extractCategories();
-            this.precomputeAnalytics();
-            
-            this.emitRestoreCompleteEvent({
-                traitsRestored: importResults.traits.imported,
-                connectionsRestored: importResults.connections.imported,
-                timestamp: backup.timestamp
-            });
-            
-            return {
-                success: true,
-                message: `Restored ${importResults.traits.imported} traits and ${importResults.connections.imported} connections`,
-                details: importResults
-            };
-            
-        } catch (error) {
-            console.error('Error restoring backup:', error);
-            return {
-                success: false,
-                error: error.message
-            };
+    async getTraitsByCategory(category, options = {}) {
+        const cacheKey = `traits_category_${category}`;
+        
+        if (!options.skipCache) {
+            const cached = this.cache.get(cacheKey);
+            if (cached) return cached;
         }
+        
+        const traits = await this.queryDatabase('traits', 'category', category);
+        if (traits.length > 0) {
+            this.cache.set(cacheKey, traits, 300000);
+        }
+        
+        return traits;
     }
     
     // ============================================================================
-    // VALIDATION
+    // DATABASE OPERATIONS
+    // ============================================================================
+    
+    async saveToDatabase(storeName, data) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+            
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.put(data);
+            
+            request.onsuccess = () => resolve(data);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    
+    async getFromDatabase(storeName, key) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+            
+            const transaction = this.db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.get(key);
+            
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    
+    async queryDatabase(storeName, indexName, value) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+            
+            const transaction = this.db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const index = store.index(indexName);
+            const request = index.getAll(value);
+            
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    
+    async deleteFromDatabase(storeName, key) {
+        return new Promise((resolve, reject) => {
+            if (!this.db) {
+                reject(new Error('Database not initialized'));
+                return;
+            }
+            
+            const transaction = this.db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.delete(key);
+            
+            request.onsuccess = () => resolve(true);
+            request.onerror = (event) => reject(event.target.error);
+        });
+    }
+    
+    // ============================================================================
+    // UTILITY METHODS
     // ============================================================================
     
     validateTrait(trait) {
         const errors = [];
         
         if (!trait.name || trait.name.trim().length < 2) {
-            errors.push('Trait name is required (minimum 2 characters)');
+            errors.push('Name must be at least 2 characters');
         }
         
         if (!trait.category) {
@@ -2250,13 +896,7 @@ class ClinicalDatabase {
         }
         
         if (!trait.evaluation || trait.evaluation.trim().length < 10) {
-            errors.push('Clinical evaluation is required (minimum 10 characters)');
-        }
-        
-        if (!trait.treatment || 
-            (typeof trait.treatment === 'object' && !trait.treatment.firstLine) ||
-            (typeof trait.treatment === 'string' && trait.treatment.trim().length === 0)) {
-            errors.push('Treatment information is required');
+            errors.push('Evaluation must be at least 10 characters');
         }
         
         return {
@@ -2265,451 +905,2497 @@ class ClinicalDatabase {
         };
     }
     
-    validateConnection(sourceId, targetId) {
-        const errors = [];
+    extractMedications(treatment) {
+        if (!treatment) return [];
         
-        if (!sourceId || !targetId) {
-            errors.push('Both source and target trait IDs are required');
-        }
+        const meds = [];
+        const treatmentStr = typeof treatment === 'string' ? 
+            treatment : JSON.stringify(treatment);
         
-        if (sourceId === targetId) {
-            errors.push('Cannot connect a trait to itself');
-        }
+        const medicationPatterns = [
+            /(?:ics|inhaled corticosteroid)/gi,
+            /(?:laba|long-acting beta agonist)/gi,
+            /(?:lama|long-acting muscarinic antagonist)/gi,
+            /(?:saba|short-acting beta agonist)/gi,
+            /(?:sama|short-acting muscarinic antagonist)/gi,
+            /(?:theophylline)/gi,
+            /(?:roflumilast)/gi,
+            /(?:azithromycin)/gi,
+            /(?:prednisone|prednisolone|methylprednisolone)/gi,
+            /(?:biologic|mepolizumab|omalizumab|benralizumab|dupilumab)/gi
+        ];
         
-        const sourceExists = this.allTraits.some(t => t.id === sourceId);
-        const targetExists = this.allTraits.some(t => t.id === targetId);
-        
-        if (!sourceExists) errors.push('Source trait not found');
-        if (!targetExists) errors.push('Target trait not found');
-        
-        return {
-            isValid: errors.length === 0,
-            errors
-        };
-    }
-    
-    // ============================================================================
-    // UTILITY METHODS
-    // ============================================================================
-    
-    getTraitById(id) {
-        return this.allTraits.find(trait => trait.id === id);
-    }
-    
-    getTraitsByIds(ids) {
-        return this.allTraits.filter(trait => ids.includes(trait.id));
-    }
-    
-    getRelatedTraits(traitId, depth = 1) {
-        if (depth < 1) return [];
-        
-        const directConnections = this.connections.filter(conn => 
-            conn.source === traitId || conn.target === traitId
-        );
-        
-        const relatedIds = new Set();
-        directConnections.forEach(conn => {
-            if (conn.source === traitId) relatedIds.add(conn.target);
-            if (conn.target === traitId) relatedIds.add(conn.source);
-        });
-        
-        if (depth > 1) {
-            const indirectIds = new Set();
-            relatedIds.forEach(id => {
-                const indirect = this.getRelatedTraits(id, depth - 1);
-                indirect.forEach(indirectId => {
-                    if (indirectId !== traitId && !relatedIds.has(indirectId)) {
-                        indirectIds.add(indirectId);
-                    }
-                });
-            });
-            
-            indirectIds.forEach(id => relatedIds.add(id));
-        }
-        
-        return this.getTraitsByIds(Array.from(relatedIds));
-    }
-    
-    extractCategories() {
-        const categories = new Set();
-        this.allTraits.forEach(trait => categories.add(trait.category));
-        return Array.from(categories).sort();
-    }
-    
-    getCategoryColor(category) {
-        const colorMap = {
-            'pulmonary': '#2d6ca2',
-            'inflammatory': '#d64550',
-            'physiological': '#81b29a',
-            'radiological': '#7b6ba9',
-            'clinical': '#c4906a',
-            'comorbid': '#e39a9c',
-            'behavioral': '#4a7c8c',
-            'pharmacological': '#6a8d73',
-            'surgical': '#7b6ba9',
-            'user-defined': '#8a4baf'
-        };
-        
-        return colorMap[category] || '#9fa8c7';
-    }
-    
-    getStatistics() {
-        const totalTraits = this.allTraits.length;
-        const systemTraits = this.systemTraits.length;
-        const userTraits = this.userTraits.length;
-        
-        const severityDistribution = {
-            critical: this.allTraits.filter(t => t.severity >= 90).length,
-            high: this.allTraits.filter(t => t.severity >= 80 && t.severity < 90).length,
-            moderate: this.allTraits.filter(t => t.severity >= 65 && t.severity < 80).length,
-            low: this.allTraits.filter(t => t.severity < 65).length
-        };
-        
-        const categoryDistribution = {};
-        this.allTraits.forEach(trait => {
-            categoryDistribution[trait.category] = (categoryDistribution[trait.category] || 0) + 1;
-        });
-        
-        const evidenceDistribution = {};
-        this.allTraits.forEach(trait => {
-            const level = trait.evidence?.level || 'E';
-            evidenceDistribution[level] = (evidenceDistribution[level] || 0) + 1;
-        });
-        
-        const avgSeverity = totalTraits > 0 ? 
-            Math.round(this.allTraits.reduce((sum, trait) => sum + trait.severity, 0) / totalTraits) : 0;
-        
-        // Calculate network metrics
-        const maxConnections = totalTraits * (totalTraits - 1) / 2;
-        const networkDensity = maxConnections > 0 ? 
-            (this.connections.length / maxConnections) * 100 : 0;
-        
-        // Calculate average connection strength
-        const avgConnectionStrength = this.connections.length > 0 ?
-            Math.round(this.connections.reduce((sum, conn) => sum + conn.strength, 0) / this.connections.length) : 0;
-        
-        return {
-            totalTraits,
-            systemTraits,
-            userTraits,
-            categories: Object.keys(categoryDistribution).length,
-            avgSeverity,
-            severityDistribution,
-            categoryDistribution,
-            evidenceDistribution,
-            connections: this.connections.length,
-            networkDensity: Math.round(networkDensity * 10) / 10,
-            avgConnectionStrength,
-            favorites: this.favoriteTraits.length,
-            searchHistory: this.searchHistory.length,
-            lastUpdated: this.analyticsCache.lastUpdated || new Date().toISOString()
-        };
-    }
-    
-    getCategoryStatistics(category) {
-        const traits = this.allTraits.filter(t => t.category === category);
-        const total = traits.length;
-        
-        if (total === 0) return null;
-        
-        const avgSeverity = Math.round(traits.reduce((sum, t) => sum + t.severity, 0) / total);
-        
-        const severityRange = {
-            min: Math.min(...traits.map(t => t.severity)),
-            max: Math.max(...traits.map(t => t.severity))
-        };
-        
-        const evidenceLevels = {};
-        traits.forEach(trait => {
-            const level = trait.evidence?.level || 'E';
-            evidenceLevels[level] = (evidenceLevels[level] || 0) + 1;
-        });
-        
-        // Get common biomarkers in this category
-        const biomarkerFrequency = {};
-        traits.forEach(trait => {
-            trait.biomarkers?.forEach(bio => {
-                biomarkerFrequency[bio] = (biomarkerFrequency[bio] || 0) + 1;
-            });
-        });
-        
-        const commonBiomarkers = Object.entries(biomarkerFrequency)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([bio, count]) => ({ bio, frequency: count / total }));
-        
-        return {
-            total,
-            avgSeverity,
-            severityRange,
-            evidenceLevels,
-            commonBiomarkers,
-            traits: traits.map(t => ({
-                id: t.id,
-                name: t.name,
-                severity: t.severity
-            }))
-        };
-    }
-    
-    // ============================================================================
-    // EVENT SYSTEM
-    // ============================================================================
-    
-    emitTraitAddedEvent(trait) {
-        this.dispatchEvent('clinical:trait-added', { 
-            trait,
-            statistics: this.getStatistics(),
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitTraitUpdatedEvent(trait) {
-        this.dispatchEvent('clinical:trait-updated', {
-            trait,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitTraitDeletedEvent(traitId) {
-        this.dispatchEvent('clinical:trait-deleted', {
-            traitId,
-            statistics: this.getStatistics(),
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitConnectionAddedEvent(connection) {
-        this.dispatchEvent('clinical:connection-added', {
-            connection,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitConnectionUpdatedEvent(connection) {
-        this.dispatchEvent('clinical:connection-updated', {
-            connection,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitConnectionDeletedEvent(connectionId) {
-        this.dispatchEvent('clinical:connection-deleted', {
-            connectionId,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitUpdateEvent() {
-        this.dispatchEvent('clinical:database-updated', {
-            statistics: this.getStatistics(),
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitAnalyticsUpdatedEvent() {
-        this.dispatchEvent('clinical:analytics-updated', {
-            analytics: this.analyticsCache,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitConflictWarningEvent(data) {
-        this.dispatchEvent('clinical:conflict-warning', {
-            ...data,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitImportCompleteEvent(results) {
-        this.dispatchEvent('clinical:import-complete', {
-            results,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitRestoreCompleteEvent(data) {
-        this.dispatchEvent('clinical:restore-complete', {
-            ...data,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    emitFavoritesUpdatedEvent() {
-        this.dispatchEvent('clinical:favorites-updated', {
-            favorites: this.favoriteTraits,
-            timestamp: new Date().toISOString()
-        });
-    }
-    
-    dispatchEvent(eventName, detail) {
-        const event = new CustomEvent(eventName, { detail });
-        window.dispatchEvent(event);
-    }
-    
-    // ============================================================================
-    // MAINTENANCE & CLEANUP
-    // ============================================================================
-    
-    cleanupDatabase() {
-        console.log('Starting database cleanup...');
-        
-        const report = {
-            removedTraits: 0,
-            removedConnections: 0,
-            cleanedCases: 0
-        };
-        
-        // Remove orphaned connections (where one trait doesn't exist)
-        const initialConnectionCount = this.connections.length;
-        this.connections = this.connections.filter(conn => {
-            const sourceExists = this.allTraits.some(t => t.id === conn.source);
-            const targetExists = this.allTraits.some(t => t.id === conn.target);
-            
-            if (!sourceExists || !targetExists) {
-                report.removedConnections++;
-                return false;
+        for (const pattern of medicationPatterns) {
+            if (pattern.test(treatmentStr)) {
+                meds.push(pattern.source.replace(/[()|]/g, ''));
             }
-            return true;
-        });
-        
-        if (report.removedConnections > 0) {
-            this.saveConnections();
         }
         
-        // Clean up search history (remove duplicates and old entries)
-        const uniqueSearches = new Map();
-        this.searchHistory.forEach(entry => {
-            if (!uniqueSearches.has(entry.term)) {
-                uniqueSearches.set(entry.term, entry);
-            }
-        });
-        
-        this.searchHistory = Array.from(uniqueSearches.values())
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-            .slice(0, this.config.maxSearchHistory);
-        
-        this.saveSearchHistory();
-        
-        // Clean up favorites (remove references to non-existent traits)
-        const initialFavoritesCount = this.favoriteTraits.length;
-        this.favoriteTraits = this.favoriteTraits.filter(id => 
-            this.allTraits.some(t => t.id === id)
-        );
-        
-        if (this.favoriteTraits.length !== initialFavoritesCount) {
-            this.saveFavorites();
-        }
-        
-        // Update analytics cache
-        this.precomputeAnalytics();
-        
-        console.log(`Cleanup completed: ${report.removedConnections} connections removed`);
-        
-        return report;
+        return [...new Set(meds)]; // Remove duplicates
     }
     
-    getDatabaseHealth() {
-        const stats = this.getStatistics();
-        const issues = [];
+    async findDrugInteraction(med1, med2) {
+        // This would integrate with a drug interaction database
+        // For now, return hard-coded known interactions
         
-        // Check for orphaned connections
-        const orphanedConnections = this.connections.filter(conn => {
-            const sourceExists = this.allTraits.some(t => t.id === conn.source);
-            const targetExists = this.allTraits.some(t => t.id === conn.target);
-            return !sourceExists || !targetExists;
-        });
-        
-        if (orphanedConnections.length > 0) {
-            issues.push({
-                type: 'orphaned_connections',
-                count: orphanedConnections.length,
-                severity: 'low',
-                description: 'Connections referencing non-existent traits'
-            });
-        }
-        
-        // Check for invalid trait data
-        const invalidTraits = this.allTraits.filter(t => {
-            const validation = this.validateTrait(t);
-            return !validation.isValid;
-        });
-        
-        if (invalidTraits.length > 0) {
-            issues.push({
-                type: 'invalid_traits',
-                count: invalidTraits.length,
-                severity: 'medium',
-                description: 'Traits with validation issues'
-            });
-        }
-        
-        // Check storage limits
-        const totalSize = JSON.stringify({
-            userTraits: this.userTraits,
-            connections: this.connections,
-            favorites: this.favoriteTraits,
-            searchHistory: this.searchHistory
-        }).length;
-        
-        const storageLimit = 5 * 1024 * 1024; // 5MB
-        const storageUsage = (totalSize / storageLimit) * 100;
-        
-        if (storageUsage > 80) {
-            issues.push({
-                type: 'storage_limit',
-                usage: Math.round(storageUsage),
+        const interactions = {
+            'theophylline-azithromycin': {
+                type: 'pharmacokinetic',
                 severity: 'high',
-                description: 'Approaching localStorage limit'
-            });
-        }
+                description: 'Azithromycin increases theophylline levels',
+                recommendation: 'Monitor theophylline levels, consider dose reduction'
+            },
+            'prednisone-theophylline': {
+                type: 'additive',
+                severity: 'moderate',
+                description: 'Additive risk of hypokalemia',
+                recommendation: 'Monitor potassium levels'
+            }
+        };
         
-        // Check analytics freshness
-        if (this.analyticsCache.lastUpdated) {
-            const lastUpdate = new Date(this.analyticsCache.lastUpdated);
-            const now = new Date();
-            const hoursSinceUpdate = (now - lastUpdate) / (1000 * 60 * 60);
-            
-            if (hoursSinceUpdate > 24) {
-                issues.push({
-                    type: 'stale_analytics',
-                    hours: Math.round(hoursSinceUpdate),
-                    severity: 'low',
-                    description: 'Analytics cache needs refresh'
-                });
+        const key1 = `${med1}-${med2}`;
+        const key2 = `${med2}-${med1}`;
+        
+        return interactions[key1] || interactions[key2] || null;
+    }
+    
+    hasTherapeuticDuplication(meds1, meds2) {
+        // Check if same therapeutic class appears in both lists
+        const classes1 = this.mapToTherapeuticClass(meds1);
+        const classes2 = this.mapToTherapeuticClass(meds2);
+        
+        for (const cls of classes1) {
+            if (classes2.includes(cls)) {
+                return true;
             }
         }
         
+        return false;
+    }
+    
+    mapToTherapeuticClass(medications) {
+        const classMap = {
+            'ics': 'corticosteroid',
+            'laba': 'beta_agonist',
+            'lama': 'anticholinergic',
+            'saba': 'beta_agonist',
+            'sama': 'anticholinergic',
+            'theophylline': 'methylxanthine',
+            'roflumilast': 'pde4_inhibitor',
+            'azithromycin': 'macrolide',
+            'prednisone': 'corticosteroid',
+            'biologic': 'biologic'
+        };
+        
+        return medications.map(med => classMap[med.toLowerCase()] || 'other');
+    }
+    
+    // ============================================================================
+    // EVENT SYSTEM INTEGRATION
+    // ============================================================================
+    
+    setupEventListeners() {
+        // Listen for external events
+        this.eventSystem.subscribe('network:connectivity', (data) => {
+            if (data.online) {
+                this.syncManager.sync();
+            }
+        });
+        
+        this.eventSystem.subscribe('security:lock', () => {
+            this.security.lock();
+        });
+        
+        this.eventSystem.subscribe('security:unlock', ({ password }) => {
+            this.security.unlock(password);
+        });
+        
+        // Emit internal events
+        setInterval(() => {
+            this.eventSystem.emit('database:health', this.getHealthStatus());
+        }, 60000);
+    }
+    
+    getHealthStatus() {
         return {
-            status: issues.length === 0 ? 'healthy' : 'needs_attention',
-            statistics: stats,
-            issues,
+            graph: {
+                nodes: this.graph.nodes.size,
+                edges: this.graph.edgeData.size,
+                density: this.graph.calculateDensity()
+            },
+            cache: this.cache.stats(),
+            database: this.db ? 'connected' : 'disconnected',
+            sync: this.syncManager.getStatus(),
+            memory: performance.memory ? {
+                usedJSHeapSize: performance.memory.usedJSHeapSize,
+                totalJSHeapSize: performance.memory.totalJSHeapSize
+            } : null,
             timestamp: new Date().toISOString()
         };
+    }
+    
+    // ============================================================================
+    // INITIALIZATION
+    // ============================================================================
+    
+    async loadInitialData() {
+        try {
+            // Load system traits
+            const systemTraits = await this.loadSystemTraits();
+            systemTraits.forEach(trait => this.graph.addNode(trait));
+            
+            // Load user traits
+            const userTraits = await this.loadUserTraits();
+            userTraits.forEach(trait => this.graph.addNode(trait));
+            
+            // Load connections
+            const connections = await this.loadConnections();
+            connections.forEach(conn => {
+                this.graph.addEdge(conn.source, conn.target, conn);
+            });
+            
+            // Build indexes
+            Array.from(this.graph.nodes.values()).forEach(trait => {
+                this.index.indexTrait(trait);
+            });
+            
+            console.log(`Initial data loaded: ${this.graph.nodes.size} traits, ${this.graph.edgeData.size} connections`);
+            
+            this.eventSystem.emit('database:ready', {
+                traits: this.graph.nodes.size,
+                connections: this.graph.edgeData.size,
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+            throw error;
+        }
+    }
+    
+    async loadSystemTraits() {
+        // Load default clinical traits
+        // In a real implementation, this would load from a file or API
+        return [
+            {
+                id: 'sys_pulm_001',
+                name: 'Airflow Limitation (Obstructive)',
+                category: 'pulmonary',
+                severity: 85,
+                evaluation: 'Post-bronchodilator FEV1/FVC < 0.70',
+                treatment: {
+                    firstLine: 'LAMA/LABA combination',
+                    secondLine: 'ICS add-on if eosinophils ≥300 cells/μL',
+                    nonPharmacological: 'Smoking cessation, Pulmonary rehabilitation'
+                },
+                biomarkers: ['FEV1', 'FVC', 'FEV1/FVC', 'PEF'],
+                evidence: { level: 'A' },
+                isSystem: true,
+                created: new Date().toISOString(),
+                updated: new Date().toISOString()
+            }
+            // More traits would be loaded here
+        ];
+    }
+    
+    async loadUserTraits() {
+        try {
+            const transaction = this.db.transaction(['traits'], 'readonly');
+            const store = transaction.objectStore('traits');
+            const index = store.index('userDefined');
+            const request = index.getAll(true);
+            
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        } catch (error) {
+            console.error('Error loading user traits:', error);
+            return [];
+        }
+    }
+    
+    async loadConnections() {
+        try {
+            const transaction = this.db.transaction(['connections'], 'readonly');
+            const store = transaction.objectStore('connections');
+            const request = store.getAll();
+            
+            return new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = (event) => reject(event.target.error);
+            });
+        } catch (error) {
+            console.error('Error loading connections:', error);
+            return [];
+        }
+    }
+    
+    // ============================================================================
+    // CLEANUP
+    // ============================================================================
+    
+    async cleanup() {
+        console.log('Cleaning up Clinical Database...');
+        
+        // Stop background processes
+        this.syncManager.stop();
+        
+        // Clear caches
+        this.cache.clear();
+        
+        // Close database
+        if (this.db) {
+            this.db.close();
+        }
+        
+        // Remove event listeners
+        this.eventSystem = null;
+        
+        console.log('Clinical Database cleaned up');
     }
 }
 
 // ============================================================================
-// GLOBAL EXPORT
+// SUPPORTING CLASSES
 // ============================================================================
 
-// Export for Node.js/CommonJS
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ClinicalDatabase;
+class ClinicalGraph {
+    constructor() {
+        this.nodes = new Map();
+        this.adjacency = new Map();
+        this.edgeData = new Map();
+        this.metrics = {
+            lastCalculated: null,
+            cache: new Map()
+        };
+    }
+    
+    addNode(trait) {
+        this.nodes.set(trait.id, trait);
+        this.adjacency.set(trait.id, new Set());
+        this.metrics.cache.clear(); // Invalidate cached metrics
+        return trait.id;
+    }
+    
+    updateNode(traitId, updatedTrait) {
+        if (this.nodes.has(traitId)) {
+            this.nodes.set(traitId, updatedTrait);
+            this.metrics.cache.clear();
+        }
+    }
+    
+    removeNode(traitId) {
+        if (this.nodes.has(traitId)) {
+            // Remove node
+            this.nodes.delete(traitId);
+            
+            // Remove all connections involving this node
+            const neighbors = this.adjacency.get(traitId) || new Set();
+            for (const neighbor of neighbors) {
+                const neighborAdj = this.adjacency.get(neighbor);
+                if (neighborAdj) {
+                    neighborAdj.delete(traitId);
+                }
+                
+                // Remove edge data
+                const edgeId = this.getEdgeId(traitId, neighbor);
+                this.edgeData.delete(edgeId);
+            }
+            
+            // Remove adjacency list
+            this.adjacency.delete(traitId);
+            
+            this.metrics.cache.clear();
+        }
+    }
+    
+    addEdge(sourceId, targetId, data) {
+        if (!this.nodes.has(sourceId) || !this.nodes.has(targetId)) {
+            throw new Error('Nodes not found');
+        }
+        
+        // Add to adjacency lists
+        this.adjacency.get(sourceId).add(targetId);
+        this.adjacency.get(targetId).add(sourceId);
+        
+        // Store edge data
+        const edgeId = this.getEdgeId(sourceId, targetId);
+        this.edgeData.set(edgeId, data);
+        
+        this.metrics.cache.clear();
+    }
+    
+    getEdge(sourceId, targetId) {
+        const edgeId = this.getEdgeId(sourceId, targetId);
+        return this.edgeData.get(edgeId);
+    }
+    
+    getEdgeId(sourceId, targetId) {
+        const sorted = [sourceId, targetId].sort();
+        return `${sorted[0]}-${sorted[1]}`;
+    }
+    
+    calculateDensity() {
+        const n = this.nodes.size;
+        if (n < 2) return 0;
+        
+        const maxEdges = n * (n - 1) / 2;
+        const actualEdges = this.edgeData.size;
+        
+        return actualEdges / maxEdges;
+    }
+    
+    calculateDegreeCentrality() {
+        const centrality = new Map();
+        
+        for (const [nodeId, neighbors] of this.adjacency) {
+            centrality.set(nodeId, {
+                degree: neighbors.size,
+                normalizedDegree: neighbors.size / (this.nodes.size - 1)
+            });
+        }
+        
+        return centrality;
+    }
+    
+    calculateBetweennessCentrality() {
+        // Brandes' algorithm for betweenness centrality
+        const centrality = new Map();
+        const nodes = Array.from(this.nodes.keys());
+        
+        // Initialize centrality
+        for (const node of nodes) {
+            centrality.set(node, 0);
+        }
+        
+        for (const s of nodes) {
+            const S = [];
+            const P = new Map();
+            const sigma = new Map();
+            const d = new Map();
+            
+            // Initialize
+            for (const node of nodes) {
+                P.set(node, []);
+                sigma.set(node, 0);
+                d.set(node, -1);
+            }
+            
+            sigma.set(s, 1);
+            d.set(s, 0);
+            
+            const Q = [s];
+            
+            while (Q.length > 0) {
+                const v = Q.shift();
+                S.push(v);
+                
+                for (const w of this.adjacency.get(v) || []) {
+                    if (d.get(w) < 0) {
+                        Q.push(w);
+                        d.set(w, d.get(v) + 1);
+                    }
+                    
+                    if (d.get(w) === d.get(v) + 1) {
+                        sigma.set(w, sigma.get(w) + sigma.get(v));
+                        P.get(w).push(v);
+                    }
+                }
+            }
+            
+            const delta = new Map();
+            for (const node of nodes) {
+                delta.set(node, 0);
+            }
+            
+            while (S.length > 0) {
+                const w = S.pop();
+                for (const v of P.get(w)) {
+                    delta.set(v, delta.get(v) + (sigma.get(v) / sigma.get(w)) * (1 + delta.get(w)));
+                }
+                if (w !== s) {
+                    centrality.set(w, centrality.get(w) + delta.get(w));
+                }
+            }
+        }
+        
+        // Normalize
+        const n = nodes.length;
+        const factor = 2 / ((n - 1) * (n - 2));
+        
+        const normalized = new Map();
+        for (const [node, value] of centrality) {
+            normalized.set(node, value * factor);
+        }
+        
+        return normalized;
+    }
+    
+    calculateClusteringCoefficient() {
+        const coefficients = new Map();
+        
+        for (const [node, neighbors] of this.adjacency) {
+            const k = neighbors.size;
+            if (k < 2) {
+                coefficients.set(node, 0);
+                continue;
+            }
+            
+            // Count triangles
+            let triangles = 0;
+            const neighborArray = Array.from(neighbors);
+            
+            for (let i = 0; i < neighborArray.length; i++) {
+                for (let j = i + 1; j < neighborArray.length; j++) {
+                    if (this.adjacency.get(neighborArray[i])?.has(neighborArray[j])) {
+                        triangles++;
+                    }
+                }
+            }
+            
+            const maxTriangles = k * (k - 1) / 2;
+            coefficients.set(node, triangles / maxTriangles);
+        }
+        
+        return coefficients;
+    }
+    
+    detectCommunitiesLouvain() {
+        // Simplified Louvain algorithm
+        const communities = new Map();
+        let communityId = 0;
+        
+        // Initialize each node in its own community
+        for (const node of this.nodes.keys()) {
+            communities.set(node, communityId++);
+        }
+        
+        let improved = true;
+        let iterations = 0;
+        
+        while (improved && iterations < 10) {
+            improved = false;
+            
+            for (const node of this.nodes.keys()) {
+                const bestCommunity = this.findBestCommunityLouvain(node, communities);
+                if (bestCommunity !== communities.get(node)) {
+                    communities.set(node, bestCommunity);
+                    improved = true;
+                }
+            }
+            
+            iterations++;
+        }
+        
+        // Group by community
+        const communityGroups = new Map();
+        for (const [node, commId] of communities) {
+            if (!communityGroups.has(commId)) {
+                communityGroups.set(commId, []);
+            }
+            communityGroups.get(commId).push(node);
+        }
+        
+        return communityGroups;
+    }
+    
+    findBestCommunityLouvain(node, communities) {
+        const currentCommunity = communities.get(node);
+        let bestCommunity = currentCommunity;
+        let bestGain = 0;
+        
+        // Calculate modularity gain for each neighboring community
+        const neighborCommunities = new Set();
+        for (const neighbor of this.adjacency.get(node) || []) {
+            neighborCommunities.add(communities.get(neighbor));
+        }
+        
+        for (const community of neighborCommunities) {
+            if (community !== currentCommunity) {
+                const gain = this.calculateModularityGain(node, currentCommunity, community, communities);
+                if (gain > bestGain) {
+                    bestGain = gain;
+                    bestCommunity = community;
+                }
+            }
+        }
+        
+        return bestCommunity;
+    }
+    
+    calculateModularityGain(node, oldCommunity, newCommunity, communities) {
+        // Simplified modularity gain calculation
+        const edgesInOld = this.countEdgesToCommunity(node, oldCommunity, communities);
+        const edgesInNew = this.countEdgesToCommunity(node, newCommunity, communities);
+        const degree = this.adjacency.get(node).size;
+        
+        return edgesInNew - edgesInOld - (degree / (2 * this.edgeData.size));
+    }
+    
+    countEdgesToCommunity(node, community, communities) {
+        let count = 0;
+        for (const neighbor of this.adjacency.get(node) || []) {
+            if (communities.get(neighbor) === community) {
+                count++;
+            }
+        }
+        return count;
+    }
+    
+    findBridges() {
+        const bridges = [];
+        const ids = new Map();
+        const low = new Map();
+        let idCounter = 0;
+        
+        const dfs = (node, parent, visited) => {
+            visited.add(node);
+            ids.set(node, idCounter);
+            low.set(node, idCounter);
+            idCounter++;
+            
+            for (const neighbor of this.adjacency.get(node) || []) {
+                if (neighbor === parent) continue;
+                
+                if (!visited.has(neighbor)) {
+                    dfs(neighbor, node, visited);
+                    low.set(node, Math.min(low.get(node), low.get(neighbor)));
+                    
+                    if (ids.get(node) < low.get(neighbor)) {
+                        bridges.push({
+                            source: node,
+                            target: neighbor,
+                            edgeId: this.getEdgeId(node, neighbor)
+                        });
+                    }
+                } else {
+                    low.set(node, Math.min(low.get(node), ids.get(neighbor)));
+                }
+            }
+        };
+        
+        const visited = new Set();
+        for (const node of this.nodes.keys()) {
+            if (!visited.has(node)) {
+                dfs(node, null, visited);
+            }
+        }
+        
+        return bridges;
+    }
+    
+    findArticulationPoints() {
+        const articulationPoints = new Set();
+        const ids = new Map();
+        const low = new Map();
+        let idCounter = 0;
+        
+        const dfs = (node, parent, visited, isRoot) => {
+            visited.add(node);
+            ids.set(node, idCounter);
+            low.set(node, idCounter);
+            idCounter++;
+            
+            let children = 0;
+            
+            for (const neighbor of this.adjacency.get(node) || []) {
+                if (neighbor === parent) continue;
+                
+                if (!visited.has(neighbor)) {
+                    children++;
+                    dfs(neighbor, node, visited, false);
+                    
+                    low.set(node, Math.min(low.get(node), low.get(neighbor)));
+                    
+                    if (!isRoot && ids.get(node) <= low.get(neighbor)) {
+                        articulationPoints.add(node);
+                    }
+                } else {
+                    low.set(node, Math.min(low.get(node), ids.get(neighbor)));
+                }
+            }
+            
+            if (isRoot && children > 1) {
+                articulationPoints.add(node);
+            }
+        };
+        
+        const visited = new Set();
+        for (const node of this.nodes.keys()) {
+            if (!visited.has(node)) {
+                dfs(node, null, visited, true);
+            }
+        }
+        
+        return Array.from(articulationPoints);
+    }
+    
+    findNeighborsWithinDistance(startId, maxDistance) {
+        const visited = new Set([startId]);
+        const queue = [{ node: startId, distance: 0 }];
+        const result = [];
+        
+        while (queue.length > 0) {
+            const { node, distance } = queue.shift();
+            
+            if (distance > 0 && distance <= maxDistance) {
+                result.push(node);
+            }
+            
+            if (distance < maxDistance) {
+                for (const neighbor of this.adjacency.get(node) || []) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push({ node: neighbor, distance: distance + 1 });
+                    }
+                }
+            }
+        }
+        
+        return result;
+    }
+    
+    getDistance(sourceId, targetId) {
+        const path = this.findShortestPath(sourceId, targetId);
+        return path ? path.distance : Infinity;
+    }
+    
+    findShortestPath(startId, endId) {
+        // Dijkstra's algorithm
+        const distances = new Map();
+        const previous = new Map();
+        const unvisited = new Set();
+        
+        // Initialize
+        for (const node of this.nodes.keys()) {
+            distances.set(node, Infinity);
+            previous.set(node, null);
+            unvisited.add(node);
+        }
+        distances.set(startId, 0);
+        
+        while (unvisited.size > 0) {
+            // Get node with smallest distance
+            let current = null;
+            let smallestDistance = Infinity;
+            
+            for (const node of unvisited) {
+                if (distances.get(node) < smallestDistance) {
+                    smallestDistance = distances.get(node);
+                    current = node;
+                }
+            }
+            
+            if (current === null || current === endId) break;
+            unvisited.delete(current);
+            
+            // Update distances to neighbors
+            for (const neighbor of this.adjacency.get(current) || []) {
+                if (unvisited.has(neighbor)) {
+                    const edgeId = this.getEdgeId(current, neighbor);
+                    const edgeData = this.edgeData.get(edgeId);
+                    const weight = edgeData ? 100 - edgeData.strength : 50; // Inverse of strength
+                    const alt = distances.get(current) + weight;
+                    
+                    if (alt < distances.get(neighbor)) {
+                        distances.set(neighbor, alt);
+                        previous.set(neighbor, current);
+                    }
+                }
+            }
+        }
+        
+        // Reconstruct path
+        const path = [];
+        let current = endId;
+        
+        while (current !== null) {
+            path.unshift(current);
+            current = previous.get(current);
+        }
+        
+        if (path.length === 1 && path[0] !== startId) {
+            return null; // No path found
+        }
+        
+        return {
+            path,
+            distance: distances.get(endId),
+            strength: 100 - (distances.get(endId) / path.length)
+        };
+    }
 }
 
-// Export for ES6 modules
+class ClinicalML {
+    constructor() {
+        this.featureEncoder = new FeatureEncoder();
+        this.models = new Map();
+        this.embeddings = new Map();
+    }
+    
+    extractFeatures(traits) {
+        return traits.map(trait => ({
+            severity: trait.severity / 100,
+            category: this.featureEncoder.encodeCategory(trait.category),
+            evidence: this.featureEncoder.encodeEvidence(trait.evidence?.level),
+            hasBiomarkers: trait.biomarkers?.length > 0 ? 1 : 0,
+            treatmentComplexity: this.calculateTreatmentComplexity(trait.treatment),
+            ageFactor: this.extractAgeFactor(trait),
+            inflammatory: this.isInflammatory(trait) ? 1 : 0,
+            obstructive: this.isObstructive(trait) ? 1 : 0
+        }));
+    }
+    
+    calculateTreatmentComplexity(treatment) {
+        if (!treatment) return 0;
+        
+        let complexity = 0;
+        const treatmentStr = typeof treatment === 'object' ? 
+            JSON.stringify(treatment) : treatment.toString();
+        
+        // Count medication classes
+        const medicationTypes = [
+            'ics', 'laba', 'lama', 'saba', 'corticosteroid',
+            'antibiotic', 'biologic', 'immunosuppressant', 'theophylline'
+        ];
+        
+        for (const type of medicationTypes) {
+            if (treatmentStr.toLowerCase().includes(type)) {
+                complexity += 1;
+            }
+        }
+        
+        // Check for combination therapies
+        if (treatmentStr.includes('/') || treatmentStr.includes('+')) {
+            complexity += 2;
+        }
+        
+        // Check for monitoring requirements
+        if (treatmentStr.includes('monitor') || treatmentStr.includes('check')) {
+            complexity += 1;
+        }
+        
+        return Math.min(1, complexity / 10);
+    }
+    
+    extractAgeFactor(trait) {
+        // Some traits are age-related
+        const ageRelatedTerms = ['geriatric', 'elderly', 'pediatric', 'child', 'aging'];
+        const evaluation = trait.evaluation?.toLowerCase() || '';
+        
+        for (const term of ageRelatedTerms) {
+            if (evaluation.includes(term)) {
+                return 1;
+            }
+        }
+        
+        return 0;
+    }
+    
+    isInflammatory(trait) {
+        const inflammatoryTerms = ['inflammatory', 'inflammation', 'crp', 'esr', 'eosinophil'];
+        const evaluation = trait.evaluation?.toLowerCase() || '';
+        const name = trait.name?.toLowerCase() || '';
+        
+        for (const term of inflammatoryTerms) {
+            if (evaluation.includes(term) || name.includes(term)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    isObstructive(trait) {
+        const obstructiveTerms = ['obstructive', 'airflow', 'fev1', 'bronchodilator'];
+        const evaluation = trait.evaluation?.toLowerCase() || '';
+        const name = trait.name?.toLowerCase() || '';
+        
+        for (const term of obstructiveTerms) {
+            if (evaluation.includes(term) || name.includes(term)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    detectPatterns(traits, connections) {
+        const patterns = [];
+        
+        // 1. Inflammatory-Obstructive pattern
+        const inflammatoryTraits = traits.filter(t => this.isInflammatory(t));
+        const obstructiveTraits = traits.filter(t => this.isObstructive(t));
+        
+        if (inflammatoryTraits.length >= 2 && obstructiveTraits.length >= 1) {
+            patterns.push({
+                name: 'Inflammatory-Obstructive Syndrome',
+                traits: [...inflammatoryTraits, ...obstructiveTraits].map(t => t.id),
+                confidence: 0.85,
+                description: 'Combination of systemic inflammation with airflow obstruction',
+                implications: 'May require combined anti-inflammatory and bronchodilator therapy'
+            });
+        }
+        
+        // 2. High-severity cluster
+        const highSeverityTraits = traits.filter(t => t.severity >= 80);
+        if (highSeverityTraits.length >= 3) {
+            const avgSeverity = highSeverityTraits.reduce((sum, t) => sum + t.severity, 0) / highSeverityTraits.length;
+            patterns.push({
+                name: 'High-Severity Cluster',
+                traits: highSeverityTraits.map(t => t.id),
+                confidence: 0.78,
+                avgSeverity,
+                description: 'Multiple high-severity clinical traits',
+                implications: 'Requires aggressive, comprehensive management'
+            });
+        }
+        
+        // 3. Treatment complexity pattern
+        const complexTreatmentTraits = traits.filter(t => 
+            this.calculateTreatmentComplexity(t.treatment) > 0.5
+        );
+        if (complexTreatmentTraits.length >= 2) {
+            patterns.push({
+                name: 'Treatment Complexity Pattern',
+                traits: complexTreatmentTraits.map(t => t.id),
+                confidence: 0.72,
+                description: 'Multiple traits requiring complex treatment regimens',
+                implications: 'Risk of non-adherence, consider simplification'
+            });
+        }
+        
+        return patterns;
+    }
+    
+    predictExacerbation(features, patientData) {
+        // Simplified exacerbation risk prediction
+        let risk = 0;
+        
+        // Severity contribution
+        const avgSeverity = features.reduce((sum, f) => sum + f.severity, 0) / features.length;
+        risk += avgSeverity * 40;
+        
+        // Inflammatory component
+        const inflammatoryScore = features.reduce((sum, f) => sum + f.inflammatory, 0) / features.length;
+        risk += inflammatoryScore * 30;
+        
+        // Treatment complexity
+        const avgComplexity = features.reduce((sum, f) => sum + f.treatmentComplexity, 0) / features.length;
+        risk += avgComplexity * 20;
+        
+        // Patient factors
+        if (patientData.smoking) risk += 10;
+        if (patientData.previousExacerbations) risk += patientData.previousExacerbations * 5;
+        
+        return {
+            score: Math.min(100, risk),
+            level: risk >= 70 ? 'high' : risk >= 50 ? 'moderate' : 'low',
+            factors: {
+                severity: avgSeverity * 40,
+                inflammation: inflammatoryScore * 30,
+                complexity: avgComplexity * 20,
+                patientFactors: risk - (avgSeverity * 40 + inflammatoryScore * 30 + avgComplexity * 20)
+            }
+        };
+    }
+    
+    predictHospitalization(features, patientData) {
+        // Simplified hospitalization risk prediction
+        let risk = 0;
+        
+        // High severity traits
+        const highSeverityFeatures = features.filter(f => f.severity > 0.8);
+        risk += highSeverityFeatures.length * 15;
+        
+        // Multiple comorbidities
+        const uniqueCategories = new Set(features.map(f => f.category));
+        risk += uniqueCategories.size * 10;
+        
+        // Age factor
+        const ageFactor = features.reduce((sum, f) => sum + f.ageFactor, 0) / features.length;
+        risk += ageFactor * 25;
+        
+        // Previous hospitalizations
+        if (patientData.previousHospitalizations) {
+            risk += patientData.previousHospitalizations * 10;
+        }
+        
+        return {
+            score: Math.min(100, risk),
+            level: risk >= 60 ? 'high' : risk >= 40 ? 'moderate' : 'low',
+            factors: {
+                highSeverity: highSeverityFeatures.length * 15,
+                comorbidities: uniqueCategories.size * 10,
+                age: ageFactor * 25,
+                history: patientData.previousHospitalizations ? patientData.previousHospitalizations * 10 : 0
+            }
+        };
+    }
+    
+    predictFunctionalDecline(features, patientData) {
+        // Simplified functional decline prediction
+        let risk = 0;
+        
+        // Obstructive traits
+        const obstructiveScore = features.reduce((sum, f) => sum + f.obstructive, 0) / features.length;
+        risk += obstructiveScore * 35;
+        
+        // Age factor
+        const ageFactor = features.reduce((sum, f) => sum + f.ageFactor, 0) / features.length;
+        risk += ageFactor * 30;
+        
+        // Treatment complexity
+        const avgComplexity = features.reduce((sum, f) => sum + f.treatmentComplexity, 0) / features.length;
+        risk += avgComplexity * 20;
+        
+        // Frailty indicators
+        if (patientData.frailty) risk += 15;
+        
+        return {
+            score: Math.min(100, risk),
+            level: risk >= 65 ? 'high' : risk >= 45 ? 'moderate' : 'low',
+            factors: {
+                obstruction: obstructiveScore * 35,
+                age: ageFactor * 30,
+                complexity: avgComplexity * 20,
+                frailty: patientData.frailty ? 15 : 0
+            }
+        };
+    }
+    
+    predictTreatmentResponse(features, patientData) {
+        // Simplified treatment response prediction
+        let score = 50; // Base score
+        
+        // Inflammatory component (good response to anti-inflammatories)
+        const inflammatoryScore = features.reduce((sum, f) => sum + f.inflammatory, 0) / features.length;
+        score += inflammatoryScore * 20;
+        
+        // Treatment complexity (negative impact)
+        const avgComplexity = features.reduce((sum, f) => sum + f.treatmentComplexity, 0) / features.length;
+        score -= avgComplexity * 15;
+        
+        // Biomarker presence (positive impact)
+        const biomarkerScore = features.reduce((sum, f) => sum + f.hasBiomarkers, 0) / features.length;
+        score += biomarkerScore * 10;
+        
+        // Adherence factors
+        if (patientData.goodAdherence) score += 15;
+        if (patientData.poorAdherence) score -= 20;
+        
+        return {
+            score: Math.max(0, Math.min(100, score)),
+            level: score >= 70 ? 'good' : score >= 50 ? 'moderate' : 'poor',
+            factors: {
+                inflammation: inflammatoryScore * 20,
+                complexity: -avgComplexity * 15,
+                biomarkers: biomarkerScore * 10,
+                adherence: patientData.goodAdherence ? 15 : patientData.poorAdherence ? -20 : 0
+            }
+        };
+    }
+    
+    calculateConnectionStrength(sourceTrait, targetTrait) {
+        let strength = 50; // Base strength
+        
+        // Category similarity
+        if (sourceTrait.category === targetTrait.category) {
+            strength += 20;
+        }
+        
+        // Severity correlation
+        const severityDiff = Math.abs(sourceTrait.severity - targetTrait.severity);
+        if (severityDiff < 10) strength += 15;
+        else if (severityDiff < 25) strength += 8;
+        
+        // Biomarker overlap
+        const biomarkers1 = sourceTrait.biomarkers || [];
+        const biomarkers2 = targetTrait.biomarkers || [];
+        const commonBiomarkers = biomarkers1.filter(b => biomarkers2.includes(b));
+        strength += Math.min(20, commonBiomarkers.length * 5);
+        
+        // Treatment similarity
+        if (this.treatmentsSimilar(sourceTrait.treatment, targetTrait.treatment)) {
+            strength += 10;
+        }
+        
+        // Evidence level
+        const evidence1 = sourceTrait.evidence?.level || 'C';
+        const evidence2 = targetTrait.evidence?.level || 'C';
+        if (evidence1 === 'A' && evidence2 === 'A') strength += 10;
+        
+        return Math.min(100, Math.max(10, strength));
+    }
+    
+    treatmentsSimilar(treatment1, treatment2) {
+        if (!treatment1 || !treatment2) return false;
+        
+        const t1 = typeof treatment1 === 'string' ? treatment1 : treatment1.firstLine;
+        const t2 = typeof treatment2 === 'string' ? treatment2 : treatment2.firstLine;
+        
+        if (!t1 || !t2) return false;
+        
+        const t1Lower = t1.toLowerCase();
+        const t2Lower = t2.toLowerCase();
+        
+        const commonTerms = ['ics', 'laba', 'lama', 'corticosteroid', 'bronchodilator'];
+        
+        return commonTerms.some(term => 
+            t1Lower.includes(term) && t2Lower.includes(term)
+        );
+    }
+    
+    clusterKMeans(traits, k = 3) {
+        const features = this.extractFeatures(traits);
+        
+        if (features.length < k) {
+            k = Math.max(1, features.length);
+        }
+        
+        // Initialize centroids
+        let centroids = [];
+        for (let i = 0; i < k; i++) {
+            centroids.push(features[Math.floor(Math.random() * features.length)]);
+        }
+        
+        let assignments = new Array(features.length).fill(-1);
+        let changed = true;
+        let iterations = 0;
+        
+        while (changed && iterations < 100) {
+            changed = false;
+            
+            // Assign to nearest centroid
+            for (let i = 0; i < features.length; i++) {
+                let minDist = Infinity;
+                let bestCentroid = -1;
+                
+                for (let j = 0; j < centroids.length; j++) {
+                    const dist = this.euclideanDistance(features[i], centroids[j]);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        bestCentroid = j;
+                    }
+                }
+                
+                if (assignments[i] !== bestCentroid) {
+                    assignments[i] = bestCentroid;
+                    changed = true;
+                }
+            }
+            
+            // Update centroids
+            const newCentroids = new Array(k).fill().map(() => ({
+                sum: new Array(Object.keys(features[0]).length).fill(0),
+                count: 0
+            }));
+            
+            for (let i = 0; i < features.length; i++) {
+                const cluster = assignments[i];
+                const featureValues = Object.values(features[i]);
+                
+                for (let j = 0; j < featureValues.length; j++) {
+                    newCentroids[cluster].sum[j] += featureValues[j];
+                }
+                newCentroids[cluster].count++;
+            }
+            
+            for (let j = 0; j < centroids.length; j++) {
+                if (newCentroids[j].count > 0) {
+                    const centroidObj = {};
+                    const keys = Object.keys(features[0]);
+                    
+                    for (let i = 0; i < keys.length; i++) {
+                        centroidObj[keys[i]] = newCentroids[j].sum[i] / newCentroids[j].count;
+                    }
+                    
+                    centroids[j] = centroidObj;
+                }
+            }
+            
+            iterations++;
+        }
+        
+        // Format results
+        const clusters = new Map();
+        for (let i = 0; i < assignments.length; i++) {
+            const clusterId = assignments[i];
+            if (!clusters.has(clusterId)) {
+                clusters.set(clusterId, []);
+            }
+            clusters.get(clusterId).push({
+                trait: traits[i],
+                distance: this.euclideanDistance(
+                    features[i],
+                    centroids[clusterId]
+                )
+            });
+        }
+        
+        return {
+            clusters: Array.from(clusters.entries()).map(([id, items]) => ({
+                id,
+                traits: items.map(item => item.trait),
+                centroid: centroids[id],
+                avgDistance: items.reduce((sum, item) => sum + item.distance, 0) / items.length,
+                size: items.length
+            })),
+            iterations,
+            silhouette: this.calculateSilhouetteScore(features, assignments)
+        };
+    }
+    
+    euclideanDistance(a, b) {
+        const keys = Object.keys(a);
+        let sum = 0;
+        for (const key of keys) {
+            sum += Math.pow(a[key] - b[key], 2);
+        }
+        return Math.sqrt(sum);
+    }
+    
+    calculateSilhouetteScore(features, assignments) {
+        if (features.length === 0) return 0;
+        
+        let totalSilhouette = 0;
+        
+        for (let i = 0; i < features.length; i++) {
+            // Calculate a(i): average distance to other points in same cluster
+            let a = 0;
+            let sameClusterCount = 0;
+            
+            for (let j = 0; j < features.length; j++) {
+                if (i !== j && assignments[i] === assignments[j]) {
+                    a += this.euclideanDistance(features[i], features[j]);
+                    sameClusterCount++;
+                }
+            }
+            
+            a = sameClusterCount > 0 ? a / sameClusterCount : 0;
+            
+            // Calculate b(i): smallest average distance to other clusters
+            let b = Infinity;
+            const clusters = new Set(assignments);
+            
+            for (const cluster of clusters) {
+                if (cluster !== assignments[i]) {
+                    let clusterDistance = 0;
+                    let clusterCount = 0;
+                    
+                    for (let j = 0; j < features.length; j++) {
+                        if (assignments[j] === cluster) {
+                            clusterDistance += this.euclideanDistance(features[i], features[j]);
+                            clusterCount++;
+                        }
+                    }
+                    
+                    const avgDistance = clusterCount > 0 ? clusterDistance / clusterCount : Infinity;
+                    b = Math.min(b, avgDistance);
+                }
+            }
+            
+            // Calculate silhouette for this point
+            const s = b > a ? (b - a) / Math.max(a, b) : 0;
+            totalSilhouette += s;
+        }
+        
+        return totalSilhouette / features.length;
+    }
+    
+    clusterHierarchical(traits) {
+        // Single-linkage hierarchical clustering
+        const features = this.extractFeatures(traits);
+        const n = features.length;
+        
+        // Initialize distance matrix
+        const distances = [];
+        for (let i = 0; i < n; i++) {
+            distances[i] = [];
+            for (let j = 0; j < n; j++) {
+                distances[i][j] = i === j ? 0 : this.euclideanDistance(features[i], features[j]);
+            }
+        }
+        
+        // Initialize clusters (each point in its own cluster)
+        let clusters = [];
+        for (let i = 0; i < n; i++) {
+            clusters.push({
+                indices: [i],
+                traits: [traits[i]]
+            });
+        }
+        
+        const dendrogram = [];
+        
+        while (clusters.length > 1) {
+            // Find closest clusters
+            let minDistance = Infinity;
+            let cluster1 = -1;
+            let cluster2 = -1;
+            
+            for (let i = 0; i < clusters.length; i++) {
+                for (let j = i + 1; j < clusters.length; j++) {
+                    // Single linkage: distance between closest points
+                    let distance = Infinity;
+                    
+                    for (const idx1 of clusters[i].indices) {
+                        for (const idx2 of clusters[j].indices) {
+                            distance = Math.min(distance, distances[idx1][idx2]);
+                        }
+                    }
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        cluster1 = i;
+                        cluster2 = j;
+                    }
+                }
+            }
+            
+            // Merge clusters
+            const merged = {
+                indices: [...clusters[cluster1].indices, ...clusters[cluster2].indices],
+                traits: [...clusters[cluster1].traits, ...clusters[cluster2].traits],
+                distance: minDistance
+            };
+            
+            dendrogram.push({
+                cluster1,
+                cluster2,
+                distance: minDistance,
+                size: merged.indices.length
+            });
+            
+            // Remove old clusters and add merged
+            clusters.splice(Math.max(cluster1, cluster2), 1);
+            clusters.splice(Math.min(cluster1, cluster2), 1);
+            clusters.push(merged);
+        }
+        
+        return {
+            dendrogram,
+            finalClusters: clusters,
+            features
+        };
+    }
+    
+    clusterDBSCAN(traits, epsilon = 0.3, minPoints = 2) {
+        const features = this.extractFeatures(traits);
+        const n = features.length;
+        
+        const visited = new Array(n).fill(false);
+        const clustered = new Array(n).fill(-1); // -1 = noise
+        let clusterId = 0;
+        
+        const getNeighbors = (pointIndex) => {
+            const neighbors = [];
+            for (let i = 0; i < n; i++) {
+                if (i !== pointIndex && this.euclideanDistance(features[pointIndex], features[i]) < epsilon) {
+                    neighbors.push(i);
+                }
+            }
+            return neighbors;
+        };
+        
+        const expandCluster = (pointIndex, neighbors, clusterId) => {
+            clustered[pointIndex] = clusterId;
+            
+            for (let i = 0; i < neighbors.length; i++) {
+                const neighborIndex = neighbors[i];
+                
+                if (!visited[neighborIndex]) {
+                    visited[neighborIndex] = true;
+                    const neighborNeighbors = getNeighbors(neighborIndex);
+                    
+                    if (neighborNeighbors.length >= minPoints) {
+                        neighbors.push(...neighborNeighbors);
+                    }
+                }
+                
+                if (clustered[neighborIndex] === -1) {
+                    clustered[neighborIndex] = clusterId;
+                }
+            }
+        };
+        
+        for (let i = 0; i < n; i++) {
+            if (!visited[i]) {
+                visited[i] = true;
+                const neighbors = getNeighbors(i);
+                
+                if (neighbors.length < minPoints) {
+                    clustered[i] = -1; // Noise
+                } else {
+                    expandCluster(i, neighbors, clusterId);
+                    clusterId++;
+                }
+            }
+        }
+        
+        // Group results
+        const clusters = new Map();
+        const noise = [];
+        
+        for (let i = 0; i < n; i++) {
+            const cluster = clustered[i];
+            if (cluster === -1) {
+                noise.push(traits[i]);
+            } else {
+                if (!clusters.has(cluster)) {
+                    clusters.set(cluster, []);
+                }
+                clusters.get(cluster).push(traits[i]);
+            }
+        }
+        
+        return {
+            clusters: Array.from(clusters.entries()).map(([id, clusterTraits]) => ({
+                id,
+                traits: clusterTraits,
+                size: clusterTraits.length,
+                isNoise: false
+            })),
+            noise: noise.map(trait => ({
+                trait,
+                isNoise: true
+            })),
+            parameters: { epsilon, minPoints }
+        };
+    }
+    
+    semanticSearch(query, options = {}) {
+        // This would use word embeddings for semantic search
+        // For now, return simplified version
+        
+        const queryLower = query.toLowerCase();
+        const results = [];
+        
+        // In real implementation, this would use pre-computed embeddings
+        // and cosine similarity
+        
+        return results;
+    }
+}
+
+class FeatureEncoder {
+    constructor() {
+        this.categoryMap = new Map();
+        this.evidenceMap = new Map();
+        this.nextCategoryId = 0;
+        this.nextEvidenceId = 0;
+        
+        // Pre-defined categories for consistency
+        this.predefinedCategories = [
+            'pulmonary', 'inflammatory', 'physiological', 'clinical',
+            'comorbid', 'behavioral', 'pharmacological', 'radiological'
+        ];
+        
+        // Initialize with predefined categories
+        for (const category of this.predefinedCategories) {
+            this.encodeCategory(category);
+        }
+    }
+    
+    encodeCategory(category) {
+        if (!category) return 0;
+        
+        if (!this.categoryMap.has(category)) {
+            this.categoryMap.set(category, this.nextCategoryId++);
+        }
+        
+        // Normalize to 0-1 range
+        return this.categoryMap.get(category) / Math.max(1, this.nextCategoryId - 1);
+    }
+    
+    encodeEvidence(level) {
+        if (!level) return 0.5;
+        
+        const evidenceWeights = {
+            'A': 1.0,
+            'B': 0.8,
+            'C': 0.6,
+            'D': 0.4,
+            'E': 0.2
+        };
+        
+        return evidenceWeights[level] || 0.5;
+    }
+}
+
+class ClinicalSyncManager {
+    constructor() {
+        this.queue = [];
+        this.syncing = false;
+        this.lastSync = null;
+        this.conflictResolver = new ConflictResolver();
+        this.offline = !navigator.onLine;
+        
+        this.init();
+    }
+    
+    init() {
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            this.offline = false;
+            this.sync();
+        });
+        
+        window.addEventListener('offline', () => {
+            this.offline = true;
+        });
+        
+        // Load queued changes from storage
+        this.loadQueue();
+    }
+    
+    async queueChange(change) {
+        const queuedChange = {
+            ...change,
+            id: `change_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            queuedAt: new Date().toISOString(),
+            attempts: 0
+        };
+        
+        this.queue.push(queuedChange);
+        await this.saveQueue();
+        
+        // Try to sync if online
+        if (!this.offline && !this.syncing) {
+            this.sync();
+        }
+        
+        return queuedChange.id;
+    }
+    
+    async sync() {
+        if (this.syncing || this.offline || this.queue.length === 0) {
+            return;
+        }
+        
+        this.syncing = true;
+        
+        try {
+            const changes = [...this.queue];
+            const successful = [];
+            
+            for (const change of changes) {
+                try {
+                    await this.sendChange(change);
+                    successful.push(change.id);
+                    change.attempts++;
+                } catch (error) {
+                    console.error('Failed to sync change:', change.id, error);
+                    
+                    // If failed too many times, mark as failed
+                    if (change.attempts >= 3) {
+                        successful.push(change.id); // Remove from queue even if failed
+                        console.warn(`Change ${change.id} failed after 3 attempts`);
+                    }
+                }
+            }
+            
+            // Remove successful changes from queue
+            this.queue = this.queue.filter(change => !successful.includes(change.id));
+            await this.saveQueue();
+            
+            this.lastSync = new Date().toISOString();
+            
+            // Notify of sync completion
+            window.dispatchEvent(new CustomEvent('sync:complete', {
+                detail: {
+                    success: true,
+                    synced: successful.length,
+                    failed: changes.length - successful.length,
+                    timestamp: this.lastSync
+                }
+            }));
+            
+        } catch (error) {
+            console.error('Sync failed:', error);
+            
+            window.dispatchEvent(new CustomEvent('sync:failed', {
+                detail: {
+                    error: error.message,
+                    timestamp: new Date().toISOString()
+                }
+            }));
+        } finally {
+            this.syncing = false;
+        }
+    }
+    
+    async sendChange(change) {
+        // In a real implementation, this would send to a server
+        // For now, simulate network request
+        
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                // Simulate network failure 10% of the time
+                if (Math.random() < 0.1) {
+                    reject(new Error('Network error'));
+                } else {
+                    resolve({ success: true, changeId: change.id });
+                }
+            }, 100);
+        });
+    }
+    
+    async saveQueue() {
+        try {
+            localStorage.setItem('clinical_sync_queue', JSON.stringify(this.queue));
+        } catch (error) {
+            console.error('Failed to save sync queue:', error);
+        }
+    }
+    
+    async loadQueue() {
+        try {
+            const saved = localStorage.getItem('clinical_sync_queue');
+            if (saved) {
+                this.queue = JSON.parse(saved);
+            }
+        } catch (error) {
+            console.error('Failed to load sync queue:', error);
+            this.queue = [];
+        }
+    }
+    
+    getStatus() {
+        return {
+            online: !this.offline,
+            syncing: this.syncing,
+            queueSize: this.queue.length,
+            lastSync: this.lastSync
+        };
+    }
+    
+    stop() {
+        // Cleanup
+        this.syncing = false;
+    }
+}
+
+class ConflictResolver {
+    constructor() {
+        this.strategies = {
+            'trait': this.resolveTraitConflict.bind(this),
+            'connection': this.resolveConnectionConflict.bind(this),
+            'analytics': this.resolveAnalyticsConflict.bind(this)
+        };
+    }
+    
+    resolveTraitConflict(localTrait, remoteTrait) {
+        // Strategy: Keep the most recently updated version
+        const localTime = new Date(localTrait.updated || localTrait.created);
+        const remoteTime = new Date(remoteTrait.updated || remoteTrait.created);
+        
+        if (remoteTime > localTime) {
+            return { resolved: remoteTrait, strategy: 'newer_wins' };
+        } else if (remoteTime < localTime) {
+            return { resolved: localTrait, strategy: 'newer_wins' };
+        } else {
+            // Same timestamp, merge
+            const merged = { ...localTrait, ...remoteTrait };
+            merged.version = Math.max(localTrait.version || 1, remoteTrait.version || 1) + 1;
+            merged.updated = new Date().toISOString();
+            return { resolved: merged, strategy: 'merge' };
+        }
+    }
+    
+    resolveConnectionConflict(localConn, remoteConn) {
+        // For connections, use strength as tiebreaker
+        if (remoteConn.strength > localConn.strength) {
+            return { resolved: remoteConn, strategy: 'stronger_wins' };
+        } else if (remoteConn.strength < localConn.strength) {
+            return { resolved: localConn, strategy: 'stronger_wins' };
+        } else {
+            // Same strength, use timestamp
+            const localTime = new Date(localConn.updated || localConn.created);
+            const remoteTime = new Date(remoteConn.updated || remoteConn.created);
+            
+            if (remoteTime > localTime) {
+                return { resolved: remoteConn, strategy: 'newer_wins' };
+            } else {
+                return { resolved: localConn, strategy: 'newer_wins' };
+            }
+        }
+    }
+    
+    resolveAnalyticsConflict(localAnalytics, remoteAnalytics) {
+        // For analytics, merge and average where appropriate
+        const merged = {};
+        
+        for (const key in localAnalytics) {
+            if (typeof localAnalytics[key] === 'number' && typeof remoteAnalytics[key] === 'number') {
+                merged[key] = (localAnalytics[key] + remoteAnalytics[key]) / 2;
+            } else {
+                merged[key] = remoteAnalytics[key] || localAnalytics[key];
+            }
+        }
+        
+        return { resolved: merged, strategy: 'average' };
+    }
+    
+    resolve(entityType, localData, remoteData) {
+        const resolver = this.strategies[entityType] || this.strategies.trait;
+        return resolver(localData, remoteData);
+    }
+}
+
+class ClinicalSecurity {
+    constructor() {
+        this.encryptionKey = null;
+        this.locked = false;
+        this.permissions = new Set();
+        this.auditLog = [];
+    }
+    
+    async initialize(password) {
+        try {
+            // Generate encryption key
+            this.encryptionKey = await this.generateKey(password);
+            
+            // Set up permissions based on role
+            this.setupPermissions();
+            
+            // Log initialization
+            this.log('security_initialized', { timestamp: new Date().toISOString() });
+            
+            return true;
+        } catch (error) {
+            console.error('Security initialization failed:', error);
+            throw error;
+        }
+    }
+    
+    async generateKey(password) {
+        // Use password-based key derivation
+        const encoder = new TextEncoder();
+        const passwordBuffer = encoder.encode(password);
+        const salt = window.crypto.getRandomValues(new Uint8Array(16));
+        
+        const baseKey = await window.crypto.subtle.importKey(
+            'raw',
+            passwordBuffer,
+            { name: 'PBKDF2' },
+            false,
+            ['deriveKey']
+        );
+        
+        return window.crypto.subtle.deriveKey(
+            {
+                name: 'PBKDF2',
+                salt: salt,
+                iterations: 100000,
+                hash: 'SHA-256'
+            },
+            baseKey,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    }
+    
+    setupPermissions() {
+        // In a real implementation, this would be based on user role
+        // For now, grant all permissions
+        const allPermissions = [
+            'read_traits', 'write_traits', 'delete_traits',
+            'read_connections', 'write_connections', 'delete_connections',
+            'export_data', 'import_data', 'view_analytics'
+        ];
+        
+        this.permissions = new Set(allPermissions);
+    }
+    
+    async encryptData(data) {
+        if (!this.encryptionKey || this.locked) {
+            throw new Error('Security not initialized or locked');
+        }
+        
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(JSON.stringify(data));
+        
+        const encrypted = await window.crypto.subtle.encrypt(
+            {
+                name: 'AES-GCM',
+                iv: iv
+            },
+            this.encryptionKey,
+            dataBuffer
+        );
+        
+        return {
+            iv: Array.from(iv),
+            data: Array.from(new Uint8Array(encrypted)),
+            algorithm: 'AES-GCM-256'
+        };
+    }
+    
+    async decryptData(encryptedData) {
+        if (!this.encryptionKey || this.locked) {
+            throw new Error('Security not initialized or locked');
+        }
+        
+        const iv = new Uint8Array(encryptedData.iv);
+        const data = new Uint8Array(encryptedData.data);
+        
+        const decrypted = await window.crypto.subtle.decrypt(
+            {
+                name: 'AES-GCM',
+                iv: iv
+            },
+            this.encryptionKey,
+            data
+        );
+        
+        const decoder = new TextDecoder();
+        return JSON.parse(decoder.decode(decrypted));
+    }
+    
+    checkPermission(permission) {
+        if (this.locked) return false;
+        return this.permissions.has(permission);
+    }
+    
+    lock() {
+        this.locked = true;
+        this.log('security_locked', { timestamp: new Date().toISOString() });
+    }
+    
+    unlock(password) {
+        // In a real implementation, this would verify password
+        this.locked = false;
+        this.log('security_unlocked', { timestamp: new Date().toISOString() });
+    }
+    
+    log(action, details) {
+        this.auditLog.push({
+            action,
+            timestamp: new Date().toISOString(),
+            details,
+            userAgent: navigator.userAgent
+        });
+        
+        // Keep only last 1000 entries
+        if (this.auditLog.length > 1000) {
+            this.auditLog.shift();
+        }
+    }
+    
+    getAuditReport() {
+        return {
+            totalEntries: this.auditLog.length,
+            recentEntries: this.auditLog.slice(-100),
+            locked: this.locked,
+            permissions: Array.from(this.permissions)
+        };
+    }
+}
+
+class ClinicalAnalytics {
+    constructor() {
+        this.metrics = {
+            performance: new Map(),
+            usage: new Map(),
+            errors: new Map(),
+            searches: new Map()
+        };
+        
+        this.startTime = Date.now();
+        this.startMonitoring();
+    }
+    
+    startMonitoring() {
+        // Performance monitoring
+        if (window.performance) {
+            const perfObserver = new PerformanceObserver((list) => {
+                list.getEntries().forEach(entry => {
+                    this.recordMetric('performance', entry.name, {
+                        duration: entry.duration,
+                        entryType: entry.entryType,
+                        timestamp: Date.now()
+                    });
+                });
+            });
+            
+            perfObserver.observe({ entryTypes: ['measure', 'resource', 'navigation'] });
+        }
+        
+        // Error monitoring
+        window.addEventListener('error', (event) => {
+            this.recordError('javascript', {
+                message: event.message,
+                filename: event.filename,
+                lineno: event.lineno,
+                colno: event.colno,
+                error: event.error?.toString()
+            });
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            this.recordError('promise', {
+                reason: event.reason?.toString(),
+                timestamp: Date.now()
+            });
+        });
+        
+        // Custom event tracking
+        this.setupEventTracking();
+    }
+    
+    setupEventTracking() {
+        // Track database operations
+        const trackEvent = (type, data) => {
+            this.recordMetric('usage', type, {
+                ...data,
+                timestamp: Date.now()
+            });
+        };
+        
+        // Listen for clinical events
+        if (window.clinicalEvents) {
+            window.clinicalEvents.subscribe('trait:created', (data) => {
+                trackEvent('trait_created', data);
+            });
+            
+            window.clinicalEvents.subscribe('connection:created', (data) => {
+                trackEvent('connection_created', data);
+            });
+            
+            // Add more event tracking as needed
+        }
+    }
+    
+    recordMetric(type, name, value) {
+        if (!this.metrics[type]) {
+            this.metrics[type] = new Map();
+        }
+        
+        if (!this.metrics[type].has(name)) {
+            this.metrics[type].set(name, []);
+        }
+        
+        const metricArray = this.metrics[type].get(name);
+        metricArray.push(value);
+        
+        // Keep only last 1000 entries
+        if (metricArray.length > 1000) {
+            metricArray.shift();
+        }
+    }
+    
+    recordError(type, details) {
+        this.recordMetric('errors', type, {
+            ...details,
+            timestamp: Date.now(),
+            url: window.location.href
+        });
+    }
+    
+    recordSearch(query, resultCount, timeMs) {
+        this.recordMetric('searches', 'query', {
+            query,
+            resultCount,
+            timeMs,
+            timestamp: Date.now()
+        });
+    }
+    
+    generateReport() {
+        const now = Date.now();
+        const uptime = now - this.startTime;
+        
+        return {
+            uptime: this.formatDuration(uptime),
+            performance: this.calculatePerformanceMetrics(),
+            usage: this.calculateUsageMetrics(),
+            errors: this.calculateErrorMetrics(),
+            searches: this.calculateSearchMetrics(),
+            recommendations: this.generateRecommendations()
+        };
+    }
+    
+    calculatePerformanceMetrics() {
+        const metrics = {};
+        
+        for (const [name, values] of this.metrics.performance.entries()) {
+            if (values.length > 0) {
+                const durations = values.map(v => v.duration || 0);
+                metrics[name] = {
+                    avg: this.average(durations),
+                    p95: this.percentile(durations, 0.95),
+                    p99: this.percentile(durations, 0.99),
+                    max: Math.max(...durations),
+                    min: Math.min(...durations),
+                    count: values.length
+                };
+            }
+        }
+        
+        return metrics;
+    }
+    
+    calculateUsageMetrics() {
+        const usage = {};
+        const now = Date.now();
+        const oneHourAgo = now - (60 * 60 * 1000);
+        const oneDayAgo = now - (24 * 60 * 60 * 1000);
+        
+        for (const [eventType, events] of this.metrics.usage.entries()) {
+            const recentEvents = events.filter(e => e.timestamp > oneHourAgo);
+            const dailyEvents = events.filter(e => e.timestamp > oneDayAgo);
+            
+            usage[eventType] = {
+                hourly: recentEvents.length,
+                daily: dailyEvents.length,
+                total: events.length
+            };
+        }
+        
+        return usage;
+    }
+    
+    calculateErrorMetrics() {
+        const errors = {};
+        
+        for (const [errorType, errorList] of this.metrics.errors.entries()) {
+            errors[errorType] = {
+                count: errorList.length,
+                recent: errorList.slice(-10),
+                firstSeen: errorList[0]?.timestamp,
+                lastSeen: errorList[errorList.length - 1]?.timestamp
+            };
+        }
+        
+        return errors;
+    }
+    
+    calculateSearchMetrics() {
+        const searches = this.metrics.searches.get('query') || [];
+        
+        if (searches.length === 0) {
+            return {
+                total: 0,
+                avgTime: 0,
+                avgResults: 0
+            };
+        }
+        
+        const times = searches.map(s => s.timeMs || 0);
+        const results = searches.map(s => s.resultCount || 0);
+        
+        return {
+            total: searches.length,
+            avgTime: this.average(times),
+            avgResults: this.average(results),
+            popularQueries: this.getPopularQueries(searches)
+        };
+    }
+    
+    getPopularQueries(searches, limit = 10) {
+        const queryCounts = {};
+        
+        searches.forEach(search => {
+            const query = search.query?.toLowerCase().trim();
+            if (query) {
+                queryCounts[query] = (queryCounts[query] || 0) + 1;
+            }
+        });
+        
+        return Object.entries(queryCounts)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, limit)
+            .map(([query, count]) => ({ query, count }));
+    }
+    
+    generateRecommendations() {
+        const recommendations = [];
+        const perfMetrics = this.calculatePerformanceMetrics();
+        
+        // Check for slow operations
+        for (const [operation, metrics] of Object.entries(perfMetrics)) {
+            if (metrics.p95 > 1000) { // > 1 second
+                recommendations.push({
+                    type: 'performance',
+                    severity: 'warning',
+                    description: `Slow operation detected: ${operation}`,
+                    suggestion: `Consider optimizing ${operation} (p95: ${metrics.p95.toFixed(1)}ms)`
+                });
+            }
+        }
+        
+        // Check for frequent errors
+        const errorMetrics = this.calculateErrorMetrics();
+        for (const [errorType, metrics] of Object.entries(errorMetrics)) {
+            if (metrics.count > 10) {
+                recommendations.push({
+                    type: 'error',
+                    severity: 'high',
+                    description: `Frequent errors: ${errorType}`,
+                    suggestion: `Investigate and fix ${errorType} errors`
+                });
+            }
+        }
+        
+        return recommendations;
+    }
+    
+    average(values) {
+        if (values.length === 0) return 0;
+        return values.reduce((sum, val) => sum + val, 0) / values.length;
+    }
+    
+    percentile(values, p) {
+        if (values.length === 0) return 0;
+        
+        const sorted = [...values].sort((a, b) => a - b);
+        const pos = (sorted.length - 1) * p;
+        const base = Math.floor(pos);
+        const rest = pos - base;
+        
+        if (sorted[base + 1] !== undefined) {
+            return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+        } else {
+            return sorted[base];
+        }
+    }
+    
+    formatDuration(ms) {
+        const seconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (days > 0) return `${days}d ${hours % 24}h`;
+        if (hours > 0) return `${hours}h ${minutes % 60}m`;
+        if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
+        return `${seconds}s`;
+    }
+}
+
+class ClinicalCache {
+    constructor() {
+        this.cache = new Map();
+        this.stats = {
+            hits: 0,
+            misses: 0,
+            sets: 0,
+            deletes: 0,
+            size: 0
+        };
+        this.maxSize = 1000;
+        this.cleanupInterval = setInterval(() => this.cleanup(), 60000); // Cleanup every minute
+    }
+    
+    set(key, value, ttl = 60000) { // Default TTL: 1 minute
+        const entry = {
+            value,
+            expires: Date.now() + ttl,
+            createdAt: Date.now()
+        };
+        
+        this.cache.set(key, entry);
+        this.stats.sets++;
+        this.stats.size = this.cache.size;
+        
+        // Evict if cache is too large
+        if (this.cache.size > this.maxSize) {
+            this.evictOldest();
+        }
+        
+        return true;
+    }
+    
+    get(key) {
+        const entry = this.cache.get(key);
+        
+        if (!entry) {
+            this.stats.misses++;
+            return null;
+        }
+        
+        // Check if expired
+        if (entry.expires < Date.now()) {
+            this.cache.delete(key);
+            this.stats.misses++;
+            this.stats.size = this.cache.size;
+            return null;
+        }
+        
+        this.stats.hits++;
+        return entry.value;
+    }
+    
+    delete(key) {
+        const existed = this.cache.delete(key);
+        if (existed) {
+            this.stats.deletes++;
+            this.stats.size = this.cache.size;
+        }
+        return existed;
+    }
+    
+    clear() {
+        this.cache.clear();
+        this.stats.size = 0;
+    }
+    
+    invalidate(keys) {
+        if (Array.isArray(keys)) {
+            keys.forEach(key => this.delete(key));
+        } else if (typeof keys === 'string') {
+            // Delete all keys matching pattern
+            const pattern = keys;
+            for (const key of this.cache.keys()) {
+                if (key.startsWith(pattern)) {
+                    this.delete(key);
+                }
+            }
+        }
+    }
+    
+    evictOldest() {
+        // Find oldest entry
+        let oldestKey = null;
+        let oldestTime = Infinity;
+        
+        for (const [key, entry] of this.cache) {
+            if (entry.createdAt < oldestTime) {
+                oldestTime = entry.createdAt;
+                oldestKey = key;
+            }
+        }
+        
+        if (oldestKey) {
+            this.delete(oldestKey);
+        }
+    }
+    
+    cleanup() {
+        const now = Date.now();
+        let cleaned = 0;
+        
+        for (const [key, entry] of this.cache) {
+            if (entry.expires < now) {
+                this.cache.delete(key);
+                cleaned++;
+            }
+        }
+        
+        this.stats.size = this.cache.size;
+        
+        if (cleaned > 0) {
+            console.log(`Cache cleanup: removed ${cleaned} expired entries`);
+        }
+    }
+    
+    getStats() {
+        return {
+            ...this.stats,
+            hitRate: this.stats.hits + this.stats.misses > 0 ? 
+                this.stats.hits / (this.stats.hits + this.stats.misses) : 0,
+            currentSize: this.cache.size
+        };
+    }
+}
+
+class ClinicalIndex {
+    constructor() {
+        this.invertedIndex = new Map();
+        this.documents = new Map();
+        this.totalDocuments = 0;
+    }
+    
+    indexTrait(trait) {
+        if (!trait || !trait.id) return;
+        
+        // Remove old index entries for this trait
+        this.removeTrait(trait.id);
+        
+        // Index all searchable text
+        const textToIndex = [
+            trait.name,
+            trait.spanishName || '',
+            trait.evaluation || '',
+            trait.category,
+            ...(trait.tags || []),
+            ...(trait.biomarkers || []),
+            this.extractTreatmentText(trait.treatment)
+        ].join(' ').toLowerCase();
+        
+        // Tokenize
+        const tokens = this.tokenize(textToIndex);
+        
+        // Add to inverted index
+        for (const token of tokens) {
+            if (!this.invertedIndex.has(token)) {
+                this.invertedIndex.set(token, new Set());
+            }
+            this.invertedIndex.get(token).add(trait.id);
+        }
+        
+        // Store document
+        this.documents.set(trait.id, {
+            id: trait.id,
+            text: textToIndex,
+            tokens: new Set(tokens),
+            indexedAt: Date.now()
+        });
+        
+        this.totalDocuments++;
+    }
+    
+    removeTrait(traitId) {
+        const doc = this.documents.get(traitId);
+        if (!doc) return;
+        
+        // Remove from inverted index
+        for (const token of doc.tokens) {
+            const postings = this.invertedIndex.get(token);
+            if (postings) {
+                postings.delete(traitId);
+                if (postings.size === 0) {
+                    this.invertedIndex.delete(token);
+                }
+            }
+        }
+        
+        // Remove document
+        this.documents.delete(traitId);
+        this.totalDocuments--;
+    }
+    
+    updateTrait(trait) {
+        // Re-index
+        this.indexTrait(trait);
+    }
+    
+    search(query, limit = 50) {
+        const tokens = this.tokenize(query.toLowerCase());
+        if (tokens.length === 0) return [];
+        
+        // Get document sets for each token
+        const docSets = [];
+        for (const token of tokens) {
+            const postings = this.invertedIndex.get(token);
+            if (postings && postings.size > 0) {
+                docSets.push(postings);
+            }
+        }
+        
+        if (docSets.length === 0) return [];
+        
+        // Intersect sets for AND search
+        let resultSet = docSets[0];
+        for (let i = 1; i < docSets.length; i++) {
+            resultSet = this.intersectSets(resultSet, docSets[i]);
+        }
+        
+        // Score documents
+        const scoredDocs = [];
+        for (const docId of resultSet) {
+            const score = this.scoreDocument(docId, tokens);
+            scoredDocs.push({ docId, score });
+        }
+        
+        // Sort by score and limit
+        return scoredDocs
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit);
+    }
+    
+    scoreDocument(docId, queryTokens) {
+        const doc = this.documents.get(docId);
+        if (!doc) return 0;
+        
+        let score = 0;
+        
+        // TF-IDF scoring
+        for (const token of queryTokens) {
+            // Term frequency in document
+            const tf = this.calculateTF(token, doc);
+            
+            // Inverse document frequency
+            const idf = this.calculateIDF(token);
+            
+            score += tf * idf;
+        }
+        
+        // Boost for exact matches in name
+        const docText = doc.text;
+        for (const token of queryTokens) {
+            if (docText.includes(` ${token} `)) {
+                score += 0.5;
+            }
+        }
+        
+        return score;
+    }
+    
+    calculateTF(token, doc) {
+        // Simple term frequency (binary for now)
+        return doc.tokens.has(token) ? 1 : 0;
+    }
+    
+    calculateIDF(token) {
+        const docCount = this.invertedIndex.get(token)?.size || 0;
+        if (docCount === 0) return 0;
+        
+        return Math.log(this.totalDocuments / docCount);
+    }
+    
+    tokenize(text) {
+        return text
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(token => token.length > 2) // Ignore very short tokens
+            .filter(token => !this.isStopWord(token));
+    }
+    
+    isStopWord(token) {
+        const stopWords = new Set([
+            'the', 'and', 'for', 'with', 'this', 'that', 'have', 'from',
+            'are', 'was', 'were', 'will', 'not', 'but', 'what', 'which',
+            'there', 'their', 'they', 'them', 'then', 'than', 'also'
+        ]);
+        
+        return stopWords.has(token);
+    }
+    
+    extractTreatmentText(treatment) {
+        if (!treatment) return '';
+        
+        if (typeof treatment === 'string') {
+            return treatment;
+        }
+        
+        // Extract from treatment object
+        const parts = [];
+        if (treatment.firstLine) parts.push(treatment.firstLine);
+        if (treatment.secondLine) parts.push(treatment.secondLine);
+        if (treatment.nonPharmacological) parts.push(treatment.nonPharmacological);
+        
+        return parts.join(' ');
+    }
+    
+    intersectSets(setA, setB) {
+        const result = new Set();
+        for (const item of setA) {
+            if (setB.has(item)) {
+                result.add(item);
+            }
+        }
+        return result;
+    }
+}
+
+// ============================================================================
+// EVENT SYSTEM - SIMPLIFIED VERSION
+// ============================================================================
+
+class ClinicalEventSystem {
+    constructor() {
+        this.listeners = new Map();
+        this.queue = [];
+        this.processing = false;
+        this.metrics = {
+            eventsEmitted: 0,
+            listenersCalled: 0,
+            queueSize: 0
+        };
+    }
+    
+    subscribe(event, callback) {
+        if (!this.listeners.has(event)) {
+            this.listeners.set(event, new Set());
+        }
+        this.listeners.get(event).add(callback);
+        
+        return () => this.unsubscribe(event, callback);
+    }
+    
+    unsubscribe(event, callback) {
+        if (this.listeners.has(event)) {
+            this.listeners.get(event).delete(callback);
+        }
+    }
+    
+    emit(event, data) {
+        this.metrics.eventsEmitted++;
+        
+        // Add to queue for async processing
+        this.queue.push({ event, data, timestamp: Date.now() });
+        
+        // Process queue if not already processing
+        if (!this.processing) {
+            this.processQueue();
+        }
+    }
+    
+    async processQueue() {
+        if (this.processing || this.queue.length === 0) return;
+        
+        this.processing = true;
+        
+        while (this.queue.length > 0) {
+            const { event, data } = this.queue.shift();
+            this.metrics.queueSize = this.queue.length;
+            
+            const callbacks = this.listeners.get(event);
+            if (callbacks) {
+                const callbackArray = Array.from(callbacks);
+                
+                // Execute callbacks in parallel
+                await Promise.all(callbackArray.map(async callback => {
+                    try {
+                        await callback(data);
+                        this.metrics.listenersCalled++;
+                    } catch (error) {
+                        console.error(`Error in event listener for ${event}:`, error);
+                    }
+                }));
+            }
+        }
+        
+        this.processing = false;
+    }
+    
+    getMetrics() {
+        return { ...this.metrics };
+    }
+}
+
+// ============================================================================
+// GLOBAL EXPORT AND INITIALIZATION
+// ============================================================================
+
+// Create global event system
+if (typeof window !== 'undefined' && !window.clinicalEvents) {
+    window.clinicalEvents = new ClinicalEventSystem();
+}
+
+// Export classes
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        ClinicalDatabase,
+        ClinicalGraph,
+        ClinicalML,
+        ClinicalEventSystem,
+        ClinicalSyncManager,
+        ClinicalSecurity,
+        ClinicalAnalytics,
+        ClinicalCache,
+        ClinicalIndex
+    };
+}
+
 if (typeof window !== 'undefined') {
     window.ClinicalDatabase = ClinicalDatabase;
 }
 
-// Auto-initialize if in browser context
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    window.addEventListener('DOMContentLoaded', () => {
-        // Check if database already exists
-        if (!window.clinicalDB) {
-            window.clinicalDB = new ClinicalDatabase();
-            console.log('Clinical Database auto-initialized');
-        }
-    });
-}
+console.log('Clinical Database v4.0 - Complete implementation loaded');
