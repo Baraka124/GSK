@@ -1,4 +1,1117 @@
+// ============================================================================
+// CLINICAL GRAPH ENGINE v4.0 - COMPLETE NETWORK ARCHITECTURE
+// ============================================================================
+
+class ClinicalGraphEngine {
+    constructor() {
+        console.log('Initializing Clinical Graph Engine v4.0...');
+        
+        // Core graph data structures
+        this.graph = new Graph();
+        this.layout = new ForceDirectedLayout();
+        this.communityDetector = new CommunityDetector();
+        this.pathFinder = new PathFinder();
+        this.centralityCalculator = new CentralityCalculator();
+        this.patternDetector = new PatternDetector();
+        
+        // Cache and performance
+        this.cache = new GraphCache();
+        this.worker = new GraphWorker();
+        this.batchProcessor = new BatchProcessor();
+        
+        // Visualization state
+        this.visualization = {
+            nodes: new Map(),
+            edges: new Map(),
+            selected: new Set(),
+            highlighted: new Set(),
+            clusters: new Map(),
+            tree: null
+        };
+        
+        // Configuration
+        this.config = {
+            layoutIterations: 100,
+            repulsionStrength: 200,
+            attractionStrength: 0.1,
+            gravity: 0.01,
+            maxDistance: 1000,
+            minDistance: 10,
+            clusterThreshold: 0.7,
+            animationSpeed: 0.1,
+            physicsEnabled: true,
+            autoLayout: true
+        };
+        
+        // Initialize
+        this.setupEventListeners();
+        this.startLayoutEngine();
+    }
+    
+    // ============================================================================
+    // GRAPH DATA STRUCTURES
+    // ============================================================================
+    
+    class Graph {
+        constructor() {
+            this.nodes = new Map();           // nodeId -> Node
+            this.edges = new Map();           // edgeId -> Edge
+            this.adjacency = new Map();       // nodeId -> Set(neighborIds)
+            this.invertedIndex = new Map();   // property -> Set(nodeIds)
+            
+            // Multi-graph support
+            this.multiEdges = new Map();      // (source,target) -> Set(edgeIds)
+            
+            // Tree structure for hierarchical data
+            this.tree = new Tree();
+            
+            // Metrics
+            this.metrics = {
+                density: 0,
+                diameter: 0,
+                avgDegree: 0,
+                clusteringCoefficient: 0,
+                lastCalculated: 0
+            };
+        }
+        
+        // Node operations
+        addNode(node) {
+            const nodeObj = this.createNode(node);
+            this.nodes.set(node.id, nodeObj);
+            this.adjacency.set(node.id, new Set());
+            this.multiEdges.set(node.id, new Map());
+            
+            // Update inverted index
+            this.indexNode(nodeObj);
+            
+            // Update tree
+            if (node.parentId) {
+                this.tree.addNode(node.id, node.parentId);
+            } else {
+                this.tree.addNode(node.id);
+            }
+            
+            this.invalidateMetrics();
+            return nodeObj;
+        }
+        
+        createNode(data) {
+            return {
+                id: data.id || `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                label: data.name || 'Unnamed',
+                type: data.category || 'default',
+                data: data,
+                
+                // Position and visual properties
+                x: Math.random() * 800 - 400,
+                y: Math.random() * 600 - 300,
+                z: 0,
+                size: this.calculateNodeSize(data),
+                color: this.getNodeColor(data),
+                
+                // Network properties
+                degree: 0,
+                centrality: 0,
+                betweenness: 0,
+                closeness: 0,
+                clusterId: -1,
+                
+                // State
+                fixed: false,
+                hidden: false,
+                selected: false,
+                highlighted: false,
+                
+                // Metadata
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                version: 1
+            };
+        }
+        
+        calculateNodeSize(nodeData) {
+            // Size based on severity and connections
+            const baseSize = 20;
+            const severityFactor = (nodeData.severity || 50) / 100;
+            const connectionFactor = Math.log2((nodeData.connections || 0) + 1);
+            
+            return baseSize + (severityFactor * 30) + (connectionFactor * 10);
+        }
+        
+        getNodeColor(nodeData) {
+            const colorMap = {
+                'pulmonary': '#2d6ca2',
+                'inflammatory': '#d64550',
+                'physiological': '#81b29a',
+                'clinical': '#c4906a',
+                'comorbid': '#e39a9c',
+                'behavioral': '#4a7c8c',
+                'pharmacological': '#6a8d73',
+                'radiological': '#7b6ba9',
+                'default': '#9fa8c7'
+            };
+            
+            return colorMap[nodeData.category] || colorMap.default;
+        }
+        
+        indexNode(node) {
+            // Index by category
+            if (!this.invertedIndex.has('category')) {
+                this.invertedIndex.set('category', new Map());
+            }
+            const categoryIndex = this.invertedIndex.get('category');
+            if (!categoryIndex.has(node.data.category)) {
+                categoryIndex.set(node.data.category, new Set());
+            }
+            categoryIndex.get(node.data.category).add(node.id);
+            
+            // Index by severity range
+            if (!this.invertedIndex.has('severity')) {
+                this.invertedIndex.set('severity', new Map());
+            }
+            const severityIndex = this.invertedIndex.get('severity');
+            const severityRange = Math.floor((node.data.severity || 0) / 25) * 25;
+            if (!severityIndex.has(severityRange)) {
+                severityIndex.set(severityRange, new Set());
+            }
+            severityIndex.get(severityRange).add(node.id);
+            
+            // Index by tags/biomarkers
+            const tags = node.data.tags || [];
+            const biomarkers = node.data.biomarkers || [];
+            
+            for (const tag of [...tags, ...biomarkers]) {
+                if (!this.invertedIndex.has(tag)) {
+                    this.invertedIndex.set(tag, new Set());
+                }
+                this.invertedIndex.get(tag).add(node.id);
+            }
+        }
+        
+        // Edge operations
+        addEdge(sourceId, targetId, data = {}) {
+            if (!this.nodes.has(sourceId) || !this.nodes.has(targetId)) {
+                throw new Error('Source or target node not found');
+            }
+            
+            const edgeId = this.generateEdgeId(sourceId, targetId, data.type);
+            const edge = this.createEdge(edgeId, sourceId, targetId, data);
+            
+            this.edges.set(edgeId, edge);
+            
+            // Update adjacency
+            this.adjacency.get(sourceId).add(targetId);
+            this.adjacency.get(targetId).add(sourceId);
+            
+            // Update multi-edges
+            if (!this.multiEdges.get(sourceId).has(targetId)) {
+                this.multiEdges.get(sourceId).set(targetId, new Set());
+            }
+            this.multiEdges.get(sourceId).get(targetId).add(edgeId);
+            
+            if (!this.multiEdges.get(targetId).has(sourceId)) {
+                this.multiEdges.get(targetId).set(sourceId, new Set());
+            }
+            this.multiEdges.get(targetId).get(sourceId).add(edgeId);
+            
+            // Update node degrees
+            this.nodes.get(sourceId).degree++;
+            this.nodes.get(targetId).degree++;
+            
+            this.invalidateMetrics();
+            return edge;
+        }
+        
+        createEdge(id, sourceId, targetId, data) {
+            const strength = data.strength || this.calculateEdgeStrength(
+                this.nodes.get(sourceId).data,
+                this.nodes.get(targetId).data
+            );
+            
+            return {
+                id,
+                source: sourceId,
+                target: targetId,
+                label: data.label || '',
+                type: data.type || 'association',
+                data,
+                
+                // Visual properties
+                strength,
+                width: this.calculateEdgeWidth(strength),
+                color: this.getEdgeColor(strength, data.type),
+                dashes: data.conflicts ? [5, 5] : false,
+                
+                // Direction
+                directed: data.directed || false,
+                arrows: data.arrows || 'to',
+                
+                // State
+                hidden: false,
+                selected: false,
+                highlighted: false,
+                
+                // Metadata
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                version: 1
+            };
+        }
+        
+        generateEdgeId(sourceId, targetId, type = '') {
+            const sorted = [sourceId, targetId].sort();
+            const baseId = `${sorted[0]}-${sorted[1]}`;
+            
+            if (type) {
+                return `${baseId}-${type}`;
+            }
+            
+            // For multiple edges between same nodes
+            const existing = Array.from(this.edges.keys())
+                .filter(id => id.startsWith(baseId))
+                .length;
+            
+            return existing > 0 ? `${baseId}-${existing + 1}` : baseId;
+        }
+        
+        calculateEdgeStrength(sourceData, targetData) {
+            let strength = 50; // Base
+            
+            // Category similarity
+            if (sourceData.category === targetData.category) strength += 20;
+            
+            // Severity correlation
+            const severityDiff = Math.abs((sourceData.severity || 0) - (targetData.severity || 0));
+            if (severityDiff < 10) strength += 15;
+            else if (severityDiff < 25) strength += 8;
+            
+            // Biomarker overlap
+            const biomarkers1 = sourceData.biomarkers || [];
+            const biomarkers2 = targetData.biomarkers || [];
+            const commonBiomarkers = biomarkers1.filter(b => biomarkers2.includes(b));
+            strength += Math.min(20, commonBiomarkers.length * 5);
+            
+            // Treatment similarity
+            if (this.treatmentsSimilar(sourceData.treatment, targetData.treatment)) {
+                strength += 10;
+            }
+            
+            return Math.min(100, Math.max(10, strength));
+        }
+        
+        treatmentsSimilar(treatment1, treatment2) {
+            if (!treatment1 || !treatment2) return false;
+            
+            const t1 = typeof treatment1 === 'string' ? treatment1 : treatment1.firstLine || '';
+            const t2 = typeof treatment2 === 'string' ? treatment2 : treatment2.firstLine || '';
+            
+            const commonTerms = ['ics', 'laba', 'lama', 'corticosteroid', 'bronchodilator'];
+            const t1Lower = t1.toLowerCase();
+            const t2Lower = t2.toLowerCase();
+            
+            return commonTerms.some(term => 
+                t1Lower.includes(term) && t2Lower.includes(term)
+            );
+        }
+        
+        calculateEdgeWidth(strength) {
+            // Width from 1 to 5 based on strength
+            return 1 + (strength / 100) * 4;
+        }
+        
+        getEdgeColor(strength, type) {
+            if (type === 'conflict') return '#d64550';
+            if (type === 'enhancement') return '#81b29a';
+            if (type === 'required') return '#f2cc8f';
+            
+            // Gradient from blue (weak) to red (strong)
+            if (strength >= 80) return '#d64550'; // Red
+            if (strength >= 65) return '#e07a5f'; // Orange
+            if (strength >= 50) return '#f2cc8f'; // Yellow
+            return '#2d6ca2'; // Blue
+        }
+        
+        // Graph algorithms
+        findShortestPath(startId, endId, algorithm = 'dijkstra') {
+            switch (algorithm) {
+                case 'dijkstra':
+                    return this.dijkstra(startId, endId);
+                case 'astar':
+                    return this.aStar(startId, endId);
+                case 'bfs':
+                    return this.bfsShortestPath(startId, endId);
+                default:
+                    return this.dijkstra(startId, endId);
+            }
+        }
+        
+        dijkstra(startId, endId) {
+            const distances = new Map();
+            const previous = new Map();
+            const unvisited = new Set();
+            
+            // Initialize
+            for (const nodeId of this.nodes.keys()) {
+                distances.set(nodeId, Infinity);
+                previous.set(nodeId, null);
+                unvisited.add(nodeId);
+            }
+            distances.set(startId, 0);
+            
+            while (unvisited.size > 0) {
+                // Get node with smallest distance
+                let current = null;
+                let smallestDistance = Infinity;
+                
+                for (const nodeId of unvisited) {
+                    if (distances.get(nodeId) < smallestDistance) {
+                        smallestDistance = distances.get(nodeId);
+                        current = nodeId;
+                    }
+                }
+                
+                if (current === null || current === endId) break;
+                unvisited.delete(current);
+                
+                // Update distances to neighbors
+                for (const neighbor of this.adjacency.get(current)) {
+                    if (unvisited.has(neighbor)) {
+                        // Weight based on inverse strength (stronger connection = shorter distance)
+                        const edgeId = this.findEdgeId(current, neighbor);
                         const edge = this.edges.get(edgeId);
+                        const weight = edge ? 100 - edge.strength : 50;
+                        
+                        const alt = distances.get(current) + weight;
+                        if (alt < distances.get(neighbor)) {
+                            distances.set(neighbor, alt);
+                            previous.set(neighbor, current);
+                        }
+                    }
+                }
+            }
+            
+            // Reconstruct path
+            const path = [];
+            let current = endId;
+            
+            while (current !== null) {
+                path.unshift(current);
+                current = previous.get(current);
+            }
+            
+            if (path.length === 1 && path[0] !== startId) {
+                return null; // No path found
+            }
+            
+            return {
+                path,
+                distance: distances.get(endId),
+                steps: path.length - 1,
+                edges: this.getEdgesFromPath(path)
+            };
+        }
+        
+        aStar(startId, endId) {
+            // Heuristic function (Euclidean distance between nodes)
+            const heuristic = (nodeId1, nodeId2) => {
+                const node1 = this.nodes.get(nodeId1);
+                const node2 = this.nodes.get(nodeId2);
+                const dx = node1.x - node2.x;
+                const dy = node1.y - node2.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            };
+            
+            const openSet = new Set([startId]);
+            const cameFrom = new Map();
+            
+            const gScore = new Map(); // Cost from start to node
+            const fScore = new Map(); // Estimated total cost
+            
+            for (const nodeId of this.nodes.keys()) {
+                gScore.set(nodeId, Infinity);
+                fScore.set(nodeId, Infinity);
+            }
+            
+            gScore.set(startId, 0);
+            fScore.set(startId, heuristic(startId, endId));
+            
+            while (openSet.size > 0) {
+                // Get node with lowest fScore
+                let current = null;
+                let lowestFScore = Infinity;
+                
+                for (const nodeId of openSet) {
+                    if (fScore.get(nodeId) < lowestFScore) {
+                        lowestFScore = fScore.get(nodeId);
+                        current = nodeId;
+                    }
+                }
+                
+                if (current === endId) {
+                    // Reconstruct path
+                    const path = [current];
+                    while (cameFrom.has(current)) {
+                        current = cameFrom.get(current);
+                        path.unshift(current);
+                    }
+                    
+                    return {
+                        path,
+                        distance: gScore.get(endId),
+                        steps: path.length - 1,
+                        edges: this.getEdgesFromPath(path)
+                    };
+                }
+                
+                openSet.delete(current);
+                
+                for (const neighbor of this.adjacency.get(current)) {
+                    // Edge weight
+                    const edgeId = this.findEdgeId(current, neighbor);
+                    const edge = this.edges.get(edgeId);
+                    const weight = edge ? 100 - edge.strength : 50;
+                    
+                    const tentativeGScore = gScore.get(current) + weight;
+                    
+                    if (tentativeGScore < gScore.get(neighbor)) {
+                        cameFrom.set(neighbor, current);
+                        gScore.set(neighbor, tentativeGScore);
+                        fScore.set(neighbor, tentativeGScore + heuristic(neighbor, endId));
+                        
+                        if (!openSet.has(neighbor)) {
+                            openSet.add(neighbor);
+                        }
+                    }
+                }
+            }
+            
+            return null; // No path found
+        }
+        
+        bfsShortestPath(startId, endId) {
+            const queue = [{ node: startId, path: [startId] }];
+            const visited = new Set([startId]);
+            
+            while (queue.length > 0) {
+                const { node, path } = queue.shift();
+                
+                if (node === endId) {
+                    return {
+                        path,
+                        distance: path.length - 1,
+                        steps: path.length - 1,
+                        edges: this.getEdgesFromPath(path)
+                    };
+                }
+                
+                for (const neighbor of this.adjacency.get(node)) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push({
+                            node: neighbor,
+                            path: [...path, neighbor]
+                        });
+                    }
+                }
+            }
+            
+            return null; // No path found
+        }
+        
+        findEdgeId(sourceId, targetId) {
+            const edges = this.multiEdges.get(sourceId)?.get(targetId);
+            if (edges && edges.size > 0) {
+                return Array.from(edges)[0];
+            }
+            return null;
+        }
+        
+        getEdgesFromPath(path) {
+            const edges = [];
+            for (let i = 0; i < path.length - 1; i++) {
+                const edgeId = this.findEdgeId(path[i], path[i + 1]);
+                if (edgeId) {
+                    edges.push(this.edges.get(edgeId));
+                }
+            }
+            return edges;
+        }
+        
+        // Community detection
+        detectCommunities(method = 'louvain') {
+            switch (method) {
+                case 'louvain':
+                    return this.louvainCommunityDetection();
+                case 'girvan_newman':
+                    return this.girvanNewmanCommunityDetection();
+                case 'label_propagation':
+                    return this.labelPropagationCommunityDetection();
+                case 'spectral':
+                    return this.spectralClustering();
+                default:
+                    return this.louvainCommunityDetection();
+            }
+        }
+        
+        louvainCommunityDetection() {
+            // Initialize each node in its own community
+            const communities = new Map();
+            let communityId = 0;
+            
+            for (const nodeId of this.nodes.keys()) {
+                communities.set(nodeId, communityId++);
+            }
+            
+            let improved = true;
+            let iterations = 0;
+            
+            while (improved && iterations < 10) {
+                improved = false;
+                
+                // Phase 1: Local moving of nodes
+                const nodes = Array.from(this.nodes.keys());
+                this.shuffleArray(nodes);
+                
+                for (const nodeId of nodes) {
+                    const bestCommunity = this.findBestCommunityLouvain(nodeId, communities);
+                    if (bestCommunity !== communities.get(nodeId)) {
+                        communities.set(nodeId, bestCommunity);
+                        improved = true;
+                    }
+                }
+                
+                // Phase 2: Aggregation
+                if (improved) {
+                    const aggregated = this.aggregateCommunities(communities);
+                    // Re-run with aggregated graph
+                    // (Simplified - in full implementation would rebuild graph)
+                }
+                
+                iterations++;
+            }
+            
+            // Update nodes with community assignments
+            for (const [nodeId, community] of communities) {
+                const node = this.nodes.get(nodeId);
+                if (node) {
+                    node.clusterId = community;
+                }
+            }
+            
+            return communities;
+        }
+        
+        findBestCommunityLouvain(nodeId, communities) {
+            const currentCommunity = communities.get(nodeId);
+            let bestCommunity = currentCommunity;
+            let bestModularityGain = 0;
+            
+            // Calculate modularity gain for each neighboring community
+            const neighborCommunities = new Set();
+            for (const neighbor of this.adjacency.get(nodeId)) {
+                neighborCommunities.add(communities.get(neighbor));
+            }
+            
+            for (const community of neighborCommunities) {
+                if (community !== currentCommunity) {
+                    const gain = this.calculateModularityGain(nodeId, currentCommunity, community, communities);
+                    if (gain > bestModularityGain) {
+                        bestModularityGain = gain;
+                        bestCommunity = community;
+                    }
+                }
+            }
+            
+            return bestModularityGain > 0 ? bestCommunity : currentCommunity;
+        }
+        
+        calculateModularityGain(nodeId, oldCommunity, newCommunity, communities) {
+            // Simplified modularity gain calculation
+            const edgesInOld = this.countEdgesToCommunity(nodeId, oldCommunity, communities);
+            const edgesInNew = this.countEdgesToCommunity(nodeId, newCommunity, communities);
+            const degree = this.adjacency.get(nodeId).size;
+            const totalEdges = this.edges.size;
+            
+            // ΔQ = [Σ_in + 2k_i,in / 2m - (Σ_tot + k_i / 2m)^2] - [Σ_in / 2m - (Σ_tot / 2m)^2 - (k_i / 2m)^2]
+            // Simplified version:
+            return (edgesInNew - edgesInOld) / (2 * totalEdges) - 
+                   (degree * degree) / (4 * totalEdges * totalEdges);
+        }
+        
+        countEdgesToCommunity(nodeId, community, communities) {
+            let count = 0;
+            for (const neighbor of this.adjacency.get(nodeId)) {
+                if (communities.get(neighbor) === community) {
+                    count++;
+                }
+            }
+            return count;
+        }
+        
+        aggregateCommunities(communities) {
+            // Group nodes by community
+            const communityGroups = new Map();
+            for (const [nodeId, community] of communities) {
+                if (!communityGroups.has(community)) {
+                    communityGroups.set(community, []);
+                }
+                communityGroups.get(community).push(nodeId);
+            }
+            
+            // Create aggregated graph
+            const aggregated = {
+                nodes: new Map(),
+                edges: new Map(),
+                adjacency: new Map()
+            };
+            
+            // Add community nodes
+            for (const [communityId, nodes] of communityGroups) {
+                aggregated.nodes.set(communityId, {
+                    id: communityId,
+                    size: nodes.length,
+                    internalEdges: this.countInternalEdges(nodes)
+                });
+                aggregated.adjacency.set(communityId, new Set());
+            }
+            
+            // Add edges between communities
+            for (const edge of this.edges.values()) {
+                const sourceCommunity = communities.get(edge.source);
+                const targetCommunity = communities.get(edge.target);
+                
+                if (sourceCommunity !== targetCommunity) {
+                    const edgeId = `${sourceCommunity}-${targetCommunity}`;
+                    
+                    if (!aggregated.edges.has(edgeId)) {
+                        aggregated.edges.set(edgeId, {
+                            id: edgeId,
+                            source: sourceCommunity,
+                            target: targetCommunity,
+                            weight: 0
+                        });
+                        aggregated.adjacency.get(sourceCommunity).add(targetCommunity);
+                        aggregated.adjacency.get(targetCommunity).add(sourceCommunity);
+                    }
+                    
+                    aggregated.edges.get(edgeId).weight += edge.strength;
+                }
+            }
+            
+            return aggregated;
+        }
+        
+        countInternalEdges(nodes) {
+            let count = 0;
+            const nodeSet = new Set(nodes);
+            
+            for (const edge of this.edges.values()) {
+                if (nodeSet.has(edge.source) && nodeSet.has(edge.target)) {
+                    count++;
+                }
+            }
+            
+            return count;
+        }
+        
+        girvanNewmanCommunityDetection() {
+            // Calculate edge betweenness
+            const edgeBetweenness = this.calculateEdgeBetweenness();
+            
+            // Sort edges by betweenness
+            const sortedEdges = Array.from(edgeBetweenness.entries())
+                .sort((a, b) => b[1] - a[1]);
+            
+            // Remove edges and detect communities
+            const communities = [];
+            const tempGraph = this.clone();
+            
+            for (const [edgeId, betweenness] of sortedEdges) {
+                // Remove edge
+                const edge = tempGraph.edges.get(edgeId);
+                if (edge) {
+                    tempGraph.removeEdge(edgeId);
+                    
+                    // Check if removal created new components
+                    const components = tempGraph.findConnectedComponents();
+                    if (components.length > communities.length) {
+                        communities.push(...components);
+                    }
+                }
+            }
+            
+            return communities;
+        }
+        
+        calculateEdgeBetweenness() {
+            const edgeBetweenness = new Map();
+            
+            for (const edge of this.edges.values()) {
+                edgeBetweenness.set(edge.id, 0);
+            }
+            
+            for (const startId of this.nodes.keys()) {
+                const { distances, predecessors, sigma } = this.brandesBFS(startId);
+                const delta = this.brandesAccumulation(startId, distances, predecessors, sigma);
+                
+                // Accumulate edge betweenness
+                for (const [edgeId, value] of delta) {
+                    edgeBetweenness.set(edgeId, (edgeBetweenness.get(edgeId) || 0) + value);
+                }
+            }
+            
+            // Normalize for undirected graph
+            for (const [edgeId, value] of edgeBetweenness) {
+                edgeBetweenness.set(edgeId, value / 2);
+            }
+            
+            return edgeBetweenness;
+        }
+        
+        brandesBFS(startId) {
+            const distances = new Map();
+            const predecessors = new Map();
+            const sigma = new Map();
+            const queue = [startId];
+            
+            // Initialize
+            for (const nodeId of this.nodes.keys()) {
+                distances.set(nodeId, -1);
+                predecessors.set(nodeId, []);
+                sigma.set(nodeId, 0);
+            }
+            
+            distances.set(startId, 0);
+            sigma.set(startId, 1);
+            
+            const stack = [];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                stack.push(current);
+                
+                for (const neighbor of this.adjacency.get(current)) {
+                    if (distances.get(neighbor) < 0) {
+                        queue.push(neighbor);
+                        distances.set(neighbor, distances.get(current) + 1);
+                    }
+                    
+                    if (distances.get(neighbor) === distances.get(current) + 1) {
+                        sigma.set(neighbor, sigma.get(neighbor) + sigma.get(current));
+                        predecessors.get(neighbor).push(current);
+                    }
+                }
+            }
+            
+            return { distances, predecessors, sigma, stack };
+        }
+        
+        brandesAccumulation(startId, distances, predecessors, sigma) {
+            const delta = new Map();
+            const dependency = new Map();
+            
+            // Initialize
+            for (const nodeId of this.nodes.keys()) {
+                delta.set(nodeId, 0);
+                dependency.set(nodeId, 0);
+            }
+            
+            // Process in reverse order
+            const stack = Array.from(this.nodes.keys()).reverse();
+            
+            for (const node of stack) {
+                for (const predecessor of predecessors.get(node)) {
+                    const edgeId = this.findEdgeId(predecessor, node);
+                    if (edgeId) {
+                        const coeff = (sigma.get(predecessor) / sigma.get(node)) * 
+                                    (1 + dependency.get(node));
+                        dependency.set(predecessor, dependency.get(predecessor) + coeff);
+                        delta.set(edgeId, (delta.get(edgeId) || 0) + coeff);
+                    }
+                }
+                
+                if (node !== startId) {
+                    delta.set(node, delta.get(node) + dependency.get(node));
+                }
+            }
+            
+            return delta;
+        }
+        
+        labelPropagationCommunityDetection() {
+            // Initialize each node with unique label
+            const labels = new Map();
+            let labelId = 0;
+            
+            for (const nodeId of this.nodes.keys()) {
+                labels.set(nodeId, labelId++);
+            }
+            
+            let changed = true;
+            let iterations = 0;
+            
+            while (changed && iterations < 100) {
+                changed = false;
+                const nodes = Array.from(this.nodes.keys());
+                this.shuffleArray(nodes);
+                
+                for (const nodeId of nodes) {
+                    // Count neighbor labels
+                    const neighborLabels = new Map();
+                    for (const neighbor of this.adjacency.get(nodeId)) {
+                        const label = labels.get(neighbor);
+                        neighborLabels.set(label, (neighborLabels.get(label) || 0) + 1);
+                    }
+                    
+                    // Find most frequent label
+                    let maxCount = 0;
+                    let bestLabel = labels.get(nodeId);
+                    
+                    for (const [label, count] of neighborLabels) {
+                        if (count > maxCount || (count === maxCount && Math.random() > 0.5)) {
+                            maxCount = count;
+                            bestLabel = label;
+                        }
+                    }
+                    
+                    if (bestLabel !== labels.get(nodeId)) {
+                        labels.set(nodeId, bestLabel);
+                        changed = true;
+                    }
+                }
+                
+                iterations++;
+            }
+            
+            return labels;
+        }
+        
+        spectralClustering(k = 3) {
+            // Build adjacency matrix
+            const nodeIds = Array.from(this.nodes.keys());
+            const n = nodeIds.size;
+            const indexMap = new Map();
+            
+            nodeIds.forEach((id, i) => indexMap.set(id, i));
+            
+            // Create adjacency and degree matrices
+            const A = Array(n).fill().map(() => Array(n).fill(0));
+            const D = Array(n).fill().map(() => Array(n).fill(0));
+            
+            for (const edge of this.edges.values()) {
+                const i = indexMap.get(edge.source);
+                const j = indexMap.get(edge.target);
+                const weight = edge.strength / 100; // Normalize to 0-1
+                
+                A[i][j] = weight;
+                A[j][i] = weight;
+            }
+            
+            // Calculate degree matrix
+            for (let i = 0; i < n; i++) {
+                let degree = 0;
+                for (let j = 0; j < n; j++) {
+                    degree += A[i][j];
+                }
+                D[i][i] = degree;
+            }
+            
+            // Calculate Laplacian: L = D - A
+            const L = Array(n).fill().map(() => Array(n).fill(0));
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    L[i][j] = D[i][j] - A[i][j];
+                }
+            }
+            
+            // Simplified: Use k-means on node positions
+            // In full implementation, would calculate eigenvectors
+            
+            const positions = nodeIds.map(id => {
+                const node = this.nodes.get(id);
+                return [node.x, node.y];
+            });
+            
+            // Run k-means on positions
+            const clusters = this.kMeans(positions, k);
+            
+            // Map back to node IDs
+            const result = new Map();
+            nodeIds.forEach((id, i) => {
+                result.set(id, clusters[i]);
+            });
+            
+            return result;
+        }
+        
+        kMeans(points, k, maxIterations = 100) {
+            const n = points.length;
+            if (n === 0) return [];
+            
+            // Initialize centroids randomly
+            let centroids = [];
+            for (let i = 0; i < k; i++) {
+                centroids.push(points[Math.floor(Math.random() * n)]);
+            }
+            
+            let assignments = new Array(n).fill(-1);
+            let changed = true;
+            let iterations = 0;
+            
+            while (changed && iterations < maxIterations) {
+                changed = false;
+                
+                // Assign points to nearest centroid
+                for (let i = 0; i < n; i++) {
+                    let minDist = Infinity;
+                    let bestCluster = -1;
+                    
+                    for (let j = 0; j < k; j++) {
+                        const dist = this.euclideanDistance(points[i], centroids[j]);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            bestCluster = j;
+                        }
+                    }
+                    
+                    if (assignments[i] !== bestCluster) {
+                        assignments[i] = bestCluster;
+                        changed = true;
+                    }
+                }
+                
+                // Update centroids
+                const newCentroids = Array(k).fill().map(() => [0, 0]);
+                const counts = new Array(k).fill(0);
+                
+                for (let i = 0; i < n; i++) {
+                    const cluster = assignments[i];
+                    newCentroids[cluster][0] += points[i][0];
+                    newCentroids[cluster][1] += points[i][1];
+                    counts[cluster]++;
+                }
+                
+                for (let j = 0; j < k; j++) {
+                    if (counts[j] > 0) {
+                        centroids[j] = [
+                            newCentroids[j][0] / counts[j],
+                            newCentroids[j][1] / counts[j]
+                        ];
+                    }
+                }
+                
+                iterations++;
+            }
+            
+            return assignments;
+        }
+        
+        euclideanDistance(a, b) {
+            const dx = a[0] - b[0];
+            const dy = a[1] - b[1];
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+        
+        // Centrality calculations
+        calculateCentralities() {
+            return {
+                degree: this.calculateDegreeCentrality(),
+                betweenness: this.calculateBetweennessCentrality(),
+                closeness: this.calculateClosenessCentrality(),
+                eigenvector: this.calculateEigenvectorCentrality(),
+                pagerank: this.calculatePageRank()
+            };
+        }
+        
+        calculateDegreeCentrality() {
+            const centrality = new Map();
+            const n = this.nodes.size;
+            
+            for (const [nodeId, node] of this.nodes) {
+                centrality.set(nodeId, {
+                    degree: node.degree,
+                    normalized: node.degree / (n - 1)
+                });
+            }
+            
+            return centrality;
+        }
+        
+        calculateBetweennessCentrality() {
+            const centrality = new Map();
+            
+            for (const nodeId of this.nodes.keys()) {
+                centrality.set(nodeId, 0);
+            }
+            
+            for (const startId of this.nodes.keys()) {
+                const { distances, predecessors, sigma, stack } = this.brandesBFS(startId);
+                const delta = this.brandesAccumulation(startId, distances, predecessors, sigma);
+                
+                for (const [nodeId, value] of delta) {
+                    if (this.nodes.has(nodeId)) {
+                        centrality.set(nodeId, centrality.get(nodeId) + value);
+                    }
+                }
+            }
+            
+            // Normalize
+            const n = this.nodes.size;
+            const factor = 2 / ((n - 1) * (n - 2));
+            
+            for (const [nodeId, value] of centrality) {
+                centrality.set(nodeId, value * factor);
+            }
+            
+            return centrality;
+        }
+        
+        calculateClosenessCentrality() {
+            const centrality = new Map();
+            const n = this.nodes.size;
+            
+            for (const startId of this.nodes.keys()) {
+                let totalDistance = 0;
+                let reachable = 0;
+                
+                const distances = this.calculateDistancesFrom(startId);
+                
+                for (const distance of distances.values()) {
+                    if (distance > 0 && distance < Infinity) {
+                        totalDistance += distance;
+                        reachable++;
+                    }
+                }
+                
+                if (reachable > 0) {
+                    centrality.set(startId, reachable / totalDistance);
+                } else {
+                    centrality.set(startId, 0);
+                }
+            }
+            
+            return centrality;
+        }
+        
+        calculateDistancesFrom(startId) {
+            const distances = new Map();
+            const queue = [{ node: startId, distance: 0 }];
+            const visited = new Set([startId]);
+            
+            for (const nodeId of this.nodes.keys()) {
+                distances.set(nodeId, Infinity);
+            }
+            distances.set(startId, 0);
+            
+            while (queue.length > 0) {
+                const { node, distance } = queue.shift();
+                
+                for (const neighbor of this.adjacency.get(node)) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        const edgeId = this.findEdgeId(node, neighbor);
+                                              const edge = this.edges.get(edgeId);
                         const weight = edge ? 100 - edge.strength : 50;
                         
                         const newDistance = distance + weight;
@@ -2428,3 +3541,4 @@ if (typeof window !== 'undefined') {
 }
 
 console.log('Clinical Graph Engine v4.0 - Complete network architecture loaded');
+                      
