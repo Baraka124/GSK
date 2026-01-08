@@ -3232,15 +3232,22 @@ $('#btnLaunchAvatar').click(function() {
         
         // ====== PATIENT MANAGEMENT ======
         function showPatientProfile(patientId) {
-            const patient = AppState.patients.find(p => p.id === patientId);
-            if (!patient) return;
-            
-            AppState.currentPatient = patient;
-            
-            $('#patientProfile').show();
-            $('#patientName').text(patient.name);
-            $('#patientAge').text(`${patient.age} years`);
-            $('#patientDisease').text(patient.disease);
+    // CHANGE THIS LINE: === to ==
+    const patient = AppState.patients.find(p => p.id == patientId);
+    
+    if (!patient) {
+        console.error('Patient not found:', patientId);
+        $('#patientProfile').html('<div style="padding: 20px; color: #ef476f;">Patient not found</div>');
+        return;
+    }
+    
+    AppState.currentPatient = patient;
+    
+    $('#patientProfile').show();
+    $('#patientName').text(patient.name);
+    $('#patientAge').text(`${patient.age} years`);
+    $('#patientDisease').text(patient.disease);
+    
             
             // Create trait value sliders
             const traitsHtml = AppState.currentTraits.map(trait => `
@@ -3955,8 +3962,39 @@ $('#btnLaunchAvatar').click(function() {
             }
         }
         // In showPatientProfile function, add this button:
-function showPatientProfile(patientId) {
-    // ... existing code ...
+   function showPatientProfile(patientId) {
+    // CHANGE === to ==
+    const patient = AppState.patients.find(p => p.id == patientId);
+    
+    if (!patient) {
+        console.error('Patient not found:', patientId);
+        $('#patientProfile').html('<div style="padding: 20px; color: #ef476f;">Patient not found</div>');
+        return;
+    }
+    
+    AppState.currentPatient = patient;
+    
+    $('#patientProfile').show();
+    // KEEP THIS LINE EXACTLY AS IS:
+    $('#patientName').text(`${patient.name} (${patient.age}, ${patient.disease})`);
+            
+            // Create trait value sliders
+            const traitsHtml = AppState.currentTraits.map(trait => `
+                <div class="trait-slider">
+                    <div class="trait-name">${trait.trait_name}</div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="slider" 
+                               data-trait-id="${trait.id}" oninput="updateTraitValue(this, ${trait.id})">
+                        <span class="slider-value">5</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            $('#patientTraits').html(traitsHtml);
+            
+            // Generate treatment recommendations
+            generateTreatmentRecommendations();
+        }
     
     // Add to patient header
     $('#patientProfile').html(`
