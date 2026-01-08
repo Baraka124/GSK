@@ -5,8 +5,6 @@
 // Analytics, Guidelines Integration, and Conflict Detection
 // ============================================================================
 
-'use strict';
-
 class ClinicalDatabase {
     constructor() {
         console.log('Initializing Clinical Database v3.0...');
