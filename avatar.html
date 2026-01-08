@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Airway Avatar | Digital Twin</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .avatar-header {
+            padding: 20px;
+            background: rgba(30, 41, 59, 0.8);
+            border-bottom: 1px solid #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .avatar-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .patient-info {
+            background: rgba(51, 65, 85, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #60a5fa;
+        }
+        
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+        
+        .anatomy-view {
+            flex: 3;
+            position: relative;
+            background: #0f172a;
+        }
+        
+        #avatarCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .control-panel {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.9);
+            border-left: 1px solid #475569;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .trait-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .trait-badge:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.5);
+        }
+        
+        .inflammatory { background: #dc2626; color: white; }
+        .physiological { background: #059669; color: white; }
+        .behavioral { background: #d97706; color: white; }
+        .comorbid { background: #2563eb; color: white; }
+        .environmental { background: #7c3aed; color: white; }
+        
+        .simulation-controls {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(51, 65, 85, 0.4);
+            border-radius: 10px;
+        }
+        
+        .btn-avatar {
+            padding: 12px 24px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        
+        .btn-avatar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="avatar-header">
+        <div>
+            <h1 class="avatar-title">🫁 Airway Avatar</h1>
+            <div style="font-size: 14px; color: #cbd5e1; margin-top: 5px;">
+                Digital Twin for Personalized Respiratory Care
+            </div>
+        </div>
+        <div class="patient-info" id="patientInfo">
+            Loading patient data...
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="anatomy-view">
+            <canvas id="avatarCanvas"></canvas>
+            <div id="loadingOverlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🫁</div>
+                <div style="font-size: 18px; color: #cbd5e1;">Building Airway Avatar...</div>
+                <div style="font-size: 14px; color: #94a3b8; margin-top: 10px;" id="loadingStatus">Initializing</div>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <h3 style="margin-bottom: 15px; color: #e2e8f0;">Active Traits</h3>
+            <div id="traitContainer"></div>
+            
+            <div class="simulation-controls">
+                <h3 style="margin-bottom: 15px; color: #e2e8f0;">Simulation</h3>
+                <button class="btn-avatar" onclick="simulateTreatment('ICS')">
+                    💨 Simulate ICS Treatment
+                </button>
+                <button class="btn-avatar" onclick="simulateTreatment('Biologic')">
+                    🧬 Simulate Biologic
+                </button>
+                <button class="btn-avatar" onclick="compareToPopulation()">
+                    📊 Compare to Population
+                </button>
+                <button class="btn-avatar" onclick="predictFlareRisk()">
+                    ⚠️ Predict Flare Risk
+                </button>
+            </div>
+            
+            <div style="margin-top: 30px; font-size: 12px; color: #94a3b8;">
+                <div>🔄 Real-time synchronization with main platform</div>
+                <div>📈 Predictive analytics based on trait patterns</div>
+                <div>🎯 Personalized treatment simulation</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ====== CONFIGURATION ======
+        const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_';
+        
+        // ====== STATE ======
+        const AvatarState = {
+            supabase: null,
+            patient: null,
+            disease: null,
+            traits: [],
+            treatments: [],
+            scene: null,
+            camera: null,
+            renderer: null,
+            anatomy: {}
+        };
+        
+        // ====== INITIALIZATION ======
+        $(document).ready(async function() {
+            console.log('🚀 Airway Avatar Initializing...');
+            
+            // 1. Initialize Supabase
+            AvatarState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            
+            // 2. Get patient/disease from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const patientId = urlParams.get('patient');
+            const diseaseId = urlParams.get('disease');
+            const sessionId = urlParams.get('session') || new Date().toISOString().split('T')[0];
+            
+            // 3. Load data
+            await loadPatientData(patientId);
+            await loadDiseaseData(diseaseId);
+            await loadTraits(diseaseId);
+            
+            // 4. Initialize 3D visualization
+            initAnatomyView();
+            
+            // 5. Update UI
+            updatePatientInfo();
+            renderTraits();
+            
+            console.log('✅ Airway Avatar Ready');
+            $('#loadingOverlay').hide();
+        });
+        
+        // ====== DATA LOADING ======
+        async function loadPatientData(patientId) {
+            if (!patientId) {
+                // Demo mode - create virtual patient
+                AvatarState.patient = {
+                    id: 'demo',
+                    name: 'Demo Patient',
+                    age: 58,
+                    gender: 'Male',
+                    disease: 'Asthma'
+                };
+                return;
+            }
+            
+            try {
+                const { data, error } = await AvatarState.supabase
+                    .from('patients')
+                    .select('*')
+                    .eq('id', patientId)
+                    .single();
+                    
+                if (!error && data) {
+                    AvatarState.patient = data;
+                }
+            } catch (error) {
+                console.error('Error loading patient:', error);
+            }
+        }
+        
+        async function loadDiseaseData(diseaseId) {
+            if (!diseaseId) {
+                AvatarState.disease = { id: 1, disease_name: 'Asthma' };
+                return;
+            }
+            
+            try {
+                const { data, error } = await AvatarState.supabase
+                    .from('diseases')
+                    .select('*')
+                    .eq('id', diseaseId)
+                    .single();
+                    
+                if (!error && data) {
+                    AvatarState.disease = data;
+                }
+            } catch (error) {
+                console.error('Error loading disease:', error);
+            }
+        }
+        
+        async function loadTraits(diseaseId) {
+            // Load traits for this disease
+            try {
+                const { data, error } = await AvatarState.supabase
+                    .from('disease_traits')
+                    .select(`
+                        treatable_traits(*)
+                    `)
+                    .eq('disease_id', diseaseId);
+                    
+                if (!error && data) {
+                    AvatarState.traits = data.map(dt => dt.treatable_traits);
+                }
+            } catch (error) {
+                console.error('Error loading traits:', error);
+            }
+        }
+        
+        // ====== 3D VISUALIZATION ======
+        function initAnatomyView() {
+            // Simplified anatomy visualization
+            const canvas = document.getElementById('avatarCanvas');
+            AvatarState.renderer = new THREE.WebGLRenderer({ 
+                canvas, 
+                antialias: true,
+                alpha: true 
+            });
+            AvatarState.renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+            
+            AvatarState.scene = new THREE.Scene();
+            AvatarState.camera = new THREE.PerspectiveCamera(75, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 1000);
+            AvatarState.camera.position.z = 5;
+            
+            // Add basic airway anatomy
+            createAnatomy();
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                AvatarState.renderer.render(AvatarState.scene, AvatarState.camera);
+            }
+            animate();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                AvatarState.renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+                AvatarState.camera.aspect = canvas.parentElement.clientWidth / canvas.parentElement.clientHeight;
+                AvatarState.camera.updateProjectionMatrix();
+            });
+        }
+        
+        function createAnatomy() {
+            // Create simplified airway model
+            const trachea = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.3, 0.25, 2, 8),
+                new THREE.MeshPhongMaterial({ color: 0x4f46e5, transparent: true, opacity: 0.8 })
+            );
+            trachea.position.y = 0.5;
+            AvatarState.scene.add(trachea);
+            AvatarState.anatomy.trachea = trachea;
+            
+            // Bronchi
+            const leftBronchus = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.12, 1.5, 6),
+                new THREE.MeshPhongMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.7 })
+            );
+            leftBronchus.position.set(-0.4, -0.5, 0);
+            leftBronchus.rotation.z = Math.PI / 6;
+            AvatarState.scene.add(leftBronchus);
+            
+            const rightBronchus = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.15, 0.12, 1.5, 6),
+                new THREE.MeshPhongMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.7 })
+            );
+            rightBronchus.position.set(0.4, -0.5, 0);
+            rightBronchus.rotation.z = -Math.PI / 6;
+            AvatarState.scene.add(rightBronchus);
+            
+            // Alveoli clusters (simplified)
+            for (let i = 0; i < 5; i++) {
+                const alveolus = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.08, 8, 6),
+                    new THREE.MeshPhongMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.6 })
+                );
+                alveolus.position.set(
+                    (Math.random() - 0.5) * 1.5,
+                    -1 + Math.random() * 0.5,
+                    (Math.random() - 0.5) * 0.5
+                );
+                AvatarState.scene.add(alveolus);
+            }
+            
+            // Lighting
+            const light = new THREE.DirectionalLight(0xffffff, 1);
+            light.position.set(5, 5, 5);
+            AvatarState.scene.add(light);
+            
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            AvatarState.scene.add(ambientLight);
+        }
+        
+        // ====== UI UPDATES ======
+        function updatePatientInfo() {
+            const patient = AvatarState.patient;
+            const disease = AvatarState.disease;
+            
+            $('#patientInfo').html(`
+                <div style="font-weight: 600; color: #e2e8f0;">${patient?.name || 'Demo Patient'}</div>
+                <div style="font-size: 12px; color: #cbd5e1;">
+                    ${patient?.age || '58'} yrs • ${disease?.disease_name || 'Asthma'}
+                </div>
+                <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
+                    Avatar ID: ${AvatarState.patient?.id || 'demo'} | ${new Date().toLocaleDateString()}
+                </div>
+            `);
+        }
+        
+        function renderTraits() {
+            const container = $('#traitContainer');
+            container.empty();
+            
+            AvatarState.traits.forEach(trait => {
+                const badge = $(`
+                    <div class="trait-badge ${trait.category.toLowerCase()}" 
+                         data-trait-id="${trait.id}"
+                         onclick="highlightAnatomy('${trait.id}')">
+                        ${trait.trait_name}
+                        <div style="font-size: 10px; opacity: 0.9;">${trait.category}</div>
+                    </div>
+                `);
+                container.append(badge);
+            });
+        }
+        
+        // ====== SIMULATION FUNCTIONS ======
+        function simulateTreatment(treatmentType) {
+            // Visualize treatment effect on anatomy
+            if (AvatarState.anatomy.trachea) {
+                // Example: Reduce inflammation (reddening)
+                AvatarState.anatomy.trachea.material.color.setHex(
+                    treatmentType === 'ICS' ? 0x3b82f6 : 0x10b981
+                );
+                
+                // Show effect
+                showNotification(`${treatmentType} simulation activated`, 'success');
+            }
+        }
+        
+        function compareToPopulation() {
+            showNotification('Comparing to population database...', 'info');
+            // In full version: Fetch population data, show percentiles
+        }
+        
+        function predictFlareRisk() {
+            // Simple risk calculation based on trait count
+            const riskLevel = AvatarState.traits.length > 5 ? 'HIGH' : 'MODERATE';
+            showNotification(`Predicted flare risk: ${riskLevel}`, 'warning');
+        }
+        
+        function highlightAnatomy(traitId) {
+            // Highlight relevant anatomy part
+            const trait = AvatarState.traits.find(t => t.id == traitId);
+            if (!trait) return;
+            
+            // Map trait to anatomy (simplified)
+            const anatomyMap = {
+                'inflammatory': AvatarState.anatomy.trachea,
+                'physiological': AvatarState.anatomy.trachea // etc.
+            };
+            
+            const part = anatomyMap[trait.category.toLowerCase()];
+            if (part) {
+                part.material.emissive.setHex(0xffaa00);
+                setTimeout(() => part.material.emissive.setHex(0x000000), 1000);
+            }
+            
+            showNotification(`Highlighting: ${trait.trait_name}`, 'info');
+        }
+        
+        function showNotification(message, type) {
+            // Simple notification
+            const colors = {
+                'success': '#10b981',
+                'info': '#3b82f6', 
+                'warning': '#f59e0b'
+            };
+            
+            const notification = $(`
+                <div style="position: fixed; bottom: 20px; right: 20px; 
+                           background: ${colors[type] || '#475569'}; 
+                           color: white; padding: 12px 20px; 
+                           border-radius: 8px; font-weight: 600;
+                           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                           z-index: 1000;">
+                    ${message}
+                </div>
+            `);
+            
+            $('body').append(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+        
+        // ====== EXPORT FUNCTIONS ======
+        function saveAvatar() {
+            const avatarData = {
+                patient: AvatarState.patient,
+                disease: AvatarState.disease,
+                traits: AvatarState.traits,
+                timestamp: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            // Save to localStorage or Supabase
+            localStorage.setItem(`avatar_${AvatarState.patient?.id || 'demo'}`, JSON.stringify(avatarData));
+            showNotification('Avatar saved successfully', 'success');
+        }
+        
+        // Expose to window
+        window.simulateTreatment = simulateTreatment;
+        window.compareToPopulation = compareToPopulation;
+        window.predictFlareRisk = predictFlareRisk;
+        window.highlightAnatomy = highlightAnatomy;
+        window.saveAvatar = saveAvatar;
+        
+        console.log('🫁 Airway Avatar System Loaded');
+    </script>
+</body>
+</html>
