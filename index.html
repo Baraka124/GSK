@@ -884,6 +884,2452 @@
 // ============================================================================
 // CLINICAL NETWORK INTELLIGENCE v4.0
 // ============================================================================
+    // ============================================================================
+// CLINICAL GRAPH ENGINE v4.0 - COMPLETE IMPLEMENTATION
+// ============================================================================
+
+class ClinicalGraphEngine {
+    constructor() {
+        console.log('Initializing Clinical Graph Engine v4.0...');
+        
+        // Core graph structure
+        this.graph = new ClinicalGraph();
+        
+        // Advanced algorithms
+        this.layout = new ForceDirectedLayout();
+        this.communityDetector = new LouvainCommunityDetector();
+        this.pathFinder = new ClinicalPathFinder();
+        this.patternDetector = new ClinicalPatternDetector();
+        this.centralityCalculator = new CentralityAnalyzer();
+        
+        // Performance optimization
+        this.cache = new GraphCache();
+        this.workerPool = new WorkerPool();
+        this.batchProcessor = new GraphBatchProcessor();
+        
+        // State management
+        this.state = {
+            layoutRunning: false,
+            analysisInProgress: false,
+            graphModified: false,
+            selectedNodes: new Set(),
+            selectedEdges: new Set()
+        };
+        
+        // Event system integration
+        this.eventSystem = window.clinicalEvents || this.createEventSystem();
+        
+        // Initialize
+        this.setupEventListeners();
+        this.initializeWorkerPool();
+        
+        console.log('Clinical Graph Engine v4.0 initialized successfully');
+    }
+    
+    // ============================================================================
+    // GRAPH STRUCTURE
+    // ============================================================================
+    
+    class ClinicalGraph {
+        constructor() {
+            this.nodes = new Map();           // nodeId -> Node
+            this.edges = new Map();           // edgeId -> Edge
+            this.adjacency = new Map();       // nodeId -> Set(neighborIds)
+            this.properties = new Map();      // nodeId -> Map(property -> value)
+            
+            // Indexes for fast lookup
+            this.nodeIndex = {
+                byCategory: new Map(),
+                bySeverity: new Map(),
+                byBiomarker: new Map(),
+                byTreatment: new Map()
+            };
+            
+            // Graph metrics cache
+            this.metricsCache = {
+                density: null,
+                diameter: null,
+                avgPathLength: null,
+                clusteringCoefficient: null,
+                lastCalculated: 0
+            };
+        }
+        
+        // Node operations
+        addNode(traitData) {
+            const node = this.createNode(traitData);
+            
+            this.nodes.set(node.id, node);
+            this.adjacency.set(node.id, new Set());
+            this.properties.set(node.id, new Map());
+            
+            // Index node
+            this.indexNode(node);
+            
+            // Invalidate cache
+            this.invalidateMetrics();
+            
+            return node;
+        }
+        
+        createNode(traitData) {
+            return {
+                id: traitData.id || `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                label: traitData.name || 'Unnamed Trait',
+                data: traitData,
+                
+                // Visual properties
+                x: Math.random() * 800 - 400,
+                y: Math.random() * 600 - 300,
+                size: this.calculateNodeSize(traitData),
+                color: this.getNodeColor(traitData.category),
+                
+                // Graph properties
+                degree: 0,
+                centrality: {
+                    degree: 0,
+                    betweenness: 0,
+                    closeness: 0,
+                    eigenvector: 0
+                },
+                community: -1,
+                
+                // State
+                fixed: false,
+                hidden: false,
+                selected: false,
+                highlighted: false
+            };
+        }
+        
+        calculateNodeSize(traitData) {
+            // Size based on severity and importance
+            const baseSize = 20;
+            const severityFactor = (traitData.severity || 50) / 100;
+            const importanceFactor = traitData.evidence?.level === 'A' ? 1.2 : 
+                                   traitData.evidence?.level === 'B' ? 1.1 : 1.0;
+            
+            return baseSize * (1 + severityFactor) * importanceFactor;
+        }
+        
+        getNodeColor(category) {
+            const colorMap = {
+                'pulmonary': '#2D6CA2',
+                'inflammatory': '#D64550',
+                'physiological': '#81B29A',
+                'radiological': '#7B6BA9',
+                'clinical': '#C4906A',
+                'comorbid': '#E39A9C',
+                'behavioral': '#4A7C8C',
+                'pharmacological': '#6A8D73'
+            };
+            return colorMap[category] || '#9FA8C7';
+        }
+        
+        indexNode(node) {
+            const data = node.data;
+            
+            // Index by category
+            if (!this.nodeIndex.byCategory.has(data.category)) {
+                this.nodeIndex.byCategory.set(data.category, new Set());
+            }
+            this.nodeIndex.byCategory.get(data.category).add(node.id);
+            
+            // Index by severity range
+            const severityRange = Math.floor((data.severity || 0) / 25) * 25;
+            if (!this.nodeIndex.bySeverity.has(severityRange)) {
+                this.nodeIndex.bySeverity.set(severityRange, new Set());
+            }
+            this.nodeIndex.bySeverity.get(severityRange).add(node.id);
+            
+            // Index by biomarkers
+            if (data.biomarkers) {
+                for (const biomarker of data.biomarkers) {
+                    if (!this.nodeIndex.byBiomarker.has(biomarker)) {
+                        this.nodeIndex.byBiomarker.set(biomarker, new Set());
+                    }
+                    this.nodeIndex.byBiomarker.get(biomarker).add(node.id);
+                }
+            }
+            
+            // Index by treatment
+            if (data.treatment) {
+                const treatmentStr = typeof data.treatment === 'string' 
+                    ? data.treatment 
+                    : JSON.stringify(data.treatment);
+                
+                // Extract medication classes
+                const medClasses = this.extractMedicationClasses(treatmentStr);
+                for (const medClass of medClasses) {
+                    if (!this.nodeIndex.byTreatment.has(medClass)) {
+                        this.nodeIndex.byTreatment.set(medClass, new Set());
+                    }
+                    this.nodeIndex.byTreatment.get(medClass).add(node.id);
+                }
+            }
+        }
+        
+        extractMedicationClasses(treatmentStr) {
+            const classes = [];
+            const lowerStr = treatmentStr.toLowerCase();
+            
+            if (lowerStr.includes('ics')) classes.push('corticosteroid');
+            if (lowerStr.includes('laba') || lowerStr.includes('beta')) classes.push('beta_agonist');
+            if (lowerStr.includes('lama')) classes.push('anticholinergic');
+            if (lowerStr.includes('theophylline')) classes.push('methylxanthine');
+            if (lowerStr.includes('biologic')) classes.push('biologic');
+            if (lowerStr.includes('antibiotic')) classes.push('antibiotic');
+            
+            return classes;
+        }
+        
+        // Edge operations
+        addEdge(sourceId, targetId, edgeData = {}) {
+            if (!this.nodes.has(sourceId) || !this.nodes.has(targetId)) {
+                throw new Error('Source or target node not found');
+            }
+            
+            const edge = this.createEdge(sourceId, targetId, edgeData);
+            this.edges.set(edge.id, edge);
+            
+            // Update adjacency
+            this.adjacency.get(sourceId).add(targetId);
+            this.adjacency.get(targetId).add(sourceId);
+            
+            // Update node degrees
+            this.nodes.get(sourceId).degree++;
+            this.nodes.get(targetId).degree++;
+            
+            // Invalidate cache
+            this.invalidateMetrics();
+            
+            return edge;
+        }
+        
+        createEdge(sourceId, targetId, edgeData) {
+            const strength = edgeData.strength || this.calculateEdgeStrength(
+                this.nodes.get(sourceId).data,
+                this.nodes.get(targetId).data
+            );
+            
+            return {
+                id: `${sourceId}-${targetId}-${Date.now()}`,
+                source: sourceId,
+                target: targetId,
+                label: edgeData.label || '',
+                type: edgeData.type || 'association',
+                data: edgeData,
+                
+                // Visual properties
+                strength,
+                width: this.calculateEdgeWidth(strength),
+                color: this.getEdgeColor(strength, edgeData.type),
+                dashes: edgeData.conflicts ? [5, 5] : false,
+                
+                // Direction
+                directed: edgeData.directed || false,
+                
+                // State
+                hidden: false,
+                selected: false,
+                highlighted: false
+            };
+        }
+        
+        calculateEdgeStrength(sourceData, targetData) {
+            let strength = 50; // Base strength
+            
+            // Category similarity
+            if (sourceData.category === targetData.category) {
+                strength += 20;
+            }
+            
+            // Severity correlation
+            const severityDiff = Math.abs((sourceData.severity || 0) - (targetData.severity || 0));
+            if (severityDiff < 10) strength += 15;
+            else if (severityDiff < 25) strength += 8;
+            
+            // Biomarker overlap
+            const biomarkers1 = sourceData.biomarkers || [];
+            const biomarkers2 = targetData.biomarkers || [];
+            const commonBiomarkers = biomarkers1.filter(b => biomarkers2.includes(b));
+            strength += Math.min(20, commonBiomarkers.length * 5);
+            
+            // Treatment similarity
+            if (this.treatmentsSimilar(sourceData.treatment, targetData.treatment)) {
+                strength += 10;
+            }
+            
+            // Evidence level
+            const evidence1 = sourceData.evidence?.level || 'C';
+            const evidence2 = targetData.evidence?.level || 'C';
+            if (evidence1 === 'A' && evidence2 === 'A') strength += 10;
+            
+            return Math.min(100, Math.max(10, strength));
+        }
+        
+        treatmentsSimilar(treatment1, treatment2) {
+            if (!treatment1 || !treatment2) return false;
+            
+            const t1 = typeof treatment1 === 'string' ? treatment1 : treatment1.firstLine || '';
+            const t2 = typeof treatment2 === 'string' ? treatment2 : treatment2.firstLine || '';
+            
+            const commonTerms = ['ics', 'laba', 'lama', 'corticosteroid', 'bronchodilator'];
+            const t1Lower = t1.toLowerCase();
+            const t2Lower = t2.toLowerCase();
+            
+            return commonTerms.some(term => 
+                t1Lower.includes(term) && t2Lower.includes(term)
+            );
+        }
+        
+        calculateEdgeWidth(strength) {
+            return 1 + (strength / 100) * 4; // Width from 1 to 5
+        }
+        
+        getEdgeColor(strength, type) {
+            if (type === 'conflict') return '#D64550';
+            if (type === 'enhancement') return '#81B29A';
+            if (type === 'required') return '#F2CC8F';
+            
+            // Gradient based on strength
+            if (strength >= 80) return '#D64550'; // Red
+            if (strength >= 65) return '#E07A5F'; // Orange
+            if (strength >= 50) return '#F2CC8F'; // Yellow
+            return '#2D6CA2'; // Blue
+        }
+        
+        // Graph algorithms
+        findShortestPath(startId, endId, algorithm = 'dijkstra') {
+            switch (algorithm) {
+                case 'dijkstra':
+                    return this.dijkstra(startId, endId);
+                case 'astar':
+                    return this.aStar(startId, endId);
+                case 'bfs':
+                    return this.bfsShortestPath(startId, endId);
+                default:
+                    return this.dijkstra(startId, endId);
+            }
+        }
+        
+        dijkstra(startId, endId) {
+            const distances = new Map();
+            const previous = new Map();
+            const unvisited = new Set();
+            
+            // Initialize
+            for (const nodeId of this.nodes.keys()) {
+                distances.set(nodeId, Infinity);
+                previous.set(nodeId, null);
+                unvisited.add(nodeId);
+            }
+            distances.set(startId, 0);
+            
+            while (unvisited.size > 0) {
+                // Get node with smallest distance
+                let current = null;
+                let smallestDistance = Infinity;
+                
+                for (const nodeId of unvisited) {
+                    if (distances.get(nodeId) < smallestDistance) {
+                        smallestDistance = distances.get(nodeId);
+                        current = nodeId;
+                    }
+                }
+                
+                if (current === null || current === endId) break;
+                unvisited.delete(current);
+                
+                // Update distances to neighbors
+                for (const neighbor of this.adjacency.get(current)) {
+                    if (unvisited.has(neighbor)) {
+                        // Weight based on inverse strength
+                        const edge = this.getEdgeBetween(current, neighbor);
+                        const weight = edge ? 100 - edge.strength : 50;
+                        
+                        const alt = distances.get(current) + weight;
+                        if (alt < distances.get(neighbor)) {
+                            distances.set(neighbor, alt);
+                            previous.set(neighbor, current);
+                        }
+                    }
+                }
+            }
+            
+            // Reconstruct path
+            const path = [];
+            let current = endId;
+            
+            while (current !== null) {
+                path.unshift(current);
+                current = previous.get(current);
+            }
+            
+            if (path.length === 1 && path[0] !== startId) {
+                return null;
+            }
+            
+            return {
+                path,
+                distance: distances.get(endId),
+                edges: this.getEdgesFromPath(path)
+            };
+        }
+        
+        aStar(startId, endId) {
+            // Heuristic function (Euclidean distance)
+            const heuristic = (nodeId1, nodeId2) => {
+                const node1 = this.nodes.get(nodeId1);
+                const node2 = this.nodes.get(nodeId2);
+                const dx = node1.x - node2.x;
+                const dy = node1.y - node2.y;
+                return Math.sqrt(dx * dx + dy * dy);
+            };
+            
+            const openSet = new Set([startId]);
+            const cameFrom = new Map();
+            
+            const gScore = new Map(); // Cost from start
+            const fScore = new Map(); // Estimated total cost
+            
+            for (const nodeId of this.nodes.keys()) {
+                gScore.set(nodeId, Infinity);
+                fScore.set(nodeId, Infinity);
+            }
+            
+            gScore.set(startId, 0);
+            fScore.set(startId, heuristic(startId, endId));
+            
+            while (openSet.size > 0) {
+                // Get node with lowest fScore
+                let current = null;
+                let lowestFScore = Infinity;
+                
+                for (const nodeId of openSet) {
+                    if (fScore.get(nodeId) < lowestFScore) {
+                        lowestFScore = fScore.get(nodeId);
+                        current = nodeId;
+                    }
+                }
+                
+                if (current === endId) {
+                    // Reconstruct path
+                    const path = [current];
+                    while (cameFrom.has(current)) {
+                        current = cameFrom.get(current);
+                        path.unshift(current);
+                    }
+                    
+                    return {
+                        path,
+                        distance: gScore.get(endId),
+                        edges: this.getEdgesFromPath(path)
+                    };
+                }
+                
+                openSet.delete(current);
+                
+                for (const neighbor of this.adjacency.get(current)) {
+                    // Edge weight
+                    const edge = this.getEdgeBetween(current, neighbor);
+                    const weight = edge ? 100 - edge.strength : 50;
+                    
+                    const tentativeGScore = gScore.get(current) + weight;
+                    
+                    if (tentativeGScore < gScore.get(neighbor)) {
+                        cameFrom.set(neighbor, current);
+                        gScore.set(neighbor, tentativeGScore);
+                        fScore.set(neighbor, tentativeGScore + heuristic(neighbor, endId));
+                        
+                        if (!openSet.has(neighbor)) {
+                            openSet.add(neighbor);
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        bfsShortestPath(startId, endId) {
+            const queue = [{ node: startId, path: [startId] }];
+            const visited = new Set([startId]);
+            
+            while (queue.length > 0) {
+                const { node, path } = queue.shift();
+                
+                if (node === endId) {
+                    return {
+                        path,
+                        distance: path.length - 1,
+                        edges: this.getEdgesFromPath(path)
+                    };
+                }
+                
+                for (const neighbor of this.adjacency.get(node)) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push({
+                            node: neighbor,
+                            path: [...path, neighbor]
+                        });
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        getEdgeBetween(sourceId, targetId) {
+            const edgeId = `${sourceId}-${targetId}`;
+            return this.edges.get(edgeId) || this.edges.get(`${targetId}-${sourceId}`);
+        }
+        
+        getEdgesFromPath(path) {
+            const edges = [];
+            for (let i = 0; i < path.length - 1; i++) {
+                const edge = this.getEdgeBetween(path[i], path[i + 1]);
+                if (edge) edges.push(edge);
+            }
+            return edges;
+        }
+        
+        // Community detection
+        detectCommunities(method = 'louvain') {
+            switch (method) {
+                case 'louvain':
+                    return this.louvainCommunityDetection();
+                case 'label_propagation':
+                    return this.labelPropagation();
+                case 'girvan_newman':
+                    return this.girvanNewman();
+                default:
+                    return this.louvainCommunityDetection();
+            }
+        }
+        
+        louvainCommunityDetection() {
+            // Initialize each node in its own community
+            const communities = new Map();
+            let communityId = 0;
+            
+            for (const nodeId of this.nodes.keys()) {
+                communities.set(nodeId, communityId++);
+            }
+            
+            let improved = true;
+            let iterations = 0;
+            
+            while (improved && iterations < 10) {
+                improved = false;
+                
+                // Phase 1: Local moving of nodes
+                const nodes = Array.from(this.nodes.keys());
+                this.shuffleArray(nodes);
+                
+                for (const nodeId of nodes) {
+                    const bestCommunity = this.findBestCommunityLouvain(nodeId, communities);
+                    if (bestCommunity !== communities.get(nodeId)) {
+                        communities.set(nodeId, bestCommunity);
+                        improved = true;
+                    }
+                }
+                
+                iterations++;
+            }
+            
+            // Update nodes with community assignments
+            for (const [nodeId, community] of communities) {
+                const node = this.nodes.get(nodeId);
+                if (node) {
+                    node.community = community;
+                }
+            }
+            
+            return communities;
+        }
+        
+        findBestCommunityLouvain(nodeId, communities) {
+            const currentCommunity = communities.get(nodeId);
+            let bestCommunity = currentCommunity;
+            let bestModularityGain = 0;
+            
+            // Calculate modularity gain for each neighboring community
+            const neighborCommunities = new Set();
+            for (const neighbor of this.adjacency.get(nodeId)) {
+                neighborCommunities.add(communities.get(neighbor));
+            }
+            
+            for (const community of neighborCommunities) {
+                if (community !== currentCommunity) {
+                    const gain = this.calculateModularityGain(nodeId, currentCommunity, community, communities);
+                    if (gain > bestModularityGain) {
+                        bestModularityGain = gain;
+                        bestCommunity = community;
+                    }
+                }
+            }
+            
+            return bestModularityGain > 0 ? bestCommunity : currentCommunity;
+        }
+        
+        calculateModularityGain(nodeId, oldCommunity, newCommunity, communities) {
+            const edgesInOld = this.countEdgesToCommunity(nodeId, oldCommunity, communities);
+            const edgesInNew = this.countEdgesToCommunity(nodeId, newCommunity, communities);
+            const degree = this.adjacency.get(nodeId).size;
+            const totalEdges = this.edges.size;
+            
+            return (edgesInNew - edgesInOld) / (2 * totalEdges) - 
+                   (degree * degree) / (4 * totalEdges * totalEdges);
+        }
+        
+        countEdgesToCommunity(nodeId, community, communities) {
+            let count = 0;
+            for (const neighbor of this.adjacency.get(nodeId)) {
+                if (communities.get(neighbor) === community) {
+                    count++;
+                }
+            }
+            return count;
+        }
+        
+        labelPropagation() {
+            // Initialize each node with unique label
+            const labels = new Map();
+            let labelId = 0;
+            
+            for (const nodeId of this.nodes.keys()) {
+                labels.set(nodeId, labelId++);
+            }
+            
+            let changed = true;
+            let iterations = 0;
+            
+            while (changed && iterations < 100) {
+                changed = false;
+                const nodes = Array.from(this.nodes.keys());
+                this.shuffleArray(nodes);
+                
+                for (const nodeId of nodes) {
+                    // Count neighbor labels
+                    const neighborLabels = new Map();
+                    for (const neighbor of this.adjacency.get(nodeId)) {
+                        const label = labels.get(neighbor);
+                        neighborLabels.set(label, (neighborLabels.get(label) || 0) + 1);
+                    }
+                    
+                    // Find most frequent label
+                    let maxCount = 0;
+                    let bestLabel = labels.get(nodeId);
+                    
+                    for (const [label, count] of neighborLabels) {
+                        if (count > maxCount || (count === maxCount && Math.random() > 0.5)) {
+                            maxCount = count;
+                            bestLabel = label;
+                        }
+                    }
+                    
+                    if (bestLabel !== labels.get(nodeId)) {
+                        labels.set(nodeId, bestLabel);
+                        changed = true;
+                    }
+                }
+                
+                iterations++;
+            }
+            
+            return labels;
+        }
+        
+        girvanNewman() {
+            // Calculate edge betweenness
+            const edgeBetweenness = this.calculateEdgeBetweenness();
+            
+            // Sort edges by betweenness
+            const sortedEdges = Array.from(edgeBetweenness.entries())
+                .sort((a, b) => b[1] - a[1]);
+            
+            // Remove edges and detect communities
+            const communities = [];
+            const tempGraph = this.clone();
+            
+            for (const [edgeId, betweenness] of sortedEdges) {
+                // Remove edge
+                const edge = tempGraph.edges.get(edgeId);
+                if (edge) {
+                    tempGraph.removeEdge(edgeId);
+                    
+                    // Check if removal created new components
+                    const components = tempGraph.findConnectedComponents();
+                    if (components.length > communities.length) {
+                        communities.push(...components);
+                    }
+                }
+            }
+            
+            return communities;
+        }
+        
+        calculateEdgeBetweenness() {
+            const edgeBetweenness = new Map();
+            
+            for (const edge of this.edges.values()) {
+                edgeBetweenness.set(edge.id, 0);
+            }
+            
+            for (const startId of this.nodes.keys()) {
+                const { distances, predecessors, sigma } = this.brandesBFS(startId);
+                const delta = this.brandesAccumulation(startId, distances, predecessors, sigma);
+                
+                // Accumulate edge betweenness
+                for (const [edgeId, value] of delta) {
+                    edgeBetweenness.set(edgeId, (edgeBetweenness.get(edgeId) || 0) + value);
+                }
+            }
+            
+            // Normalize for undirected graph
+            for (const [edgeId, value] of edgeBetweenness) {
+                edgeBetweenness.set(edgeId, value / 2);
+            }
+            
+            return edgeBetweenness;
+        }
+        
+        brandesBFS(startId) {
+            const distances = new Map();
+            const predecessors = new Map();
+            const sigma = new Map();
+            const queue = [startId];
+            
+            // Initialize
+            for (const nodeId of this.nodes.keys()) {
+                distances.set(nodeId, -1);
+                predecessors.set(nodeId, []);
+                sigma.set(nodeId, 0);
+            }
+            
+            distances.set(startId, 0);
+            sigma.set(startId, 1);
+            
+            const stack = [];
+            
+            while (queue.length > 0) {
+                const current = queue.shift();
+                stack.push(current);
+                
+                for (const neighbor of this.adjacency.get(current)) {
+                    if (distances.get(neighbor) < 0) {
+                        queue.push(neighbor);
+                        distances.set(neighbor, distances.get(current) + 1);
+                    }
+                    
+                    if (distances.get(neighbor) === distances.get(current) + 1) {
+                        sigma.set(neighbor, sigma.get(neighbor) + sigma.get(current));
+                        predecessors.get(neighbor).push(current);
+                    }
+                }
+            }
+            
+            return { distances, predecessors, sigma, stack };
+        }
+        
+        brandesAccumulation(startId, distances, predecessors, sigma) {
+            const delta = new Map();
+            const dependency = new Map();
+            
+            // Initialize
+            for (const nodeId of this.nodes.keys()) {
+                delta.set(nodeId, 0);
+                dependency.set(nodeId, 0);
+            }
+            
+            // Process in reverse order
+            const stack = Array.from(this.nodes.keys()).reverse();
+            
+            for (const node of stack) {
+                for (const predecessor of predecessors.get(node)) {
+                    const edge = this.getEdgeBetween(predecessor, node);
+                    if (edge) {
+                        const coeff = (sigma.get(predecessor) / sigma.get(node)) * 
+                                    (1 + dependency.get(node));
+                        dependency.set(predecessor, dependency.get(predecessor) + coeff);
+                        delta.set(edge.id, (delta.get(edge.id) || 0) + coeff);
+                    }
+                }
+                
+                if (node !== startId) {
+                    delta.set(node, delta.get(node) + dependency.get(node));
+                }
+            }
+            
+            return delta;
+        }
+        
+        // Centrality calculations
+        calculateCentralities() {
+            return {
+                degree: this.calculateDegreeCentrality(),
+                betweenness: this.calculateBetweennessCentrality(),
+                closeness: this.calculateClosenessCentrality(),
+                eigenvector: this.calculateEigenvectorCentrality()
+            };
+        }
+        
+        calculateDegreeCentrality() {
+            const centrality = new Map();
+            const n = this.nodes.size;
+            
+            for (const [nodeId, node] of this.nodes) {
+                centrality.set(nodeId, {
+                    degree: node.degree,
+                    normalized: n > 1 ? node.degree / (n - 1) : 0
+                });
+            }
+            
+            return centrality;
+        }
+        
+        calculateBetweennessCentrality() {
+            const centrality = new Map();
+            
+            for (const nodeId of this.nodes.keys()) {
+                centrality.set(nodeId, 0);
+            }
+            
+            for (const startId of this.nodes.keys()) {
+                const { distances, predecessors, sigma, stack } = this.brandesBFS(startId);
+                const delta = this.brandesAccumulation(startId, distances, predecessors, sigma);
+                
+                for (const [nodeId, value] of delta) {
+                    if (this.nodes.has(nodeId)) {
+                        centrality.set(nodeId, centrality.get(nodeId) + value);
+                    }
+                }
+            }
+            
+            // Normalize
+            const n = this.nodes.size;
+            const factor = 2 / ((n - 1) * (n - 2));
+            
+            for (const [nodeId, value] of centrality) {
+                centrality.set(nodeId, value * factor);
+            }
+            
+            return centrality;
+        }
+        
+        calculateClosenessCentrality() {
+            const centrality = new Map();
+            const n = this.nodes.size;
+            
+            for (const startId of this.nodes.keys()) {
+                let totalDistance = 0;
+                let reachable = 0;
+                
+                const distances = this.calculateDistancesFrom(startId);
+                
+                for (const distance of distances.values()) {
+                    if (distance > 0 && distance < Infinity) {
+                        totalDistance += distance;
+                        reachable++;
+                    }
+                }
+                
+                if (reachable > 0) {
+                    centrality.set(startId, reachable / totalDistance);
+                } else {
+                    centrality.set(startId, 0);
+                }
+            }
+            
+            return centrality;
+        }
+        
+        calculateDistancesFrom(startId) {
+            const distances = new Map();
+            const queue = [{ node: startId, distance: 0 }];
+            const visited = new Set([startId]);
+            
+            for (const nodeId of this.nodes.keys()) {
+                distances.set(nodeId, Infinity);
+            }
+            distances.set(startId, 0);
+            
+            while (queue.length > 0) {
+                const { node, distance } = queue.shift();
+                
+                for (const neighbor of this.adjacency.get(node)) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        const edge = this.getEdgeBetween(node, neighbor);
+                        const weight = edge ? 100 - edge.strength : 50;
+                        
+                        const newDistance = distance + weight;
+                        if (newDistance < distances.get(neighbor)) {
+                            distances.set(neighbor, newDistance);
+                            queue.push({ node: neighbor, distance: newDistance });
+                        }
+                    }
+                }
+            }
+            
+            return distances;
+        }
+        
+        calculateEigenvectorCentrality(maxIterations = 100, epsilon = 0.0001) {
+            const n = this.nodes.size;
+            const nodeIds = Array.from(this.nodes.keys());
+            const indexMap = new Map();
+            
+            nodeIds.forEach((id, i) => indexMap.set(id, i));
+            
+            // Create adjacency matrix
+            const A = Array(n).fill().map(() => Array(n).fill(0));
+            for (const edge of this.edges.values()) {
+                const i = indexMap.get(edge.source);
+                const j = indexMap.get(edge.target);
+                const weight = edge.strength / 100;
+                
+                A[i][j] = weight;
+                A[j][i] = weight;
+            }
+            
+            // Power iteration
+            let x = Array(n).fill(1 / Math.sqrt(n));
+            let lambda = 0;
+            
+            for (let iter = 0; iter < maxIterations; iter++) {
+                // Ax = b
+                const b = Array(n).fill(0);
+                for (let i = 0; i < n; i++) {
+                    for (let j = 0; j < n; j++) {
+                        b[i] += A[i][j] * x[j];
+                    }
+                }
+                
+                const newLambda = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
+                
+                // Normalize
+                for (let i = 0; i < n; i++) {
+                    x[i] = b[i] / newLambda;
+                }
+                
+                // Check convergence
+                if (Math.abs(newLambda - lambda) < epsilon) {
+                    lambda = newLambda;
+                    break;
+                }
+                
+                lambda = newLambda;
+            }
+            
+            // Map back to node IDs
+            const centrality = new Map();
+            nodeIds.forEach((id, i) => {
+                centrality.set(id, x[i]);
+            });
+            
+            return centrality;
+        }
+        
+        // Graph metrics
+        calculateDensity() {
+            const n = this.nodes.size;
+            if (n < 2) return 0;
+            
+            const maxEdges = n * (n - 1) / 2;
+            return this.edges.size / maxEdges;
+        }
+        
+        calculateDiameter() {
+            if (this.nodes.size === 0) return 0;
+            
+            let diameter = 0;
+            const nodeIds = Array.from(this.nodes.keys());
+            
+            // Sample some nodes to approximate diameter
+            for (let i = 0; i < Math.min(20, nodeIds.length); i++) {
+                const startId = nodeIds[Math.floor(Math.random() * nodeIds.length)];
+                const distances = this.calculateDistancesFrom(startId);
+                
+                for (const distance of distances.values()) {
+                    if (distance > diameter && distance < Infinity) {
+                        diameter = distance;
+                    }
+                }
+            }
+            
+            return diameter;
+        }
+        
+        calculateClusteringCoefficient() {
+            let totalCoefficient = 0;
+            let nodesWithNeighbors = 0;
+            
+            for (const [nodeId, neighbors] of this.adjacency) {
+                const k = neighbors.size;
+                if (k < 2) continue;
+                
+                // Count triangles
+                let triangles = 0;
+                const neighborArray = Array.from(neighbors);
+                
+                for (let i = 0; i < neighborArray.length; i++) {
+                    for (let j = i + 1; j < neighborArray.length; j++) {
+                        if (this.adjacency.get(neighborArray[i]).has(neighborArray[j])) {
+                            triangles++;
+                        }
+                    }
+                }
+                
+                const maxTriangles = k * (k - 1) / 2;
+                totalCoefficient += triangles / maxTriangles;
+                nodesWithNeighbors++;
+            }
+            
+            return nodesWithNeighbors > 0 ? totalCoefficient / nodesWithNeighbors : 0;
+        }
+        
+        findConnectedComponents() {
+            const visited = new Set();
+            const components = [];
+            
+            for (const nodeId of this.nodes.keys()) {
+                if (!visited.has(nodeId)) {
+                    const component = this.bfsComponent(nodeId, visited);
+                    components.push(component);
+                }
+            }
+            
+            return components;
+        }
+        
+        bfsComponent(startId, visited) {
+            const component = [];
+            const queue = [startId];
+            visited.add(startId);
+            
+            while (queue.length > 0) {
+                const nodeId = queue.shift();
+                component.push(nodeId);
+                
+                for (const neighbor of this.adjacency.get(nodeId)) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push(neighbor);
+                    }
+                }
+            }
+            
+            return component;
+        }
+        
+        // Pattern detection
+        findPatterns() {
+            const patterns = [];
+            
+            // Find star patterns (hubs)
+            patterns.push(...this.findStarPatterns());
+            
+            // Find chains
+            patterns.push(...this.findChainPatterns());
+            
+            // Find cliques
+            patterns.push(...this.findCliques());
+            
+            // Find bridges
+            patterns.push(...this.findBridgePatterns());
+            
+            return patterns;
+        }
+        
+        findStarPatterns(minDegree = 5) {
+            const stars = [];
+            
+            for (const [nodeId, node] of this.nodes) {
+                if (node.degree >= minDegree) {
+                    // Check if neighbors are not highly connected
+                    const neighbors = Array.from(this.adjacency.get(nodeId));
+                    let neighborConnections = 0;
+                    let maxPossible = neighbors.length * (neighbors.length - 1) / 2;
+                    
+                    for (let i = 0; i < neighbors.length; i++) {
+                        for (let j = i + 1; j < neighbors.length; j++) {
+                            if (this.adjacency.get(neighbors[i]).has(neighbors[j])) {
+                                neighborConnections++;
+                            }
+                        }
+                    }
+                    
+                    const density = maxPossible > 0 ? neighborConnections / maxPossible : 0;
+                    
+                    if (density < 0.3) {
+                        stars.push({
+                            type: 'star',
+                            center: nodeId,
+                            spokes: neighbors,
+                            degree: node.degree,
+                            density
+                        });
+                    }
+                }
+            }
+            
+            return stars;
+        }
+        
+        findChainPatterns(minLength = 3) {
+            const chains = [];
+            const visited = new Set();
+            
+            for (const nodeId of this.nodes.keys()) {
+                if (this.adjacency.get(nodeId).size === 1 && !visited.has(nodeId)) {
+                    const chain = this.traverseChain(nodeId, visited);
+                    if (chain.length >= minLength) {
+                        chains.push({
+                            type: 'chain',
+                            nodes: chain,
+                            length: chain.length
+                        });
+                    }
+                }
+            }
+            
+            return chains;
+        }
+        
+        traverseChain(startId, visited) {
+            const chain = [startId];
+            visited.add(startId);
+            
+            let current = startId;
+            let neighbors = Array.from(this.adjacency.get(current));
+            
+            while (neighbors.length === 2 || (chain.length === 1 && neighbors.length === 1)) {
+                let next = null;
+                for (const neighbor of neighbors) {
+                    if (!visited.has(neighbor)) {
+                        next = neighbor;
+                        break;
+                    }
+                }
+                
+                if (!next) break;
+                
+                chain.push(next);
+                visited.add(next);
+                current = next;
+                neighbors = Array.from(this.adjacency.get(current));
+            }
+            
+            return chain;
+        }
+        
+        findCliques(minSize = 3) {
+            const cliques = [];
+            const nodes = Array.from(this.nodes.keys());
+            
+            // Bron-Kerbosch algorithm
+            const bronKerbosch = (R, P, X) => {
+                if (P.size === 0 && X.size === 0) {
+                    if (R.size >= minSize) {
+                        cliques.push({
+                            type: 'clique',
+                            nodes: Array.from(R),
+                            size: R.size,
+                            density: 1.0
+                        });
+                    }
+                    return;
+                }
+                
+                // Choose pivot
+                const pivot = this.choosePivot(P, X);
+                const candidates = new Set(P);
+                
+                // Remove neighbors of pivot
+                for (const neighbor of this.adjacency.get(pivot)) {
+                    candidates.delete(neighbor);
+                }
+                
+                for (const v of candidates) {
+                    const neighbors = this.adjacency.get(v);
+                    
+                    const newR = new Set(R);
+                    newR.add(v);
+                    
+                    const newP = new Set(P);
+                    const newX = new Set(X);
+                    
+                    // Intersect with neighbors
+                    for (const item of newP) {
+                        if (!neighbors.has(item)) {
+                            newP.delete(item);
+                        }
+                    }
+                    for (const item of newX) {
+                        if (!neighbors.has(item)) {
+                            newX.delete(item);
+                        }
+                    }
+                    
+                    bronKerbosch(newR, newP, newX);
+                    
+                    P.delete(v);
+                    X.add(v);
+                }
+            };
+            
+            bronKerbosch(new Set(), new Set(nodes), new Set());
+            return cliques;
+        }
+        
+        choosePivot(P, X) {
+            let maxDegree = -1;
+            let pivot = null;
+            
+            for (const node of new Set([...P, ...X])) {
+                const degree = this.adjacency.get(node).size;
+                if (degree > maxDegree) {
+                    maxDegree = degree;
+                    pivot = node;
+                }
+            }
+            
+            return pivot || (P.values().next().value);
+        }
+        
+        findBridgePatterns() {
+            const bridges = [];
+            
+            for (const edge of this.edges.values()) {
+                // Temporarily remove edge
+                this.adjacency.get(edge.source).delete(edge.target);
+                this.adjacency.get(edge.target).delete(edge.source);
+                
+                // Check if graph becomes disconnected
+                const components = this.findConnectedComponents();
+                
+                // Restore edge
+                this.adjacency.get(edge.source).add(edge.target);
+                this.adjacency.get(edge.target).add(edge.source);
+                
+                if (components.length > 1) {
+                    bridges.push({
+                        type: 'bridge',
+                        edge: edge.id,
+                        source: edge.source,
+                        target: edge.target,
+                        strength: edge.strength
+                    });
+                }
+            }
+            
+            return bridges;
+        }
+        
+        // Utility methods
+        clone() {
+            const clone = new ClinicalGraph();
+            
+            // Clone nodes
+            for (const node of this.nodes.values()) {
+                clone.addNode({ ...node.data });
+                const clonedNode = clone.nodes.get(node.id);
+                if (clonedNode) {
+                    clonedNode.x = node.x;
+                    clonedNode.y = node.y;
+                }
+            }
+            
+            // Clone edges
+            for (const edge of this.edges.values()) {
+                clone.addEdge(edge.source, edge.target, edge.data);
+            }
+            
+            return clone;
+        }
+        
+        shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        invalidateMetrics() {
+            this.metricsCache.lastCalculated = 0;
+        }
+        
+        removeEdge(edgeId) {
+            const edge = this.edges.get(edgeId);
+            if (!edge) return;
+            
+            // Remove from adjacency
+            this.adjacency.get(edge.source).delete(edge.target);
+            this.adjacency.get(edge.target).delete(edge.source);
+            
+            // Update node degrees
+            this.nodes.get(edge.source).degree--;
+            this.nodes.get(edge.target).degree--;
+            
+            // Remove edge
+            this.edges.delete(edgeId);
+            
+            this.invalidateMetrics();
+        }
+        
+        // Serialization
+        toJSON() {
+            return {
+                nodes: Array.from(this.nodes.values()).map(node => ({
+                    id: node.id,
+                    label: node.label,
+                    data: node.data,
+                    position: { x: node.x, y: node.y },
+                    size: node.size,
+                    color: node.color,
+                    degree: node.degree,
+                    community: node.community
+                })),
+                edges: Array.from(this.edges.values()).map(edge => ({
+                    id: edge.id,
+                    source: edge.source,
+                    target: edge.target,
+                    label: edge.label,
+                    type: edge.type,
+                    strength: edge.strength,
+                    width: edge.width,
+                    color: edge.color,
+                    data: edge.data
+                }))
+            };
+        }
+        
+        fromJSON(data) {
+            this.nodes.clear();
+            this.edges.clear();
+            this.adjacency.clear();
+            this.properties.clear();
+            
+            // Add nodes
+            for (const nodeData of data.nodes) {
+                this.addNode(nodeData.data);
+                const node = this.nodes.get(nodeData.id);
+                if (node) {
+                    node.x = nodeData.position.x;
+                    node.y = nodeData.position.y;
+                    node.size = nodeData.size;
+                    node.color = nodeData.color;
+                    node.degree = nodeData.degree;
+                    node.community = nodeData.community;
+                }
+            }
+            
+            // Add edges
+            for (const edgeData of data.edges) {
+                this.addEdge(edgeData.source, edgeData.target, edgeData.data);
+            }
+        }
+        
+        // Visualization data
+        getVisualizationData() {
+            return {
+                nodes: Array.from(this.nodes.values()).map(node => ({
+                    id: node.id,
+                    label: node.label,
+                    title: `
+                        <div style="padding: 10px;">
+                            <strong>${node.label}</strong><br/>
+                            Category: ${node.data.category}<br/>
+                            Severity: ${node.data.severity || 'N/A'}%<br/>
+                            Degree: ${node.degree}<br/>
+                            ${node.data.evaluation ? `Evaluation: ${node.data.evaluation.substring(0, 100)}...` : ''}
+                        </div>
+                    `,
+                    x: node.x,
+                    y: node.y,
+                    size: node.size,
+                    color: node.color,
+                    borderWidth: node.selected ? 3 : 1,
+                    borderColor: node.highlighted ? '#FF6B6B' : '#2D3436',
+                    shape: 'dot'
+                })),
+                edges: Array.from(this.edges.values()).map(edge => ({
+                    id: edge.id,
+                    from: edge.source,
+                    to: edge.target,
+                    label: edge.label,
+                    title: `
+                        <div style="padding: 10px;">
+                            <strong>Connection</strong><br/>
+                            Type: ${edge.type}<br/>
+                            Strength: ${edge.strength.toFixed(1)}<br/>
+                            ${edge.data.conflicts ? '⚠️ Has conflicts' : ''}
+                        </div>
+                    `,
+                    width: edge.width,
+                    color: edge.color,
+                    dashes: edge.dashes,
+                    arrows: edge.directed ? 'to' : false
+                }))
+            };
+        }
+    }
+    
+    // ============================================================================
+    // LAYOUT ENGINE
+    // ============================================================================
+    
+    class ForceDirectedLayout {
+        constructor() {
+            this.config = {
+                repulsion: 200,
+                attraction: 0.1,
+                gravity: 0.01,
+                maxDistance: 1000,
+                minDistance: 10,
+                damping: 0.9,
+                maxSpeed: 50
+            };
+            
+            this.forces = new Map();
+            this.velocities = new Map();
+            this.running = false;
+            this.iteration = 0;
+        }
+        
+        initialize(graph) {
+            for (const nodeId of graph.nodes.keys()) {
+                this.forces.set(nodeId, { x: 0, y: 0 });
+                this.velocities.set(nodeId, { x: 0, y: 0 });
+            }
+        }
+        
+        calculateForces(graph) {
+            const nodes = Array.from(graph.nodes.values());
+            
+            // Reset forces
+            for (const force of this.forces.values()) {
+                force.x = 0;
+                force.y = 0;
+            }
+            
+            // Repulsion between all nodes
+            for (let i = 0; i < nodes.length; i++) {
+                const node1 = nodes[i];
+                
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const node2 = nodes[j];
+                    
+                    const dx = node1.x - node2.x;
+                    const dy = node1.y - node2.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                    
+                    // Coulomb's law repulsion
+                    const repulsionForce = this.config.repulsion / (distance * distance);
+                    const forceX = repulsionForce * dx / distance;
+                    const forceY = repulsionForce * dy / distance;
+                    
+                    this.forces.get(node1.id).x += forceX;
+                    this.forces.get(node1.id).y += forceY;
+                    this.forces.get(node2.id).x -= forceX;
+                    this.forces.get(node2.id).y -= forceY;
+                }
+            }
+            
+            // Attraction along edges
+            for (const edge of graph.edges.values()) {
+                const node1 = graph.nodes.get(edge.source);
+                const node2 = graph.nodes.get(edge.target);
+                
+                if (!node1 || !node2) continue;
+                
+                const dx = node1.x - node2.x;
+                const dy = node1.y - node2.y;
+                const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                
+                // Hooke's law attraction
+                const idealLength = 100 + (100 - edge.strength);
+                const displacement = distance - idealLength;
+                const attractionForce = this.config.attraction * displacement;
+                
+                const forceX = attractionForce * dx / distance;
+                const forceY = attractionForce * dy / distance;
+                
+                this.forces.get(node1.id).x -= forceX;
+                this.forces.get(node1.id).y -= forceY;
+                this.forces.get(node2.id).x += forceX;
+                this.forces.get(node2.id).y += forceY;
+            }
+            
+            // Gravity towards center
+            const center = this.calculateCenter(nodes);
+            for (const node of nodes) {
+                const dx = node.x - center.x;
+                const dy = node.y - center.y;
+                const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+                
+                const gravityForce = this.config.gravity * distance;
+                this.forces.get(node.id).x -= gravityForce * dx / distance;
+                this.forces.get(node.id).y -= gravityForce * dy / distance;
+            }
+        }
+        
+        calculateCenter(nodes) {
+            if (nodes.length === 0) return { x: 0, y: 0 };
+            
+            let sumX = 0, sumY = 0;
+            for (const node of nodes) {
+                sumX += node.x;
+                sumY += node.y;
+            }
+            
+            return {
+                x: sumX / nodes.length,
+                y: sumY / nodes.length
+            };
+        }
+        
+        applyForces(graph, deltaTime = 0.1) {
+            for (const node of graph.nodes.values()) {
+                if (node.fixed) continue;
+                
+                const force = this.forces.get(node.id);
+                const velocity = this.velocities.get(node.id);
+                
+                if (!force || !velocity) continue;
+                
+                // Update velocity
+                velocity.x += force.x * deltaTime;
+                velocity.y += force.y * deltaTime;
+                
+                // Apply damping
+                velocity.x *= this.config.damping;
+                velocity.y *= this.config.damping;
+                
+                // Limit speed
+                const speed = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+                if (speed > this.config.maxSpeed) {
+                    velocity.x = (velocity.x / speed) * this.config.maxSpeed;
+                    velocity.y = (velocity.y / speed) * this.config.maxSpeed;
+                }
+                
+                // Update position
+                node.x += velocity.x * deltaTime;
+                node.y += velocity.y * deltaTime;
+            }
+        }
+        
+        step(graph) {
+            this.calculateForces(graph);
+            this.applyForces(graph);
+            this.iteration++;
+            
+            // Check convergence
+            const totalForce = this.calculateTotalForce();
+            return totalForce < 0.1;
+        }
+        
+        calculateTotalForce() {
+            let total = 0;
+            for (const force of this.forces.values()) {
+                total += Math.sqrt(force.x * force.x + force.y * force.y);
+            }
+            return total / this.forces.size;
+        }
+        
+        run(graph, maxIterations = 1000, callback = null) {
+            this.initialize(graph);
+            this.running = true;
+            
+            const stepFunction = () => {
+                if (!this.running || this.iteration >= maxIterations) {
+                    this.running = false;
+                    if (callback) callback(this.iteration);
+                    return;
+                }
+                
+                const converged = this.step(graph);
+                
+                if (callback) callback(this.iteration, converged);
+                
+                if (!converged) {
+                    requestAnimationFrame(stepFunction);
+                } else {
+                    this.running = false;
+                    if (callback) callback(this.iteration, true);
+                }
+            };
+            
+            requestAnimationFrame(stepFunction);
+        }
+        
+        stop() {
+            this.running = false;
+        }
+    }
+    
+    // ============================================================================
+    // COMMUNITY DETECTOR
+    // ============================================================================
+    
+    class LouvainCommunityDetector {
+        constructor() {
+            this.cache = new Map();
+        }
+        
+        detect(graph) {
+            // Use Louvain method from graph class
+            return graph.detectCommunities('louvain');
+        }
+        
+        calculateModularity(graph, communities) {
+            const m = graph.edges.size;
+            if (m === 0) return 0;
+            
+            let modularity = 0;
+            const degrees = new Map();
+            
+            // Calculate degrees
+            for (const [nodeId, node] of graph.nodes) {
+                degrees.set(nodeId, graph.adjacency.get(nodeId).size);
+            }
+            
+            // Group nodes by community
+            const communityMap = new Map();
+            for (const [nodeId, communityId] of communities) {
+                if (!communityMap.has(communityId)) {
+                    communityMap.set(communityId, []);
+                }
+                communityMap.get(communityId).push(nodeId);
+            }
+            
+            // Calculate modularity for each community
+            for (const [communityId, nodeIds] of communityMap) {
+                let edgesInside = 0;
+                let totalDegree = 0;
+                
+                // Count edges inside community
+                for (const nodeId of nodeIds) {
+                    totalDegree += degrees.get(nodeId);
+                    
+                    for (const neighbor of graph.adjacency.get(nodeId)) {
+                        if (nodeIds.includes(neighbor)) {
+                            edgesInside++;
+                        }
+                    }
+                }
+                
+                // Each edge counted twice
+                edgesInside /= 2;
+                
+                modularity += (edgesInside / m) - Math.pow(totalDegree / (2 * m), 2);
+            }
+            
+            return modularity;
+        }
+    }
+    
+    // ============================================================================
+    // PATH FINDER
+    // ============================================================================
+    
+    class ClinicalPathFinder {
+        constructor() {
+            this.cache = new Map();
+        }
+        
+        findPath(graph, startId, endId, options = {}) {
+            const cacheKey = `${startId}-${endId}-${JSON.stringify(options)}`;
+            
+            if (this.cache.has(cacheKey)) {
+                return this.cache.get(cacheKey);
+            }
+            
+            const path = graph.findShortestPath(startId, endId, options.algorithm || 'dijkstra');
+            
+            if (path) {
+                this.cache.set(cacheKey, path);
+            }
+            
+            return path;
+        }
+        
+        findAllPaths(graph, startId, endId, maxDepth = 6) {
+            const paths = [];
+            const visited = new Set();
+            
+            const dfs = (current, path, depth) => {
+                if (depth > maxDepth) return;
+                
+                visited.add(current);
+                path.push(current);
+                
+                if (current === endId) {
+                    paths.push([...path]);
+                } else {
+                    for (const neighbor of graph.adjacency.get(current)) {
+                        if (!visited.has(neighbor)) {
+                            dfs(neighbor, path, depth + 1);
+                        }
+                    }
+                }
+                
+                visited.delete(current);
+                path.pop();
+            };
+            
+            dfs(startId, [], 0);
+            return paths.sort((a, b) => a.length - b.length);
+        }
+    }
+    
+    // ============================================================================
+    // PATTERN DETECTOR
+    // ============================================================================
+    
+    class ClinicalPatternDetector {
+        detectAll(graph) {
+            const patterns = graph.findPatterns();
+            
+            // Add clinical-specific patterns
+            const clinicalPatterns = this.detectClinicalPatterns(graph);
+            
+            return {
+                structural: patterns,
+                clinical: clinicalPatterns,
+                insights: this.generateInsights(patterns, clinicalPatterns)
+            };
+        }
+        
+        detectClinicalPatterns(graph) {
+            const patterns = [];
+            
+            // Inflammation patterns
+            const inflammatoryNodes = this.getNodesByCategory(graph, 'inflammatory');
+            if (inflammatoryNodes.length >= 2) {
+                patterns.push({
+                    type: 'inflammatory_cluster',
+                    nodes: inflammatoryNodes.map(n => n.id),
+                    description: 'Cluster of inflammatory traits',
+                    severity: this.calculateAverageSeverity(inflammatoryNodes),
+                    implications: 'Consider anti-inflammatory therapy'
+                });
+            }
+            
+            // Treatment complexity patterns
+            const complexNodes = [];
+            for (const node of graph.nodes.values()) {
+                if (this.hasComplexTreatment(node.data.treatment)) {
+                    complexNodes.push(node.id);
+                }
+            }
+            
+            if (complexNodes.length >= 2) {
+                patterns.push({
+                    type: 'treatment_complexity',
+                    nodes: complexNodes,
+                    description: 'Multiple traits requiring complex treatments',
+                    implications: 'Risk of non-adherence, consider simplification'
+                });
+            }
+            
+            // Critical bridge patterns
+            const bridges = graph.findBridgePatterns();
+            for (const bridge of bridges) {
+                patterns.push({
+                    type: 'critical_bridge',
+                    edge: bridge.edge,
+                    description: 'Critical connection between network components',
+                    severity: 'high',
+                    implications: 'Monitor this connection carefully'
+                });
+            }
+            
+            return patterns;
+        }
+        
+        getNodesByCategory(graph, category) {
+            return Array.from(graph.nodes.values()).filter(node => 
+                node.data.category === category
+            );
+        }
+        
+        calculateAverageSeverity(nodes) {
+            if (nodes.length === 0) return 0;
+            const total = nodes.reduce((sum, node) => sum + (node.data.severity || 0), 0);
+            return total / nodes.length;
+        }
+        
+        hasComplexTreatment(treatment) {
+            if (!treatment) return false;
+            
+            const treatmentStr = typeof treatment === 'string' 
+                ? treatment 
+                : JSON.stringify(treatment);
+            
+            const complexityMarkers = [
+                'combination',
+                'multiple',
+                'add-on',
+                'step-up',
+                'rescue',
+                'maintenance'
+            ];
+            
+            return complexityMarkers.some(marker => 
+                treatmentStr.toLowerCase().includes(marker)
+            );
+        }
+        
+        generateInsights(structuralPatterns, clinicalPatterns) {
+            const insights = [];
+            
+            // Hub insights
+            const hubs = structuralPatterns.filter(p => p.type === 'star');
+            if (hubs.length > 0) {
+                const largestHub = hubs.reduce((max, hub) => 
+                    hub.degree > max.degree ? hub : max
+                );
+                
+                insights.push({
+                    type: 'hub_analysis',
+                    description: `Network has ${hubs.length} hub nodes`,
+                    detail: `Largest hub (${largestHub.center}) has ${largestHub.degree} connections`,
+                    implications: 'Hubs represent key clinical traits that influence many others'
+                });
+            }
+            
+            // Clique insights
+            const cliques = structuralPatterns.filter(p => p.type === 'clique');
+            if (cliques.length > 0) {
+                const largestClique = cliques.reduce((max, clique) => 
+                    clique.size > max.size ? clique : max
+                );
+                
+                insights.push({
+                    type: 'clique_analysis',
+                    description: `Found ${cliques.length} tightly connected groups`,
+                    detail: `Largest clique has ${largestClique.size} fully interconnected nodes`,
+                    implications: 'Cliques may represent clinical syndromes or co-occurring conditions'
+                });
+            }
+            
+            // Bridge insights
+            const bridges = structuralPatterns.filter(p => p.type === 'bridge');
+            if (bridges.length > 0) {
+                insights.push({
+                    type: 'bridge_analysis',
+                    description: `${bridges.length} critical bridge connections detected`,
+                    detail: 'These connections keep the network from fragmenting',
+                    implications: 'Bridge failures would disconnect major network components'
+                });
+            }
+            
+            return insights;
+        }
+    }
+    
+    // ============================================================================
+    // CENTRALITY ANALYZER
+    // ============================================================================
+    
+    class CentralityAnalyzer {
+        constructor() {
+            this.cache = new Map();
+        }
+        
+        calculateAll(graph) {
+            return graph.calculateCentralities();
+        }
+        
+        getTopNodes(graph, centralityType = 'degree', limit = 10) {
+            const centralities = graph.calculateCentralities();
+            const centrality = centralities[centralityType];
+            
+            if (!centrality) return [];
+            
+            return Array.from(centrality.entries())
+                .sort((a, b) => {
+                    const valA = typeof a[1] === 'object' ? a[1].normalized : a[1];
+                    const valB = typeof b[1] === 'object' ? b[1].normalized : b[1];
+                    return valB - valA;
+                })
+                .slice(0, limit)
+                .map(([nodeId, value]) => ({
+                    node: graph.nodes.get(nodeId),
+                    value,
+                    centrality: centralityType
+                }));
+        }
+        
+        identifyCriticalNodes(graph) {
+            const centralities = graph.calculateCentralities();
+            const criticalNodes = [];
+            
+            for (const [nodeId, degree] of centralities.degree) {
+                if (degree.normalized > 0.7) {
+                    const node = graph.nodes.get(nodeId);
+                    criticalNodes.push({
+                        node,
+                        reason: 'high_degree',
+                        score: degree.normalized,
+                        description: 'Highly connected hub node'
+                    });
+                }
+            }
+            
+            for (const [nodeId, betweenness] of centralities.betweenness) {
+                if (betweenness > 0.5) {
+                    const node = graph.nodes.get(nodeId);
+                    criticalNodes.push({
+                        node,
+                        reason: 'high_betweenness',
+                        score: betweenness,
+                        description: 'Critical intermediary node'
+                    });
+                }
+            }
+            
+            return criticalNodes;
+        }
+    }
+    
+    // ============================================================================
+    // PERFORMANCE OPTIMIZATION
+    // ============================================================================
+    
+    class GraphCache {
+        constructor() {
+            this.cache = new Map();
+            this.stats = {
+                hits: 0,
+                misses: 0,
+                size: 0
+            };
+            this.maxSize = 100;
+        }
+        
+        set(key, value, ttl = 60000) {
+            const entry = {
+                value,
+                expires: Date.now() + ttl,
+                lastAccessed: Date.now()
+            };
+            
+            this.cache.set(key, entry);
+            this.stats.size = this.cache.size;
+            
+            if (this.cache.size > this.maxSize) {
+                this.evictLRU();
+            }
+        }
+        
+        get(key) {
+            const entry = this.cache.get(key);
+            
+            if (!entry) {
+                this.stats.misses++;
+                return null;
+            }
+            
+            if (entry.expires < Date.now()) {
+                this.cache.delete(key);
+                this.stats.misses++;
+                this.stats.size = this.cache.size;
+                return null;
+            }
+            
+            entry.lastAccessed = Date.now();
+            this.stats.hits++;
+            return entry.value;
+        }
+        
+        delete(key) {
+            const existed = this.cache.delete(key);
+            if (existed) {
+                this.stats.size = this.cache.size;
+            }
+            return existed;
+        }
+        
+        clear() {
+            this.cache.clear();
+            this.stats.size = 0;
+        }
+        
+        evictLRU() {
+            let lruKey = null;
+            let lruTime = Infinity;
+            
+            for (const [key, entry] of this.cache) {
+                if (entry.lastAccessed < lruTime) {
+                    lruTime = entry.lastAccessed;
+                    lruKey = key;
+                }
+            }
+            
+            if (lruKey) {
+                this.delete(lruKey);
+            }
+        }
+    }
+    
+    class WorkerPool {
+        constructor() {
+            this.workers = new Map();
+            this.taskQueue = [];
+            this.maxWorkers = navigator.hardwareConcurrency || 4;
+        }
+        
+        async runTask(taskType, data) {
+            // Simplified - in real implementation would use Web Workers
+            // For now, run in main thread
+            
+            switch (taskType) {
+                case 'calculate_centralities':
+                    return this.calculateCentralitiesInThread(data.graph);
+                case 'detect_communities':
+                    return this.detectCommunitiesInThread(data.graph, data.method);
+                case 'find_patterns':
+                    return this.findPatternsInThread(data.graph);
+                default:
+                    throw new Error(`Unknown task type: ${taskType}`);
+            }
+        }
+        
+        calculateCentralitiesInThread(graph) {
+            // Simulate async calculation
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const centralities = graph.calculateCentralities();
+                    resolve(centralities);
+                }, 100);
+            });
+        }
+        
+        detectCommunitiesInThread(graph, method) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const communities = graph.detectCommunities(method);
+                    resolve(communities);
+                }, 150);
+            });
+        }
+        
+        findPatternsInThread(graph) {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    const patterns = graph.findPatterns();
+                    resolve(patterns);
+                }, 200);
+            });
+        }
+        
+        terminate() {
+            // Clean up workers
+            this.workers.clear();
+        }
+    }
+    
+    class GraphBatchProcessor {
+        constructor() {
+            this.queue = [];
+            this.processing = false;
+            this.batchSize = 50;
+        }
+        
+        add(task) {
+            this.queue.push(task);
+            if (!this.processing) {
+                this.process();
+            }
+        }
+        
+        async process() {
+            this.processing = true;
+            
+            while (this.queue.length > 0) {
+                const batch = this.queue.splice(0, this.batchSize);
+                
+                await Promise.all(batch.map(async task => {
+                    try {
+                        await task();
+                    } catch (error) {
+                        console.error('Batch task error:', error);
+                    }
+                }));
+                
+                // Yield to prevent blocking
+                if (this.queue.length > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+            }
+            
+            this.processing = false;
+        }
+        
+        clear() {
+            this.queue = [];
+            this.processing = false;
+        }
+    }
+    
+    // ============================================================================
+    // PUBLIC API
+    // ============================================================================
+    
+    async loadGraph(graphData) {
+        try {
+            this.graph = new ClinicalGraph();
+            
+            if (graphData) {
+                this.graph.fromJSON(graphData);
+            }
+            
+            // Initialize layout
+            this.layout = new ForceDirectedLayout();
+            this.layout.initialize(this.graph);
+            
+            // Run initial analysis
+            const analysis = await this.analyzeGraph();
+            
+            this.eventSystem.emit('graph:loaded', {
+                nodes: this.graph.nodes.size,
+                edges: this.graph.edges.size,
+                analysis
+            });
+            
+            return {
+                graph: this.graph,
+                layout: this.layout,
+                analysis
+            };
+            
+        } catch (error) {
+            console.error('Error loading graph:', error);
+            this.eventSystem.emit('graph:error', { error: error.message });
+            throw error;
+        }
+    }
+    
+    async analyzeGraph() {
+        if (!this.graph || this.graph.nodes.size === 0) {
+            return null;
+        }
+        
+        this.state.analysisInProgress = true;
+        this.eventSystem.emit('analysis:started');
+        
+        try {
+            // Run analyses in parallel
+            const [metrics, communities, centralities, patterns] = await Promise.all([
+                this.calculateMetrics(),
+                this.detectCommunities(),
+                this.calculateCentralities(),
+                this.detectPatterns()
+            ]);
+            
+            const analysis = {
+                metrics,
+                communities,
+                centralities,
+                patterns,
+                timestamp: new Date().toISOString()
+            };
+            
+            this.cache.set('last_analysis', analysis, 30000); // Cache for 30 seconds
+            
+            this.eventSystem.emit('analysis:complete', analysis);
+            return analysis;
+            
+        } catch (error) {
+            console.error('Analysis error:', error);
+            this.eventSystem.emit('analysis:error', { error: error.message });
+            throw error;
+        } finally {
+            this.state.analysisInProgress = false;
+        }
+    }
+    
+    async calculateMetrics() {
+        if (!this.graph) return null;
+        
+        return {
+            nodes: this.graph.nodes.size,
+            edges: this.graph.edges.size,
+            density: this.graph.calculateDensity(),
+            diameter: this.graph.calculateDiameter(),
+            clusteringCoefficient: this.graph.calculateClusteringCoefficient(),
+            components: this.graph.findConnectedComponents().length
+        };
+    }
+    
+    async detectCommunities(method = 'louvain') {
+        if (!this.graph) return null;
+        
+        const communities = this.graph.detectCommunities(method);
+        const communityDetector = new LouvainCommunityDetector();
+        const modularity = communityDetector.calculateModularity(this.graph, communities);
+        
+        return {
+            method,
+            assignments: communities,
+            count: new Set(Array.from(communities.values())).size,
+            modularity
+        };
+    }
+    
+    async calculateCentralities() {
+        if (!this.graph) return null;
+        
+        return this.graph.calculateCentralities();
+    }
+    
+    async detectPatterns() {
+        if (!this.graph) return null;
+        
+        const patternDetector = new ClinicalPatternDetector();
+        return patternDetector.detectAll(this.graph);
+    }
+    
+    async findPath(startId, endId, options = {}) {
+        if (!this.graph) return null;
+        
+        const pathFinder = new ClinicalPathFinder();
+        return pathFinder.findPath(this.graph, startId, endId, options);
+    }
+    
+    async findAllPaths(startId, endId, maxDepth = 6) {
+        if (!this.graph) return null;
+        
+        const pathFinder = new ClinicalPathFinder();
+        return pathFinder.findAllPaths(this.graph, startId, endId, maxDepth);
+    }
+    
+    async runLayout(iterations = 500) {
+        if (!this.graph || !this.layout) return;
+        
+        return new Promise((resolve) => {
+            this.layout.run(this.graph, iterations, (iteration, converged) => {
+                if (converged || iteration >= iterations) {
+                    resolve({ iteration, converged });
+                }
+            });
+        });
+    }
+    
+    async exportGraph(format = 'json') {
+        if (!this.graph) return null;
+        
+        switch (format) {
+            case 'json':
+                return this.graph.toJSON();
+            case 'csv':
+                return this.exportToCSV();
+            case 'gexf':
+                return this.exportToGEXF();
+            default:
+                return this.graph.toJSON();
+        }
+    }
+    
+    exportToCSV() {
+        if (!this.graph) return '';
+        
+        let csv = 'Node ID,Label,Category,Severity,Degree,X,Y\n';
+        
+        for (const node of this.graph.nodes.values()) {
+            csv += `"${node.id}","${node.label}","${node.data.category}",${node.data.severity || 0},${node.degree},${node.x},${node.y}\n`;
+        }
+        
+        csv += '\nEdge ID,Source,Target,Type,Strength\n';
+        
+        for (const edge of this.graph.edges.values()) {
+            csv += `"${edge.id}","${edge.source}","${edge.target}","${edge.type}",${edge.strength}\n`;
+        }
+        
+        return csv;
+    }
+    
+    exportToGEXF() {
+        if (!this.graph) return '';
+        
+        const nodes = Array.from(this.graph.nodes.values());
+        const edges = Array.from(this.graph.edges.values());
+        
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<gexf xmlns="http://www.gexf.net/1.2draft" version="1.2">
+    <graph mode="static" defaultedgetype="undirected">
+        <nodes>
+            ${nodes.map(node => `
+            <node id="${node.id}" label="${node.label}">
+                <attvalues>
+                    <attvalue for="category" value="${node.data.category}"/>
+                    <attvalue for="severity" value="${node.data.severity || 0}"/>
+                    <attvalue for="degree" value="${node.degree}"/>
+                </attvalues>
+                <viz:position x="${node.x}" y="${node.y}" z="0"/>
+                <viz:size value="${node.size}"/>
+                <viz:color r="${parseInt(node.color.slice(1, 3), 16)}" 
+                          g="${parseInt(node.color.slice(3, 5), 16)}" 
+                          b="${parseInt(node.color.slice(5, 7), 16)}"/>
+            </node>`).join('')}
+        </nodes>
+        <edges>
+            ${edges.map(edge => `
+            <edge id="${edge.id}" source="${edge.source}" target="${edge.target}" weight="${edge.strength / 100}">
+                <attvalues>
+                    <attvalue for="type" value="${edge.type}"/>
+                </attvalues>
+                <viz:thickness value="${edge.width}"/>
+                <viz:color r="${parseInt(edge.color.slice(1, 3), 16)}" 
+                          g="${parseInt(edge.color.slice(3, 5), 16)}" 
+                          b="${parseInt(edge.color.slice(5, 7), 16)}"/>
+            </edge>`).join('')}
+        </edges>
+    </graph>
+</gexf>`;
+    }
+    
+    // ============================================================================
+    // EVENT SYSTEM
+    // ============================================================================
+    
+    createEventSystem() {
+        return {
+            listeners: new Map(),
+            
+            subscribe(event, callback) {
+                if (!this.listeners.has(event)) {
+                    this.listeners.set(event, new Set());
+                }
+                this.listeners.get(event).add(callback);
+                return () => this.unsubscribe(event, callback);
+            },
+            
+            unsubscribe(event, callback) {
+                if (this.listeners.has(event)) {
+                    this.listeners.get(event).delete(callback);
+                }
+            },
+            
+            emit(event, data) {
+                if (this.listeners.has(event)) {
+                    this.listeners.get(event).forEach(callback => {
+                        try {
+                            callback(data);
+                        } catch (error) {
+                            console.error(`Event listener error for ${event}:`, error);
+                        }
+                    });
+                }
+            }
+        };
+    }
+    
+    setupEventListeners() {
+        // Listen for node selection
+        this.eventSystem.subscribe('node:selected', (data) => {
+            this.state.selectedNodes.add(data.node.id);
+            this.highlightNeighbors(data.node.id);
+        });
+        
+        // Listen for node deselection
+        this.eventSystem.subscribe('node:deselected', (data) => {
+            this.state.selectedNodes.delete(data.node.id);
+            this.clearHighlights();
+        });
+        
+        // Listen for graph modifications
+        this.eventSystem.subscribe('graph:modified', () => {
+            this.state.graphModified = true;
+            this.cache.clear(); // Clear cache when graph changes
+        });
+    }
+    
+    highlightNeighbors(nodeId) {
+        if (!this.graph) return;
+        
+        const neighbors = this.graph.adjacency.get(nodeId);
+        if (!neighbors) return;
+        
+        for (const neighborId of neighbors) {
+            const neighbor = this.graph.nodes.get(neighborId);
+            if (neighbor) {
+                neighbor.highlighted = true;
+            }
+        }
+    }
+    
+    clearHighlights() {
+        if (!this.graph) return;
+        
+        for (const node of this.graph.nodes.values()) {
+            node.highlighted = false;
+        }
+    }
+    
+    initializeWorkerPool() {
+        this.workerPool = new WorkerPool();
+    }
+    
+    // ============================================================================
+    // CLEANUP
+    // ============================================================================
+    
+    destroy() {
+        if (this.layout) {
+            this.layout.stop();
+        }
+        
+        if (this.workerPool) {
+            this.workerPool.terminate();
+        }
+        
+        this.cache.clear();
+        this.batchProcessor.clear();
+        
+        this.graph = null;
+        this.layout = null;
+        this.communityDetector = null;
+        this.pathFinder = null;
+        this.patternDetector = null;
+        this.centralityCalculator = null;
+        this.workerPool = null;
+        this.batchProcessor = null;
+        
+        console.log('Clinical Graph Engine destroyed');
+    }
+}
+
+// ============================================================================
+// GLOBAL EXPORT
+// ============================================================================
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        ClinicalGraphEngine,
+        ClinicalGraph,
+        ForceDirectedLayout,
+        LouvainCommunityDetector,
+        ClinicalPathFinder,
+        ClinicalPatternDetector,
+        CentralityAnalyzer,
+        GraphCache,
+        WorkerPool,
+        GraphBatchProcessor
+    };
+}
+
+if (typeof window !== 'undefined') {
+    window.ClinicalGraphEngine = ClinicalGraphEngine;
+}
+
+console.log('Clinical Graph Engine v4.0 - Complete implementation loaded');
 
 'use strict';
 
@@ -897,7 +3343,7 @@ class ClinicalNetwork {
         
         // Initialize database and graph engine
         this.database = new ClinicalDatabase();
-        this.graphEngine = new ClinicalGraphEngine();
+        this.graphEngine = new ClinicalGraphEngine(); // Now using the complete implementation
         
         // State management
         this.state = {
