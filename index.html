@@ -2110,867 +2110,2281 @@ class ClinicalDatabase {
     }
     
     loadSystemTraits() {
-        // Generate 200+ comprehensive clinical traits
-        return [
-            // Pulmonary/Respiratory Traits (40 traits)
-            {
-                id: 'PULM-001',
-                name: 'Airflow Limitation (Obstructive)',
-                spanishName: 'Limitación al Flujo Aéreo (Obstructiva)',
-                category: 'pulmonary',
-                evaluation: 'Post-bronchodilator FEV1/FVC < 0.70 confirms persistent airflow obstruction.',
-                severity: 85,
-                biomarkers: ['FEV1', 'FVC', 'FEV1/FVC', 'PEF', 'RV/TLC'],
-                treatment: {
-                    firstLine: 'LAMA/LABA combination therapy',
-                    nonPharmacological: 'Smoking cessation, Pulmonary rehabilitation'
-                },
-                evidence: { level: 'A' }
+    return [
+        // ===================================================
+        // PULMONARY/RESPIRATORY TRAITS (40 traits)
+        // ===================================================
+        {
+            id: 'PULM-001',
+            name: 'Airflow Limitation (Obstructive)',
+            spanishName: 'Limitación al Flujo Aéreo (Obstructiva)',
+            category: 'pulmonary',
+            evaluation: 'Post-bronchodilator FEV1/FVC < 0.70 confirms persistent airflow obstruction.',
+            severity: 85,
+            biomarkers: ['FEV1', 'FVC', 'FEV1/FVC', 'PEF', 'RV/TLC', 'Bronchodilator response'],
+            treatment: {
+                firstLine: 'LAMA/LABA combination therapy',
+                secondLine: 'ICS add-on if eosinophils ≥300 cells/μL',
+                nonPharmacological: 'Smoking cessation, Pulmonary rehabilitation, Annual vaccination'
             },
-            {
-                id: 'PULM-002',
-                name: 'Bronchial Hyperresponsiveness',
-                spanishName: 'Hiperreactividad Bronquial',
-                category: 'pulmonary',
-                evaluation: 'Positive methacholine challenge test (PC20 ≤ 8 mg/mL).',
-                severity: 75,
-                biomarkers: ['Methacholine PC20', 'FeNO', 'Bronchodilator response'],
-                treatment: {
-                    firstLine: 'Inhaled corticosteroids',
-                    nonPharmacological: 'Allergen avoidance, Breathing exercises'
-                },
-                evidence: { level: 'A' }
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-002',
+            name: 'Bronchial Hyperresponsiveness',
+            spanishName: 'Hiperreactividad Bronquial',
+            category: 'pulmonary',
+            evaluation: 'Positive methacholine challenge test (PC20 ≤ 8 mg/mL).',
+            severity: 75,
+            biomarkers: ['Methacholine PC20', 'FeNO', 'Bronchodilator response', 'Airway resistance'],
+            treatment: {
+                firstLine: 'Inhaled corticosteroids',
+                secondLine: 'Leukotriene receptor antagonists',
+                nonPharmacological: 'Allergen avoidance, Breathing exercises, Environmental control'
             },
-            {
-                id: 'PULM-003',
-                name: 'Gas Exchange Impairment',
-                spanishName: 'Alteración del Intercambio Gaseoso',
-                category: 'pulmonary',
-                evaluation: 'PaO2 < 80 mmHg or SpO2 < 94% on room air.',
-                severity: 80,
-                biomarkers: ['PaO2', 'PaCO2', 'SpO2', 'DLCO', 'A-a gradient'],
-                treatment: {
-                    firstLine: 'Oxygen therapy to maintain SpO2 ≥90-92%',
-                    nonPharmacological: 'Pulmonary rehabilitation'
-                },
-                evidence: { level: 'A' }
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-003',
+            name: 'Gas Exchange Impairment',
+            spanishName: 'Alteración del Intercambio Gaseoso',
+            category: 'pulmonary',
+            evaluation: 'PaO2 < 80 mmHg or SpO2 < 94% on room air.',
+            severity: 80,
+            biomarkers: ['PaO2', 'PaCO2', 'SpO2', 'DLCO', 'A-a gradient', 'Shunt fraction'],
+            treatment: {
+                firstLine: 'Oxygen therapy to maintain SpO2 ≥90-92%',
+                secondLine: 'Non-invasive ventilation for hypercapnia',
+                nonPharmacological: 'Pulmonary rehabilitation, Energy conservation'
             },
-            {
-                id: 'PULM-004',
-                name: 'Dynamic Hyperinflation',
-                spanishName: 'Hiperinflación Dinámica',
-                category: 'pulmonary',
-                evaluation: 'Increased inspiratory capacity after bronchodilator > 200 mL.',
-                severity: 70,
-                biomarkers: ['IC', 'FRC', 'TLC', 'PEEP'],
-                treatment: {
-                    firstLine: 'Long-acting bronchodilators',
-                    nonPharmacological: 'Breathing techniques, Exercise pacing'
-                },
-                evidence: { level: 'B' }
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-004',
+            name: 'Dynamic Hyperinflation',
+            spanishName: 'Hiperinflación Dinámica',
+            category: 'pulmonary',
+            evaluation: 'Increased inspiratory capacity after bronchodilator > 200 mL.',
+            severity: 70,
+            biomarkers: ['IC', 'FRC', 'TLC', 'PEEP', 'Work of breathing'],
+            treatment: {
+                firstLine: 'Long-acting bronchodilators',
+                secondLine: 'Theophylline if tolerated',
+                nonPharmacological: 'Breathing techniques, Exercise pacing, Pursed-lip breathing'
             },
-            {
-                id: 'PULM-005',
-                name: 'Respiratory Muscle Weakness',
-                spanishName: 'Debilidad Muscular Respiratoria',
-                category: 'pulmonary',
-                evaluation: 'MIP < 60 cm H2O or MEP < 100 cm H2O.',
-                severity: 65,
-                biomarkers: ['MIP', 'MEP', 'SNIP', 'VC'],
-                treatment: {
-                    firstLine: 'Respiratory muscle training',
-                    nonPharmacological: 'Nutritional support, Physical therapy'
-                },
-                evidence: { level: 'B' }
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-005',
+            name: 'Respiratory Muscle Weakness',
+            spanishName: 'Debilidad Muscular Respiratoria',
+            category: 'pulmonary',
+            evaluation: 'MIP < 60 cm H2O or MEP < 100 cm H2O.',
+            severity: 65,
+            biomarkers: ['MIP', 'MEP', 'SNIP', 'VC', 'Maximum voluntary ventilation'],
+            treatment: {
+                firstLine: 'Respiratory muscle training',
+                secondLine: 'Non-invasive ventilation support',
+                nonPharmacological: 'Nutritional support, Physical therapy, Postural drainage'
             },
-            {
-                id: 'PULM-006',
-                name: 'Ventilation-Perfusion Mismatch',
-                spanishName: 'Desajuste Ventilación-Perfusión',
-                category: 'pulmonary',
-                evaluation: 'Increased dead space ventilation (VD/VT > 0.4).',
-                severity: 75,
-                biomarkers: ['VD/VT', 'A-a gradient', 'PETCO2'],
-                treatment: {
-                    firstLine: 'Optimize ventilation and perfusion matching',
-                    nonPharmacological: 'Positioning, Exercise training'
-                },
-                evidence: { level: 'B' }
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-006',
+            name: 'Ventilation-Perfusion Mismatch',
+            spanishName: 'Desajuste Ventilación-Perfusión',
+            category: 'pulmonary',
+            evaluation: 'Increased dead space ventilation (VD/VT > 0.4).',
+            severity: 75,
+            biomarkers: ['VD/VT', 'A-a gradient', 'PETCO2', 'Alveolar-arterial O2 difference'],
+            treatment: {
+                firstLine: 'Optimize ventilation and perfusion matching',
+                secondLine: 'Vasodilators if pulmonary hypertension present',
+                nonPharmacological: 'Positioning, Exercise training, Oxygen therapy'
             },
-            {
-                id: 'PULM-007',
-                name: 'Air Trapping',
-                spanishName: 'Atrapamiento Aéreo',
-                category: 'pulmonary',
-                evaluation: 'RV/TLC ratio > 0.45 indicating air trapping.',
-                severity: 68,
-                biomarkers: ['RV', 'RV/TLC', 'FRC', 'IC'],
-                treatment: {
-                    firstLine: 'Long-acting bronchodilators',
-                    nonPharmacological: 'Airway clearance techniques'
-                },
-                evidence: { level: 'B' }
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-007',
+            name: 'Air Trapping',
+            spanishName: 'Atrapamiento Aéreo',
+            category: 'pulmonary',
+            evaluation: 'RV/TLC ratio > 0.45 indicating air trapping.',
+            severity: 68,
+            biomarkers: ['RV', 'RV/TLC', 'FRC', 'IC', 'Expiratory flows'],
+            treatment: {
+                firstLine: 'Long-acting bronchodilators',
+                secondLine: 'Roflumilast for frequent exacerbators',
+                nonPharmacological: 'Airway clearance techniques, Breathing control'
             },
-            {
-                id: 'PULM-008',
-                name: 'Exercise-Induced Bronchoconstriction',
-                spanishName: 'Broncoconstricción Inducida por Ejercicio',
-                category: 'pulmonary',
-                evaluation: 'FEV1 decrease ≥10% after exercise challenge.',
-                severity: 60,
-                biomarkers: ['FEV1 post-exercise', 'EIA severity score'],
-                treatment: {
-                    firstLine: 'Pre-exercise SABA or mast cell stabilizer',
-                    nonPharmacological: 'Warm-up exercises, Environmental control'
-                },
-                evidence: { level: 'A' }
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-008',
+            name: 'Exercise-Induced Bronchoconstriction',
+            spanishName: 'Broncoconstricción Inducida por Ejercicio',
+            category: 'pulmonary',
+            evaluation: 'FEV1 decrease ≥10% after exercise challenge.',
+            severity: 60,
+            biomarkers: ['FEV1 post-exercise', 'EIA severity score', 'Recovery time'],
+            treatment: {
+                firstLine: 'Pre-exercise SABA or mast cell stabilizer',
+                secondLine: 'Daily controller therapy if frequent',
+                nonPharmacological: 'Warm-up exercises, Environmental control, Mask use in cold'
             },
-            {
-                id: 'PULM-009',
-                name: 'Nocturnal Hypoxemia',
-                spanishName: 'Hipoxemia Nocturna',
-                category: 'pulmonary',
-                evaluation: 'Overnight SpO2 < 90% for >5% of sleep time.',
-                severity: 72,
-                biomarkers: ['Nocturnal SpO2', 'ODI', 'TST with SpO2<90%'],
-                treatment: {
-                    firstLine: 'Nocturnal oxygen therapy',
-                    nonPharmacological: 'Sleep position, Weight management'
-                },
-                evidence: { level: 'B' }
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-009',
+            name: 'Nocturnal Hypoxemia',
+            spanishName: 'Hipoxemia Nocturna',
+            category: 'pulmonary',
+            evaluation: 'Overnight SpO2 < 90% for >5% of sleep time.',
+            severity: 72,
+            biomarkers: ['Nocturnal SpO2', 'ODI', 'TST with SpO2<90%', 'Sleep architecture'],
+            treatment: {
+                firstLine: 'Nocturnal oxygen therapy',
+                secondLine: 'Non-invasive ventilation if hypercapnic',
+                nonPharmacological: 'Sleep position, Weight management, Alcohol avoidance'
             },
-            {
-                id: 'PULM-010',
-                name: 'Chronic Mucus Hypersecretion',
-                spanishName: 'Hipersecreción Crónica de Moco',
-                category: 'pulmonary',
-                evaluation: 'Daily cough and sputum production for ≥3 months.',
-                severity: 55,
-                biomarkers: ['Sputum volume', 'Sputum viscosity', 'Inflammatory cells'],
-                treatment: {
-                    firstLine: 'Mucolytics (carbocisteine, erdosteine)',
-                    nonPharmacological: 'Hydration, Chest physiotherapy'
-                },
-                evidence: { level: 'B' }
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-010',
+            name: 'Chronic Mucus Hypersecretion',
+            spanishName: 'Hipersecreción Crónica de Moco',
+            category: 'pulmonary',
+            evaluation: 'Daily cough and sputum production for ≥3 months.',
+            severity: 55,
+            biomarkers: ['Sputum volume', 'Sputum viscosity', 'Inflammatory cells', 'Mucin genes'],
+            treatment: {
+                firstLine: 'Mucolytics (carbocisteine, erdosteine)',
+                secondLine: 'Macrolides for anti-inflammatory effect',
+                nonPharmacological: 'Hydration, Chest physiotherapy, Steam inhalation'
             },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-011',
+            name: 'Pulmonary Hypertension',
+            spanishName: 'Hipertensión Pulmonar',
+            category: 'pulmonary',
+            evaluation: 'mPAP ≥ 25 mmHg at rest measured by RHC.',
+            severity: 85,
+            biomarkers: ['mPAP', 'PVR', 'NT-proBNP', 'Echocardiogram parameters'],
+            treatment: {
+                firstLine: 'Pulmonary vasodilators',
+                secondLine: 'Combination therapy',
+                nonPharmacological: 'Oxygen therapy, Diuretics, Exercise within limits'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-012',
+            name: 'Bronchiectasis',
+            spanishName: 'Bronquiectasias',
+            category: 'pulmonary',
+            evaluation: 'Permanent abnormal bronchial dilation on CT.',
+            severity: 75,
+            biomarkers: ['Sputum culture', 'Inflammatory markers', 'Lung function decline'],
+            treatment: {
+                firstLine: 'Airway clearance techniques',
+                secondLine: 'Macrolide antibiotics',
+                nonPharmacological: 'Pulmonary rehabilitation, Vaccination'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-013',
+            name: 'Restrictive Ventilatory Defect',
+            spanishName: 'Defecto Ventilatorio Restrictivo',
+            category: 'pulmonary',
+            evaluation: 'TLC < 80% predicted with preserved FEV1/FVC.',
+            severity: 70,
+            biomarkers: ['TLC', 'FVC', 'DLCO', 'Compliance'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Immunosuppressants if inflammatory',
+                nonPharmacological: 'Pulmonary rehabilitation, Oxygen if needed'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-014',
+            name: 'Diffusion Capacity Impairment',
+            spanishName: 'Alteración de la Capacidad de Difusión',
+            category: 'pulmonary',
+            evaluation: 'DLCO < 80% predicted corrected for Hb.',
+            severity: 68,
+            biomarkers: ['DLCO', 'KCO', 'Alveolar volume', 'Hb correction'],
+            treatment: {
+                firstLine: 'Oxygen therapy if hypoxemic',
+                secondLine: 'Treat underlying interstitial disease',
+                nonPharmacological: 'Avoid smoking, Environmental protection'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-015',
+            name: 'Tracheomalacia',
+            spanishName: 'Traqueomalacia',
+            category: 'pulmonary',
+            evaluation: '>50% reduction in cross-sectional area during expiration.',
+            severity: 65,
+            biomarkers: ['Dynamic CT findings', 'Flow-volume loop', 'Bronchoscopy'],
+            treatment: {
+                firstLine: 'CPAP or positive pressure',
+                secondLine: 'Surgical intervention if severe',
+                nonPharmacological: 'Breathing techniques, Airway clearance'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-016',
+            name: 'Vocal Cord Dysfunction',
+            spanishName: 'Disfunción de Cuerdas Vocales',
+            category: 'pulmonary',
+            evaluation: 'Paradoxical vocal cord motion on laryngoscopy.',
+            severity: 60,
+            biomarkers: ['Flow-volume loop', 'Laryngoscopy', 'Provocation tests'],
+            treatment: {
+                firstLine: 'Speech therapy',
+                secondLine: 'Breathing retraining',
+                nonPharmacological: 'Stress management, Trigger avoidance'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-017',
+            name: 'Pulmonary Embolism History',
+            spanishName: 'Historia de Embolia Pulmonar',
+            category: 'pulmonary',
+            evaluation: 'Previous confirmed PE with residual symptoms.',
+            severity: 72,
+            biomarkers: ['D-dimer', 'CTPA findings', 'Echocardiogram'],
+            treatment: {
+                firstLine: 'Anticoagulation therapy',
+                secondLine: 'Thrombolysis if acute',
+                nonPharmacological: 'Compression stockings, Mobility'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-018',
+            name: 'Aspiration Risk',
+            spanishName: 'Riesgo de Aspiración',
+            category: 'pulmonary',
+            evaluation: 'Abnormal swallow study or recurrent aspiration pneumonia.',
+            severity: 75,
+            biomarkers: ['Swallow study', 'Chest imaging', 'Reflex testing'],
+            treatment: {
+                firstLine: 'Swallow therapy',
+                secondLine: 'Diet modification',
+                nonPharmacological: 'Positioning, Oral care'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-019',
+            name: 'Pleural Disease',
+            spanishName: 'Enfermedad Pleural',
+            category: 'pulmonary',
+            evaluation: 'Pleural thickening, effusion, or plaques.',
+            severity: 62,
+            biomarkers: ['Pleural fluid analysis', 'CT findings', 'PFT restriction'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Pleurodesis if recurrent',
+                nonPharmacological: 'Pain management, Breathing exercises'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-020',
+            name: 'Lung Volume Reduction Indication',
+            spanishName: 'Indicación de Reducción de Volumen Pulmonar',
+            category: 'pulmonary',
+            evaluation: 'Upper lobe predominant emphysema with hyperinflation.',
+            severity: 80,
+            biomarkers: ['CT emphysema score', 'Hyperinflation measures', 'Exercise capacity'],
+            treatment: {
+                firstLine: 'Medical optimization first',
+                secondLine: 'Bronchoscopic or surgical LVR',
+                nonPharmacological: 'Pulmonary rehabilitation'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-021',
+            name: 'Pneumothorax History',
+            spanishName: 'Historia de Neumotórax',
+            category: 'pulmonary',
+            evaluation: 'Previous spontaneous or traumatic pneumothorax.',
+            severity: 68,
+            biomarkers: ['Chest imaging', 'Recurrence rate', 'Underlying lung disease'],
+            treatment: {
+                firstLine: 'Observation for small',
+                secondLine: 'Chest tube drainage',
+                nonPharmacological: 'Smoking cessation, Air travel caution'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-022',
+            name: 'Respiratory Infection Susceptibility',
+            spanishName: 'Susceptibilidad a Infecciones Respiratorias',
+            category: 'pulmonary',
+            evaluation: '≥3 LRTI episodes in past year.',
+            severity: 70,
+            biomarkers: ['Infection frequency', 'Immune function tests', 'Vaccination status'],
+            treatment: {
+                firstLine: 'Vaccination optimization',
+                secondLine: 'Prophylactic antibiotics if frequent',
+                nonPharmacological: 'Infection control, Nutrition'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-023',
+            name: 'Chest Wall Deformity',
+            spanishName: 'Deformidad de la Pared Torácica',
+            category: 'pulmonary',
+            evaluation: 'Pectus excavatum/carinatum or kyphoscoliosis.',
+            severity: 58,
+            biomarkers: ['Chest wall index', 'PFT restriction', 'Imaging severity'],
+            treatment: {
+                firstLine: 'Physical therapy',
+                secondLine: 'Surgical correction if severe',
+                nonPharmacological: 'Breathing exercises, Posture training'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PULM-024',
+            name: 'Diaphragmatic Dysfunction',
+            spanishName: 'Disfunción Diafragmática',
+            category: 'pulmonary',
+            evaluation: 'Reduced diaphragm excursion on ultrasound or fluoroscopy.',
+            severity: 65,
+            biomarkers: ['Diaphragm ultrasound', 'SNIP test', 'Supine fall in VC'],
+            treatment: {
+                firstLine: 'Non-invasive ventilation',
+                secondLine: 'Pacing if phrenic nerve intact',
+                nonPharmacological: 'Positioning, Breathing exercises'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-025',
+            name: 'Exercise Desaturation',
+            spanishName: 'Desaturación con el Ejercicio',
+            category: 'pulmonary',
+            evaluation: 'SpO2 drop ≥4% during exercise.',
+            severity: 73,
+            biomarkers: ['Exercise SpO2', '6MWT desaturation', 'CPET parameters'],
+            treatment: {
+                firstLine: 'Supplemental oxygen during exercise',
+                secondLine: 'Pulmonary rehabilitation',
+                nonPharmacological: 'Interval training, Energy conservation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-026',
+            name: 'Morning Symptoms',
+            spanishName: 'Síntomas Matutinos',
+            category: 'pulmonary',
+            evaluation: 'Increased dyspnea, cough, or sputum in morning.',
+            severity: 55,
+            biomarkers: ['Morning symptom diary', 'PEF variability', 'Nocturnal symptoms'],
+            treatment: {
+                firstLine: 'Long-acting bronchodilators',
+                secondLine: 'Timing of medication administration',
+                nonPharmacological: 'Airway clearance in morning, Warm fluids'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-027',
+            name: 'Barrel Chest',
+            spanishName: 'Tórax en Tonel',
+            category: 'pulmonary',
+            evaluation: 'Increased AP diameter with hyperinflation.',
+            severity: 62,
+            biomarkers: ['Chest measurement', 'Hyperinflation on imaging', 'PFT pattern'],
+            treatment: {
+                firstLine: 'Bronchodilator optimization',
+                secondLine: 'Consider lung volume reduction',
+                nonPharmacological: 'Postural training, Breathing techniques'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PULM-028',
+            name: 'Pursed-Lip Breathing Habit',
+            spanishName: 'Hábito de Respiración con Labios Fruncidos',
+            category: 'pulmonary',
+            evaluation: 'Patient naturally uses PLB for dyspnea relief.',
+            severity: 45,
+            biomarkers: ['Breathing pattern assessment', 'Dyspnea relief'],
+            treatment: {
+                firstLine: 'Formal breathing training',
+                secondLine: 'Combine with other techniques',
+                nonPharmacological: 'Regular practice, Trigger recognition'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-029',
+            name: 'Paradoxical Breathing',
+            spanishName: 'Respiración Paradójica',
+            category: 'pulmonary',
+            evaluation: 'Inward abdominal motion during inspiration.',
+            severity: 67,
+            biomarkers: ['Breathing pattern', 'Accessory muscle use', 'Diaphragm function'],
+            treatment: {
+                firstLine: 'Breathing retraining',
+                secondLine: 'Non-invasive ventilation if severe',
+                nonPharmacological: 'Positioning, Relaxation techniques'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-030',
+            name: 'Accessory Muscle Use',
+            spanishName: 'Uso de Músculos Accesorios',
+            category: 'pulmonary',
+            evaluation: 'Visible use of SCM, scalenes during quiet breathing.',
+            severity: 60,
+            biomarkers: ['Muscle use assessment', 'Work of breathing', 'Dyspnea score'],
+            treatment: {
+                firstLine: 'Bronchodilator optimization',
+                secondLine: 'Non-invasive ventilation if chronic',
+                nonPharmacological: 'Breathing retraining, Energy conservation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-031',
+            name: 'Clubbing',
+            spanishName: 'Acropaquia',
+            category: 'pulmonary',
+            evaluation: 'Increased nail bed angle >180 degrees.',
+            severity: 70,
+            biomarkers: ['Digital clubbing assessment', 'Underlying disease markers'],
+            treatment: {
+                firstLine: 'Treat underlying pulmonary condition',
+                secondLine: 'Investigate for other causes',
+                nonPharmacological: 'Monitor for disease progression'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PULM-032',
+            name: 'Cyanosis',
+            spanishName: 'Cianosis',
+            category: 'pulmonary',
+            evaluation: 'Bluish discoloration of lips/nail beds.',
+            severity: 78,
+            biomarkers: ['SpO2', 'PaO2', 'Hemoglobin', 'Methemoglobin if suspected'],
+            treatment: {
+                firstLine: 'Oxygen therapy',
+                secondLine: 'Treat underlying hypoxemia cause',
+                nonPharmacological: 'Keep warm, Avoid vasoconstrictors'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-033',
+            name: 'Hemoptysis',
+            spanishName: 'Hemoptisis',
+            category: 'pulmonary',
+            evaluation: 'Coughing up blood or blood-streaked sputum.',
+            severity: 82,
+            biomarkers: ['Sputum examination', 'Chest imaging', 'Bronchoscopy findings'],
+            treatment: {
+                firstLine: 'Identify and treat source',
+                secondLine: 'Bronchial artery embolization if needed',
+                nonPharmacological: 'Rest, Avoid coughing triggers'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-034',
+            name: 'Digital Ischemia',
+            spanishName: 'Isquemia Digital',
+            category: 'pulmonary',
+            evaluation: 'Finger discoloration/pain in cold (secondary to pulmonary disease).',
+            severity: 65,
+            biomarkers: ['Digital perfusion', 'Autoantibodies', 'Inflammatory markers'],
+            treatment: {
+                firstLine: 'Calcium channel blockers',
+                secondLine: 'Prostacyclin analogs if severe',
+                nonPharmacological: 'Keep hands warm, Smoking cessation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-035',
+            name: 'Hoarseness',
+            spanishName: 'Ronquera',
+            category: 'pulmonary',
+            evaluation: 'Voice changes from respiratory condition or treatment.',
+            severity: 48,
+            biomarkers: ['Laryngoscopy', 'Voice assessment', 'Medication review'],
+            treatment: {
+                firstLine: 'Speech therapy evaluation',
+                secondLine: 'Inhaler technique review',
+                nonPharmacological: 'Voice rest, Hydration'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PULM-036',
+            name: 'Tracheostomy Dependence',
+            spanishName: 'Dependencia de Traqueostomía',
+            category: 'pulmonary',
+            evaluation: 'Requires tracheostomy for airway management.',
+            severity: 85,
+            biomarkers: ['Tracheostomy care needs', 'Weaning attempts', 'Swallow function'],
+            treatment: {
+                firstLine: 'Regular tracheostomy care',
+                secondLine: 'Weaning protocol if possible',
+                nonPharmacological: 'Humidification, Suction as needed'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-037',
+            name: 'Oxygen Therapy Dependence',
+            spanishName: 'Dependencia de Oxigenoterapia',
+            category: 'pulmonary',
+            evaluation: 'Requires supplemental oxygen ≥15 hours/day.',
+            severity: 80,
+            biomarkers: ['Oxygen requirements', 'Activity desaturation', 'Adherence'],
+            treatment: {
+                firstLine: 'Optimize oxygen delivery system',
+                secondLine: 'Consider ambulatory systems',
+                nonPharmacological: 'Energy conservation, Travel planning'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-038',
+            name: 'Non-Invasive Ventilation Dependence',
+            spanishName: 'Dependencia de Ventilación No Invasiva',
+            category: 'pulmonary',
+            evaluation: 'Requires NIV for respiratory support.',
+            severity: 83,
+            biomarkers: ['NIV settings', 'Adherence data', 'Blood gases'],
+            treatment: {
+                firstLine: 'Regular NIV use optimization',
+                secondLine: 'Interface optimization',
+                nonPharmacological: 'Skin care, Regular equipment checks'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PULM-039',
+            name: 'Mechanical Ventilation History',
+            spanishName: 'Historia de Ventilación Mecánica',
+            category: 'pulmonary',
+            evaluation: 'Previous ICU admission with mechanical ventilation.',
+            severity: 77,
+            biomarkers: ['ICU length of stay', 'Weaning difficulty', 'Residual deficits'],
+            treatment: {
+                firstLine: 'Pulmonary rehabilitation',
+                secondLine: 'Psychological support',
+                nonPharmacological: 'Gradual recovery, Family support'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PULM-040',
+            name: 'Lung Transplant Evaluation',
+            spanishName: 'Evaluación para Trasplante Pulmonar',
+            category: 'pulmonary',
+            evaluation: 'Meeting criteria for lung transplant referral.',
+            severity: 90,
+            biomarkers: ['Disease severity scores', 'Prognosis estimates', 'Transplant criteria'],
+            treatment: {
+                firstLine: 'Optimize medical therapy',
+                secondLine: 'Transplant center referral',
+                nonPharmacological: 'Prehabilitation, Psychosocial evaluation'
+            },
+            evidence: { level: 'A' }
+        },
+
+        // ===================================================
+        // INFLAMMATORY TRAITS (35 traits)
+        // ===================================================
+        {
+            id: 'INFL-001',
+            name: 'Eosinophilic Airway Inflammation',
+            spanishName: 'Inflamación Eosinofílica de Vías Aéreas',
+            category: 'inflammatory',
+            evaluation: 'Blood eosinophils ≥300 cells/μL or FeNO ≥50 ppb.',
+            severity: 78,
+            biomarkers: ['Blood eosinophils', 'FeNO', 'Sputum eosinophils', 'IgE', 'ECP', 'Periostin'],
+            treatment: {
+                firstLine: 'High-dose ICS ± LABA',
+                secondLine: 'Biologics targeting IL-5/IL-5R or IL-4/IL-13',
+                nonPharmacological: 'Allergen avoidance, Environmental control'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-002',
+            name: 'Neutrophilic Inflammation',
+            spanishName: 'Inflamación Neutrofílica',
+            category: 'inflammatory',
+            evaluation: 'Sputum neutrophils > 61% or serum CRP > 10 mg/L.',
+            severity: 70,
+            biomarkers: ['Sputum neutrophils', 'CRP', 'IL-8', 'Neutrophil elastase', 'MMP-9', 'Calprotectin'],
+            treatment: {
+                firstLine: 'Macrolide antibiotics (anti-inflammatory dose)',
+                secondLine: 'Phosphodiesterase-4 inhibitors',
+                nonPharmacological: 'Infection control, Smoking cessation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-003',
+            name: 'Systemic Inflammation',
+            spanishName: 'Inflamación Sistémica',
+            category: 'inflammatory',
+            evaluation: 'CRP > 10 mg/L or ESR > 30 mm/hr.',
+            severity: 75,
+            biomarkers: ['CRP', 'ESR', 'IL-6', 'TNF-α', 'Fibrinogen', 'Ferritin'],
+            treatment: {
+                firstLine: 'Targeted anti-inflammatory therapy',
+                secondLine: 'Biologics for specific pathways',
+                nonPharmacological: 'Weight management, Mediterranean diet, Exercise'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-004',
+            name: 'Oxidative Stress',
+            spanishName: 'Estrés Oxidativo',
+            category: 'inflammatory',
+            evaluation: 'Increased biomarkers of oxidative damage.',
+            severity: 65,
+            biomarkers: ['8-isoprostane', 'MDA', 'Protein carbonyls', 'GSH/GSSG', 'SOD', 'Catalase'],
+            treatment: {
+                firstLine: 'Antioxidant therapy (N-acetylcysteine)',
+                secondLine: 'Other antioxidants as needed',
+                nonPharmacological: 'Antioxidant-rich diet, Smoking cessation, Exercise'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-005',
+            name: 'Endothelial Dysfunction',
+            spanishName: 'Disfunción Endotelial',
+            category: 'inflammatory',
+            evaluation: 'Impaired flow-mediated dilation < 7%.',
+            severity: 72,
+            biomarkers: ['FMD', 'Endothelin-1', 'ADMA', 'VCAM-1', 'ICAM-1', 'E-selectin'],
+            treatment: {
+                firstLine: 'Statins, ACE inhibitors',
+                secondLine: 'Phosphodiesterase-5 inhibitors if indicated',
+                nonPharmacological: 'Exercise, Mediterranean diet, Smoking cessation'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-006',
+            name: 'Mast Cell Activation',
+            spanishName: 'Activación de Mastocitos',
+            category: 'inflammatory',
+            evaluation: 'Increased tryptase or histamine levels.',
+            severity: 68,
+            biomarkers: ['Tryptase', 'Histamine', 'Prostaglandin D2', 'Leukotrienes', 'Chymase', 'CPA3'],
+            treatment: {
+                firstLine: 'Mast cell stabilizers, Antihistamines',
+                secondLine: 'Leukotriene receptor antagonists',
+                nonPharmacological: 'Trigger avoidance, Low-histamine diet, Stress management'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-007',
+            name: 'Autoimmune Inflammation',
+            spanishName: 'Inflamación Autoinmune',
+            category: 'inflammatory',
+            evaluation: 'Positive autoantibodies or complement activation.',
+            severity: 80,
+            biomarkers: ['ANA', 'RF', 'Anti-CCP', 'Complement levels', 'ANCA', 'Anti-dsDNA'],
+            treatment: {
+                firstLine: 'Immunosuppressive therapy',
+                secondLine: 'Biologics targeting specific pathways',
+                nonPharmacological: 'Stress management, Regular monitoring, Sun protection'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-008',
+            name: 'Microbial Dysbiosis',
+            spanishName: 'Disbiosis Microbiana',
+            category: 'inflammatory',
+            evaluation: 'Altered microbiome composition.',
+            severity: 62,
+            biomarkers: ['Microbiome analysis', 'SCFA levels', 'Calprotectin', 'Zonulin', 'Beta-defensins'],
+            treatment: {
+                firstLine: 'Probiotics, Prebiotics',
+                secondLine: 'Fecal microbiota transplantation in select cases',
+                nonPharmacological: 'Dietary fiber, Fermented foods, Avoid unnecessary antibiotics'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'INFL-009',
+            name: 'Neurogenic Inflammation',
+            spanishName: 'Inflamación Neurogénica',
+            category: 'inflammatory',
+            evaluation: 'Increased neuropeptides (substance P, CGRP).',
+            severity: 58,
+            biomarkers: ['Substance P', 'CGRP', 'NGF', 'Neurokinin A', 'VIP', 'Nitrotyrosine'],
+            treatment: {
+                firstLine: 'Neurokinin receptor antagonists',
+                secondLine: 'Capsaicin desensitization',
+                nonPharmacological: 'Stress reduction, Relaxation techniques, Acupuncture'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'INFL-010',
+            name: 'Complement System Activation',
+            spanishName: 'Activación del Sistema de Complemento',
+            category: 'inflammatory',
+            evaluation: 'Reduced C3, C4 or increased complement activation products.',
+            severity: 70,
+            biomarkers: ['C3', 'C4', 'C5a', 'MAC', 'Factor B', 'Properdin'],
+            treatment: {
+                firstLine: 'Complement inhibitors if available',
+                secondLine: 'Immunosuppressive therapy',
+                nonPharmacological: 'Infection prevention, Regular monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-011',
+            name: 'Platelet Activation',
+            spanishName: 'Activación Plaquetaria',
+            category: 'inflammatory',
+            evaluation: 'Increased platelet activation markers.',
+            severity: 66,
+            biomarkers: ['P-selectin', 'Platelet factor 4', 'β-thromboglobulin', 'Platelet aggregation'],
+            treatment: {
+                firstLine: 'Anti-platelet therapy if indicated',
+                secondLine: 'Address underlying inflammation',
+                nonPharmacological: 'Omega-3 fatty acids, Mediterranean diet'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-012',
+            name: 'Coagulation Activation',
+            spanishName: 'Activación de la Coagulación',
+            category: 'inflammatory',
+            evaluation: 'Increased coagulation factors or D-dimer.',
+            severity: 73,
+            biomarkers: ['D-dimer', 'Fibrinogen', 'Factor VIII', 'vWF', 'Thrombin-antithrombin complexes'],
+            treatment: {
+                firstLine: 'Anticoagulation if indicated',
+                secondLine: 'Treat underlying inflammation',
+                nonPharmacological: 'Hydration, Mobility, Compression stockings'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-013',
+            name: 'Acute Phase Response',
+            spanishName: 'Respuesta de Fase Aguda',
+            category: 'inflammatory',
+            evaluation: 'Elevated acute phase proteins.',
+            severity: 68,
+            biomarkers: ['CRP', 'ESR', 'Serum amyloid A', 'Haptoglobin', 'Ceruloplasmin'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Anti-inflammatory therapy',
+                nonPharmacological: 'Rest, Adequate nutrition, Hydration'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-014',
+            name: 'Lymphocytic Infiltration',
+            spanishName: 'Infiltración Linfocítica',
+            category: 'inflammatory',
+            evaluation: 'Increased lymphocytes in tissue or BAL.',
+            severity: 64,
+            biomarkers: ['Lymphocyte subsets', 'Cytokine profiles', 'Tissue biopsy'],
+            treatment: {
+                firstLine: 'Corticosteroids',
+                secondLine: 'Other immunosuppressants',
+                nonPharmacological: 'Avoid triggers, Regular monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-015',
+            name: 'Granulomatous Inflammation',
+            spanishName: 'Inflamación Granulomatosa',
+            category: 'inflammatory',
+            evaluation: 'Presence of granulomas on biopsy.',
+            severity: 76,
+            biomarkers: ['Biopsy findings', 'ACE levels', 'Calcium metabolism'],
+            treatment: {
+                firstLine: 'Corticosteroids',
+                secondLine: 'Other immunosuppressants',
+                nonPharmacological: 'Sun avoidance if photosensitive, Calcium/vitamin D'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-016',
+            name: 'Fibrotic Response',
+            spanishName: 'Respuesta Fibrótica',
+            category: 'inflammatory',
+            evaluation: 'Increased fibrosis markers or imaging evidence.',
+            severity: 79,
+            biomarkers: ['TGF-β', 'MMP-7', 'YKL-40', 'LOXL2', 'Imaging fibrosis score'],
+            treatment: {
+                firstLine: 'Anti-fibrotic therapy',
+                secondLine: 'Immunosuppressants if inflammatory component',
+                nonPharmacological: 'Pulmonary rehabilitation, Oxygen if needed'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-017',
+            name: 'Vasculitic Inflammation',
+            spanishName: 'Inflamación Vasculítica',
+            category: 'inflammatory',
+            evaluation: 'Vessel wall inflammation on imaging or biopsy.',
+            severity: 82,
+            biomarkers: ['ANCA', 'Inflammatory markers', 'Imaging findings'],
+            treatment: {
+                firstLine: 'High-dose corticosteroids',
+                secondLine: 'Cyclophosphamide or rituximab',
+                nonPharmacological: 'Infection prevention, Regular monitoring'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-018',
+            name: 'Pyroptosis Activation',
+            spanishName: 'Activación de Piroptosis',
+            category: 'inflammatory',
+            evaluation: 'Increased pyroptosis markers (caspase-1, IL-1β, IL-18).',
+            severity: 71,
+            biomarkers: ['Caspase-1', 'IL-1β', 'IL-18', 'Gasdermin D', 'Inflammasome components'],
+            treatment: {
+                firstLine: 'IL-1 inhibitors',
+                secondLine: 'Other anti-inflammatory therapy',
+                nonPharmacological: 'Infection control, Regular monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-019',
+            name: 'NETosis',
+            spanishName: 'NETosis',
+            category: 'inflammatory',
+            evaluation: 'Increased neutrophil extracellular traps.',
+            severity: 69,
+            biomarkers: ['Citrullinated histones', 'MPO-DNA complexes', 'Neutrophil elastase'],
+            treatment: {
+                firstLine: 'Treat underlying condition',
+                secondLine: 'DNase therapy in select cases',
+                nonPharmacological: 'Infection prevention, Regular monitoring'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'INFL-020',
+            name: 'Inflammasome Activation',
+            spanishName: 'Activación del Inflamasoma',
+            category: 'inflammatory',
+            evaluation: 'Increased inflammasome component expression.',
+            severity: 74,
+            biomarkers: ['NLRP3', 'ASC', 'Caspase-1', 'IL-1β', 'IL-18'],
+            treatment: {
+                firstLine: 'IL-1 inhibitors',
+                secondLine: 'Other targeted therapies',
+                nonPharmacological: 'Trigger avoidance, Regular monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-021',
+            name: 'Cytokine Storm Risk',
+            spanishName: 'Riesgo de Tormenta de Citoquinas',
+            category: 'inflammatory',
+            evaluation: 'History or risk factors for hyperinflammatory response.',
+            severity: 83,
+            biomarkers: ['Cytokine profiles', 'Ferritin', 'CRP', 'D-dimer'],
+            treatment: {
+                firstLine: 'Early immunomodulation if occurs',
+                secondLine: 'Supportive care',
+                nonPharmacological: 'Infection prevention, Early recognition'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-022',
+            name: 'Immune Complex Deposition',
+            spanishName: 'Depósito de Complejos Inmunes',
+            category: 'inflammatory',
+            evaluation: 'Evidence of immune complex disease.',
+            severity: 77,
+            biomarkers: ['Complement levels', 'Immune complexes', 'Cryoglobulins'],
+            treatment: {
+                firstLine: 'Immunosuppressive therapy',
+                secondLine: 'Plasmapheresis if severe',
+                nonPharmacological: 'Infection prevention, Regular monitoring'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-023',
+            name: 'Type 2 Inflammation',
+            spanishName: 'Inflamación Tipo 2',
+            category: 'inflammatory',
+            evaluation: 'Increased type 2 cytokines (IL-4, IL-5, IL-13).',
+            severity: 72,
+            biomarkers: ['IL-4', 'IL-5', 'IL-13', 'IgE', 'Eosinophils'],
+            treatment: {
+                firstLine: 'Corticosteroids',
+                secondLine: 'Type 2 cytokine inhibitors',
+                nonPharmacological: 'Allergen avoidance, Environmental control'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-024',
+            name: 'Type 1 Inflammation',
+            spanishName: 'Inflamación Tipo 1',
+            category: 'inflammatory',
+            evaluation: 'Increased type 1 cytokines (IFN-γ, IL-12, TNF-α).',
+            severity: 75,
+            biomarkers: ['IFN-γ', 'IL-12', 'TNF-α', 'Neopterin'],
+            treatment: {
+                firstLine: 'Immunosuppressive therapy',
+                secondLine: 'Biologics targeting specific cytokines',
+                nonPharmacological: 'Infection prevention, Regular monitoring'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-025',
+            name: 'Type 17 Inflammation',
+            spanishName: 'Inflamación Tipo 17',
+            category: 'inflammatory',
+            evaluation: 'Increased IL-17 family cytokines.',
+            severity: 70,
+            biomarkers: ['IL-17A', 'IL-17F', 'IL-22', 'IL-23'],
+            treatment: {
+                firstLine: 'Corticosteroids',
+                secondLine: 'IL-17 inhibitors',
+                nonPharmacological: 'Skin care if psoriatic, Regular monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-026',
+            name: 'Regulatory T Cell Deficiency',
+            spanishName: 'Deficiencia de Células T Reguladoras',
+            category: 'inflammatory',
+            evaluation: 'Reduced Treg numbers or function.',
+            severity: 68,
+            biomarkers: ['Treg numbers', 'FOXP3 expression', 'Suppressive function'],
+            treatment: {
+                firstLine: 'Low-dose IL-2 therapy in select cases',
+                secondLine: 'Other immunomodulators',
+                nonPharmacological: 'Avoid immunosuppressants that affect Tregs'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'INFL-027',
+            name: 'B Cell Hyperactivity',
+            spanishName: 'Hiperactividad de Células B',
+            category: 'inflammatory',
+            evaluation: 'Increased autoantibodies or hypergammaglobulinemia.',
+            severity: 73,
+            biomarkers: ['Autoantibodies', 'Immunoglobulins', 'B cell subsets'],
+            treatment: {
+                firstLine: 'B cell depletion therapy if indicated',
+                secondLine: 'Immunosuppressants',
+                nonPharmacological: 'Infection prevention, Regular monitoring'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-028',
+            name: 'Macrophage Activation',
+            spanishName: 'Activación de Macrófagos',
+            category: 'inflammatory',
+            evaluation: 'Increased macrophage activation markers.',
+            severity: 69,
+            biomarkers: ['sCD163', 'sCD206', 'IL-6', 'TNF-α', 'Neopterin'],
+            treatment: {
+                firstLine: 'Treat underlying condition',
+                secondLine: 'Immunosuppressants if autoimmune',
+                nonPharmacological: 'Regular monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'INFL-029',
+            name: 'Dendritic Cell Dysfunction',
+            spanishName: 'Disfunción de Células Dendríticas',
+            category: 'inflammatory',
+            evaluation: 'Altered dendritic cell function.',
+            severity: 66,
+            biomarkers: ['Dendritic cell subsets', 'Cytokine production', 'Antigen presentation'],
+            treatment: {
+                firstLine: 'Treat underlying condition',
+                secondLine: 'Immunomodulators',
+                nonPharmacological: 'Regular monitoring'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'INFL-030',
+            name: 'Natural Killer Cell Dysfunction',
+            spanishName: 'Disfunción de Células Natural Killer',
+            category: 'inflammatory',
+            evaluation: 'Reduced NK cell numbers or function.',
+            severity: 64,
+            biomarkers: ['NK cell numbers', 'Cytotoxic function', 'Cytokine production'],
+            treatment: {
+                firstLine: 'Treat underlying condition',
+                secondLine: 'Immunomodulators if indicated',
+                nonPharmacological: 'Regular monitoring, Infection prevention'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'INFL-031',
+            name: 'Inflammatory Anemia',
+            spanishName: 'Anemia Inflamatoria',
+            category: 'inflammatory',
+            evaluation: 'Anemia of chronic disease.',
+            severity: 62,
+            biomarkers: ['Hb', 'Ferritin', 'Transferrin saturation', 'Hepcidin'],
+            treatment: {
+                firstLine: 'Treat underlying inflammation',
+                secondLine: 'Erythropoietin if severe',
+                nonPharmacological: 'Adequate nutrition, Regular monitoring'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-032',
+            name: 'Inflammatory Cachexia',
+            spanishName: 'Caquexia Inflamatoria',
+            category: 'inflammatory',
+            evaluation: 'Weight loss with systemic inflammation.',
+            severity: 78,
+            biomarkers: ['Weight loss', 'Inflammatory markers', 'Muscle mass'],
+            treatment: {
+                firstLine: 'Appetite stimulants if needed',
+                secondLine: 'Anti-inflammatory therapy',
+                nonPharmacological: 'Nutritional support, Resistance exercise'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-033',
+            name: 'Inflammatory Osteoporosis',
+            spanishName: 'Osteoporosis Inflamatoria',
+            category: 'inflammatory',
+            evaluation: 'Bone loss secondary to inflammation.',
+            severity: 71,
+            biomarkers: ['Bone density', 'Inflammatory markers', 'Bone turnover markers'],
+            treatment: {
+                firstLine: 'Control inflammation',
+                secondLine: 'Bone-active agents',
+                nonPharmacological: 'Calcium/vitamin D, Weight-bearing exercise'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-034',
+            name: 'Inflammatory Neuropathy',
+            spanishName: 'Neuropatía Inflamatoria',
+            category: 'inflammatory',
+            evaluation: 'Peripheral neuropathy from inflammation.',
+            severity: 74,
+            biomarkers: ['Nerve conduction studies', 'Autoantibodies', 'Inflammatory markers'],
+            treatment: {
+                firstLine: 'Immunosuppressive therapy',
+                secondLine: 'IVIG or plasma exchange if needed',
+                nonPharmacological: 'Physical therapy, Pain management'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'INFL-035',
+            name: 'Inflammatory Myopathy',
+            spanishName: 'Miopatía Inflamatoria',
+            category: 'inflammatory',
+            evaluation: 'Muscle inflammation and weakness.',
+            severity: 76,
+            biomarkers: ['CK', 'Aldolase', 'Autoantibodies', 'EMG', 'Muscle biopsy'],
+            treatment: {
+                firstLine: 'Corticosteroids',
+                secondLine: 'Other immunosuppressants',
+                nonPharmacological: 'Physical therapy, Fall prevention'
+            },
+            evidence: { level: 'A' }
+        },
+
+        // ===================================================
+        // PHYSIOLOGICAL TRAITS (30 traits)
+        // ===================================================
+        {
+            id: 'PHYS-001',
+            name: 'Exercise Intolerance',
+            spanishName: 'Intolerancia al Ejercicio',
+            category: 'physiological',
+            evaluation: '6MWD < 350 meters or VO2 max < 65% predicted.',
+            severity: 70,
+            biomarkers: ['6MWD', 'VO2 max', 'VE/VCO2 slope', 'Oxygen pulse', 'Lactate threshold'],
+            treatment: {
+                firstLine: 'Pulmonary rehabilitation (8+ weeks)',
+                secondLine: 'Supplemental oxygen during exercise if desaturates',
+                nonPharmacological: 'Gradual exercise program, Interval training, Energy conservation'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-002',
+            name: 'Peripheral Muscle Dysfunction',
+            spanishName: 'Disfunción Muscular Periférica',
+            category: 'physiological',
+            evaluation: 'Quadriceps strength < 70% predicted.',
+            severity: 65,
+            biomarkers: ['Quadriceps strength', 'Handgrip strength', 'Muscle mass', 'Muscle quality'],
+            treatment: {
+                firstLine: 'Resistance training',
+                secondLine: 'Nutritional optimization',
+                nonPharmacological: 'Protein supplementation, Physical therapy'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-003',
+            name: 'Cardiac Autonomic Dysfunction',
+            spanishName: 'Disfunción Autonómica Cardíaca',
+            category: 'physiological',
+            evaluation: 'Abnormal heart rate variability.',
+            severity: 60,
+            biomarkers: ['HRV', 'Heart rate recovery', 'Baroreflex sensitivity', 'Orthostatic testing'],
+            treatment: {
+                firstLine: 'Beta-blockers if indicated',
+                secondLine: 'Other autonomic modulators',
+                nonPharmacological: 'Exercise training, Stress management, Hydration'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-004',
+            name: 'Sleep Architecture Disruption',
+            spanishName: 'Alteración de la Arquitectura del Sueño',
+            category: 'physiological',
+            evaluation: 'Reduced sleep efficiency < 85% or increased arousal index.',
+            severity: 63,
+            biomarkers: ['Sleep efficiency', 'Arousal index', 'Sleep stages', 'Sleep latency'],
+            treatment: {
+                firstLine: 'Sleep hygiene optimization',
+                secondLine: 'CPAP if OSA, Cognitive behavioral therapy for insomnia',
+                nonPharmacological: 'Sleep schedule regularity, Bedroom environment optimization'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-005',
+            name: 'Metabolic Syndrome',
+            spanishName: 'Síndrome Metabólico',
+            category: 'physiological',
+            evaluation: '≥3 of: abdominal obesity, hypertension, dyslipidemia, insulin resistance.',
+            severity: 75,
+            biomarkers: ['Waist circumference', 'BP', 'Lipids', 'Glucose', 'Insulin'],
+            treatment: {
+                firstLine: 'Lifestyle modification',
+                secondLine: 'Medications for individual components',
+                nonPharmacological: 'Diet, Exercise, Weight loss, Stress management'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-006',
+            name: 'Nutritional Deficiency',
+            spanishName: 'Deficiencia Nutricional',
+            category: 'physiological',
+            evaluation: 'BMI < 18.5 or unintentional weight loss > 5% in 3 months.',
+            severity: 68,
+            biomarkers: ['BMI', 'Albumin', 'Prealbumin', 'Vitamin levels', 'Micronutrients'],
+            treatment: {
+                firstLine: 'Nutritional supplementation',
+                secondLine: 'Appetite stimulants if needed',
+                nonPharmacological: 'Dietary counseling, Meal planning, Oral nutritional supplements'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-007',
+            name: 'Deconditioning',
+            spanishName: 'Desacondicionamiento',
+            category: 'physiological',
+            evaluation: 'Reduced physical activity < 150 min/week moderate intensity.',
+            severity: 55,
+            biomarkers: ['Activity monitor data', 'Exercise tolerance', 'Functional assessments'],
+            treatment: {
+                firstLine: 'Graded exercise program',
+                secondLine: 'Supervised rehabilitation',
+                nonPharmacological: 'Activity monitoring, Goal setting, Social support'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-008',
+            name: 'Thermoregulatory Dysfunction',
+            spanishName: 'Disfunción Termorreguladora',
+            category: 'physiological',
+            evaluation: 'Abnormal temperature response to exercise or environment.',
+            severity: 48,
+            biomarkers: ['Core temperature', 'Sweat rate', 'Skin temperature', 'Thermal comfort'],
+            treatment: {
+                firstLine: 'Environmental modification',
+                secondLine: 'Medications if autonomic dysfunction',
+                nonPharmacological: 'Hydration, Appropriate clothing, Acclimatization'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PHYS-009',
+            name: 'Circadian Rhythm Disruption',
+            spanishName: 'Alteración del Ritmo Circadiano',
+            category: 'physiological',
+            evaluation: 'Abnormal melatonin secretion or sleep-wake cycle.',
+            severity: 52,
+            biomarkers: ['Melatonin', 'Cortisol rhythm', 'Actigraphy', 'Sleep-wake patterns'],
+            treatment: {
+                firstLine: 'Light therapy, Melatonin supplementation',
+                secondLine: 'Chronotherapy',
+                nonPharmacological: 'Sleep schedule regularization, Light exposure timing'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-010',
+            name: 'Hydration Status Abnormalities',
+            spanishName: 'Anormalidades en el Estado de Hidratación',
+            category: 'physiological',
+            evaluation: 'Abnormal serum osmolality or urine specific gravity.',
+            severity: 45,
+            biomarkers: ['Serum osmolality', 'Urine specific gravity', 'BUN/Cr', 'Weight changes'],
+            treatment: {
+                firstLine: 'Hydration protocol',
+                secondLine: 'Electrolyte management',
+                nonPharmacological: 'Fluid intake monitoring, Thirst assessment, Output monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-011',
+            name: 'Altered Pain Perception',
+            spanishName: 'Percepción Alterada del Dolor',
+            category: 'physiological',
+            evaluation: 'Abnormal pain thresholds or central sensitization.',
+            severity: 61,
+            biomarkers: ['Pain thresholds', 'Temporal summation', 'Conditioned pain modulation'],
+            treatment: {
+                firstLine: 'Multimodal pain management',
+                secondLine: 'Central sensitization medications',
+                nonPharmacological: 'Pain neuroscience education, Graded exposure'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-012',
+            name: 'Fatigue Physiology',
+            spanishName: 'Fisiología de la Fatiga',
+            category: 'physiological',
+            evaluation: 'Objective measures of fatigability.',
+            severity: 66,
+            biomarkers: ['Fatigability tests', 'Muscle endurance', 'Recovery time'],
+            treatment: {
+                firstLine: 'Energy conservation strategies',
+                secondLine: 'Treat underlying physiological causes',
+                nonPharmacological: 'Pacing, Rest periods, Activity modification'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-013',
+            name: 'Respiratory Drive Abnormality',
+            spanishName: 'Anormalidad del Impulso Respiratorio',
+            category: 'physiological',
+            evaluation: 'Altered ventilatory response to CO2 or hypoxia.',
+            severity: 69,
+            biomarkers: ['CO2 response curve', 'Hypoxic response', 'P0.1'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Respiratory stimulants if indicated',
+                nonPharmacological: 'Breathing exercises, Sleep positioning'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-014',
+            name: 'Baroreceptor Sensitivity',
+            spanishName: 'Sensibilidad Barorreceptora',
+            category: 'physiological',
+            evaluation: 'Impaired blood pressure regulation.',
+            severity: 58,
+            biomarkers: ['Baroreflex sensitivity', 'Orthostatic BP changes', 'HR response'],
+            treatment: {
+                firstLine: 'Physical countermeasures',
+                secondLine: 'Medications if symptomatic',
+                nonPharmacological: 'Compression garments, Hydration, Salt intake'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PHYS-015',
+            name: 'Metabolic Flexibility Impairment',
+            spanishName: 'Alteración de la Flexibilidad Metabólica',
+            category: 'physiological',
+            evaluation: 'Reduced ability to switch between fuel sources.',
+            severity: 64,
+            biomarkers: ['Respiratory quotient', 'Substrate oxidation', 'Metabolic rate'],
+            treatment: {
+                firstLine: 'Exercise training',
+                secondLine: 'Nutritional timing strategies',
+                nonPharmacological: 'Intermittent fasting, Macronutrient manipulation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-016',
+            name: 'Mitochondrial Dysfunction',
+            spanishName: 'Disfunción Mitocondrial',
+            category: 'physiological',
+            evaluation: 'Reduced mitochondrial capacity or efficiency.',
+            severity: 71,
+            biomarkers: ['Mitochondrial function tests', 'ATP production', 'Oxidative capacity'],
+            treatment: {
+                firstLine: 'Exercise training',
+                secondLine: 'Mitochondrial nutrients',
+                nonPharmacological: 'Antioxidant-rich diet, Stress reduction'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-017',
+            name: 'Lymphatic Dysfunction',
+            spanishName: 'Disfunción Linfática',
+            category: 'physiological',
+            evaluation: 'Impaired lymphatic flow or drainage.',
+            severity: 59,
+            biomarkers: ['Lymphoscintigraphy', 'Limb volume', 'Tissue compliance'],
+            treatment: {
+                firstLine: 'Manual lymphatic drainage',
+                secondLine: 'Compression therapy',
+                nonPharmacological: 'Exercise, Skin care, Elevation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-018',
+            name: 'Microvascular Dysfunction',
+            spanishName: 'Disfunción Microvascular',
+            category: 'physiological',
+            evaluation: 'Impaired microvascular perfusion.',
+            severity: 67,
+            biomarkers: ['Capillaroscopy', 'Laser Doppler', 'Nailfold video'],
+            treatment: {
+                firstLine: 'Vasodilators',
+                secondLine: 'Treat underlying conditions',
+                nonPharmacological: 'Temperature protection, Stress management'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-019',
+            name: 'Glucose Homeostasis Impairment',
+            spanishName: 'Alteración de la Homeostasis de la Glucosa',
+            category: 'physiological',
+            evaluation: 'Impaired glucose tolerance or insulin resistance.',
+            severity: 70,
+            biomarkers: ['Glucose tolerance test', 'HbA1c', 'Insulin sensitivity'],
+            treatment: {
+                firstLine: 'Lifestyle modification',
+                secondLine: 'Metformin if indicated',
+                nonPharmacological: 'Diet, Exercise, Weight management'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-020',
+            name: 'Lipid Metabolism Abnormality',
+            spanishName: 'Anormalidad del Metabolismo Lipídico',
+            category: 'physiological',
+            evaluation: 'Dyslipidemia or altered lipid metabolism.',
+            severity: 65,
+            biomarkers: ['Lipid profile', 'Apolipoproteins', 'Lipoprotein particles'],
+            treatment: {
+                firstLine: 'Statins if indicated',
+                secondLine: 'Other lipid-lowering agents',
+                nonPharmacological: 'Diet, Exercise, Weight management'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-021',
+            name: 'Acid-Base Balance Disturbance',
+            spanishName: 'Alteración del Equilibrio Ácido-Base',
+            category: 'physiological',
+            evaluation: 'Chronic respiratory or metabolic acid-base disorder.',
+            severity: 72,
+            biomarkers: ['Arterial blood gases', 'Electrolytes', 'Anion gap'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Bicarbonate supplementation if metabolic acidosis',
+                nonPharmacological: 'Dietary adjustments, Fluid management'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-022',
+            name: 'Electrolyte Imbalance',
+            spanishName: 'Desequilibrio Electrolítico',
+            category: 'physiological',
+            evaluation: 'Chronic electrolyte abnormalities.',
+            severity: 63,
+            biomarkers: ['Electrolytes', 'Renal function', 'Hormone levels'],
+            treatment: {
+                firstLine: 'Supplementation or restriction',
+                secondLine: 'Treat underlying cause',
+                nonPharmacological: 'Dietary modifications, Fluid management'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-023',
+            name: 'Hormonal Dysregulation',
+            spanishName: 'Desregulación Hormonal',
+            category: 'physiological',
+            evaluation: 'Abnormal hormone levels or rhythms.',
+            severity: 68,
+            biomarkers: ['Hormone panels', 'Diurnal rhythms', 'Feedback regulation'],
+            treatment: {
+                firstLine: 'Hormone replacement if deficient',
+                secondLine: 'Medications to modulate excess',
+                nonPharmacological: 'Stress management, Sleep optimization, Nutrition'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'PHYS-024',
+            name: 'Immune Senescence',
+            spanishName: 'Senescencia Inmune',
+            category: 'physiological',
+            evaluation: 'Age-related immune function decline.',
+            severity: 74,
+            biomarkers: ['Immune cell subsets', 'Vaccine responses', 'Inflammatory markers'],
+            treatment: {
+                firstLine: 'Vaccination optimization',
+                secondLine: 'Treat modifiable risk factors',
+                nonPharmacological: 'Healthy aging strategies, Nutrition, Exercise'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-025',
+            name: 'Cellular Senescence',
+            spanishName: 'Senescencia Celular',
+            category: 'physiological',
+            evaluation: 'Increased senescent cell burden.',
+            severity: 76,
+            biomarkers: ['Senescence markers', 'Telomere length', 'DNA damage'],
+            treatment: {
+                firstLine: 'Senolytics in clinical trials',
+                secondLine: 'Lifestyle interventions',
+                nonPharmacological: 'Exercise, Caloric restriction, Stress reduction'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PHYS-026',
+            name: 'Proteostasis Impairment',
+            spanishName: 'Alteración de la Proteostasis',
+            category: 'physiological',
+            evaluation: 'Impaired protein homeostasis.',
+            severity: 69,
+            biomarkers: ['Protein aggregation markers', 'Proteasome activity', 'Autophagy markers'],
+            treatment: {
+                firstLine: 'Treat underlying conditions',
+                secondLine: 'Emerging therapies',
+                nonPharmacological: 'Exercise, Fasting, Stress reduction'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PHYS-027',
+            name: 'Epigenetic Alterations',
+            spanishName: 'Alteraciones Epigenéticas',
+            category: 'physiological',
+            evaluation: 'Disease-related epigenetic changes.',
+            severity: 73,
+            biomarkers: ['DNA methylation', 'Histone modifications', 'Non-coding RNAs'],
+            treatment: {
+                firstLine: 'Treat underlying disease',
+                secondLine: 'Epigenetic modulators in development',
+                nonPharmacological: 'Lifestyle factors that modulate epigenetics'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PHYS-028',
+            name: 'Stem Cell Exhaustion',
+            spanishName: 'Agotamiento de Células Madre',
+            category: 'physiological',
+            evaluation: 'Reduced regenerative capacity.',
+            severity: 77,
+            biomarkers: ['Stem cell numbers', 'Differentiation capacity', 'Tissue repair'],
+            treatment: {
+                firstLine: 'Treat underlying conditions',
+                secondLine: 'Stem cell therapies in development',
+                nonPharmacological: 'Exercise, Nutrition, Injury prevention'
+            },
+            evidence: { level: 'C' }
+        },
+        {
+            id: 'PHYS-029',
+            name: 'Neuroendocrine Dysfunction',
+            spanishName: 'Disfunción Neuroendocrina',
+            category: 'physiological',
+            evaluation: 'Altered hypothalamic-pituitary-adrenal axis.',
+            severity: 70,
+            biomarkers: ['Cortisol rhythm', 'ACTH', 'CRH', 'Stress response'],
+            treatment: {
+                firstLine: 'Stress reduction techniques',
+                secondLine: 'Hormonal interventions if needed',
+                nonPharmacological: 'Mind-body practices, Sleep optimization, Social support'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'PHYS-030',
+            name: 'Biorhythm Desynchronization',
+            spanishName: 'Desincronización de Biorritmos',
+            category: 'physiological',
+            evaluation: 'Misalignment of internal rhythms with environment.',
+            severity: 62,
+            biomarkers: ['Circadian markers', 'Sleep-wake patterns', 'Temperature rhythms'],
+            treatment: {
+                firstLine: 'Light therapy',
+                secondLine: 'Chronobiotics',
+                nonPharmacological: 'Regular schedule, Meal timing, Exercise timing'
+            },
+            evidence: { level: 'B' }
+        },
+
+        // ===================================================
+        // RADIOLOGICAL TRAITS (20 traits)
+        // ===================================================
+        {
+            id: 'RAD-001',
+            name: 'Emphysema on CT',
+            spanishName: 'Enfisema en TC',
+            category: 'radiological',
+            evaluation: 'Low attenuation areas < -950 HU on inspiratory CT.',
+            severity: 75,
+            biomarkers: ['Emphysema index', 'Distribution pattern', 'Severity grading'],
+            treatment: {
+                firstLine: 'Smoking cessation, Bronchodilators',
+                secondLine: 'Consider lung volume reduction if eligible',
+                nonPharmacological: 'Pulmonary rehabilitation, Oxygen if needed'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-002',
+            name: 'Bronchial Wall Thickening',
+            spanishName: 'Engrosamiento de la Pared Bronquial',
+            category: 'radiological',
+            evaluation: 'Increased bronchial wall thickness on CT.',
+            severity: 65,
+            biomarkers: ['Wall thickness', 'Lumen diameter', 'Wall area percentage'],
+            treatment: {
+                firstLine: 'Inhaled corticosteroids',
+                secondLine: 'Macrolides if neutrophilic',
+                nonPharmacological: 'Airway clearance, Smoking cessation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'RAD-003',
+            name: 'Mosaic Attenuation Pattern',
+            spanishName: 'Patrón de Atenuación en Mosaico',
+            category: 'radiological',
+            evaluation: 'Geographic heterogeneity of lung attenuation.',
+            severity: 68,
+            biomarkers: ['Expiratory-inspiratory differences', 'Air trapping quantification'],
+            treatment: {
+                firstLine: 'Bronchodilators',
+                secondLine: 'Investigate for small airway disease',
+                nonPharmacological: 'Avoid irritants, Pulmonary rehabilitation'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'RAD-004',
+            name: 'Ground-Glass Opacities',
+            spanishName: 'Opacidades en Vidrio Deslustrado',
+            category: 'radiological',
+            evaluation: 'Hazy increased lung opacity with preserved bronchial margins.',
+            severity: 72,
+            biomarkers: ['Extent', 'Distribution', 'Associated findings'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Corticosteroids if inflammatory',
+                nonPharmacological: 'Oxygen if hypoxemic, Follow-up imaging'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-005',
+            name: 'Consolidation',
+            spanishName: 'Consolidación',
+            category: 'radiological',
+            evaluation: 'Homogeneous opacity obscuring vessels and airways.',
+            severity: 78,
+            biomarkers: ['Extent', 'Location', 'Evolution over time'],
+            treatment: {
+                firstLine: 'Antibiotics if infectious',
+                secondLine: 'Bronchoscopy if unresolved',
+                nonPharmacological: 'Chest physiotherapy, Follow-up imaging'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-006',
+            name: 'Interstitial Lung Disease Pattern',
+            spanishName: 'Patrón de Enfermedad Pulmonar Intersticial',
+            category: 'radiological',
+            evaluation: 'Reticular, nodular, or honeycomb patterns.',
+            severity: 82,
+            biomarkers: ['Pattern classification', 'Extent', 'Progression rate'],
+            treatment: {
+                firstLine: 'Anti-fibrotic therapy if IPF',
+                secondLine: 'Immunosuppressants if inflammatory',
+                nonPharmacological: 'Oxygen, Pulmonary rehabilitation, Transplant evaluation'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-007',
+            name: 'Pleural Effusion',
+            spanishName: 'Derrame Pleural',
+            category: 'radiological',
+            evaluation: 'Fluid in pleural space.',
+            severity: 70,
+            biomarkers: ['Size', 'Characteristics', 'Associated findings'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Thoracentesis if symptomatic',
+                nonPharmacological: 'Monitor size, Follow-up imaging'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-008',
+            name: 'Pleural Thickening',
+            spanishName: 'Engrosamiento Pleural',
+            category: 'radiological',
+            evaluation: 'Increased pleural thickness > 3 mm.',
+            severity: 60,
+            biomarkers: ['Extent', 'Calcification', 'Associated findings'],
+            treatment: {
+                firstLine: 'Monitor for progression',
+                secondLine: 'Treat underlying cause if active',
+                nonPharmacological: 'Asbestos exposure history, Regular follow-up'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'RAD-009',
+            name: 'Mediastinal Lymphadenopathy',
+            spanishName: 'Linfadenopatía Mediastínica',
+            category: 'radiological',
+            evaluation: 'Lymph nodes > 1 cm in short axis.',
+            severity: 73,
+            biomarkers: ['Size', 'Number', 'Characteristics'],
+            treatment: {
+                firstLine: 'Investigate cause',
+                secondLine: 'Biopsy if concerning features',
+                nonPharmacological: 'Follow-up imaging, Monitor symptoms'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-010',
+            name: 'Pulmonary Nodule(s)',
+            spanishName: 'Nódulo(s) Pulmonar(es)',
+            category: 'radiological',
+            evaluation: 'Focal rounded opacity ≤ 3 cm.',
+            severity: 67,
+            biomarkers: ['Size', 'Growth rate', 'Characteristics'],
+            treatment: {
+                firstLine: 'Follow Fleischner Society guidelines',
+                secondLine: 'Biopsy if high risk',
+                nonPharmacological: 'Smoking cessation, Follow-up imaging'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-011',
+            name: 'Cavitary Lesion',
+            spanishName: 'Lesión Cavitaria',
+            category: 'radiological',
+            evaluation: 'Gas-filled space within consolidation or nodule.',
+            severity: 79,
+            biomarkers: ['Wall thickness', 'Contents', 'Surrounding changes'],
+            treatment: {
+                firstLine: 'Antibiotics if infectious',
+                secondLine: 'Consider fungal or mycobacterial causes',
+                nonPharmacological: 'Follow-up imaging, Monitor for complications'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-012',
+            name: 'Bronchiectasis on CT',
+            spanishName: 'Bronquiectasias en TC',
+            category: 'radiological',
+            evaluation: 'Abnormal bronchial dilation with lack of tapering.',
+            severity: 74,
+            biomarkers: ['Type (cylindrical, varicose, cystic)', 'Distribution', 'Severity'],
+            treatment: {
+                firstLine: 'Airway clearance techniques',
+                secondLine: 'Macrolide antibiotics',
+                nonPharmacological: 'Pulmonary rehabilitation, Vaccination'
+            },
+            evidence: { level: 'A' }
+        },
+           {
+            id: 'RAD-013',
+            name: 'Tree-in-Bud Pattern',
+            spanishName: 'Patrón en Árbol en Brote',
+            category: 'radiological',
+            evaluation: 'Centrilobular nodules with branching lines.',
+            severity: 71,
+            biomarkers: ['Distribution', 'Extent', 'Associated findings'],
+            treatment: {
+                firstLine: 'Antibiotics if infectious',
+                secondLine: 'Investigate for atypical infections',
+                nonPharmacological: 'Airway clearance, Follow-up imaging'
+            },
+            evidence: { level: 'A' }
+        },
+Now, let me continue with more radiological traits from where you left off:
+
+javascript
+        {
+            id: 'RAD-014',
+            name: 'Parenchymal Band',
+            spanishName: 'Banda Parenquimatosa',
+            category: 'radiological',
+            evaluation: 'Linear opacity extending to pleural surface.',
+            severity: 58,
+            biomarkers: ['Length', 'Thickness', 'Associated findings'],
+            treatment: {
+                firstLine: 'Monitor for progression',
+                secondLine: 'Treat underlying lung disease',
+                nonPharmacological: 'Follow-up imaging, Symptom monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'RAD-015',
+            name: 'Septal Thickening',
+            spanishName: 'Engrosamiento Septal',
+            category: 'radiological',
+            evaluation: 'Interlobular septal thickening on CT.',
+            severity: 66,
+            biomarkers: ['Pattern (smooth/nodular)', 'Distribution', 'Extent'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Diuretics if fluid overload',
+                nonPharmacological: 'Monitor for progression, Follow-up imaging'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-016',
+            name: 'Cystic Lung Disease',
+            spanishName: 'Enfermedad Pulmonar Quística',
+            category: 'radiological',
+            evaluation: 'Thin-walled air-filled cysts in lung parenchyma.',
+            severity: 73,
+            biomarkers: ['Cyst size', 'Wall thickness', 'Distribution', 'Number'],
+            treatment: {
+                firstLine: 'Treat underlying condition',
+                secondLine: 'Surgical intervention if complications',
+                nonPharmacological: 'Avoid high-pressure situations, Regular follow-up'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-017',
+            name: 'Subpleural Lines',
+            spanishName: 'Líneas Subpleurales',
+            category: 'radiological',
+            evaluation: 'Linear opacities parallel to pleural surface.',
+            severity: 62,
+            biomarkers: ['Length', 'Thickness', 'Distribution'],
+            treatment: {
+                firstLine: 'Monitor for progression',
+                secondLine: 'Treat underlying fibrosis if progressive',
+                nonPharmacological: 'Follow-up imaging, Pulmonary function monitoring'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'RAD-018',
+            name: 'Traction Bronchiectasis',
+            spanishName: 'Bronquiectasias por Tracción',
+            category: 'radiological',
+            evaluation: 'Bronchial dilation due to surrounding fibrosis.',
+            severity: 77,
+            biomarkers: ['Extent of fibrosis', 'Bronchial dilation severity', 'Distribution'],
+            treatment: {
+                firstLine: 'Anti-fibrotic therapy if IPF',
+                secondLine: 'Immunosuppressants if inflammatory',
+                nonPharmacological: 'Airway clearance, Oxygen if needed, Pulmonary rehabilitation'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-019',
+            name: 'Honeycombing',
+            spanishName: 'Panalización',
+            category: 'radiological',
+            evaluation: 'Clustered cystic spaces with thick walls, usually subpleural.',
+            severity: 85,
+            biomarkers: ['Extent', 'Distribution', 'Progression rate'],
+            treatment: {
+                firstLine: 'Anti-fibrotic therapy',
+                secondLine: 'Consider transplant evaluation',
+                nonPharmacological: 'Oxygen therapy, Pulmonary rehabilitation, Palliative care'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'RAD-020',
+            name: 'Expiratory Air Trapping',
+            spanishName: 'Atrapamiento Aéreo Espiratorio',
+            category: 'radiological',
+            evaluation: 'Incomplete emptying of lung on expiratory CT.',
+            severity: 69,
+            biomarkers: ['Air trapping index', 'Distribution', 'Severity'],
+            treatment: {
+                firstLine: 'Bronchodilators',
+                secondLine: 'Consider small airway disease treatment',
+                nonPharmacological: 'Breathing exercises, Pulmonary rehabilitation'
+            },
+            evidence: { level: 'B' }
+        },
+
+        // ===================================================
+        // CLINICAL TRAITS (25 traits)
+        // ===================================================
+        {
+            id: 'CLIN-001',
+            name: 'Chronic Cough',
+            spanishName: 'Tos Crónica',
+            category: 'clinical',
+            evaluation: 'Cough persisting >8 weeks despite treatment.',
+            severity: 65,
+            biomarkers: ['Cough frequency', 'Cough severity', 'Quality of life impact'],
+            treatment: {
+                firstLine: 'Treat underlying cause',
+                secondLine: 'Neuromodulators if refractory',
+                nonPharmacological: 'Speech therapy, Cough suppression techniques'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-002',
+            name: 'Dyspnea on Exertion',
+            spanishName: 'Disnea al Esfuerzo',
+            category: 'clinical',
+            evaluation: 'Breathlessness with ordinary activities.',
+            severity: 72,
+            biomarkers: ['MRC dyspnea scale', 'Borg scale', 'Activity limitation'],
+            treatment: {
+                firstLine: 'Treat underlying pulmonary/cardiac condition',
+                secondLine: 'Pulmonary rehabilitation',
+                nonPharmacological: 'Energy conservation, Pacing, Breathing techniques'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-003',
+            name: 'Wheeze',
+            spanishName: 'Sibilancias',
+            category: 'clinical',
+            evaluation: 'Musical high-pitched sound on expiration.',
+            severity: 60,
+            biomarkers: ['Wheeze frequency', 'Response to bronchodilators', 'Trigger identification'],
+            treatment: {
+                firstLine: 'Bronchodilators',
+                secondLine: 'Anti-inflammatory therapy',
+                nonPharmacological: 'Trigger avoidance, Breathing control'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-004',
+            name: 'Chest Tightness',
+            spanishName: 'Opresión Torácica',
+            category: 'clinical',
+            evaluation: 'Subjective sensation of chest constriction.',
+            severity: 58,
+            biomarkers: ['Symptom diary', 'Correlation with objective measures'],
+            treatment: {
+                firstLine: 'Bronchodilators if airway-related',
+                secondLine: 'Muscle relaxants if musculoskeletal',
+                nonPharmacological: 'Relaxation techniques, Posture correction'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'CLIN-005',
+            name: 'Fatigue',
+            spanishName: 'Fatiga',
+            category: 'clinical',
+            evaluation: 'Persistent tiredness disproportionate to activity.',
+            severity: 70,
+            biomarkers: ['Fatigue scales', 'Activity monitoring', 'Sleep quality'],
+            treatment: {
+                firstLine: 'Treat underlying causes',
+                secondLine: 'Energy conservation strategies',
+                nonPharmacological: 'Pacing, Sleep hygiene, Graded exercise'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-006',
+            name: 'Anorexia',
+            spanishName: 'Anorexia',
+            category: 'clinical',
+            evaluation: 'Loss of appetite with weight loss.',
+            severity: 68,
+            biomarkers: ['Weight change', 'Nutritional markers', 'Appetite scales'],
+            treatment: {
+                firstLine: 'Appetite stimulants',
+                secondLine: 'Nutritional supplementation',
+                nonPharmacological: 'Small frequent meals, Food fortification'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-007',
+            name: 'Weight Loss',
+            spanishName: 'Pérdida de Peso',
+            category: 'clinical',
+            evaluation: 'Unintentional weight loss >5% in 6 months.',
+            severity: 73,
+            biomarkers: ['BMI', 'Muscle mass', 'Nutritional status'],
+            treatment: {
+                firstLine: 'Nutritional intervention',
+                secondLine: 'Treat underlying disease',
+                nonPharmacological: 'Dietary counseling, Oral supplements'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-008',
+            name: 'Sleep Disturbance',
+            spanishName: 'Alteración del Sueño',
+            category: 'clinical',
+            evaluation: 'Difficulty initiating or maintaining sleep.',
+            severity: 64,
+            biomarkers: ['Sleep diary', 'Actigraphy', 'Sleep questionnaires'],
+            treatment: {
+                firstLine: 'Sleep hygiene',
+                secondLine: 'Cognitive behavioral therapy for insomnia',
+                nonPharmacological: 'Regular schedule, Relaxation techniques'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-009',
+            name: 'Anxiety',
+            spanishName: 'Ansiedad',
+            category: 'clinical',
+            evaluation: 'Excessive worry affecting daily function.',
+            severity: 67,
+            biomarkers: ['Anxiety scales', 'Physiological measures', 'Impact assessment'],
+            treatment: {
+                firstLine: 'Cognitive behavioral therapy',
+                secondLine: 'Anxiolytics if severe',
+                nonPharmacological: 'Relaxation techniques, Support groups'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-010',
+            name: 'Depression',
+            spanishName: 'Depresión',
+            category: 'clinical',
+            evaluation: 'Persistent low mood and loss of interest.',
+            severity: 71,
+            biomarkers: ['Depression scales', 'Functional impairment', 'Quality of life'],
+            treatment: {
+                firstLine: 'Psychotherapy',
+                secondLine: 'Antidepressants',
+                nonPharmacological: 'Social support, Physical activity'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-011',
+            name: 'Cognitive Impairment',
+            spanishName: 'Deterioro Cognitivo',
+            category: 'clinical',
+            evaluation: 'Memory or executive function deficits.',
+            severity: 69,
+            biomarkers: ['Cognitive screening', 'Neuropsychological testing'],
+            treatment: {
+                firstLine: 'Treat underlying causes',
+                secondLine: 'Cognitive rehabilitation',
+                nonPharmacological: 'Memory aids, Routine establishment'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'CLIN-012',
+            name: 'Pain',
+            spanishName: 'Dolor',
+            category: 'clinical',
+            evaluation: 'Chronic pain interfering with function.',
+            severity: 66,
+            biomarkers: ['Pain scales', 'Location', 'Character'],
+            treatment: {
+                firstLine: 'Multimodal pain management',
+                secondLine: 'Interventional approaches if needed',
+                nonPharmacological: 'Physical therapy, Mind-body techniques'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-013',
+            name: 'Exercise Limitation',
+            spanishName: 'Limitación al Ejercicio',
+            category: 'clinical',
+            evaluation: 'Reduced physical activity due to symptoms.',
+            severity: 68,
+            biomarkers: ['Activity diaries', 'Step counts', 'Exercise tolerance'],
+            treatment: {
+                firstLine: 'Pulmonary rehabilitation',
+                secondLine: 'Symptom management',
+                nonPharmacological: 'Graded activity, Goal setting'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-014',
+            name: 'Social Isolation',
+            spanishName: 'Aislamiento Social',
+            category: 'clinical',
+            evaluation: 'Reduced social interaction due to illness.',
+            severity: 63,
+            biomarkers: ['Social network assessment', 'Quality of life measures'],
+            treatment: {
+                firstLine: 'Social support intervention',
+                secondLine: 'Psychological support',
+                nonPharmacological: 'Support groups, Community engagement'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'CLIN-015',
+            name: 'Reduced Quality of Life',
+            spanishName: 'Calidad de Vida Reducida',
+            category: 'clinical',
+            evaluation: 'Impaired physical/emotional/social well-being.',
+            severity: 75,
+            biomarkers: ['QOL questionnaires', 'Functional status', 'Symptom burden'],
+            treatment: {
+                firstLine: 'Comprehensive disease management',
+                secondLine: 'Palliative care approach',
+                nonPharmacological: 'Holistic support, Patient-centered care'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-016',
+            name: 'Medication Burden',
+            spanishName: 'Carga de Medicación',
+            category: 'clinical',
+            evaluation: 'Multiple medications with complex regimens.',
+            severity: 62,
+            biomarkers: ['Number of medications', 'Dosing frequency', 'Adherence'],
+            treatment: {
+                firstLine: 'Medication review and simplification',
+                secondLine: 'Adherence support',
+                nonPharmacological: 'Pill organizers, Medication schedules'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-017',
+            name: 'Frequent Exacerbations',
+            spanishName: 'Exacerbaciones Frecuentes',
+            category: 'clinical',
+            evaluation: '≥2 moderate or ≥1 severe exacerbation per year.',
+            severity: 78,
+            biomarkers: ['Exacerbation history', 'Risk factors', 'Triggers'],
+            treatment: {
+                firstLine: 'Optimize maintenance therapy',
+                secondLine: 'Consider biologic therapy or roflumilast',
+                nonPharmacological: 'Action plan, Early intervention, Vaccination'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-018',
+            name: 'Hospitalization History',
+            spanishName: 'Historial de Hospitalización',
+            category: 'clinical',
+            evaluation: 'Previous hospital admissions for respiratory issues.',
+            severity: 76,
+            biomarkers: ['Number of admissions', 'Length of stay', 'ICU admissions'],
+            treatment: {
+                firstLine: 'Post-discharge follow-up',
+                secondLine: 'Preventive strategies',
+                nonPharmacological: 'Early warning recognition, Action plan'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-019',
+            name: 'Emergency Department Visits',
+            spanishName: 'Visitas a Urgencias',
+            category: 'clinical',
+            evaluation: 'Frequent ED visits for respiratory symptoms.',
+            severity: 74,
+            biomarkers: ['ED visit frequency', 'Triggers', 'Management patterns'],
+            treatment: {
+                firstLine: 'Improve outpatient management',
+                secondLine: 'Enhanced access to care',
+                nonPharmacological: 'Action plan, Self-management education'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-020',
+            name: 'Functional Decline',
+            spanishName: 'Deterioro Funcional',
+            category: 'clinical',
+            evaluation: 'Progressive loss of independence in ADLs.',
+            severity: 79,
+            biomarkers: ['ADL assessment', 'Mobility measures', 'Care needs'],
+            treatment: {
+                firstLine: 'Rehabilitation',
+                secondLine: 'Assistive devices',
+                nonPharmacological: 'Home modifications, Caregiver support'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-021',
+            name: 'Caregiver Strain',
+            spanishName: 'Sobrecarga del Cuidador',
+            category: 'clinical',
+            evaluation: 'Caregiver experiencing burden or distress.',
+            severity: 65,
+            biomarkers: ['Caregiver burden scales', 'Psychological distress'],
+            treatment: {
+                firstLine: 'Caregiver support services',
+                secondLine: 'Respite care',
+                nonPharmacological: 'Education, Support groups, Self-care'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-022',
+            name: 'Financial Toxicity',
+            spanishName: 'Toxicidad Financiera',
+            category: 'clinical',
+            evaluation: 'Financial hardship due to medical costs.',
+            severity: 61,
+            biomarkers: ['Out-of-pocket costs', 'Income impact', 'Medication access'],
+            treatment: {
+                firstLine: 'Financial navigation services',
+                secondLine: 'Medication assistance programs',
+                nonPharmacological: 'Cost-saving strategies, Benefit enrollment'
+            },
+            evidence: { level: 'B' }
+        },
+        {
+            id: 'CLIN-023',
+            name: 'Health Literacy Limitations',
+            spanishName: 'Limitaciones en Alfabetización en Salud',
+            category: 'clinical',
+            evaluation: 'Difficulty understanding health information.',
+            severity: 59,
+            biomarkers: ['Health literacy assessment', 'Comprehension testing'],
+            treatment: {
+                firstLine: 'Health literacy-appropriate education',
+                secondLine: 'Teach-back method',
+                nonPharmacological: 'Simplified materials, Visual aids'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-024',
+            name: 'Adherence Challenges',
+            spanishName: 'Desafíos en la Adherencia',
+            category: 'clinical',
+            evaluation: 'Difficulty following treatment recommendations.',
+            severity: 67,
+            biomarkers: ['Adherence measures', 'Barrier assessment'],
+            treatment: {
+                firstLine: 'Barrier identification and addressing',
+                secondLine: 'Adherence aids and reminders',
+                nonPharmacological: 'Simplified regimens, Patient education'
+            },
+            evidence: { level: 'A' }
+        },
+        {
+            id: 'CLIN-025',
+            name: 'End-of-Life Planning Needs',
+            spanishName: 'Necesidades de Planificación del Final de la Vida',
+            category: 'clinical',
+            evaluation: 'Advanced disease requiring palliative planning.',
+            severity: 82,
+            biomarkers: ['Prognosis estimates', 'Symptom burden', 'Care preferences'],
+            treatment: {
+                firstLine: 'Advance care planning',
+                secondLine: 'Palliative care referral',
+                nonPharmacological: 'Symptom management, Psychosocial support'
+            },
+            evidence: { level: 'A' }
+        }
             
-            // Inflammatory Traits (35 traits)
-            {
-                id: 'INFL-001',
-                name: 'Eosinophilic Airway Inflammation',
-                spanishName: 'Inflamación Eosinofílica de Vías Aéreas',
-                category: 'inflammatory',
-                evaluation: 'Blood eosinophils ≥300 cells/μL or FeNO ≥50 ppb.',
-                severity: 78,
-                biomarkers: ['Blood eosinophils', 'FeNO', 'Sputum eosinophils', 'IgE'],
-                treatment: {
-                    firstLine: 'High-dose ICS ± LABA',
-                    nonPharmacological: 'Allergen avoidance'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'INFL-002',
-                name: 'Neutrophilic Inflammation',
-                spanishName: 'Inflamación Neutrofílica',
-                category: 'inflammatory',
-                evaluation: 'Sputum neutrophils > 61% or serum CRP > 10 mg/L.',
-                severity: 70,
-                biomarkers: ['Sputum neutrophils', 'CRP', 'IL-8', 'Neutrophil elastase'],
-                treatment: {
-                    firstLine: 'Macrolide antibiotics (anti-inflammatory dose)',
-                    nonPharmacological: 'Infection control, Smoking cessation'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'INFL-003',
-                name: 'Systemic Inflammation',
-                spanishName: 'Inflamación Sistémica',
-                category: 'inflammatory',
-                evaluation: 'CRP > 10 mg/L or ESR > 30 mm/hr.',
-                severity: 75,
-                biomarkers: ['CRP', 'ESR', 'IL-6', 'TNF-α', 'Fibrinogen'],
-                treatment: {
-                    firstLine: 'Targeted anti-inflammatory therapy',
-                    nonPharmacological: 'Weight management, Mediterranean diet'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'INFL-004',
-                name: 'Oxidative Stress',
-                spanishName: 'Estrés Oxidativo',
-                category: 'inflammatory',
-                evaluation: 'Increased biomarkers of oxidative damage.',
-                severity: 65,
-                biomarkers: ['8-isoprostane', 'MDA', 'Protein carbonyls', 'GSH/GSSG'],
-                treatment: {
-                    firstLine: 'Antioxidant therapy (N-acetylcysteine)',
-                    nonPharmacological: 'Antioxidant-rich diet, Exercise'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'INFL-005',
-                name: 'Endothelial Dysfunction',
-                spanishName: 'Disfunción Endotelial',
-                category: 'inflammatory',
-                evaluation: 'Impaired flow-mediated dilation < 7%.',
-                severity: 72,
-                biomarkers: ['FMD', 'Endothelin-1', 'ADMA', 'VCAM-1'],
-                treatment: {
-                    firstLine: 'Statins, ACE inhibitors',
-                    nonPharmacological: 'Exercise, Mediterranean diet'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'INFL-006',
-                name: 'Mast Cell Activation',
-                spanishName: 'Activación de Mastocitos',
-                category: 'inflammatory',
-                evaluation: 'Increased tryptase or histamine levels.',
-                severity: 68,
-                biomarkers: ['Tryptase', 'Histamine', 'Prostaglandin D2', 'Leukotrienes'],
-                treatment: {
-                    firstLine: 'Mast cell stabilizers, Antihistamines',
-                    nonPharmacological: 'Trigger avoidance, Low-histamine diet'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'INFL-007',
-                name: 'Autoimmune Inflammation',
-                spanishName: 'Inflamación Autoinmune',
-                category: 'inflammatory',
-                evaluation: 'Positive autoantibodies or complement activation.',
-                severity: 80,
-                biomarkers: ['ANA', 'RF', 'Anti-CCP', 'Complement levels'],
-                treatment: {
-                    firstLine: 'Immunosuppressive therapy',
-                    nonPharmacological: 'Stress management, Regular monitoring'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'INFL-008',
-                name: 'Microbial Dysbiosis',
-                spanishName: 'Disbiosis Microbiana',
-                category: 'inflammatory',
-                evaluation: 'Altered microbiome composition.',
-                severity: 62,
-                biomarkers: ['Microbiome analysis', 'SCFA levels', 'Calprotectin'],
-                treatment: {
-                    firstLine: 'Probiotics, Prebiotics',
-                    nonPharmacological: 'Dietary fiber, Fermented foods'
-                },
-                evidence: { level: 'C' }
-            },
-            {
-                id: 'INFL-009',
-                name: 'Neurogenic Inflammation',
-                spanishName: 'Inflamación Neurogénica',
-                category: 'inflammatory',
-                evaluation: 'Increased neuropeptides (substance P, CGRP).',
-                severity: 58,
-                biomarkers: ['Substance P', 'CGRP', 'NGF', 'Neurokinin A'],
-                treatment: {
-                    firstLine: 'Neurokinin receptor antagonists',
-                    nonPharmacological: 'Stress reduction, Relaxation techniques'
-                },
-                evidence: { level: 'C' }
-            },
-            {
-                id: 'INFL-010',
-                name: 'Complement System Activation',
-                spanishName: 'Activación del Sistema de Complemento',
-                category: 'inflammatory',
-                evaluation: 'Reduced C3, C4 or increased complement activation products.',
-                severity: 70,
-                biomarkers: ['C3', 'C4', 'C5a', 'MAC'],
-                treatment: {
-                    firstLine: 'Complement inhibitors',
-                    nonPharmacological: 'Infection prevention'
-                },
-                evidence: { level: 'B' }
-            },
-            
-            // Physiological Traits (30 traits)
-            {
-                id: 'PHYS-001',
-                name: 'Exercise Intolerance',
-                spanishName: 'Intolerancia al Ejercicio',
-                category: 'physiological',
-                evaluation: '6MWD < 350 meters or VO2 max < 65% predicted.',
-                severity: 70,
-                biomarkers: ['6MWD', 'VO2 max', 'VE/VCO2 slope', 'Oxygen pulse'],
-                treatment: {
-                    firstLine: 'Pulmonary rehabilitation (8+ weeks)',
-                    nonPharmacological: 'Gradual exercise program'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHYS-002',
-                name: 'Peripheral Muscle Dysfunction',
-                spanishName: 'Disfunción Muscular Periférica',
-                category: 'physiological',
-                evaluation: 'Quadriceps strength < 70% predicted.',
-                severity: 65,
-                biomarkers: ['Quadriceps strength', 'Handgrip strength', 'Muscle mass'],
-                treatment: {
-                    firstLine: 'Resistance training',
-                    nonPharmacological: 'Nutritional support, Protein supplementation'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'PHYS-003',
-                name: 'Cardiac Autonomic Dysfunction',
-                spanishName: 'Disfunción Autonómica Cardíaca',
-                category: 'physiological',
-                evaluation: 'Abnormal heart rate variability.',
-                severity: 60,
-                biomarkers: ['HRV', 'Heart rate recovery', 'Baroreflex sensitivity'],
-                treatment: {
-                    firstLine: 'Beta-blockers if indicated',
-                    nonPharmacological: 'Exercise training, Stress management'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'PHYS-004',
-                name: 'Sleep Architecture Disruption',
-                spanishName: 'Alteración de la Arquitectura del Sueño',
-                category: 'physiological',
-                evaluation: 'Reduced sleep efficiency < 85% or increased arousal index.',
-                severity: 63,
-                biomarkers: ['Sleep efficiency', 'Arousal index', 'Sleep stages'],
-                treatment: {
-                    firstLine: 'Sleep hygiene optimization',
-                    nonPharmacological: 'CPAP if OSA, Cognitive behavioral therapy'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'PHYS-005',
-                name: 'Metabolic Syndrome',
-                spanishName: 'Síndrome Metabólico',
-                category: 'physiological',
-                evaluation: '≥3 of: abdominal obesity, hypertension, dyslipidemia, insulin resistance.',
-                severity: 75,
-                biomarkers: ['Waist circumference', 'BP', 'Lipids', 'Glucose'],
-                treatment: {
-                    firstLine: 'Lifestyle modification',
-                    nonPharmacological: 'Diet, Exercise, Weight loss'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHYS-006',
-                name: 'Nutritional Deficiency',
-                spanishName: 'Deficiencia Nutricional',
-                category: 'physiological',
-                evaluation: 'BMI < 18.5 or unintentional weight loss > 5% in 3 months.',
-                severity: 68,
-                biomarkers: ['BMI', 'Albumin', 'Prealbumin', 'Vitamin levels'],
-                treatment: {
-                    firstLine: 'Nutritional supplementation',
-                    nonPharmacological: 'Dietary counseling, Meal planning'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHYS-007',
-                name: 'Deconditioning',
-                spanishName: 'Desacondicionamiento',
-                category: 'physiological',
-                evaluation: 'Reduced physical activity < 150 min/week moderate intensity.',
-                severity: 55,
-                biomarkers: ['Activity monitor data', 'Exercise tolerance'],
-                treatment: {
-                    firstLine: 'Graded exercise program',
-                    nonPharmacological: 'Activity monitoring, Goal setting'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHYS-008',
-                name: 'Thermoregulatory Dysfunction',
-                spanishName: 'Disfunción Termorreguladora',
-                category: 'physiological',
-                evaluation: 'Abnormal temperature response to exercise or environment.',
-                severity: 48,
-                biomarkers: ['Core temperature', 'Sweat rate', 'Skin temperature'],
-                treatment: {
-                    firstLine: 'Environmental modification',
-                    nonPharmacological: 'Hydration, Appropriate clothing'
-                },
-                evidence: { level: 'C' }
-            },
-            {
-                id: 'PHYS-009',
-                name: 'Circadian Rhythm Disruption',
-                spanishName: 'Alteración del Ritmo Circadiano',
-                category: 'physiological',
-                evaluation: 'Abnormal melatonin secretion or sleep-wake cycle.',
-                severity: 52,
-                biomarkers: ['Melatonin', 'Cortisol rhythm', 'Actigraphy'],
-                treatment: {
-                    firstLine: 'Light therapy, Melatonin supplementation',
-                    nonPharmacological: 'Sleep schedule regularization'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'PHYS-010',
-                name: 'Hydration Status Abnormalities',
-                spanishName: 'Anormalidades en el Estado de Hidratación',
-                category: 'physiological',
-                evaluation: 'Abnormal serum osmolality or urine specific gravity.',
-                severity: 45,
-                biomarkers: ['Serum osmolality', 'Urine specific gravity', 'BUN/Cr'],
-                treatment: {
-                    firstLine: 'Hydration protocol',
-                    nonPharmacological: 'Fluid intake monitoring, Electrolyte balance'
-                },
-                evidence: { level: 'B' }
-            },
-            
-            // Clinical/Symptomatic Traits (25 traits)
-            {
-                id: 'CLIN-001',
-                name: 'Chronic Cough',
-                spanishName: 'Tos Crónica',
-                category: 'clinical',
-                evaluation: 'Cough persisting > 8 weeks.',
-                severity: 60,
-                biomarkers: ['Cough frequency', 'Cough severity', 'Sputum characteristics'],
-                treatment: {
-                    firstLine: 'Treat underlying cause',
-                    nonPharmacological: 'Speech therapy, Cough suppression techniques'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'CLIN-002',
-                name: 'Exertional Dyspnea',
-                spanishName: 'Disnea de Esfuerzo',
-                category: 'clinical',
-                evaluation: 'mMRC ≥ 2 or CAT ≥ 10.',
-                severity: 70,
-                biomarkers: ['mMRC', 'CAT', 'Borg scale', 'Dyspnea diary'],
-                treatment: {
-                    firstLine: 'Bronchodilators, Pulmonary rehabilitation',
-                    nonPharmacological: 'Energy conservation, Breathing techniques'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'CLIN-003',
-                name: 'Wheeze',
-                spanishName: 'Sibilancias',
-                category: 'clinical',
-                evaluation: 'Audible wheezing on auscultation or patient report.',
-                severity: 58,
-                biomarkers: ['Wheeze frequency', 'Response to bronchodilator'],
-                treatment: {
-                    firstLine: 'Bronchodilators, Inhaled corticosteroids',
-                    nonPharmacological: 'Trigger avoidance'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'CLIN-004',
-                name: 'Chest Tightness',
-                spanishName: 'Opresión Torácica',
-                category: 'clinical',
-                evaluation: 'Subjective sensation of chest constriction.',
-                severity: 55,
-                biomarkers: ['Symptom diary', 'Response to treatment'],
-                treatment: {
-                    firstLine: 'Bronchodilators',
-                    nonPharmacological: 'Relaxation techniques, Breathing exercises'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'CLIN-005',
-                name: 'Fatigue',
-                spanishName: 'Fatiga',
-                category: 'clinical',
-                evaluation: 'FACIT-F < 30 or significant impact on daily activities.',
-                severity: 65,
-                biomarkers: ['FACIT-F', 'Fatigue severity scale'],
-                treatment: {
-                    firstLine: 'Treat underlying causes',
-                    nonPharmacological: 'Energy conservation, Pacing, Sleep optimization'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'CLIN-006',
-                name: 'Sputum Production',
-                spanishName: 'Producción de Esputo',
-                category: 'clinical',
-                evaluation: 'Daily sputum production > 30 mL.',
-                severity: 50,
-                biomarkers: ['Sputum volume', 'Color', 'Viscosity'],
-                treatment: {
-                    firstLine: 'Mucolytics, Airway clearance',
-                    nonPharmacological: 'Hydration, Chest physiotherapy'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'CLIN-007',
-                name: 'Sleep Disturbance',
-                spanishName: 'Trastorno del Sueño',
-                category: 'clinical',
-                evaluation: 'Insomnia severity index ≥ 15 or poor sleep quality.',
-                severity: 62,
-                biomarkers: ['ISI', 'PSQI', 'Sleep diary'],
-                treatment: {
-                    firstLine: 'Sleep hygiene, CBT for insomnia',
-                    nonPharmacological: 'Sleep environment optimization'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'CLIN-008',
-                name: 'Anorexia',
-                spanishName: 'Anorexia',
-                category: 'clinical',
-                evaluation: 'Reduced appetite leading to inadequate intake.',
-                severity: 58,
-                biomarkers: ['Appetite score', 'Food intake diary'],
-                treatment: {
-                    firstLine: 'Appetite stimulants if indicated',
-                    nonPharmacological: 'Small frequent meals, Nutritional supplements'
-                },
-                evidence: { level: 'B' }
-            },
-            {
-                id: 'CLIN-009',
-                name: 'Pain',
-                spanishName: 'Dolor',
-                category: 'clinical',
-                evaluation: 'Pain score ≥ 4/10 impacting function.',
-                severity: 67,
-                biomarkers: ['Pain scale', 'Location', 'Character'],
-                treatment: {
-                    firstLine: 'Analgesics based on pain type',
-                    nonPharmacological: 'Physical therapy, Mind-body techniques'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'CLIN-010',
-                name: 'Cognitive Impairment',
-                spanishName: 'Deterioro Cognitivo',
-                category: 'clinical',
-                evaluation: 'MoCA < 26 or subjective cognitive complaints.',
-                severity: 72,
-                biomarkers: ['MoCA', 'MMSE', 'Cognitive tests'],
-                treatment: {
-                    firstLine: 'Cognitive rehabilitation',
-                    nonPharmacological: 'Brain exercises, Sleep optimization'
-                },
-                evidence: { level: 'B' }
-            },
-            
-            // Comorbidity Traits (20 traits)
-            {
-                id: 'COM-001',
-                name: 'Anxiety/Depression',
-                spanishName: 'Ansiedad/Depresión',
-                category: 'comorbid',
-                evaluation: 'PHQ-9 ≥ 10 or GAD-7 ≥ 10.',
-                severity: 68,
-                biomarkers: ['PHQ-9', 'GAD-7', 'HADS'],
-                treatment: {
-                    firstLine: 'SSRI/SNRI, Cognitive behavioral therapy',
-                    nonPharmacological: 'Exercise, Mindfulness, Social support'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-002',
-                name: 'Cardiovascular Disease',
-                spanishName: 'Enfermedad Cardiovascular',
-                category: 'comorbid',
-                evaluation: 'Established CAD, CHF, arrhythmias, or hypertension.',
-                severity: 80,
-                biomarkers: ['BP', 'ECG', 'Echocardiogram', 'Cardiac enzymes'],
-                treatment: {
-                    firstLine: 'Cardiovascular medications',
-                    nonPharmacological: 'Cardiac rehabilitation, Diet, Exercise'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-003',
-                name: 'Osteoporosis',
-                spanishName: 'Osteoporosis',
-                category: 'comorbid',
-                evaluation: 'T-score ≤ -2.5 or fragility fracture.',
-                severity: 65,
-                biomarkers: ['DEXA T-score', 'Vitamin D', 'Calcium'],
-                treatment: {
-                    firstLine: 'Bisphosphonates, Calcium/vitamin D',
-                    nonPharmacological: 'Weight-bearing exercise, Fall prevention'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-004',
-                name: 'Diabetes Mellitus',
-                spanishName: 'Diabetes Mellitus',
-                category: 'comorbid',
-                evaluation: 'HbA1c ≥ 6.5% or fasting glucose ≥ 126 mg/dL.',
-                severity: 75,
-                biomarkers: ['HbA1c', 'Fasting glucose', 'Insulin resistance'],
-                treatment: {
-                    firstLine: 'Glucose-lowering medications',
-                    nonPharmacological: 'Diet, Exercise, Weight management'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-005',
-                name: 'GERD',
-                spanishName: 'ERGE',
-                category: 'comorbid',
-                evaluation: 'Typical symptoms or confirmed by pH monitoring.',
-                severity: 60,
-                biomarkers: ['GERD questionnaire', 'pH monitoring'],
-                treatment: {
-                    firstLine: 'PPI therapy',
-                    nonPharmacological: 'Diet modification, Elevation of head of bed'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-006',
-                name: 'Obstructive Sleep Apnea',
-                spanishName: 'Apnea Obstructiva del Sueño',
-                category: 'comorbid',
-                evaluation: 'AHI ≥ 5 events/hour with symptoms.',
-                severity: 70,
-                biomarkers: ['AHI', 'ODI', 'Sleep study'],
-                treatment: {
-                    firstLine: 'CPAP therapy',
-                    nonPharmacological: 'Weight loss, Positional therapy'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-007',
-                name: 'Anemia',
-                spanishName: 'Anemia',
-                category: 'comorbid',
-                evaluation: 'Hb < 13 g/dL (men) or < 12 g/dL (women).',
-                severity: 58,
-                biomarkers: ['Hb', 'MCV', 'Ferritin', 'Vitamin B12'],
-                treatment: {
-                    firstLine: 'Treat underlying cause, Iron supplementation',
-                    nonPharmacological: 'Dietary iron, Vitamin C for absorption'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-008',
-                name: 'Chronic Kidney Disease',
-                spanishName: 'Enfermedad Renal Crónica',
-                category: 'comorbid',
-                evaluation: 'eGFR < 60 mL/min/1.73m² for >3 months.',
-                severity: 73,
-                biomarkers: ['eGFR', 'Creatinine', 'Proteinuria'],
-                treatment: {
-                    firstLine: 'ACE inhibitors/ARBs, Disease management',
-                    nonPharmacological: 'Dietary modification, Fluid management'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-009',
-                name: 'Liver Disease',
-                spanishName: 'Enfermedad Hepática',
-                category: 'comorbid',
-                evaluation: 'Elevated LFTs or imaging evidence of liver disease.',
-                severity: 68,
-                biomarkers: ['ALT', 'AST', 'Bilirubin', 'Albumin'],
-                treatment: {
-                    firstLine: 'Treat underlying cause',
-                    nonPharmacological: 'Alcohol cessation, Healthy diet'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'COM-010',
-                name: 'Thyroid Dysfunction',
-                spanishName: 'Disfunción Tiroidea',
-                category: 'comorbid',
-                evaluation: 'Abnormal TSH with corresponding T4/T3 abnormalities.',
-                severity: 55,
-                biomarkers: ['TSH', 'Free T4', 'Free T3', 'Thyroid antibodies'],
-                treatment: {
-                    firstLine: 'Thyroid hormone replacement or antithyroid drugs',
-                    nonPharmacological: 'Regular monitoring'
-                },
-                evidence: { level: 'A' }
-            },
-            
-            // Pharmacological Traits (15 traits)
-            {
-                id: 'PHARM-001',
-                name: 'Corticosteroid Dependency',
-                spanishName: 'Dependencia de Corticosteroides',
-                category: 'pharmacological',
-                evaluation: 'Requirement of ≥10mg prednisone daily for >3 months.',
-                severity: 78,
-                biomarkers: ['Cumulative steroid dose', 'Adrenal function tests'],
-                treatment: {
-                    firstLine: 'Steroid-sparing agents, Gradual taper',
-                    nonPharmacological: 'Bone density monitoring, Eye exams'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHARM-002',
-                name: 'Inhaler Technique Deficiency',
-                spanishName: 'Deficiencia en la Técnica de Inhalación',
-                category: 'pharmacological',
-                evaluation: 'Incorrect inhaler technique on assessment.',
-                severity: 45,
-                biomarkers: ['Inhaler technique score'],
-                treatment: {
-                    firstLine: 'Education and training',
-                    nonPharmacological: 'Regular technique review, Spacer use'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHARM-003',
-                name: 'Medication Non-Adherence',
-                spanishName: 'No Adherencia a la Medicación',
-                category: 'pharmacological',
-                evaluation: 'Medication possession ratio < 80%.',
-                severity: 65,
-                biomarkers: ['MPR', 'Pill count', 'Self-report'],
-                treatment: {
-                    firstLine: 'Simplified regimen, Education',
-                    nonPharmacological: 'Pill organizers, Reminders, Follow-up'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHARM-004',
-                name: 'Polypharmacy',
-                spanishName: 'Polifarmacia',
-                category: 'pharmacological',
-                evaluation: 'Concurrent use of ≥5 medications.',
-                severity: 70,
-                biomarkers: ['Medication count', 'Potential interactions'],
-                treatment: {
-                    firstLine: 'Medication review and deprescribing',
-                    nonPharmacological: 'Regular review, Single-pill combinations'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'PHARM-005',
-                name: 'Adverse Drug Reaction Risk',
-                spanishName: 'Riesgo de Reacción Adversa a Medicamentos',
-                category: 'pharmacological',
-                evaluation: 'History of ADRs or high-risk medication use.',
-                severity: 60,
-                biomarkers: ['ADR history', 'Risk factors'],
-                treatment: {
-                    firstLine: 'Alternative medications if available',
-                    nonPharmacological: 'Close monitoring, Patient education'
-                },
-                evidence: { level: 'B' }
-            },
-            
-            // Behavioral Traits (15 traits)
-            {
-                id: 'BEHAV-001',
-                name: 'Smoking Dependence',
-                spanishName: 'Dependencia al Tabaco',
-                category: 'behavioral',
-                evaluation: 'FTND ≥ 6 or continued smoking despite illness.',
-                severity: 85,
-                biomarkers: ['FTND', 'Cotinine', 'CO breath test'],
-                treatment: {
-                    firstLine: 'Combination pharmacotherapy',
-                    nonPharmacological: 'Behavioral counseling, Support groups'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'BEHAV-002',
-                name: 'Sedentary Lifestyle',
-                spanishName: 'Estilo de Vida Sedentario',
-                category: 'behavioral',
-                evaluation: '<150 min moderate activity/week.',
-                severity: 62,
-                biomarkers: ['Activity monitor data', 'Self-report'],
-                treatment: {
-                    firstLine: 'Behavioral activation',
-                    nonPharmacological: 'Goal setting, Gradual increase'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'BEHAV-003',
-                name: 'Poor Dietary Habits',
-                spanishName: 'Hábitos Alimenticios Pobres',
-                category: 'behavioral',
-                evaluation: 'Inadequate fruit/vegetable intake, high processed foods.',
-                severity: 58,
-                biomarkers: ['Dietary recall', 'Nutrition biomarkers'],
-                treatment: {
-                    firstLine: 'Nutritional counseling',
-                    nonPharmacological: 'Meal planning, Cooking education'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'BEHAV-004',
-                name: 'Alcohol Misuse',
-                spanishName: 'Uso Inadecuado de Alcohol',
-                category: 'behavioral',
-                evaluation: 'AUDIT ≥ 8 or harmful drinking pattern.',
-                severity: 72,
-                biomarkers: ['AUDIT', 'Liver enzymes', 'MCV'],
-                treatment: {
-                    firstLine: 'Brief intervention, Pharmacotherapy',
-                    nonPharmacological: 'Counseling, Support groups'
-                },
-                evidence: { level: 'A' }
-            },
-            {
-                id: 'BEHAV-005',
-                name: 'Poor Sleep Hygiene',
-                spanishName: 'Higiene del Sueño Deficiente',
-                category: 'behavioral',
-                evaluation: 'Multiple poor sleep practices.',
-                severity: 55,
-                biomarkers: ['Sleep hygiene index'],
-                treatment: {
-                    firstLine: 'Sleep hygiene education',
-                    nonPharmacological: 'Regular schedule, Sleep environment'
-                },
-                evidence: { level: 'A' }
-            },
-            
-            // Additional categories to reach 200+ traits
-            // (We'll add more in similar pattern for: radiological, surgical, laboratory, 
-            // genetic, environmental, functional, metabolic categories)
-            
-            // ... [Additional 100+ traits would follow the same pattern]
+           
             
         ];
         
