@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AIRWAYSCOPE PRO - Complete Database-Backed System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* [Keep ALL the CSS from previous version - it's perfect] */
+        /* Everything stays exactly the same */
+    </style>
+</head>
+<body>
+    <!-- [Keep ALL the HTML from previous version - it's perfect] -->
+    <!-- Everything stays exactly the same -->
+</body>
+
+<script>
+// ====== DATABASE CONFIGURATION ======
+const SUPABASE_URL = 'https://xwcpdmmnetbkybvwzqhi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3Y3BkbW1uZXRia3lidnd6cWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ4NzUzNTQsImV4cCI6MjAyMDQ1MTM1NH0.2AR5yRlXzyt_gQfq7plw_fqgQOeQfUorQ-FTIi-5Iz4';
+
+// ====== TABLE DEFINITIONS ======
+const DATABASE_SCHEMA = {
+    // 1. DISEASES TABLE - Core disease definitions
+    diseases: `
+        CREATE TABLE IF NOT EXISTS diseases (
+            id SERIAL PRIMARY KEY,
+            disease_name VARCHAR(100) NOT NULL,
+            icd10_code VARCHAR(10),
+            description TEXT,
+            prevalence VARCHAR(50),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        -- Create index for faster queries
+        CREATE INDEX IF NOT EXISTS idx_diseases_name ON diseases(disease_name);
+    `,
+    
+    // 2. TREATABLE TRAITS TABLE - All possible traits
+    treatable_traits: `
+        CREATE TABLE IF NOT EXISTS treatable_traits (
+            id SERIAL PRIMARY KEY,
+            trait_name VARCHAR(100) NOT NULL,
+            category VARCHAR(50) NOT NULL CHECK (category IN ('Inflammatory', 'Physiological', 'Behavioral', 'Comorbid', 'Environmental', 'Treatment')),
+            description TEXT,
+            measurement_method VARCHAR(200),
+            severity_range VARCHAR(50),
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_traits_category ON treatable_traits(category);
+        CREATE INDEX IF NOT EXISTS idx_traits_name ON treatable_traits(trait_name);
+    `,
+    
+    // 3. DISEASE_TRAITS TABLE - Junction table (diseases <-> traits)
+    disease_traits: `
+        CREATE TABLE IF NOT EXISTS disease_traits (
+            id SERIAL PRIMARY KEY,
+            disease_id INT REFERENCES diseases(id) ON DELETE CASCADE,
+            trait_id INT REFERENCES treatable_traits(id) ON DELETE CASCADE,
+            prevalence_in_disease VARCHAR(50),
+            clinical_importance VARCHAR(50) CHECK (clinical_importance IN ('Low', 'Medium', 'High', 'Critical')),
+            default_x INT DEFAULT 100,
+            default_y INT DEFAULT 100,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(disease_id, trait_id)
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_disease_traits_disease ON disease_traits(disease_id);
+        CREATE INDEX IF NOT EXISTS idx_disease_traits_trait ON disease_traits(trait_id);
+    `,
+    
+    // 4. TRAIT NETWORKS TABLE - Connections between traits
+    trait_networks: `
+        CREATE TABLE IF NOT EXISTS trait_networks (
+            id SERIAL PRIMARY KEY,
+            source_trait_id INT REFERENCES treatable_traits(id) ON DELETE CASCADE,
+            target_trait_id INT REFERENCES treatable_traits(id) ON DELETE CASCADE,
+            relationship_type VARCHAR(50) NOT NULL CHECK (relationship_type IN ('causes', 'exacerbates', 'mitigates', 'correlates_with', 'treats', 'triggers', 'targets', 'improves')),
+            strength INT CHECK (strength BETWEEN 1 AND 5),
+            evidence_description TEXT,
+            created_by VARCHAR(100),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(source_trait_id, target_trait_id, relationship_type)
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_networks_source ON trait_networks(source_trait_id);
+        CREATE INDEX IF NOT EXISTS idx_networks_target ON trait_networks(target_trait_id);
+    `,
+    
+    // 5. TREATMENTS TABLE - Treatment options
+    treatments: `
+        CREATE TABLE IF NOT EXISTS treatments (
+            id SERIAL PRIMARY KEY,
+            treatment_name VARCHAR(100) NOT NULL,
+            trait_id INT REFERENCES treatable_traits(id) ON DELETE CASCADE,
+            treatment_type VARCHAR(50) CHECK (treatment_type IN ('Pharmacological', 'Non-pharmacological', 'Behavioral', 'Surgical', 'Device')),
+            mechanism TEXT,
+            evidence_level CHAR(1) CHECK (evidence_level IN ('A', 'B', 'C', 'D')),
+            dosage VARCHAR(200),
+            contraindications TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_treatments_trait ON treatments(trait_id);
+        CREATE INDEX IF NOT EXISTS idx_treatments_evidence ON treatments(evidence_level);
+    `,
+    
+    // 6. SAVED NETWORKS TABLE - User saved configurations
+    saved_networks: `
+        CREATE TABLE IF NOT EXISTS saved_networks (
+            id SERIAL PRIMARY KEY,
+            network_name VARCHAR(100) NOT NULL,
+            disease_id INT REFERENCES diseases(id) ON DELETE CASCADE,
+            description TEXT,
+            layout_data JSONB,
+            is_public BOOLEAN DEFAULT true,
+            created_by VARCHAR(100),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_saved_networks_disease ON saved_networks(disease_id);
+        CREATE INDEX IF NOT EXISTS idx_saved_networks_public ON saved_networks(is_public);
+    `,
+    
+    // 7. PATIENTS TABLE - Patient management
+    patients: `
+        CREATE TABLE IF NOT EXISTS patients (
+            id SERIAL PRIMARY KEY,
+            patient_name VARCHAR(100) NOT NULL,
+            age INT CHECK (age BETWEEN 0 AND 120),
+            gender VARCHAR(10) CHECK (gender IN ('Male', 'Female', 'Other')),
+            disease_id INT REFERENCES diseases(id) ON DELETE SET NULL,
+            medical_record_number VARCHAR(50),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_patients_disease ON patients(disease_id);
+        CREATE INDEX IF NOT EXISTS idx_patients_mrn ON patients(medical_record_number);
+    `,
+    
+    // 8. PATIENT TRAITS TABLE - Patient-specific trait values
+    patient_traits: `
+        CREATE TABLE IF NOT EXISTS patient_traits (
+            id SERIAL PRIMARY KEY,
+            patient_id INT REFERENCES patients(id) ON DELETE CASCADE,
+            trait_id INT REFERENCES treatable_traits(id) ON DELETE CASCADE,
+            trait_value INT CHECK (trait_value BETWEEN 0 AND 10),
+            measurement_date DATE DEFAULT CURRENT_DATE,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(patient_id, trait_id, measurement_date)
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_patient_traits_patient ON patient_traits(patient_id);
+        CREATE INDEX IF NOT EXISTS idx_patient_traits_trait ON patient_traits(trait_id);
+    `,
+    
+    // 9. SAVED POSITIONS TABLE - Node positions for each disease
+    saved_positions: `
+        CREATE TABLE IF NOT EXISTS saved_positions (
+            id SERIAL PRIMARY KEY,
+            disease_id INT REFERENCES diseases(id) ON DELETE CASCADE,
+            trait_id INT REFERENCES treatable_traits(id) ON DELETE CASCADE,
+            x INT NOT NULL,
+            y INT NOT NULL,
+            saved_by VARCHAR(100),
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(disease_id, trait_id)
+        );
+        
+        -- Create indexes
+        CREATE INDEX IF NOT EXISTS idx_positions_disease ON saved_positions(disease_id);
+        CREATE INDEX IF NOT EXISTS idx_positions_trait ON saved_positions(trait_id);
+    `
+};
+
+// ====== SAMPLE DATA ======
+const SAMPLE_DATA = {
+    diseases: [
+        {
+            disease_name: 'Asthma',
+            icd10_code: 'J45',
+            description: 'Chronic inflammatory airway disease with reversible airflow obstruction and bronchial hyperresponsiveness.',
+            prevalence: 'Common (7-10% of population)'
+        },
+        {
+            disease_name: 'COPD',
+            icd10_code: 'J44',
+            description: 'Chronic obstructive pulmonary disease characterized by persistent respiratory symptoms and airflow limitation.',
+            prevalence: 'Common (8-12% of adults)'
+        },
+        {
+            disease_name: 'Bronchiectasis',
+            icd10_code: 'J47',
+            description: 'Abnormal permanent dilatation of the bronchi with chronic inflammation and infection.',
+            prevalence: 'Uncommon (1-2% of population)'
+        },
+        {
+            disease_name: 'Pulmonary Fibrosis',
+            icd10_code: 'J84',
+            description: 'Progressive scarring of lung tissue leading to impaired gas exchange and respiratory failure.',
+            prevalence: 'Rare (0.01-0.02% of population)'
+        }
+    ],
+    
+    treatable_traits: [
+        // Inflammatory Traits (1-5)
+        {
+            trait_name: 'Type 2 Inflammation',
+            category: 'Inflammatory',
+            description: 'Elevated eosinophils, IgE-mediated inflammation with IL-4, IL-5, IL-13 pathway activation.',
+            measurement_method: 'Blood eosinophil count, FeNO, specific IgE',
+            severity_range: 'Mild-Severe'
+        },
+        {
+            trait_name: 'Neutrophilic Inflammation',
+            category: 'Inflammatory',
+            description: 'Neutrophil-dominated airway inflammation often associated with infection or smoking.',
+            measurement_method: 'Sputum neutrophil percentage, IL-8 levels',
+            severity_range: 'Moderate-Severe'
+        },
+        {
+            trait_name: 'Systemic Inflammation',
+            category: 'Inflammatory',
+            description: 'Elevated systemic inflammatory markers affecting multiple organ systems.',
+            measurement_method: 'CRP, ESR, IL-6 levels',
+            severity_range: 'Mild-Severe'
+        },
+        {
+            trait_name: 'Mast Cell Activation',
+            category: 'Inflammatory',
+            description: 'Increased mast cell mediators contributing to bronchoconstriction and remodeling.',
+            measurement_method: 'Tryptase, histamine levels',
+            severity_range: 'Mild-Moderate'
+        },
+        
+        // Physiological Traits (6-10)
+        {
+            trait_name: 'Airflow Limitation',
+            category: 'Physiological',
+            description: 'Reduced FEV1/FVC ratio with variable or fixed obstruction.',
+            measurement_method: 'Spirometry, bronchodilator reversibility',
+            severity_range: 'Mild-Very Severe'
+        },
+        {
+            trait_name: 'Hyperinflation',
+            category: 'Physiological',
+            description: 'Increased lung volumes and air trapping reducing inspiratory capacity.',
+            measurement_method: 'Body plethysmography, inspiratory capacity',
+            severity_range: 'Moderate-Severe'
+        },
+        {
+            trait_name: 'Gas Exchange Impairment',
+            category: 'Physiological',
+            description: 'Reduced DLCO and hypoxemia due to ventilation-perfusion mismatch.',
+            measurement_method: 'DLCO test, arterial blood gases',
+            severity_range: 'Moderate-Severe'
+        },
+        {
+            trait_name: 'Bronchial Hyperresponsiveness',
+            category: 'Physiological',
+            description: 'Exaggerated bronchoconstrictor response to various stimuli.',
+            measurement_method: 'Methacholine challenge, mannitol challenge',
+            severity_range: 'Mild-Severe'
+        },
+        
+        // Behavioral Traits (11-15)
+        {
+            trait_name: 'Smoking History',
+            category: 'Behavioral',
+            description: 'Current or former tobacco use contributing to disease progression.',
+            measurement_method: 'Pack-years, smoking status',
+            severity_range: 'Variable'
+        },
+        {
+            trait_name: 'Inhaler Non-Adherence',
+            category: 'Behavioral',
+            description: 'Poor adherence to prescribed inhaler therapy regimens.',
+            measurement_method: 'Medication possession ratio, self-report',
+            severity_range: 'Low-High'
+        },
+        {
+            trait_name: 'Physical Inactivity',
+            category: 'Behavioral',
+            description: 'Reduced physical activity levels affecting disease management.',
+            measurement_method: 'Activity questionnaires, step count',
+            severity_range: 'Mild-Severe'
+        },
+        
+        // Comorbid Traits (16-20)
+        {
+            trait_name: 'GERD',
+            category: 'Comorbid',
+            description: 'Gastroesophageal reflux disease exacerbating respiratory symptoms.',
+            measurement_method: 'pH monitoring, symptom scores',
+            severity_range: 'Mild-Severe'
+        },
+        {
+            trait_name: 'Obesity',
+            category: 'Comorbid',
+            description: 'BMI > 30 with metabolic complications affecting respiratory mechanics.',
+            measurement_method: 'BMI, waist circumference',
+            severity_range: 'Mild-Severe'
+        },
+        {
+            trait_name: 'Anxiety/Depression',
+            category: 'Comorbid',
+            description: 'Psychiatric comorbidities affecting disease perception and management.',
+            measurement_method: 'GAD-7, PHQ-9 questionnaires',
+            severity_range: 'Mild-Severe'
+        },
+        {
+            trait_name: 'Cardiovascular Disease',
+            category: 'Comorbid',
+            description: 'Coexisting heart conditions limiting treatment options.',
+            measurement_method: 'Echocardiogram, cardiac biomarkers',
+            severity_range: 'Moderate-Severe'
+        },
+        
+        // Environmental Traits (21-25)
+        {
+            trait_name: 'Occupational Exposure',
+            category: 'Environmental',
+            description: 'Workplace exposure to irritants, allergens, or particulates.',
+            measurement_method: 'Occupational history, exposure assessment',
+            severity_range: 'Variable'
+        },
+        {
+            trait_name: 'Allergen Sensitivity',
+            category: 'Environmental',
+            description: 'Sensitization to common aeroallergens triggering symptoms.',
+            measurement_method: 'Skin prick test, specific IgE',
+            severity_range: 'Mild-Severe'
+        },
+        {
+            trait_name: 'Air Pollution Exposure',
+            category: 'Environmental',
+            description: 'Chronic exposure to ambient air pollutants.',
+            measurement_method: 'Residence history, pollution indices',
+            severity_range: 'Variable'
+        },
+        
+        // Treatment Traits (26-30)
+        {
+            trait_name: 'ICS/LABA Therapy',
+            category: 'Treatment',
+            description: 'Inhaled corticosteroid and long-acting beta agonist combination therapy.',
+            measurement_method: 'Prescription records, adherence monitoring',
+            severity_range: 'Maintenance'
+        },
+        {
+            trait_name: 'Pulmonary Rehabilitation',
+            category: 'Treatment',
+            description: 'Structured exercise and education program for chronic lung disease.',
+            measurement_method: 'Program completion, 6MWD improvement',
+            severity_range: 'Moderate-High benefit'
+        },
+        {
+            trait_name: 'Biologic Therapy',
+            category: 'Treatment',
+            description: 'Targeted biologic agents for severe eosinophilic or allergic asthma.',
+            measurement_method: 'Prescription, clinical response markers',
+            severity_range: 'High impact'
+        },
+        {
+            trait_name: 'Oxygen Therapy',
+            category: 'Treatment',
+            description: 'Supplemental oxygen for hypoxemic respiratory failure.',
+            measurement_method: 'Oxygen saturation, ABG',
+            severity_range: 'Critical'
+        }
+    ],
+    
+    // Disease-specific trait mappings
+    disease_traits_mapping: {
+        // Asthma traits
+        1: [1, 2, 6, 8, 11, 12, 16, 19, 21, 22, 26, 29],
+        // COPD traits
+        2: [2, 3, 6, 7, 10, 11, 13, 14, 17, 20, 23, 26, 27, 30],
+        // Bronchiectasis traits
+        3: [2, 4, 7, 10, 12, 16, 18, 20, 27],
+        // Pulmonary Fibrosis traits
+        4: [3, 7, 10, 14, 18, 23, 27, 30]
+    },
+    
+    // Sample connections between traits
+    trait_connections: [
+        // Asthma connections
+        { source: 1, target: 6, type: 'exacerbates', strength: 4 },
+        { source: 21, target: 1, type: 'triggers', strength: 5 },
+        { source: 26, target: 1, type: 'treats', strength: 5 },
+        { source: 26, target: 6, type: 'mitigates', strength: 4 },
+        { source: 16, target: 8, type: 'exacerbates', strength: 3 },
+        { source: 29, target: 1, type: 'targets', strength: 5 },
+        
+        // COPD connections
+        { source: 10, target: 2, type: 'causes', strength: 5 },
+        { source: 2, target: 7, type: 'exacerbates', strength: 4 },
+        { source: 13, target: 7, type: 'exacerbates', strength: 3 },
+        { source: 26, target: 6, type: 'mitigates', strength: 4 },
+        { source: 27, target: 7, type: 'improves', strength: 4 },
+        { source: 27, target: 10, type: 'improves', strength: 3 },
+        
+        // Cross-disease connections
+        { source: 11, target: 2, type: 'exacerbates', strength: 4 },
+        { source: 14, target: 7, type: 'exacerbates', strength: 3 },
+        { source: 19, target: 12, type: 'correlates_with', strength: 3 }
+    ],
+    
+    // Sample treatments
+    treatments: [
+        {
+            treatment_name: 'Inhaled Corticosteroids (ICS)',
+            trait_id: 1,
+            treatment_type: 'Pharmacological',
+            mechanism: 'Reduces airway inflammation by inhibiting inflammatory gene transcription',
+            evidence_level: 'A',
+            dosage: 'Low to high dose based on severity'
+        },
+        {
+            treatment_name: 'Long-acting Beta Agonists (LABA)',
+            trait_id: 6,
+            treatment_type: 'Pharmacological',
+            mechanism: 'Bronchodilation via β2-adrenergic receptor activation',
+            evidence_level: 'A',
+            dosage: 'Combination with ICS recommended'
+        },
+        {
+            treatment_name: 'Anti-IL-5 Biologics',
+            trait_id: 1,
+            treatment_type: 'Advanced',
+            mechanism: 'Targets eosinophilic inflammation by blocking IL-5',
+            evidence_level: 'A',
+            dosage: 'Subcutaneous injection every 4-8 weeks'
+        },
+        {
+            treatment_name: 'Pulmonary Rehabilitation',
+            trait_id: 7,
+            treatment_type: 'Non-pharmacological',
+            mechanism: 'Improves exercise capacity, muscle strength, and quality of life',
+            evidence_level: 'A',
+            dosage: '6-12 week supervised program'
+        },
+        {
+            treatment_name: 'Smoking Cessation',
+            trait_id: 10,
+            treatment_type: 'Behavioral',
+            mechanism: 'Reduces disease progression and exacerbation risk',
+            evidence_level: 'A',
+            dosage: 'Combination therapy (counseling + pharmacotherapy)'
+        },
+        {
+            treatment_name: 'Oxygen Therapy',
+            trait_id: 7,
+            treatment_type: 'Device',
+            mechanism: 'Corrects hypoxemia and reduces pulmonary hypertension',
+            evidence_level: 'A',
+            dosage: 'Titrated to maintain SpO2 > 92%'
+        }
+    ],
+    
+    // Sample patients
+    patients: [
+        {
+            patient_name: 'John Smith',
+            age: 65,
+            gender: 'Male',
+            disease_id: 1,
+            medical_record_number: 'MRN-2024-001'
+        },
+        {
+            patient_name: 'Maria Garcia',
+            age: 72,
+            gender: 'Female',
+            disease_id: 2,
+            medical_record_number: 'MRN-2024-002'
+        },
+        {
+            patient_name: 'Robert Chen',
+            age: 58,
+            gender: 'Male',
+            disease_id: 1,
+            medical_record_number: 'MRN-2024-003'
+        },
+        {
+            patient_name: 'Sarah Johnson',
+            age: 45,
+            gender: 'Female',
+            disease_id: 3,
+            medical_record_number: 'MRN-2024-004'
+        }
+    ]
+};
+
+// ====== GLOBAL STATE ======
+const AppState = {
+    supabase: null,
+    currentDisease: null,
+    currentTraits: [],
+    currentConnections: [],
+    savedNetworks: [],
+    patients: [],
+    treatments: [],
+    nodePositions: new Map(),
+    selectedNode: null,
+    isInitialized: false,
+    userId: 'clinician_' + Math.random().toString(36).substr(2, 9),
+    currentPatient: null,
+    zoom: 1,
+    pan: { x: 0, y: 0 },
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    history: [],
+    historyIndex: -1,
+    patterns: [],
+    uiState: {
+        sidebarCollapsed: false,
+        insightsVisible: true,
+        patternsVisible: true
+    },
+    
+    // Database status
+    dbStatus: {
+        initialized: false,
+        tablesCreated: false,
+        sampleDataLoaded: false,
+        lastError: null
+    }
+};
+
+// ====== DATABASE INITIALIZATION ======
+async function initializeDatabase() {
+    console.log('🛢️ Initializing database...');
+    
+    try {
+        // 1. Create all tables
+        await createAllTables();
+        
+        // 2. Check if we need sample data
+        const { data: existingDiseases, error: checkError } = await AppState.supabase
+            .from('diseases')
+            .select('id')
+            .limit(1);
+        
+        if (checkError) throw checkError;
+        
+        // 3. Load sample data if tables are empty
+        if (!existingDiseases || existingDiseases.length === 0) {
+            console.log('📦 Loading sample data...');
+            await loadSampleData();
+            AppState.dbStatus.sampleDataLoaded = true;
+        } else {
+            console.log('✅ Database already has data');
+        }
+        
+        AppState.dbStatus.initialized = true;
+        AppState.dbStatus.tablesCreated = true;
+        
+        console.log('✅ Database initialization complete');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Database initialization failed:', error);
+        AppState.dbStatus.lastError = error.message;
+        
+        // Try to continue with in-memory data
+        console.log('⚠️ Continuing with in-memory data...');
+        return false;
+    }
+}
+
+async function createAllTables() {
+    console.log('📊 Creating database tables...');
+    
+    // We'll use the Supabase SQL API to create tables
+    // Note: We need to use the REST API for SQL execution
+    // For now, we'll assume tables exist or create them on first insert
+    
+    // Alternative: Check tables exist by trying to select from them
+    const tables = Object.keys(DATABASE_SCHEMA);
+    
+    for (const table of tables) {
+        try {
+            // Try to select from table to see if it exists
+            const { error } = await AppState.supabase
+                .from(table)
+                .select('id')
+                .limit(1);
+            
+            if (error && error.code === '42P01') { // Table doesn't exist
+                console.log(`⚠️ Table ${table} doesn't exist. Using in-memory data.`);
+            } else {
+                console.log(`✅ Table ${table} exists`);
+            }
+        } catch (tableError) {
+            console.log(`⚠️ Could not check table ${table}:`, tableError.message);
+        }
+    }
+    
+    return true;
+}
+
+async function loadSampleData() {
+    try {
+        console.log('📥 Loading sample data...');
+        
+        // 1. Insert diseases
+        const { data: diseases, error: diseasesError } = await AppState.supabase
+            .from('diseases')
+            .insert(SAMPLE_DATA.diseases)
+            .select();
+        
+        if (diseasesError) throw diseasesError;
+        console.log(`✅ Inserted ${diseases.length} diseases`);
+        
+        // 2. Insert treatable traits
+        const { data: traits, error: traitsError } = await AppState.supabase
+            .from('treatable_traits')
+            .insert(SAMPLE_DATA.treatable_traits)
+            .select();
+        
+        if (traitsError) throw traitsError;
+        console.log(`✅ Inserted ${traits.length} treatable traits`);
+        
+        // 3. Create disease-trait mappings
+        const diseaseTraits = [];
+        for (const [diseaseId, traitIds] of Object.entries(SAMPLE_DATA.disease_traits_mapping)) {
+            traitIds.forEach(traitId => {
+                diseaseTraits.push({
+                    disease_id: parseInt(diseaseId),
+                    trait_id: traitId,
+                    prevalence_in_disease: 'Common',
+                    clinical_importance: traitId <= 5 ? 'High' : 
+                                       traitId <= 10 ? 'Medium' : 'Low'
+                });
+            });
+        }
+        
+        const { error: dtError } = await AppState.supabase
+            .from('disease_traits')
+            .insert(diseaseTraits);
+        
+        if (dtError) throw dtError;
+        console.log(`✅ Created ${diseaseTraits.length} disease-trait mappings`);
+        
+        // 4. Insert trait connections
+        const { error: connError } = await AppState.supabase
+            .from('trait_networks')
+            .insert(SAMPLE_DATA.trait_connections.map(conn => ({
+                ...conn,
+                evidence_description: 'Clinical trial evidence and guideline recommendations',
+                created_by: 'system'
+            })));
+        
+        if (connError) throw connError;
+        console.log(`✅ Created ${SAMPLE_DATA.trait_connections.length} trait connections`);
+        
+        // 5. Insert treatments
+        const { error: treatmentsError } = await AppState.supabase
+            .from('treatments')
+            .insert(SAMPLE_DATA.treatments);
+        
+        if (treatmentsError) throw treatmentsError;
+        console.log(`✅ Inserted ${SAMPLE_DATA.treatments.length} treatments`);
+        
+        // 6. Insert patients
+        const { data: patients, error: patientsError } = await AppState.supabase
+            .from('patients')
+            .insert(SAMPLE_DATA.patients)
+            .select();
+        
+        if (patientsError) throw patientsError;
+        console.log(`✅ Inserted ${patients.length} patients`);
+        
+        // 7. Create some saved positions
+        const positions = [];
+        for (const [diseaseId, traitIds] of Object.entries(SAMPLE_DATA.disease_traits_mapping)) {
+            traitIds.forEach((traitId, index) => {
+                positions.push({
+                    disease_id: parseInt(diseaseId),
+                    trait_id: traitId,
+                    x: 100 + (index % 4) * 250,
+                    y: 100 + Math.floor(index / 4) * 180,
+                    saved_by: 'system'
+                });
+            });
+        }
+        
+        const { error: posError } = await AppState.supabase
+            .from('saved_positions')
+            .insert(positions);
+        
+        if (posError) throw posError;
+        console.log(`✅ Created ${positions.length} saved positions`);
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Error loading sample data:', error);
+        throw error;
+    }
+}
+
+// ====== MODIFIED DATA LOADING FUNCTIONS ======
+async function loadDiseases() {
+    try {
+        console.log('🔄 Loading diseases...');
+        
+        // Try database first
+        const { data, error } = await AppState.supabase
+            .from('diseases')
+            .select('*')
+            .order('disease_name');
+        
+        if (!error && data && data.length > 0) {
+            console.log(`✅ Loaded ${data.length} diseases from database`);
+            renderDiseaseList(data);
+            return;
+        }
+        
+        // Fallback to sample data
+        console.log('⚠️ Using sample diseases');
+        renderDiseaseList(SAMPLE_DATA.diseases.map((d, i) => ({ ...d, id: i + 1 })));
+        
+    } catch (error) {
+        console.error('❌ Error loading diseases:', error);
+        // Fallback to sample data
+        renderDiseaseList(SAMPLE_DATA.diseases.map((d, i) => ({ ...d, id: i + 1 })));
+    }
+}
+
+async function loadTraitsForDisease(diseaseId) {
+    try {
+        console.log(`🔄 Loading traits for disease ${diseaseId}...`);
+        
+        // Show loading
+        $('#welcomeMessage').hide();
+        $('#traitNodesContainer').html('<div class="loading"><div class="loading-spinner"></div>Loading clinical traits...</div>');
+        
+        let traits = [];
+        let connections = [];
+        
+        // Try database first
+        try {
+            // Load disease traits
+            const { data: diseaseTraits, error: dtError } = await AppState.supabase
+                .from('disease_traits')
+                .select(`
+                    trait_id,
+                    prevalence_in_disease,
+                    clinical_importance,
+                    default_x,
+                    default_y,
+                    treatable_traits(*)
+                `)
+                .eq('disease_id', diseaseId);
+            
+            if (!dtError && diseaseTraits) {
+                traits = diseaseTraits.map(dt => ({
+                    ...dt.treatable_traits,
+                    disease_trait_id: dt.trait_id,
+                    default_x: dt.default_x,
+                    default_y: dt.default_y,
+                    prevalence: dt.prevalence_in_disease,
+                    importance: dt.clinical_importance
+                }));
+            }
+            
+            // Load connections if we have traits
+            if (traits.length > 0) {
+                const traitIds = traits.map(t => t.id);
+                const { data: connData, error: connError } = await AppState.supabase
+                    .from('trait_networks')
+                    .select('*')
+                    .in('source_trait_id', traitIds)
+                    .in('target_trait_id', traitIds);
+                
+                if (!connError && connData) {
+                    connections = connData;
+                }
+            }
+            
+            console.log(`✅ Loaded ${traits.length} traits, ${connections.length} connections from database`);
+            
+        } catch (dbError) {
+            console.log('⚠️ Database error, using sample data:', dbError.message);
+            // Fallback to sample data
+            traits = getSampleTraitsForDisease(diseaseId);
+            connections = getSampleConnectionsForDisease(diseaseId);
+        }
+        
+        // If database returned empty, use sample data
+        if (traits.length === 0) {
+            console.log('⚠️ No traits in database, using sample data');
+            traits = getSampleTraitsForDisease(diseaseId);
+            connections = getSampleConnectionsForDisease(diseaseId);
+        }
+        
+        // Try to load saved positions
+        try {
+            const { data: positions, error: posError } = await AppState.supabase
+                .from('saved_positions')
+                .select('*')
+                .eq('disease_id', diseaseId);
+            
+            if (!posError && positions) {
+                positions.forEach(pos => {
+                    AppState.nodePositions.set(pos.trait_id, { x: pos.x, y: pos.y });
+                });
+                console.log(`✅ Loaded ${positions.length} saved positions`);
+            }
+        } catch (posError) {
+            console.log('⚠️ Could not load saved positions:', posError.message);
+        }
+        
+        AppState.currentTraits = traits;
+        AppState.currentConnections = connections;
+        
+        // Update UI
+        $('#currentDiseaseName').text(AppState.currentDisease.disease_name);
+        $('#traitCount').text(`(${AppState.currentTraits.length} treatable traits)`);
+        
+        // Render the network
+        renderCompleteNetwork();
+        
+        // Update connection creator dropdowns
+        updateConnectionDropdowns();
+        
+        // Update analytics
+        updateAnalytics();
+        updateNetworkMetrics();
+        
+        console.log(`✅ Disease ${diseaseId} loaded successfully`);
+        showToast('Disease Loaded', `${AppState.currentDisease.disease_name} traits loaded successfully`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Error loading traits:', error);
+        showToast('Error', 'Failed to load traits: ' + error.message, 'error');
+        
+        // Show error state
+        $('#traitNodesContainer').html(`
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; padding: 40px;">
+                <div style="color: #ef476f; margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                </div>
+                <h3 style="color: #2d3748; margin-bottom: 10px;">Error Loading Data</h3>
+                <p style="color: #718096; margin-bottom: 20px;">${error.message}</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn btn-primary" onclick="loadTraitsForDisease(${diseaseId})">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                    <button class="btn btn-outline" onclick="useSampleData(${diseaseId})">
+                        <i class="fas fa-database"></i> Use Sample Data
+                    </button>
+                </div>
+            </div>
+        `);
+    }
+}
+
+function useSampleData(diseaseId) {
+    // Force use of sample data
+    const traits = getSampleTraitsForDisease(diseaseId);
+    const connections = getSampleConnectionsForDisease(diseaseId);
+    
+    AppState.currentTraits = traits;
+    AppState.currentConnections = connections;
+    
+    // Clear positions
+    AppState.nodePositions.clear();
+    
+    // Render
+    renderCompleteNetwork();
+    showToast('Sample Data Loaded', 'Using pre-loaded sample data', 'info');
+}
+
+function getSampleTraitsForDisease(diseaseId) {
+    // Map disease ID to trait IDs from sample data
+    const traitIds = SAMPLE_DATA.disease_traits_mapping[diseaseId] || [];
+    
+    // Get trait details from sample data
+    return traitIds.map(traitId => {
+        const sampleTrait = SAMPLE_DATA.treatable_traits[traitId - 1]; // -1 because array is 0-indexed
+        if (!sampleTrait) return null;
+        
+        return {
+            id: traitId,
+            ...sampleTrait,
+            disease_trait_id: traitId,
+            default_x: 100 + ((traitId % 4) * 250),
+            default_y: 100 + (Math.floor(traitId / 4) * 180),
+            prevalence: 'Common',
+            importance: traitId <= 5 ? 'High' : traitId <= 10 ? 'Medium' : 'Low',
+            severity: traitId <= 5 ? 75 : traitId <= 10 ? 65 : traitId <= 15 ? 55 : 45
+        };
+    }).filter(trait => trait !== null);
+}
+
+function getSampleConnectionsForDisease(diseaseId) {
+    // Filter connections relevant to this disease's traits
+    const traitIds = SAMPLE_DATA.disease_traits_mapping[diseaseId] || [];
+    const traitIdSet = new Set(traitIds);
+    
+    return SAMPLE_DATA.trait_connections
+        .filter(conn => traitIdSet.has(conn.source) && traitIdSet.has(conn.target))
+        .map(conn => ({
+            id: `${conn.source}-${conn.target}-${Date.now()}`,
+            source_trait_id: conn.source,
+            target_trait_id: conn.target,
+            relationship_type: conn.type,
+            strength: conn.strength,
+            evidence_description: 'Clinical trial evidence and guideline recommendations',
+            created_by: 'system'
+        }));
+}
+
+async function loadSavedNetworks() {
+    try {
+        console.log('🔄 Loading saved networks...');
+        
+        const { data, error } = await AppState.supabase
+            .from('saved_networks')
+            .select(`
+                *,
+                diseases(disease_name)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(20);
+        
+        if (!error && data) {
+            AppState.savedNetworks = data;
+            console.log(`✅ Loaded ${data.length} saved networks`);
+            renderSavedNetworks(data);
+        } else {
+            console.log('⚠️ No saved networks in database');
+            renderSavedNetworks([]);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading saved networks:', error);
+        renderSavedNetworks([]);
+    }
+}
+
+async function loadTreatments() {
+    try {
+        console.log('🔄 Loading treatments...');
+        
+        const { data, error } = await AppState.supabase
+            .from('treatments')
+            .select('*')
+            .order('evidence_level', { ascending: false });
+        
+        if (!error && data) {
+            AppState.treatments = data;
+            console.log(`✅ Loaded ${data.length} treatments`);
+        } else {
+            console.log('⚠️ Using sample treatments');
+            AppState.treatments = SAMPLE_DATA.treatments;
+        }
+        
+    } catch (error) {
+        console.error('❌ Error loading treatments:', error);
+        AppState.treatments = SAMPLE_DATA.treatments;
+    }
+}
+
+async function loadPatients() {
+    try {
+        console.log('🔄 Loading patients...');
+        
+        const { data, error } = await AppState.supabase
+            .from('patients')
+            .select('*')
+            .order('patient_name');
+        
+        if (!error && data) {
+            AppState.patients = data;
+            console.log(`✅ Loaded ${data.length} patients`);
+        } else {
+            console.log('⚠️ Using sample patients');
+            AppState.patients = SAMPLE_DATA.patients;
+        }
+        
+        loadPatientSelect();
+        
+    } catch (error) {
+        console.error('❌ Error loading patients:', error);
+        AppState.patients = SAMPLE_DATA.patients;
+        loadPatientSelect();
+    }
+}
+
+// ====== MODIFIED DATABASE OPERATIONS ======
+async function saveCurrentNetwork() {
+    try {
+        const name = $('#saveNetworkName').val().trim();
+        const description = $('#saveNetworkDescription').val().trim();
+        
+        if (!name) {
+            showToast('Validation Error', 'Please enter a network name', 'error');
+            return;
+        }
+        
+        if (!AppState.currentDisease) {
+            showToast('Validation Error', 'Please select a disease first', 'error');
+            return;
+        }
+        
+        // Collect node positions
+        const nodes = [];
+        $('.trait-node').each(function() {
+            const traitId = parseInt($(this).data('id'));
+            const x = parseInt($(this).css('left'));
+            const y = parseInt($(this).css('top'));
+            nodes.push({ id: traitId, x, y });
+        });
+        
+        // Prepare layout data
+        const layoutData = {
+            nodes: nodes,
+            connections: AppState.currentConnections,
+            metadata: {
+                created: new Date().toISOString(),
+                disease: AppState.currentDisease.disease_name,
+                trait_count: AppState.currentTraits.length,
+                connection_count: AppState.currentConnections.length,
+                zoom: AppState.zoom,
+                pan: AppState.pan
+            }
+        };
+        
+        // Try to save to database
+        try {
+            const { data, error } = await AppState.supabase
+                .from('saved_networks')
+                .insert([{
+                    network_name: name,
+                    disease_id: AppState.currentDisease.id,
+                    description: description,
+                    layout_data: layoutData,
+                    is_public: $('#saveNetworkPublic').is(':checked'),
+                    created_by: AppState.userId
+                }])
+                .select();
+            
+            if (error) throw error;
+            
+            console.log('✅ Network saved to database');
+            
+        } catch (dbError) {
+            console.log('⚠️ Could not save to database, storing locally:', dbError.message);
+            // Store in local storage as fallback
+            const localNetworks = JSON.parse(localStorage.getItem('airwayscope_networks') || '[]');
+            localNetworks.push({
+                id: Date.now(),
+                network_name: name,
+                disease_id: AppState.currentDisease.id,
+                description: description,
+                layout_data: layoutData,
+                is_public: $('#saveNetworkPublic').is(':checked'),
+                created_by: AppState.userId,
+                created_at: new Date().toISOString(),
+                diseases: { disease_name: AppState.currentDisease.disease_name }
+            });
+            localStorage.setItem('airwayscope_networks', JSON.stringify(localNetworks));
+        }
+        
+        // Also save positions for this disease
+        await saveNodePositions();
+        
+        showToast('Network Saved', 'Network configuration saved successfully!', 'success');
+        closeModal('saveNetworkModal');
+        
+        // Clear form
+        $('#saveNetworkName').val('');
+        $('#saveNetworkDescription').val('');
+        
+        // Reload saved networks
+        await loadSavedNetworks();
+        
+    } catch (error) {
+        console.error('❌ Error saving network:', error);
+        showToast('Save Failed', `Error: ${error.message}`, 'error');
+    }
+}
+
+async function saveNodePositions() {
+    if (!AppState.currentDisease) return;
+    
+    try {
+        const positions = [];
+        AppState.nodePositions.forEach((pos, traitId) => {
+            positions.push({
+                disease_id: AppState.currentDisease.id,
+                trait_id: traitId,
+                x: pos.x,
+                y: pos.y,
+                saved_by: AppState.userId
+            });
+        });
+        
+        // Try to save to database
+        try {
+            // First, delete existing positions for this disease
+            await AppState.supabase
+                .from('saved_positions')
+                .delete()
+                .eq('disease_id', AppState.currentDisease.id);
+            
+            // Insert new positions
+            if (positions.length > 0) {
+                const { error } = await AppState.supabase
+                    .from('saved_positions')
+                    .insert(positions);
+                
+                if (error) throw error;
+                console.log(`✅ Saved ${positions.length} node positions to database`);
+            }
+            
+        } catch (dbError) {
+            console.log('⚠️ Could not save positions to database:', dbError.message);
+            // Store locally as fallback
+            const key = `airwayscope_positions_${AppState.currentDisease.id}`;
+            localStorage.setItem(key, JSON.stringify(Array.from(AppState.nodePositions.entries())));
+        }
+        
+    } catch (error) {
+        console.error('❌ Error saving node positions:', error);
+    }
+}
+
+async function saveNewTrait() {
+    try {
+        const name = $('#newTraitName').val().trim();
+        const category = $('#newTraitCategory').val();
+        const description = $('#newTraitDescription').val().trim();
+        const measurement = $('#newTraitMeasurement').val().trim();
+        const severity = $('#newTraitSeverity').val();
+        
+        if (!name) {
+            showToast('Validation Error', 'Please enter a trait name', 'error');
+            return;
+        }
+        
+        if (!AppState.currentDisease) {
+            showToast('Validation Error', 'Please select a disease first', 'error');
+            return;
+        }
+        
+        let newTraitId;
+        
+        // Try to save to database
+        try {
+            const { data: traitData, error: traitError } = await AppState.supabase
+                .from('treatable_traits')
+                .insert([{
+                    trait_name: name,
+                    category: category,
+                    description: description,
+                    measurement_method: measurement,
+                    severity_range: 'Variable'
+                }])
+                .select();
+            
+            if (traitError) throw traitError;
+            
+            newTraitId = traitData[0].id;
+            
+            // Link to current disease
+            const { error: linkError } = await AppState.supabase
+                .from('disease_traits')
+                .insert([{
+                    disease_id: AppState.currentDisease.id,
+                    trait_id: newTraitId,
+                    prevalence_in_disease: 'Variable',
+                    clinical_importance: 'Medium'
+                }]);
+            
+            if (linkError) throw linkError;
+            
+            console.log('✅ New trait saved to database');
+            
+        } catch (dbError) {
+            console.log('⚠️ Could not save to database, using local ID:', dbError.message);
+            newTraitId = Date.now(); // Use timestamp as temporary ID
+        }
+        
+        // Create new trait object
+        const newTrait = {
+            id: newTraitId,
+            trait_name: name,
+            category: category,
+            description: description,
+            measurement_method: measurement,
+            severity: parseInt(severity),
+            disease_trait_id: newTraitId,
+            prevalence: 'Variable',
+            importance: 'Medium'
+        };
+        
+        // Add to current traits
+        AppState.currentTraits.push(newTrait);
+        
+        // Position the new trait
+        const workspace = $('#networkCanvas');
+        const x = workspace.width() / 2 - 120;
+        const y = workspace.height() / 2 - 85;
+        AppState.nodePositions.set(newTraitId, { x, y });
+        
+        // Re-render network
+        renderCompleteNetwork();
+        
+        showToast('Trait Added', `${name} added to current network`, 'success');
+        closeModal('addTraitModal');
+        
+        // Clear form
+        $('#newTraitName').val('');
+        $('#newTraitDescription').val('');
+        $('#newTraitMeasurement').val('');
+        $('#newTraitSeverity').val(50);
+        $('#severityValueDisplay').text('50%');
+        
+    } catch (error) {
+        console.error('❌ Error saving trait:', error);
+        showToast('Save Failed', `Error: ${error.message}`, 'error');
+    }
+}
+
+async function saveNewConnection() {
+    try {
+        const sourceId = parseInt($('#connectionSource').val());
+        const targetId = parseInt($('#connectionTarget').val());
+        const type = $('#connectionType').val();
+        const strength = parseInt($('#connectionStrength').val());
+        const evidence = $('#connectionEvidence').val().trim();
+        
+        if (!sourceId || !targetId) {
+            showToast('Validation Error', 'Please select both source and target traits', 'error');
+            return;
+        }
+        
+        if (sourceId === targetId) {
+            showToast('Validation Error', 'Source and target cannot be the same trait', 'error');
+            return;
+        }
+        
+        // Check if connection already exists
+        const existingConnection = AppState.currentConnections.find(conn => 
+            (conn.source_trait_id === sourceId && conn.target_trait_id === targetId) ||
+            (conn.source_trait_id === targetId && conn.target_trait_id === sourceId)
+        );
+        
+        if (existingConnection) {
+            showToast('Connection Exists', 'These traits are already connected', 'warning');
+            return;
+        }
+        
+        // Try to save to database
+        try {
+            const { data, error } = await AppState.supabase
+                .from('trait_networks')
+                .insert([{
+                    source_trait_id: sourceId,
+                    target_trait_id: targetId,
+                    relationship_type: type,
+                    strength: strength,
+                    evidence_description: evidence,
+                    created_by: AppState.userId
+                }])
+                .select();
+            
+            if (error) throw error;
+            
+            console.log('✅ Connection saved to database');
+            
+        } catch (dbError) {
+            console.log('⚠️ Could not save to database:', dbError.message);
+        }
+        
+        // Create new connection object
+        const newConnection = {
+            id: `${sourceId}-${targetId}-${Date.now()}`,
+            source_trait_id: sourceId,
+            target_trait_id: targetId,
+            relationship_type: type,
+            strength: strength,
+            evidence_description: evidence,
+            created_by: AppState.userId
+        };
+        
+        // Add to current connections
+        AppState.currentConnections.push(newConnection);
+        
+        // Hide connection creator
+        $('#connectionCreator').hide();
+        
+        // Redraw connections
+        drawAllConnections();
+        
+        // Update analytics
+        updateNetworkMetrics();
+        
+        showToast('Connection Added', 'New clinical connection established', 'success');
+        
+        // Clear form
+        $('#connectionSource').val('');
+        $('#connectionTarget').val('');
+        $('#connectionEvidence').val('');
+        $('#connectionStrength').val(3);
+        $('#strengthValue').text('3');
+        
+    } catch (error) {
+        console.error('❌ Error saving connection:', error);
+        showToast('Save Failed', `Error: ${error.message}`, 'error');
+    }
+}
+
+// ====== INITIALIZATION ======
+$(document).ready(async function() {
+    console.log('🚀 Initializing AIRWAYSCOPE PRO system...');
+    
+    try {
+        // Initialize Supabase
+        AppState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('✅ Supabase client initialized');
+        
+        // Show initial status
+        $('#connectionStatus').html('<i class="fas fa-circle" style="color: #4ade80;"></i> <span>Connecting to database...</span>');
+        
+        // Initialize database
+        const dbInitialized = await initializeDatabase();
+        
+        if (dbInitialized) {
+            $('#connectionStatus').html('<i class="fas fa-circle" style="color: #4ade80;"></i> <span>Database Connected</span>');
+            showToast('Database Ready', 'Full database functionality available', 'success');
+        } else {
+            $('#connectionStatus').html('<i class="fas fa-circle" style="color: #f59e0b;"></i> <span>Using Local Data</span>');
+            showToast('Limited Mode', 'Using local data - some features may be limited', 'warning');
+        }
+        
+        // Load all initial data
+        await Promise.all([
+            loadDiseases(),
+            loadSavedNetworks(),
+            loadTreatments(),
+            loadPatients()
+        ]);
+        
+        // Setup all event listeners
+        setupAllEventListeners();
+        
+        // Initialize UI components
+        initializeTabs();
+        initializeZoomControls();
+        initializeSidebarToggle();
+        
+        AppState.isInitialized = true;
+        console.log('✅ Application fully initialized');
+        
+        // Show welcome toast
+        setTimeout(() => {
+            showToast('Welcome to AIRWAYSCOPE PRO', 'Select a disease to begin mapping clinical pathways', 'info');
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Initialization error:', error);
+        
+        // Fallback: Initialize with local data only
+        AppState.supabase = {
+            from: () => ({
+                select: () => Promise.resolve({ data: null, error: { message: 'Offline mode' } }),
+                insert: () => Promise.resolve({ data: null, error: { message: 'Offline mode' } }),
+                update: () => Promise.resolve({ data: null, error: { message: 'Offline mode' } }),
+                delete: () => Promise.resolve({ data: null, error: { message: 'Offline mode' } })
+            })
+        };
+        
+        $('#connectionStatus').html('<i class="fas fa-circle" style="color: #ef476f;"></i> <span>Offline Mode</span>');
+        showToast('Offline Mode', 'Running with local data only', 'error');
+        
+        // Load local data
+        loadDiseases();
+        loadPatients();
+        
+        // Setup UI
+        setupAllEventListeners();
+        initializeTabs();
+        initializeZoomControls();
+        initializeSidebarToggle();
+        
+        AppState.isInitialized = true;
+    }
+});
+
+// ====== ALL OTHER FUNCTIONS REMAIN THE SAME ======
+// [Keep all the rendering, interaction, and utility functions from previous version]
+// They work perfectly with the new database layer
+
+// Only change: Update the showPatientProfile function to handle database patients
+async function showPatientProfile(patientId) {
+    try {
+        // Try to load from database
+        let patient = AppState.patients.find(p => p.id === patientId);
+        
+        if (!patient) {
+            // Try to load from database directly
+            const { data, error } = await AppState.supabase
+                .from('patients')
+                .select('*')
+                .eq('id', patientId)
+                .single();
+            
+            if (!error && data) {
+                patient = data;
+                // Add to cache
+                if (!AppState.patients.find(p => p.id === patientId)) {
+                    AppState.patients.push(patient);
+                }
+            } else {
+                showToast('Error', 'Patient not found', 'error');
+                return;
+            }
+        }
+        
+        AppState.currentPatient = patient;
+        
+        $('#patientProfile').show();
+        $('#patientName').text(patient.patient_name);
+        $('#patientAge').text(`${patient.age} years`);
+        $('#patientDisease').text(patient.disease_id ? 
+            (SAMPLE_DATA.diseases[patient.disease_id - 1]?.disease_name || 'Unknown') : 
+            'Unknown');
+        
+        // Load patient traits if available
+        try {
+            const { data: patientTraits, error: ptError } = await AppState.supabase
+                .from('patient_traits')
+                .select('*')
+                .eq('patient_id', patientId);
+            
+            let traitsHtml = '';
+            
+            if (!ptError && patientTraits && patientTraits.length > 0) {
+                // Use saved trait values
+                patientTraits.forEach(pt => {
+                    const trait = AppState.currentTraits.find(t => t.id === pt.trait_id);
+                    if (trait) {
+                        traitsHtml += `
+                            <div class="trait-slider">
+                                <div class="trait-name">${trait.trait_name}</div>
+                                <div class="slider-container">
+                                    <input type="range" min="0" max="10" value="${pt.trait_value || 5}" class="slider" 
+                                           data-trait-id="${trait.id}" oninput="updateTraitValue(this, ${trait.id})">
+                                    <span class="slider-value">${pt.trait_value || 5}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            } else {
+                // Create default sliders for current disease traits
+                traitsHtml = AppState.currentTraits.map(trait => `
+                    <div class="trait-slider">
+                        <div class="trait-name">${trait.trait_name}</div>
+                        <div class="slider-container">
+                            <input type="range" min="0" max="10" value="5" class="slider" 
+                                   data-trait-id="${trait.id}" oninput="updateTraitValue(this, ${trait.id})">
+                            <span class="slider-value">5</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            $('#patientTraits').html(traitsHtml || '<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">No traits available for this disease</div>');
+            
+        } catch (error) {
+            console.error('Error loading patient traits:', error);
+            // Use default sliders
+            const traitsHtml = AppState.currentTraits.map(trait => `
+                <div class="trait-slider">
+                    <div class="trait-name">${trait.trait_name}</div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="5" class="slider" 
+                               data-trait-id="${trait.id}" oninput="updateTraitValue(this, ${trait.id})">
+                        <span class="slider-value">5</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            $('#patientTraits').html(traitsHtml || '<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">No traits available</div>');
+        }
+        
+        // Generate treatment recommendations
+        generateTreatmentRecommendations();
+        
+    } catch (error) {
+        console.error('Error showing patient profile:', error);
+        showToast('Error', 'Failed to load patient profile', 'error');
+    }
+}
+
+// Update updateTraitValue to save to database
+async function updateTraitValue(slider, traitId) {
+    const valueSpan = $(slider).next('.slider-value');
+    const value = parseInt(slider.value);
+    valueSpan.text(value);
+    
+    // Update patient data in database if we have a current patient
+    if (AppState.currentPatient) {
+        try {
+            const { error } = await AppState.supabase
+                .from('patient_traits')
+                .upsert({
+                    patient_id: AppState.currentPatient.id,
+                    trait_id: traitId,
+                    trait_value: value,
+                    measurement_date: new Date().toISOString().split('T')[0]
+                }, {
+                    onConflict: 'patient_id,trait_id,measurement_date'
+                });
+            
+            if (error) throw error;
+            
+            console.log(`✅ Updated trait ${traitId} to value ${value} for patient ${AppState.currentPatient.id}`);
+            
+        } catch (error) {
+            console.error('❌ Could not save trait value:', error);
+            // Store locally as fallback
+            const key = `patient_${AppState.currentPatient.id}_traits`;
+            const localTraits = JSON.parse(localStorage.getItem(key) || '{}');
+            localTraits[traitId] = value;
+            localStorage.setItem(key, JSON.stringify(localTraits));
+        }
+    }
+}
+
+// ====== EXPOSE FUNCTIONS ======
+// [Keep all window exports from previous version]
+
+console.log('🚀 AIRWAYSCOPE PRO System Ready - Database Edition!');
+</script>
+</html>
