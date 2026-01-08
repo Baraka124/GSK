@@ -184,306 +184,385 @@
         $(document).ready(async function() {
             console.log('🚀 Airway Avatar Initializing...');
             
-            // 1. Initialize Supabase
-            AvatarState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-            
-            // 2. Get patient/disease from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const patientId = urlParams.get('patient');
-            const diseaseId = urlParams.get('disease');
-            const sessionId = urlParams.get('session') || new Date().toISOString().split('T')[0];
-            
-            // 3. Load data
-            await loadPatientData(patientId);
-            await loadDiseaseData(diseaseId);
-            await loadTraits(diseaseId);
-            
-            // 4. Initialize 3D visualization
-            initAnatomyView();
-            
-            // 5. Update UI
-            updatePatientInfo();
-            renderTraits();
-            
-            console.log('✅ Airway Avatar Ready');
-            $('#loadingOverlay').hide();
+        // 1. Initialize Supabase
+AvatarState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// 2. Get REAL DATA from main platform
+const urlParams = new URLSearchParams(window.location.search);
+const encodedData = urlParams.get('data');
+
+if (encodedData) {
+    // USE REAL DATA FROM MAIN PLATFORM
+    try {
+        const realData = JSON.parse(decodeURIComponent(encodedData));
+        AvatarState.patient = realData.patient;
+        AvatarState.disease = realData.disease;
+        AvatarState.traits = realData.traits || [];
+        AvatarState.connections = realData.connections || [];
+        
+        console.log('✅ Loaded real patient:', AvatarState.patient.name);
+        
+    } catch (error) {
+        console.error('❌ Failed to parse data:', error);
+        createDemoPatient();
+    }
+} else {
+    // DEMO MODE
+    console.log('⚠️ No data parameter, using demo');
+    createDemoPatient();
+}
+
+// 3. Initialize 3D visualization
+initAnatomyView();
+
+// 4. Update UI
+updatePatientInfo();
+renderTraits();
+
+console.log('✅ Airway Avatar Ready');
+$('#loadingOverlay').hide();
+
+// Helper function for demo mode
+function createDemoPatient() {
+    AvatarState.patient = {
+        id: 'demo',
+        name: 'Demo Patient',
+        age: 58,
+        gender: 'Male',
+        disease: 'Asthma'
+    };
+    AvatarState.disease = { id: 1, disease_name: 'Asthma' };
+}
+
+// ====== 3D VISUALIZATION ======
+function initAnatomyView() {
+    const canvas = document.getElementById('avatarCanvas');
+    AvatarState.renderer = new THREE.WebGLRenderer({ 
+        canvas, 
+        antialias: true,
+        alpha: true 
+    });
+    AvatarState.renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+    
+    AvatarState.scene = new THREE.Scene();
+    AvatarState.camera = new THREE.PerspectiveCamera(75, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 1000);
+    AvatarState.camera.position.z = 5;
+    
+    // Add abstract network visualization instead of lung
+    createNetworkVisualization();
+    
+    // Animation loop
+    function animate() {
+        requestAnimationFrame(animate);
+        AvatarState.renderer.render(AvatarState.scene, AvatarState.camera);
+    }
+    animate();
+    
+    // Handle resize
+    window.addEventListener('resize', () => {
+        AvatarState.renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+        AvatarState.camera.aspect = canvas.parentElement.clientWidth / canvas.parentElement.clientHeight;
+        AvatarState.camera.updateProjectionMatrix();
+    });
+}
+
+function createNetworkVisualization() {
+    // Abstract network nodes for traits
+    const colors = {
+        'inflammatory': 0xef476f,
+        'physiological': 0x06d6a0,
+        'behavioral': 0xffd166,
+        'comorbid': 0x118ab2,
+        'environmental': 0x9d4edd
+    };
+    
+    // Create trait nodes
+    AvatarState.traitNodes = {};
+    AvatarState.traits.forEach((trait, index) => {
+        const color = colors[trait.category.toLowerCase()] || 0x4361ee;
+        const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+        const material = new THREE.MeshPhongMaterial({ 
+            color: color,
+            transparent: true,
+            opacity: 0.9
         });
         
-        // ====== DATA LOADING ======
-        async function loadPatientData(patientId) {
-            if (!patientId) {
-                // Demo mode - create virtual patient
-                AvatarState.patient = {
-                    id: 'demo',
-                    name: 'Demo Patient',
-                    age: 58,
-                    gender: 'Male',
-                    disease: 'Asthma'
-                };
-                return;
-            }
+        const node = new THREE.Mesh(geometry, material);
+        const angle = (index / AvatarState.traits.length) * Math.PI * 2;
+        const radius = 2;
+        node.position.x = Math.cos(angle) * radius;
+        node.position.y = Math.sin(angle) * radius;
+        node.position.z = (Math.random() - 0.5) * 1;
+        
+        AvatarState.scene.add(node);
+        AvatarState.traitNodes[trait.id] = node;
+        
+        // Add label
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 256;
+        canvas.height = 64;
+        context.fillStyle = 'rgba(30, 41, 59, 0.9)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = 'white';
+        context.font = 'bold 14px Arial';
+        context.textAlign = 'center';
+        context.fillText(trait.trait_name, canvas.width/2, 30);
+        context.fillStyle = '#94a3b8';
+        context.font = '10px Arial';
+        context.fillText(trait.category, canvas.width/2, 50);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.position.copy(node.position);
+        sprite.position.y += 0.3;
+        sprite.scale.set(1, 0.25, 1);
+        AvatarState.scene.add(sprite);
+    });
+    
+    // Create connections between traits
+    AvatarState.connections.forEach(conn => {
+        const sourceNode = AvatarState.traitNodes[conn.source_trait_id];
+        const targetNode = AvatarState.traitNodes[conn.target_trait_id];
+        
+        if (sourceNode && targetNode) {
+            const points = [
+                new THREE.Vector3(sourceNode.position.x, sourceNode.position.y, sourceNode.position.z),
+                new THREE.Vector3(
+                    (sourceNode.position.x + targetNode.position.x) / 2,
+                    (sourceNode.position.y + targetNode.position.y) / 2 + 0.5,
+                    (sourceNode.position.z + targetNode.position.z) / 2
+                ),
+                new THREE.Vector3(targetNode.position.x, targetNode.position.y, targetNode.position.z)
+            ];
             
-            try {
-                const { data, error } = await AvatarState.supabase
-                    .from('patients')
-                    .select('*')
-                    .eq('id', patientId)
-                    .single();
-                    
-                if (!error && data) {
-                    AvatarState.patient = data;
-                }
-            } catch (error) {
-                console.error('Error loading patient:', error);
-            }
-        }
-        
-        async function loadDiseaseData(diseaseId) {
-            if (!diseaseId) {
-                AvatarState.disease = { id: 1, disease_name: 'Asthma' };
-                return;
-            }
-            
-            try {
-                const { data, error } = await AvatarState.supabase
-                    .from('diseases')
-                    .select('*')
-                    .eq('id', diseaseId)
-                    .single();
-                    
-                if (!error && data) {
-                    AvatarState.disease = data;
-                }
-            } catch (error) {
-                console.error('Error loading disease:', error);
-            }
-        }
-        
-        async function loadTraits(diseaseId) {
-            // Load traits for this disease
-            try {
-                const { data, error } = await AvatarState.supabase
-                    .from('disease_traits')
-                    .select(`
-                        treatable_traits(*)
-                    `)
-                    .eq('disease_id', diseaseId);
-                    
-                if (!error && data) {
-                    AvatarState.traits = data.map(dt => dt.treatable_traits);
-                }
-            } catch (error) {
-                console.error('Error loading traits:', error);
-            }
-        }
-        
-        // ====== 3D VISUALIZATION ======
-        function initAnatomyView() {
-            // Simplified anatomy visualization
-            const canvas = document.getElementById('avatarCanvas');
-            AvatarState.renderer = new THREE.WebGLRenderer({ 
-                canvas, 
-                antialias: true,
-                alpha: true 
+            const curve = new THREE.CatmullRomCurve3(points);
+            const geometry = new THREE.TubeGeometry(curve, 20, 0.03, 8, false);
+            const material = new THREE.MeshBasicMaterial({ 
+                color: getConnectionColor(conn.relationship_type),
+                transparent: true,
+                opacity: 0.6
             });
-            AvatarState.renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
             
-            AvatarState.scene = new THREE.Scene();
-            AvatarState.camera = new THREE.PerspectiveCamera(75, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 1000);
-            AvatarState.camera.position.z = 5;
-            
-            // Add basic airway anatomy
-            createAnatomy();
-            
-            // Animation loop
-            function animate() {
-                requestAnimationFrame(animate);
-                AvatarState.renderer.render(AvatarState.scene, AvatarState.camera);
-            }
-            animate();
-            
-            // Handle resize
-            window.addEventListener('resize', () => {
-                AvatarState.renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
-                AvatarState.camera.aspect = canvas.parentElement.clientWidth / canvas.parentElement.clientHeight;
-                AvatarState.camera.updateProjectionMatrix();
-            });
+            const connectionMesh = new THREE.Mesh(geometry, material);
+            AvatarState.scene.add(connectionMesh);
         }
-        
-        function createAnatomy() {
-            // Create simplified airway model
-            const trachea = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.3, 0.25, 2, 8),
-                new THREE.MeshPhongMaterial({ color: 0x4f46e5, transparent: true, opacity: 0.8 })
-            );
-            trachea.position.y = 0.5;
-            AvatarState.scene.add(trachea);
-            AvatarState.anatomy.trachea = trachea;
-            
-            // Bronchi
-            const leftBronchus = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.15, 0.12, 1.5, 6),
-                new THREE.MeshPhongMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.7 })
-            );
-            leftBronchus.position.set(-0.4, -0.5, 0);
-            leftBronchus.rotation.z = Math.PI / 6;
-            AvatarState.scene.add(leftBronchus);
-            
-            const rightBronchus = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.15, 0.12, 1.5, 6),
-                new THREE.MeshPhongMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.7 })
-            );
-            rightBronchus.position.set(0.4, -0.5, 0);
-            rightBronchus.rotation.z = -Math.PI / 6;
-            AvatarState.scene.add(rightBronchus);
-            
-            // Alveoli clusters (simplified)
-            for (let i = 0; i < 5; i++) {
-                const alveolus = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.08, 8, 6),
-                    new THREE.MeshPhongMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.6 })
-                );
-                alveolus.position.set(
-                    (Math.random() - 0.5) * 1.5,
-                    -1 + Math.random() * 0.5,
-                    (Math.random() - 0.5) * 0.5
-                );
-                AvatarState.scene.add(alveolus);
-            }
-            
-            // Lighting
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 5, 5);
-            AvatarState.scene.add(light);
-            
-            const ambientLight = new THREE.AmbientLight(0x404040);
-            AvatarState.scene.add(ambientLight);
-        }
-        
-        // ====== UI UPDATES ======
-        function updatePatientInfo() {
-            const patient = AvatarState.patient;
-            const disease = AvatarState.disease;
-            
-            $('#patientInfo').html(`
-                <div style="font-weight: 600; color: #e2e8f0;">${patient?.name || 'Demo Patient'}</div>
-                <div style="font-size: 12px; color: #cbd5e1;">
-                    ${patient?.age || '58'} yrs • ${disease?.disease_name || 'Asthma'}
+    });
+    
+    // Lighting
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 5, 5);
+    AvatarState.scene.add(directionalLight);
+    
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    AvatarState.scene.add(ambientLight);
+    
+    // Add subtle rotation animation
+    AvatarState.rotation = { x: 0, y: 0 };
+}
+
+function getConnectionColor(relationshipType) {
+    const colors = {
+        'causes': 0xef476f,
+        'exacerbates': 0xff9e00,
+        'mitigates': 0x06d6a0,
+        'correlates_with': 0x118ab2,
+        'treats': 0x4361ee
+    };
+    return colors[relationshipType] || 0x718096;
+}
+
+// ====== UI UPDATES ======
+function updatePatientInfo() {
+    const patient = AvatarState.patient;
+    const disease = AvatarState.disease;
+    
+    $('#patientInfo').html(`
+        <div style="font-weight: 700; font-size: 16px; color: #e2e8f0; margin-bottom: 4px;">
+            ${patient?.name || 'Demo Patient'}
+        </div>
+        <div style="font-size: 12px; color: #cbd5e1;">
+            <i class="fas fa-user"></i> ${patient?.age || '58'} yrs • 
+            <i class="fas fa-lungs"></i> ${disease?.disease_name || 'Asthma'}
+        </div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">
+            <i class="fas fa-id-card"></i> Avatar ID: ${AvatarState.patient?.id || 'demo'} | 
+            <i class="fas fa-calendar"></i> ${new Date().toLocaleDateString()}
+        </div>
+    `);
+}
+
+function renderTraits() {
+    const container = $('#traitContainer');
+    container.empty();
+    
+    if (AvatarState.traits.length === 0) {
+        container.html(`
+            <div style="text-align: center; padding: 20px; color: #94a3b8;">
+                <i class="fas fa-network-wired" style="font-size: 24px; opacity: 0.5; margin-bottom: 10px; display: block;"></i>
+                No traits available
+            </div>
+        `);
+        return;
+    }
+    
+    AvatarState.traits.forEach(trait => {
+        const badge = $(`
+            <div class="trait-badge ${trait.category.toLowerCase()}" 
+                 data-trait-id="${trait.id}"
+                 onclick="highlightTrait('${trait.id}')">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600;">${trait.trait_name}</span>
+                    <span style="font-size: 10px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 10px;">
+                        ${trait.category}
+                    </span>
                 </div>
-                <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
-                    Avatar ID: ${AvatarState.patient?.id || 'demo'} | ${new Date().toLocaleDateString()}
+                <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                    ${trait.description?.substring(0, 60) || 'No description'}...
                 </div>
-            `);
+            </div>
+        `);
+        container.append(badge);
+    });
+}
+
+// ====== SIMULATION FUNCTIONS ======
+function simulateTreatment(treatmentType) {
+    // Visualize treatment effect on network
+    showNotification(`Simulating ${treatmentType} treatment...`, 'info');
+    
+    // Dim unrelated nodes, highlight affected ones
+    Object.values(AvatarState.traitNodes).forEach(node => {
+        node.material.opacity = 0.3;
+    });
+    
+    // In real version: Apply treatment logic to specific traits
+    setTimeout(() => {
+        Object.values(AvatarState.traitNodes).forEach(node => {
+            node.material.opacity = 0.9;
+        });
+        showNotification(`${treatmentType} simulation complete`, 'success');
+    }, 1500);
+}
+
+function compareToPopulation() {
+    showNotification('Analyzing population data patterns...', 'info');
+    // Future: Compare patient's network to population averages
+}
+
+function predictFlareRisk() {
+    const riskScore = calculateFlareRisk();
+    const riskLevel = riskScore > 70 ? 'HIGH' : riskScore > 40 ? 'MODERATE' : 'LOW';
+    
+    showNotification(`Flare risk: ${riskLevel} (${riskScore}%)`, 
+        riskScore > 70 ? 'warning' : 'info');
+}
+
+function calculateFlareRisk() {
+    // Simple risk calculation
+    let score = 0;
+    if (AvatarState.traits.length > 5) score += 30;
+    if (AvatarState.connections.length > 10) score += 30;
+    
+    // Check for inflammatory traits
+    const inflammatoryCount = AvatarState.traits.filter(t => 
+        t.category.toLowerCase().includes('inflammatory')).length;
+    score += inflammatoryCount * 10;
+    
+    return Math.min(100, score);
+}
+
+function highlightTrait(traitId) {
+    const node = AvatarState.traitNodes[traitId];
+    if (!node) return;
+    
+    // Pulse animation
+    const originalScale = node.scale.clone();
+    node.scale.multiplyScalar(1.3);
+    
+    setTimeout(() => {
+        node.scale.copy(originalScale);
+    }, 500);
+    
+    // Highlight connected traits
+    const connectedIds = AvatarState.connections
+        .filter(conn => conn.source_trait_id == traitId || conn.target_trait_id == traitId)
+        .map(conn => conn.source_trait_id == traitId ? conn.target_trait_id : conn.source_trait_id);
+    
+    connectedIds.forEach(id => {
+        const connectedNode = AvatarState.traitNodes[id];
+        if (connectedNode) {
+            connectedNode.material.emissive.setHex(0x444444);
+            setTimeout(() => connectedNode.material.emissive.setHex(0x000000), 1000);
         }
-        
-        function renderTraits() {
-            const container = $('#traitContainer');
-            container.empty();
-            
-            AvatarState.traits.forEach(trait => {
-                const badge = $(`
-                    <div class="trait-badge ${trait.category.toLowerCase()}" 
-                         data-trait-id="${trait.id}"
-                         onclick="highlightAnatomy('${trait.id}')">
-                        ${trait.trait_name}
-                        <div style="font-size: 10px; opacity: 0.9;">${trait.category}</div>
-                    </div>
-                `);
-                container.append(badge);
-            });
-        }
-        
-        // ====== SIMULATION FUNCTIONS ======
-        function simulateTreatment(treatmentType) {
-            // Visualize treatment effect on anatomy
-            if (AvatarState.anatomy.trachea) {
-                // Example: Reduce inflammation (reddening)
-                AvatarState.anatomy.trachea.material.color.setHex(
-                    treatmentType === 'ICS' ? 0x3b82f6 : 0x10b981
-                );
-                
-                // Show effect
-                showNotification(`${treatmentType} simulation activated`, 'success');
-            }
-        }
-        
-        function compareToPopulation() {
-            showNotification('Comparing to population database...', 'info');
-            // In full version: Fetch population data, show percentiles
-        }
-        
-        function predictFlareRisk() {
-            // Simple risk calculation based on trait count
-            const riskLevel = AvatarState.traits.length > 5 ? 'HIGH' : 'MODERATE';
-            showNotification(`Predicted flare risk: ${riskLevel}`, 'warning');
-        }
-        
-        function highlightAnatomy(traitId) {
-            // Highlight relevant anatomy part
-            const trait = AvatarState.traits.find(t => t.id == traitId);
-            if (!trait) return;
-            
-            // Map trait to anatomy (simplified)
-            const anatomyMap = {
-                'inflammatory': AvatarState.anatomy.trachea,
-                'physiological': AvatarState.anatomy.trachea // etc.
-            };
-            
-            const part = anatomyMap[trait.category.toLowerCase()];
-            if (part) {
-                part.material.emissive.setHex(0xffaa00);
-                setTimeout(() => part.material.emissive.setHex(0x000000), 1000);
-            }
-            
-            showNotification(`Highlighting: ${trait.trait_name}`, 'info');
-        }
-        
-        function showNotification(message, type) {
-            // Simple notification
-            const colors = {
-                'success': '#10b981',
-                'info': '#3b82f6', 
-                'warning': '#f59e0b'
-            };
-            
-            const notification = $(`
-                <div style="position: fixed; bottom: 20px; right: 20px; 
-                           background: ${colors[type] || '#475569'}; 
-                           color: white; padding: 12px 20px; 
-                           border-radius: 8px; font-weight: 600;
-                           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-                           z-index: 1000;">
-                    ${message}
-                </div>
-            `);
-            
-            $('body').append(notification);
-            setTimeout(() => notification.remove(), 3000);
-        }
-        
-        // ====== EXPORT FUNCTIONS ======
-        function saveAvatar() {
-            const avatarData = {
-                patient: AvatarState.patient,
-                disease: AvatarState.disease,
-                traits: AvatarState.traits,
-                timestamp: new Date().toISOString(),
-                version: '1.0'
-            };
-            
-            // Save to localStorage or Supabase
-            localStorage.setItem(`avatar_${AvatarState.patient?.id || 'demo'}`, JSON.stringify(avatarData));
-            showNotification('Avatar saved successfully', 'success');
-        }
-        
-        // Expose to window
-        window.simulateTreatment = simulateTreatment;
-        window.compareToPopulation = compareToPopulation;
-        window.predictFlareRisk = predictFlareRisk;
-        window.highlightAnatomy = highlightAnatomy;
-        window.saveAvatar = saveAvatar;
-        
-        console.log('🫁 Airway Avatar System Loaded');
-    </script>
+    });
+    
+    showNotification(`Trait: ${AvatarState.traits.find(t => t.id == traitId)?.trait_name}`, 'info');
+}
+
+function showNotification(message, type) {
+    const colors = {
+        'success': '#10b981',
+        'info': '#3b82f6', 
+        'warning': '#f59e0b',
+        'error': '#ef476f'
+    };
+    
+    const notification = $(`
+        <div style="position: fixed; bottom: 20px; right: 20px; 
+                   background: ${colors[type] || '#475569'}; 
+                   color: white; padding: 12px 20px; 
+                   border-radius: 8px; font-weight: 600;
+                   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                   z-index: 1000;">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 
+                           type === 'error' ? 'fa-exclamation-circle' : 
+                           type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'} 
+               style="margin-right: 8px;"></i>
+            ${message}
+        </div>
+    `);
+    
+    $('body').append(notification);
+    setTimeout(() => notification.remove(), 3000);
+}
+
+// ====== EXPORT FUNCTIONS ======
+function saveAvatar() {
+    const avatarData = {
+        patient: AvatarState.patient,
+        disease: AvatarState.disease,
+        traits: AvatarState.traits,
+        connections: AvatarState.connections,
+        timestamp: new Date().toISOString(),
+        version: '1.0'
+    };
+    
+    localStorage.setItem(`avatar_${AvatarState.patient?.id || 'demo'}`, JSON.stringify(avatarData));
+    showNotification('Avatar configuration saved', 'success');
+}
+
+// Animation update
+function updateAnimation() {
+    if (AvatarState.scene && AvatarState.rotation) {
+        AvatarState.rotation.y += 0.001;
+        AvatarState.scene.rotation.y = AvatarState.rotation.y;
+    }
+    requestAnimationFrame(updateAnimation);
+}
+
+// Start animation loop
+updateAnimation();
+
+// Expose to window
+window.simulateTreatment = simulateTreatment;
+window.compareToPopulation = compareToPopulation;
+window.predictFlareRisk = predictFlareRisk;
+window.highlightTrait = highlightTrait;
+window.saveAvatar = saveAvatar;
+
+console.log('🚀 Airway Avatar System Loaded');
+             </script>
 </body>
 </html>
