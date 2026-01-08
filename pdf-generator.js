@@ -2,7 +2,6 @@
 // Version: 3.0 - Advanced Clinical Report Generation
 // Features: Bilingual Reports, Interactive PDFs, Charts, Executive Summaries
 
-'use strict';
 
 class ClinicalPDFGenerator {
     constructor() {
