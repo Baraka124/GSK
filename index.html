@@ -3977,19 +3977,6 @@ window.applyForceLayout = applyForceLayout;
 window.applyCircleLayout = applyCircleLayout;
 window.launchAvatarForPatient = launchAvatarForPatient;
 
-// Add this function
-function launchAvatarForPatient(patientId) {
-    const patient = AppState.patients.find(p => p.id === patientId);
-    const diseaseId = patient?.disease_id || AppState.currentDisease?.id;
-    
-    if (!diseaseId) {
-        alert('Please select a disease first');
-        return;
-    }
-    
-    window.open(`avatar.html?patient=${patientId}&disease=${diseaseId}`, '_blank');
-}
-        
         function generateComprehensiveReport() {
             if (!AppState.currentDisease) {
                 showToast('Error', 'Please select a disease first', 'error');
