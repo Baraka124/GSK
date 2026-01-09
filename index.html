@@ -3780,7 +3780,28 @@ function setupAllEventListeners() {
             AppState.selectedNode = null;
         }
     });
+    // Add this AFTER other button handlers:
+$('#btnLaunchAvatar').click(function() {
+    if (!AppState.currentPatient) {
+        alert('Please select or create a patient first');
+        return;
+    }
+    if (!AppState.currentDisease) {
+        alert('Please select a disease first');
+        return;
+    }
     
+    // PASS REAL DATA
+    const encodedData = encodeURIComponent(JSON.stringify({
+        patient: AppState.currentPatient,
+        traits: AppState.currentTraits,
+        connections: AppState.currentConnections,
+        disease: AppState.currentDisease,
+        timestamp: new Date().toISOString()
+    }));
+    
+    window.open(`avatar.html?data=${encodedData}`, '_blank');
+});
     // Keyboard shortcuts
     $(document).keydown(function(e) {
         // Ctrl+Z for undo
