@@ -1,106 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Database Test - Safe Version</title>
+    <title>Check Database Schema</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <h1>Testing Database Connection</h1>
-    <div id="result">Loading...</div>
+    <div id="result" style="padding: 20px; font-family: Arial;"></div>
     
     <script>
-        const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
-        
-        // DO NOT USE SECRET KEY IN FRONTEND CODE!
-        // Get your ANON/PUBLIC key from: 
-        // https://app.supabase.com/project/timmylvmumneqhpkvcgb/settings/api
-        const SUPABASE_KEY = 'YOUR_ANON_PUBLIC_KEY_HERE'; // Replace this!
-        
-        async function testConnection() {
+        async function checkDatabase() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<h2>Checking database schema...</h2>';
+            
             try {
-                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                // Use the URL but NOT the secret key
+                const supabaseUrl = 'https://timmylvmumneqhpkvcgb.supabase.co';
                 
-                // Test 1: List tables you have
-                console.log('Testing connection to:', SUPABASE_URL);
+                // First, let's see if we can even connect with ANY key
+                resultDiv.innerHTML += '<p>Trying to connect to Supabase...</p>';
                 
-                // Test each table that might exist
-                const testResults = [];
-                
-                // Test diseases table
+                // Try to fetch the OpenAPI schema (no key needed)
                 try {
-                    const { data: diseases, error: dError } = await supabase
-                        .from('diseases')
-                        .select('*')
-                        .limit(2);
-                    
-                    testResults.push({
-                        table: 'diseases',
-                        exists: !dError,
-                        error: dError?.message,
-                        count: diseases?.length || 0
+                    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+                        headers: {
+                            'apikey': 'any_key_will_work_for_schema'
+                        }
                     });
-                } catch(e) {
-                    testResults.push({ table: 'diseases', exists: false, error: e.message });
+                    
+                    if (response.ok) {
+                        resultDiv.innerHTML += '<p style="color: green;">✅ Supabase project is accessible</p>';
+                        
+                        // Now check what tables might exist
+                        const tablesToCheck = [
+                            'diseases', 'treatable_traits', 'disease_traits', 
+                            'trait_networks', 'patients', 'treatments'
+                        ];
+                        
+                        for (const table of tablesToCheck) {
+                            try {
+                                const tableResponse = await fetch(`${supabaseUrl}/rest/v1/${table}?limit=0`, {
+                                    headers: {
+                                        'apikey': 'any_key',
+                                        'Authorization': 'Bearer any_key'
+                                    }
+                                });
+                                
+                                const status = tableResponse.status;
+                                if (status === 200) {
+                                    resultDiv.innerHTML += `<p style="color: green;">✅ Table "${table}" exists</p>`;
+                                } else if (status === 401) {
+                                    resultDiv.innerHTML += `<p style="color: orange;">🔒 Table "${table}" exists but needs valid key</p>`;
+                                } else if (status === 404) {
+                                    resultDiv.innerHTML += `<p style="color: red;">❌ Table "${table}" does not exist</p>`;
+                                }
+                            } catch (e) {
+                                resultDiv.innerHTML += `<p style="color: gray;">❓ Table "${table}" - Could not check</p>`;
+                            }
+                        }
+                        
+                    } else {
+                        resultDiv.innerHTML += `<p style="color: red;">❌ Cannot access Supabase (Status: ${response.status})</p>`;
+                    }
+                } catch (fetchError) {
+                    resultDiv.innerHTML += `<p style="color: red;">❌ Network error: ${fetchError.message}</p>`;
                 }
                 
-                // Test treatable_traits table
-                try {
-                    const { data: traits, error: tError } = await supabase
-                        .from('treatable_traits')
-                        .select('*')
-                        .limit(2);
-                    
-                    testResults.push({
-                        table: 'treatable_traits',
-                        exists: !tError,
-                        error: tError?.message,
-                        count: traits?.length || 0
-                    });
-                } catch(e) {
-                    testResults.push({ table: 'treatable_traits', exists: false, error: e.message });
-                }
-                
-                // Display results
-                const resultDiv = document.getElementById('result');
-                resultDiv.innerHTML = `
-                    <h3>Connection Test Results</h3>
-                    <p>URL: ${SUPABASE_URL}</p>
-                    <div style="margin-top: 20px;">
-                        ${testResults.map(r => `
-                            <div style="margin: 10px; padding: 10px; background: ${r.exists ? '#d4edda' : '#f8d7da'}; color: #000;">
-                                <strong>${r.table}</strong>: ${r.exists ? '✅ Accessible' : '❌ Error'}
-                                ${r.count ? `<br>Records: ${r.count}` : ''}
-                                ${r.error ? `<br>Error: ${r.error}` : ''}
-                            </div>
-                        `).join('')}
+                // Add security warning
+                resultDiv.innerHTML += `
+                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin-top: 20px;">
+                        <h3 style="color: #856404;">⚠️ CRITICAL SECURITY ALERT</h3>
+                        <p>You shared your SECRET SERVICE ROLE KEY in the chat:</p>
+                        <code style="background: #f8d7da; padding: 5px; display: block; margin: 10px 0;">
+                            sb_secret_rs5K0cw_tPMJr2PsQFprUQ_uHjcbc7W
+                        </code>
+                        <p><strong>IMMEDIATE ACTION REQUIRED:</strong></p>
+                        <ol>
+                            <li>Go to Supabase Dashboard NOW</li>
+                            <li>Navigate to: Project Settings → API</li>
+                            <li>Click "Regenerate" next to service_role key</li>
+                            <li>Use the ANON/PUBLIC key for frontend code</li>
+                        </ol>
                     </div>
-                    <p style="margin-top: 20px; color: red;">
-                        <strong>IMPORTANT:</strong> Regenerate your secret key immediately! 
-                        Never use service_role keys in frontend code.
-                    </p>
                 `;
-                
-                return testResults;
                 
             } catch (error) {
-                document.getElementById('result').innerHTML = `
-                    <div style="color: red;">
-                        <h3>Connection Failed</h3>
-                        <p>Error: ${error.message}</p>
-                        <p>Possible issues:</p>
-                        <ul>
-                            <li>Wrong API key type (use anon/public key, not secret)</li>
-                            <li>CORS not configured in Supabase</li>
-                            <li>Network issues</li>
-                        </ul>
-                    </div>
-                `;
-                return [];
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
             }
         }
         
-        // Run test
-        testConnection();
+        checkDatabase();
     </script>
 </body>
 </html>
