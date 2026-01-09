@@ -1,124 +1,202 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Database Test - Correct Key</title>
+    <title>Airway Digital Twin | Connected</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-</head>
-<body style="padding: 20px; font-family: Arial;">
-    <h1>Testing Database with Correct Key</h1>
-    <div id="result" style="margin-top: 20px;"></div>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     
+    <style>
+        /* Basic styles - you can expand */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial; background: #0f172a; color: white; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Airway Digital Twin</h1>
+        <div id="status">Loading...</div>
+        <div id="data"></div>
+    </div>
+
     <script>
+        // ====== CORRECT CONFIGURATION ======
         const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_';
         
-        async function testConnection() {
-            const resultDiv = document.getElementById('result');
+        // ====== INITIALIZATION ======
+        $(document).ready(async function() {
+            console.log('🚀 Starting Airway Digital Twin...');
             
             try {
-                resultDiv.innerHTML = '<h3>Connecting to database...</h3>';
-                
-                // Initialize Supabase client
+                // 1. Initialize Supabase
                 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                // Test 1: Check if we can connect
-                resultDiv.innerHTML += '<p>Testing connection...</p>';
+                // 2. Test connection
+                $('#status').text('Testing database connection...');
                 
-                const { data: testData, error: testError } = await supabase
-                    .from('diseases')
-                    .select('count')
-                    .limit(1);
-                
-                if (testError) {
-                    resultDiv.innerHTML += `<p style="color: orange;">⚠️ Count query failed: ${testError.message}</p>`;
-                    resultDiv.innerHTML += '<p>Trying simple select instead...</p>';
-                } else {
-                    resultDiv.innerHTML += '<p style="color: green;">✅ Count query successful</p>';
-                }
-                
-                // Test 2: Try to get actual data
-                const { data: diseases, error: diseaseError } = await supabase
+                const { data: diseases, error } = await supabase
                     .from('diseases')
                     .select('*')
                     .limit(5);
                 
-                if (diseaseError) {
-                    resultDiv.innerHTML += `<p style="color: red;">❌ Diseases query failed: ${diseaseError.message}</p>`;
-                } else {
-                    resultDiv.innerHTML += `<p style="color: green;">✅ Diseases table accessible (${diseases.length} records)</p>`;
-                    diseases.forEach(d => {
-                        resultDiv.innerHTML += `<div style="margin-left: 20px;">• ${d.disease_name} (ID: ${d.id})</div>`;
-                    });
-                }
-                
-                // Test 3: Check other tables
-                const tables = ['treatable_traits', 'disease_traits', 'trait_networks'];
-                
-                for (const table of tables) {
-                    try {
-                        const { data, error } = await supabase
-                            .from(table)
-                            .select('*')
-                            .limit(2);
-                        
-                        if (error) {
-                            resultDiv.innerHTML += `<p style="color: orange;">⚠️ Table "${table}": ${error.message}</p>`;
-                        } else {
-                            resultDiv.innerHTML += `<p style="color: green;">✅ Table "${table}" accessible (${data.length} records)</p>`;
-                        }
-                    } catch (e) {
-                        resultDiv.innerHTML += `<p style="color: red;">❌ Table "${table}" error: ${e.message}</p>`;
-                    }
-                }
-                
-                // Test 4: Check RLS (Row Level Security)
-                resultDiv.innerHTML += '<h4>Checking Row Level Security...</h4>';
-                
-                try {
-                    const { data: rlsData, error: rlsError } = await supabase
-                        .from('diseases')
-                        .insert([{ disease_name: 'Test Disease', description: 'Test' }]);
-                    
-                    if (rlsError && rlsError.code === '42501') {
-                        resultDiv.innerHTML += '<p style="color: green;">✅ RLS is enabled (good for security)</p>';
-                    } else if (rlsError) {
-                        resultDiv.innerHTML += `<p style="color: orange;">⚠️ Insert failed: ${rlsError.message}</p>`;
+                if (error) {
+                    if (error.code === '42501' || error.message.includes('policy')) {
+                        $('#status').html(`
+                            <div style="color: orange;">
+                                <h3>RLS Policy Error</h3>
+                                <p>You need to add RLS policies to allow public read access.</p>
+                                <p>Run this SQL in Supabase SQL Editor:</p>
+                                <pre style="background: #1e293b; padding: 10px; overflow: auto;">
+-- Allow public read access
+CREATE POLICY "Allow public read access" ON diseases
+  FOR SELECT USING (true);
+                                </pre>
+                            </div>
+                        `);
                     } else {
-                        resultDiv.innerHTML += '<p style="color: red;">⚠️ RLS might not be enabled</p>';
+                        $('#status').html(`<div style="color: red;">Database error: ${error.message}</div>`);
                     }
-                } catch (e) {
-                    resultDiv.innerHTML += `<p style="color: gray;">❓ Could not test RLS: ${e.message}</p>`;
+                    return;
                 }
                 
-                resultDiv.innerHTML += '<h3 style="color: green;">✅ Database connection successful!</h3>';
+                // 3. Success - show data
+                $('#status').html('<div style="color: green;">✅ Database connected successfully!</div>');
+                $('#data').html(`
+                    <h3>Available Diseases (${diseases.length})</h3>
+                    <ul>
+                        ${diseases.map(d => `<li>${d.disease_name} (ID: ${d.id})</li>`).join('')}
+                    </ul>
+                `);
+                
+                // 4. Now load traits and build the digital twin
+                await loadDigitalTwinData(supabase);
                 
             } catch (error) {
-                resultDiv.innerHTML = `
-                    <div style="color: red;">
-                        <h3>❌ Connection Failed</h3>
-                        <p>Error: ${error.message}</p>
-                        <p>Possible issues:</p>
-                        <ul>
-                            <li>CORS not configured</li>
-                            <li>RLS blocking access</li>
-                            <li>Network issues</li>
-                        </ul>
-                        <p>Check Supabase Dashboard → Settings → API → CORS Origins</p>
-                    </div>
-                `;
+                $('#status').html(`<div style="color: red;">Initialization failed: ${error.message}</div>`);
+            }
+        });
+        
+        // ====== LOAD DIGITAL TWIN DATA ======
+        async function loadDigitalTwinData(supabase) {
+            try {
+                // Get disease ID from URL or use first disease
+                const urlParams = new URLSearchParams(window.location.search);
+                const diseaseId = urlParams.get('disease_id') || 1;
+                
+                // Load disease traits
+                const { data: diseaseTraits, error: traitsError } = await supabase
+                    .from('disease_traits')
+                    .select(`
+                        id,
+                        prevalence_in_disease,
+                        clinical_importance,
+                        treatable_traits(*)
+                    `)
+                    .eq('disease_id', diseaseId);
+                
+                if (traitsError) throw traitsError;
+                
+                console.log('Loaded traits:', diseaseTraits);
+                
+                // Load trait connections
+                const traitIds = diseaseTraits.map(dt => dt.treatable_traits.id);
+                const { data: connections } = await supabase
+                    .from('trait_networks')
+                    .select('*')
+                    .in('source_trait_id', traitIds)
+                    .in('target_trait_id', traitIds);
+                
+                // Build the digital twin
+                buildDigitalTwin(diseaseTraits, connections || []);
+                
+            } catch (error) {
+                console.error('Error loading digital twin data:', error);
+                $('#data').append(`<div style="color: orange;">⚠️ Could not load complete data: ${error.message}</div>`);
             }
         }
         
-        // Add security warning
-        document.getElementById('result').innerHTML = `
-            <div style="background: #fff3cd; padding: 15px; margin-bottom: 20px;">
-                <strong>⚠️ SECURITY ALERT:</strong> You still need to regenerate your secret key!
-                The secret key <code>sb_secret_rs5K0cw_tPMJr2PsQFprUQ_uHjcbc7W</code> is exposed.
-            </div>
-        `;
+        // ====== BUILD DIGITAL TWIN VISUALIZATION ======
+        function buildDigitalTwin(traits, connections) {
+            $('#data').append(`
+                <div style="margin-top: 20px;">
+                    <h3>Digital Twin Ready</h3>
+                    <p>Loaded ${traits.length} traits with ${connections.length} connections</p>
+                    <div id="twinVisualization" style="width: 100%; height: 400px; background: #1e293b; margin-top: 10px;">
+                        <!-- 3D visualization will go here -->
+                        <p style="text-align: center; padding-top: 180px;">3D Visualization Loading...</p>
+                    </div>
+                </div>
+            `);
+            
+            // Initialize Three.js visualization
+            init3DVisualization(traits, connections);
+        }
         
-        // Run test
-        testConnection();
+        // ====== 3D VISUALIZATION ======
+        function init3DVisualization(traits, connections) {
+            const container = document.getElementById('twinVisualization');
+            
+            // Scene setup
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.innerHTML = '';
+            container.appendChild(renderer.domElement);
+            
+            // Add trait nodes
+            traits.forEach((trait, index) => {
+                const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: getTraitColor(trait.treatable_traits.category),
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const sphere = new THREE.Mesh(geometry, material);
+                
+                // Position in a circle
+                const angle = (index / traits.length) * Math.PI * 2;
+                const radius = 3;
+                sphere.position.x = Math.cos(angle) * radius;
+                sphere.position.y = Math.sin(angle) * radius;
+                
+                scene.add(sphere);
+            });
+            
+            // Camera position
+            camera.position.z = 5;
+            
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                scene.rotation.y += 0.005;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+        
+        function getTraitColor(category) {
+            const colors = {
+                'Inflammatory': 0xff6b6b,
+                'Physiological': 0x4ecdc4,
+                'Behavioral': 0xffd166,
+                'Comorbid': 0x118ab2,
+                'Environmental': 0x9d4edd
+            };
+            return colors[category] || 0x888888;
+        }
+        
+        // ====== UTILITY FUNCTIONS ======
+        function showError(message) {
+            $('#status').html(`<div style="color: red;">❌ ${message}</div>`);
+        }
+        
+        function showSuccess(message) {
+            $('#status').html(`<div style="color: green;">✅ ${message}</div>`);
+        }
     </script>
 </body>
 </html>
