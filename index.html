@@ -1,202 +1,558 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Airway Digital Twin | Connected</title>
+    <title>Airway Digital Twin | Complete System</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     
     <style>
-        /* Basic styles - you can expand */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial; background: #0f172a; color: white; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0e17;
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        /* Left Panel - Visualization */
+        .viz-panel {
+            flex: 3;
+            position: relative;
+            background: #000;
+        }
+        
+        #vizCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .viz-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(10, 14, 23, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Right Panel - Controls */
+        .control-panel {
+            flex: 1;
+            min-width: 400px;
+            background: rgba(10, 14, 23, 0.95);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            background: rgba(30, 41, 59, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #60a5fa;
+        }
+        
+        .trait-card {
+            background: rgba(96, 165, 250, 0.1);
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            border-left: 3px solid #60a5fa;
+        }
+        
+        .trait-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .trait-category {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 5px 0;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+        }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .metric-value {
+            color: #60a5fa;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
-    <div id="app">
-        <h1>Airway Digital Twin</h1>
-        <div id="status">Loading...</div>
-        <div id="data"></div>
+    <div class="app-container">
+        <!-- Visualization Panel -->
+        <div class="viz-panel">
+            <canvas id="vizCanvas"></canvas>
+            <div class="viz-overlay">
+                <div style="font-size: 18px; font-weight: 600;" id="vizTitle">Airway Digital Twin</div>
+                <div style="font-size: 12px; color: #94a3b8;" id="vizSubtitle">Loading...</div>
+                <div class="metric" style="margin-top: 10px;">
+                    <span>Traits Loaded:</span>
+                    <span class="metric-value" id="traitCount">0</span>
+                </div>
+                <div class="metric">
+                    <span>Connections:</span>
+                    <span class="metric-value" id="connectionCount">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="section">
+                <div class="section-title">Patient Profile</div>
+                <div id="patientInfo">Loading patient data...</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Disease Selection</div>
+                <select id="diseaseSelect" class="btn" style="background: #1e293b; margin-bottom: 10px;">
+                    <option value="">Loading diseases...</option>
+                </select>
+                <button class="btn" onclick="loadDiseaseData()">Load Disease Network</button>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Active Traits</div>
+                <div id="traitsList">
+                    Loading traits...
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Simulation Controls</div>
+                <button class="btn" onclick="simulateExacerbation()">Simulate Exacerbation</button>
+                <button class="btn" onclick="simulateTreatment()">Simulate Treatment</button>
+                <button class="btn" onclick="resetSimulation()">Reset</button>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Database Status</div>
+                <div class="metric">
+                    <span>Connection:</span>
+                    <span class="metric-value" style="color: #10b981;">Connected</span>
+                </div>
+                <div class="metric">
+                    <span>Diseases:</span>
+                    <span class="metric-value" id="dbDiseaseCount">5</span>
+                </div>
+                <div class="metric">
+                    <span>Total Traits:</span>
+                    <span class="metric-value" id="dbTraitCount">0</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // ====== CORRECT CONFIGURATION ======
+        // ====== CONFIGURATION ======
         const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_';
         
+        // ====== GLOBAL STATE ======
+        const STATE = {
+            supabase: null,
+            currentDisease: null,
+            traits: [],
+            connections: [],
+            scene: null,
+            camera: null,
+            renderer: null,
+            traitNodes: []
+        };
+        
         // ====== INITIALIZATION ======
         $(document).ready(async function() {
-            console.log('🚀 Starting Airway Digital Twin...');
+            console.log('🚀 Initializing Airway Digital Twin...');
             
             try {
                 // 1. Initialize Supabase
-                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                STATE.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log('✅ Supabase client initialized');
                 
-                // 2. Test connection
-                $('#status').text('Testing database connection...');
+                // 2. Load diseases for dropdown
+                await loadDiseases();
                 
-                const { data: diseases, error } = await supabase
-                    .from('diseases')
-                    .select('*')
-                    .limit(5);
+                // 3. Initialize 3D visualization
+                init3DVisualization();
                 
-                if (error) {
-                    if (error.code === '42501' || error.message.includes('policy')) {
-                        $('#status').html(`
-                            <div style="color: orange;">
-                                <h3>RLS Policy Error</h3>
-                                <p>You need to add RLS policies to allow public read access.</p>
-                                <p>Run this SQL in Supabase SQL Editor:</p>
-                                <pre style="background: #1e293b; padding: 10px; overflow: auto;">
--- Allow public read access
-CREATE POLICY "Allow public read access" ON diseases
-  FOR SELECT USING (true);
-                                </pre>
-                            </div>
-                        `);
-                    } else {
-                        $('#status').html(`<div style="color: red;">Database error: ${error.message}</div>`);
-                    }
-                    return;
-                }
+                // 4. Load default disease (Asthma - ID 1)
+                await loadDiseaseData(1);
                 
-                // 3. Success - show data
-                $('#status').html('<div style="color: green;">✅ Database connected successfully!</div>');
-                $('#data').html(`
-                    <h3>Available Diseases (${diseases.length})</h3>
-                    <ul>
-                        ${diseases.map(d => `<li>${d.disease_name} (ID: ${d.id})</li>`).join('')}
-                    </ul>
-                `);
-                
-                // 4. Now load traits and build the digital twin
-                await loadDigitalTwinData(supabase);
+                console.log('🎉 Digital Twin ready!');
                 
             } catch (error) {
-                $('#status').html(`<div style="color: red;">Initialization failed: ${error.message}</div>`);
+                console.error('❌ Initialization error:', error);
+                alert(`Startup error: ${error.message}`);
             }
         });
         
-        // ====== LOAD DIGITAL TWIN DATA ======
-        async function loadDigitalTwinData(supabase) {
+        // ====== DATABASE FUNCTIONS ======
+        async function loadDiseases() {
             try {
-                // Get disease ID from URL or use first disease
-                const urlParams = new URLSearchParams(window.location.search);
-                const diseaseId = urlParams.get('disease_id') || 1;
+                const { data: diseases, error } = await STATE.supabase
+                    .from('diseases')
+                    .select('*')
+                    .order('disease_name');
                 
-                // Load disease traits
-                const { data: diseaseTraits, error: traitsError } = await supabase
-                    .from('disease_traits')
-                    .select(`
-                        id,
-                        prevalence_in_disease,
-                        clinical_importance,
-                        treatable_traits(*)
-                    `)
-                    .eq('disease_id', diseaseId);
+                if (error) throw error;
+                
+                // Update dropdown
+                const select = $('#diseaseSelect');
+                select.empty();
+                
+                diseases.forEach(disease => {
+                    select.append(`<option value="${disease.id}">${disease.disease_name}</option>`);
+                });
+                
+                // Update database stats
+                $('#dbDiseaseCount').text(diseases.length);
+                
+            } catch (error) {
+                console.error('Error loading diseases:', error);
+            }
+        }
+        
+        async function loadDiseaseData(diseaseId = null) {
+            try {
+                // Get disease ID from dropdown or parameter
+                if (!diseaseId) {
+                    diseaseId = $('#diseaseSelect').val();
+                    if (!diseaseId) return;
+                }
+                
+                console.log(`📥 Loading disease ID: ${diseaseId}`);
+                
+                // Update UI
+                $('#vizSubtitle').text('Loading disease data...');
+                
+                // 1. Get the disease details
+                const { data: disease, error: diseaseError } = await STATE.supabase
+                    .from('diseases')
+                    .select('*')
+                    .eq('id', diseaseId)
+                    .single();
+                
+                if (diseaseError) throw diseaseError;
+                
+                STATE.currentDisease = disease;
+                
+                // 2. Get ALL treatable traits (not just disease-specific)
+                const { data: allTraits, error: traitsError } = await STATE.supabase
+                    .from('treatable_traits')
+                    .select('*')
+                    .order('trait_name');
                 
                 if (traitsError) throw traitsError;
                 
-                console.log('Loaded traits:', diseaseTraits);
+                STATE.traits = allTraits;
                 
-                // Load trait connections
-                const traitIds = diseaseTraits.map(dt => dt.treatable_traits.id);
-                const { data: connections } = await supabase
+                // 3. Get trait connections
+                const traitIds = allTraits.map(t => t.id);
+                const { data: connections, error: connError } = await STATE.supabase
                     .from('trait_networks')
                     .select('*')
                     .in('source_trait_id', traitIds)
                     .in('target_trait_id', traitIds);
                 
-                // Build the digital twin
-                buildDigitalTwin(diseaseTraits, connections || []);
+                STATE.connections = connections || [];
+                
+                // 4. Get disease-specific traits (if they exist)
+                const { data: diseaseTraits } = await STATE.supabase
+                    .from('disease_traits')
+                    .select('trait_id')
+                    .eq('disease_id', diseaseId);
+                
+                // Update UI
+                updateUI();
+                
+                // Update visualization
+                updateVisualization();
+                
+                console.log(`✅ Loaded ${allTraits.length} traits, ${connections?.length || 0} connections`);
                 
             } catch (error) {
-                console.error('Error loading digital twin data:', error);
-                $('#data').append(`<div style="color: orange;">⚠️ Could not load complete data: ${error.message}</div>`);
+                console.error('Error loading disease data:', error);
+                $('#vizSubtitle').text(`Error: ${error.message}`);
             }
         }
         
-        // ====== BUILD DIGITAL TWIN VISUALIZATION ======
-        function buildDigitalTwin(traits, connections) {
-            $('#data').append(`
-                <div style="margin-top: 20px;">
-                    <h3>Digital Twin Ready</h3>
-                    <p>Loaded ${traits.length} traits with ${connections.length} connections</p>
-                    <div id="twinVisualization" style="width: 100%; height: 400px; background: #1e293b; margin-top: 10px;">
-                        <!-- 3D visualization will go here -->
-                        <p style="text-align: center; padding-top: 180px;">3D Visualization Loading...</p>
+        // ====== UI UPDATES ======
+        function updateUI() {
+            // Update counts
+            $('#traitCount').text(STATE.traits.length);
+            $('#connectionCount').text(STATE.connections.length);
+            $('#dbTraitCount').text(STATE.traits.length);
+            
+            // Update title
+            $('#vizTitle').text(STATE.currentDisease?.disease_name || 'Airway Digital Twin');
+            $('#vizSubtitle').text(`${STATE.traits.length} traits, ${STATE.connections.length} connections`);
+            
+            // Update patient info
+            $('#patientInfo').html(`
+                <div style="font-size: 14px;">
+                    <div style="font-weight: 600;">${STATE.currentDisease?.disease_name || 'No disease selected'}</div>
+                    <div style="font-size: 12px; color: #94a3b8;">
+                        ${STATE.currentDisease?.description || ''}
                     </div>
                 </div>
             `);
             
-            // Initialize Three.js visualization
-            init3DVisualization(traits, connections);
+            // Update traits list
+            const traitsHtml = STATE.traits.slice(0, 10).map(trait => `
+                <div class="trait-card">
+                    <div class="trait-name">${trait.trait_name}</div>
+                    <div class="trait-category">${trait.category}</div>
+                </div>
+            `).join('');
+            
+            $('#traitsList').html(traitsHtml);
+            
+            if (STATE.traits.length > 10) {
+                $('#traitsList').append(`<div style="text-align: center; color: #94a3b8; margin-top: 10px;">+${STATE.traits.length - 10} more traits</div>`);
+            }
         }
         
         // ====== 3D VISUALIZATION ======
-        function init3DVisualization(traits, connections) {
-            const container = document.getElementById('twinVisualization');
+        function init3DVisualization() {
+            const canvas = document.getElementById('vizCanvas');
+            const container = canvas.parentElement;
             
-            // Scene setup
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            // Scene
+            STATE.scene = new THREE.Scene();
+            STATE.scene.background = new THREE.Color(0x000000);
             
-            renderer.setSize(container.clientWidth, container.clientHeight);
-            container.innerHTML = '';
-            container.appendChild(renderer.domElement);
+            // Camera
+            STATE.camera = new THREE.PerspectiveCamera(
+                75,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            STATE.camera.position.z = 8;
+            STATE.camera.position.y = 3;
             
-            // Add trait nodes
-            traits.forEach((trait, index) => {
-                const geometry = new THREE.SphereGeometry(0.3, 16, 16);
-                const material = new THREE.MeshBasicMaterial({ 
-                    color: getTraitColor(trait.treatable_traits.category),
+            // Renderer
+            STATE.renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas,
+                antialias: true,
+                alpha: true
+            });
+            STATE.renderer.setSize(container.clientWidth, container.clientHeight);
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            STATE.scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            STATE.scene.add(directionalLight);
+            
+            // Start animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Rotate scene slowly
+                if (STATE.scene) {
+                    STATE.scene.rotation.y += 0.002;
+                }
+                
+                STATE.renderer.render(STATE.scene, STATE.camera);
+            }
+            animate();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                STATE.renderer.setSize(container.clientWidth, container.clientHeight);
+                STATE.camera.aspect = container.clientWidth / container.clientHeight;
+                STATE.camera.updateProjectionMatrix();
+            });
+        }
+        
+        function updateVisualization() {
+            // Clear previous visualization
+            while(STATE.scene.children.length > 0) { 
+                STATE.scene.remove(STATE.scene.children[0]); 
+            }
+            
+            // Add lighting back
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            STATE.scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            STATE.scene.add(directionalLight);
+            
+            // Create trait nodes
+            STATE.traitNodes = [];
+            
+            STATE.traits.forEach((trait, index) => {
+                // Node color based on category
+                const color = getTraitColor(trait.category);
+                
+                // Node size based on importance (or random for demo)
+                const size = 0.2 + (Math.random() * 0.2);
+                
+                const geometry = new THREE.SphereGeometry(size, 16, 16);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: color,
+                    emissive: color,
+                    emissiveIntensity: 0.2,
                     transparent: true,
                     opacity: 0.8
                 });
                 
-                const sphere = new THREE.Mesh(geometry, material);
+                const node = new THREE.Mesh(geometry, material);
                 
-                // Position in a circle
-                const angle = (index / traits.length) * Math.PI * 2;
-                const radius = 3;
-                sphere.position.x = Math.cos(angle) * radius;
-                sphere.position.y = Math.sin(angle) * radius;
+                // Position in 3D space
+                const angle = (index / STATE.traits.length) * Math.PI * 2;
+                const radius = 3 + (STATE.traits.length * 0.1);
+                const height = (Math.random() - 0.5) * 2;
                 
-                scene.add(sphere);
+                node.position.x = Math.cos(angle) * radius;
+                node.position.y = height;
+                node.position.z = Math.sin(angle) * radius;
+                
+                STATE.scene.add(node);
+                STATE.traitNodes.push({ node, trait });
             });
             
-            // Camera position
-            camera.position.z = 5;
+            // Create connections
+            STATE.connections.forEach(connection => {
+                const sourceNode = STATE.traitNodes.find(n => n.trait.id === connection.source_trait_id);
+                const targetNode = STATE.traitNodes.find(n => n.trait.id === connection.target_trait_id);
+                
+                if (sourceNode && targetNode) {
+                    const color = getConnectionColor(connection.relationship_type);
+                    
+                    const material = new THREE.LineBasicMaterial({ 
+                        color: color,
+                        opacity: 0.6,
+                        transparent: true,
+                        linewidth: 1
+                    });
+                    
+                    const points = [
+                        new THREE.Vector3(
+                            sourceNode.node.position.x,
+                            sourceNode.node.position.y,
+                            sourceNode.node.position.z
+                        ),
+                        new THREE.Vector3(
+                            targetNode.node.position.x,
+                            targetNode.node.position.y,
+                            targetNode.node.position.z
+                        )
+                    ];
+                    
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, material);
+                    STATE.scene.add(line);
+                }
+            });
             
-            // Animation loop
-            function animate() {
-                requestAnimationFrame(animate);
-                scene.rotation.y += 0.005;
-                renderer.render(scene, camera);
-            }
-            animate();
+            console.log(`🎨 Visualization updated: ${STATE.traits.length} nodes, ${STATE.connections.length} connections`);
         }
         
         function getTraitColor(category) {
             const colors = {
-                'Inflammatory': 0xff6b6b,
-                'Physiological': 0x4ecdc4,
-                'Behavioral': 0xffd166,
-                'Comorbid': 0x118ab2,
-                'Environmental': 0x9d4edd
+                'Inflammatory': 0xff6b6b,      // Red
+                'Physiological': 0x4ecdc4,     // Teal
+                'Behavioral': 0xffd166,        // Yellow
+                'Comorbid': 0x118ab2,          // Blue
+                'Environmental': 0x9d4edd,     // Purple
+                'Treatment': 0x06d6a0          // Green
             };
             return colors[category] || 0x888888;
         }
         
-        // ====== UTILITY FUNCTIONS ======
-        function showError(message) {
-            $('#status').html(`<div style="color: red;">❌ ${message}</div>`);
+        function getConnectionColor(relationship) {
+            const colors = {
+                'causes': 0xff6b6b,        // Red
+                'exacerbates': 0xff9e00,   // Orange
+                'mitigates': 0x06d6a0,     // Green
+                'treats': 0x4ecdc4,        // Teal
+                'correlates_with': 0x118ab2, // Blue
+                'triggers': 0x9d4edd       // Purple
+            };
+            return colors[relationship] || 0x888888;
         }
         
-        function showSuccess(message) {
-            $('#status').html(`<div style="color: green;">✅ ${message}</div>`);
+        // ====== SIMULATION FUNCTIONS ======
+        function simulateExacerbation() {
+            console.log('⚠️ Simulating exacerbation...');
+            
+            // In a real implementation, this would:
+            // 1. Increase inflammation parameters
+            // 2. Update trait values
+            // 3. Trigger visualization changes
+            
+            alert('Exacerbation simulation would update trait values and show inflammatory changes');
         }
+        
+        function simulateTreatment() {
+            console.log('💊 Simulating treatment...');
+            
+            // In a real implementation, this would:
+            // 1. Apply treatment effects
+            // 2. Reduce inflammation
+            // 3. Update visualization
+            
+            alert('Treatment simulation would reduce inflammation and improve airflow');
+        }
+        
+        function resetSimulation() {
+            console.log('🔄 Resetting simulation...');
+            updateVisualization();
+        }
+        
+        // ====== EXPORT FUNCTIONS ======
+        window.loadDiseaseData = loadDiseaseData;
+        window.simulateExacerbation = simulateExacerbation;
+        window.simulateTreatment = simulateTreatment;
+        window.resetSimulation = resetSimulation;
+        
+        console.log('🚀 Airway Digital Twin System Loaded');
     </script>
 </body>
 </html>
