@@ -9,8 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-2.20.0.min.js"></script>
-    <!-- Physics Engine -->
-        <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.browser.min.js"></script>
+    <!-- Physics Engine - Loaded at the end if needed -->
+    <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.browser.min.js"></script>
 
     <!-- Medical Imaging -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
@@ -613,23 +613,23 @@
             
             <div class="loading-steps">
                 <div class="loading-step" id="step1">
-                    <span>Connecting to database...</span>
+                    <span>Loading core systems...</span>
                     <span class="step-status">⏳</span>
                 </div>
                 <div class="loading-step" id="step2">
-                    <span>Loading patient data...</span>
+                    <span>Connecting to database...</span>
                     <span class="step-status">⏳</span>
                 </div>
                 <div class="loading-step" id="step3">
-                    <span>Initializing physics engine...</span>
+                    <span>Loading patient data...</span>
                     <span class="step-status">⏳</span>
                 </div>
                 <div class="loading-step" id="step4">
-                    <span>Loading AI models...</span>
+                    <span>Initializing physics engine...</span>
                     <span class="step-status">⏳</span>
                 </div>
                 <div class="loading-step" id="step5">
-                    <span>Starting simulations...</span>
+                    <span>Loading AI models...</span>
                     <span class="step-status">⏳</span>
                 </div>
             </div>
@@ -1087,54 +1087,29 @@
         // ============================================================================
         // AIRWAY DIGITAL TWIN v2.0 - Predictive Physiology Engine
         // ============================================================================
-        // ====== LIBRARY CHECK ======
-console.log('Checking libraries...');
-console.log('CANNON loaded:', typeof CANNON !== 'undefined');
-console.log('THREE loaded:', typeof THREE !== 'undefined');
-console.log('supabase loaded:', typeof supabase !== 'undefined');
 
-// If CANNON isn't loaded, try to load it dynamically
-if (typeof CANNON === 'undefined') {
-    console.error('CANNON physics engine not loaded. Loading dynamically...');
-    loadPhysicsEngine();
-}
+        // ====== CONFIGURATION ======
+        const CONFIG = {
+            SUPABASE_URL: 'https://timmylvmumneqhpkvcgb.supabase.co',
+            SUPABASE_KEY: 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_',
+                    
+            // Physics parameters
+            PHYSICS: {
+                TIME_STEP: 1/60,
+                GRAVITY: -9.81,
+                AIR_DENSITY: 1.225,
+                VISCOSITY: 1.81e-5
+            },
+                    
+            // Physiology constants
+            PHYSIOLOGY: {
+                NORMAL_RESISTANCE: 2.0,  // cmH₂O/L/s
+                NORMAL_COMPLIANCE: 0.15, // L/cmH₂O
+                NORMAL_FEV1: 85,         // % predicted
+                NORMAL_RATE: 15          // breaths/min
+            }
+        };
 
-function loadPhysicsEngine() {
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.browser.min.js';
-    script.onload = () => {
-        console.log('CANNON loaded dynamically');
-        // You might want to re-initialize your app here
-    };
-    script.onerror = () => {
-        console.error('Failed to load physics engine');
-        showNotification('Physics engine failed to load. Some features may be unavailable.', 'error');
-    };
-    document.head.appendChild(script);
-}
-        
-       // ====== CONFIGURATION ======
-const CONFIG = {
-    SUPABASE_URL: 'https://timmylvmumneqhpkvcgb.supabase.co',
-    SUPABASE_KEY: 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_',
-            
-    // Physics parameters
-    PHYSICS: {
-        TIME_STEP: 1/60,
-        GRAVITY: -9.81,
-        AIR_DENSITY: 1.225,
-        VISCOSITY: 1.81e-5
-    },
-            
-    // Physiology constants
-    PHYSIOLOGY: {
-        NORMAL_RESISTANCE: 2.0,  // cmH₂O/L/s
-        NORMAL_COMPLIANCE: 0.15, // L/cmH₂O
-        NORMAL_FEV1: 85,         // % predicted
-        NORMAL_RATE: 15          // breaths/min
-    }
-};
-        
         // ====== GLOBAL STATE ======
         const STATE = {
             // Core
@@ -1180,7 +1155,8 @@ const CONFIG = {
                 world: null,
                 bronchialTree: [],
                 airflow: null,
-                time: 0
+                time: 0,
+                isReady: typeof CANNON !== 'undefined'
             },
             
             // Predictions
@@ -1201,23 +1177,31 @@ const CONFIG = {
                 lastUpdated: null
             }
         };
-        
+
         // ====== INITIALIZATION ======
         $(document).ready(async function() {
             console.log('🚀 Initializing Airway Digital Twin v2.0...');
             
             try {
+                // Check if physics engine is loaded
+                if (!STATE.physics.isReady) {
+                    console.warn('Physics engine not loaded, using simplified simulation');
+                    showNotification('Physics engine not available. Using simplified simulation.', 'warning');
+                } else {
+                    console.log('✓ Physics engine ready');
+                }
+                
                 // Step 1: Initialize Database
                 await initializeDatabase();
-                updateLoading('step1', '✅', 'Database connected');
+                updateLoading('step1', '✅', 'Core systems loaded');
                 
                 // Step 2: Load Patient Data
                 await loadPatientData();
-                updateLoading('step2', '✅', 'Patient data loaded');
+                updateLoading('step2', '✅', 'Database connected');
                 
                 // Step 3: Initialize Physics Engine
                 initializePhysics();
-                updateLoading('step3', '✅', 'Physics engine ready');
+                updateLoading('step3', '✅', 'Patient data loaded');
                 
                 // Step 4: Initialize 3D Visualization
                 initializeVisualization();
@@ -1248,7 +1232,7 @@ const CONFIG = {
                 showNotification(`Initialization failed: ${error.message}`, 'error');
             }
         });
-        
+
         // ====== DATABASE INTEGRATION ======
         async function initializeDatabase() {
             try {
@@ -1271,10 +1255,12 @@ const CONFIG = {
             } catch (error) {
                 console.error('Database connection failed:', error);
                 updateConnectionStatus(false);
-                throw new Error(`Database: ${error.message}`);
+                // Continue with demo data even if database fails
+                console.log('Continuing with demo data...');
+                return true;
             }
         }
-        
+
         async function loadPatientData() {
             // Get patient ID from URL or use demo
             const urlParams = new URLSearchParams(window.location.search);
@@ -1317,7 +1303,7 @@ const CONFIG = {
                 loadDemoPatient();
             }
         }
-        
+
         function loadDemoPatient() {
             STATE.patient = {
                 id: 'demo',
@@ -1330,7 +1316,7 @@ const CONFIG = {
             
             updatePatientUI();
         }
-        
+
         function setupRealtimeSubscriptions() {
             if (!STATE.patient || STATE.patient.id === 'demo') return;
             
@@ -1352,37 +1338,47 @@ const CONFIG = {
                 )
                 .subscribe();
         }
-        
+
         // ====== PHYSICS ENGINE ======
         function initializePhysics() {
-    // Check if CANNON is loaded
-    if (typeof CANNON === 'undefined') {
-        throw new Error('CANNON physics engine not loaded. Please refresh the page.');
-    }
-    
-    console.log('CANNON version:', CANNON.version);
-    
-    try {
-        // Create physics world
-        STATE.physics.world = new CANNON.World();
-        STATE.physics.world.gravity.set(0, CONFIG.PHYSICS.GRAVITY, 0);
-        STATE.physics.world.broadphase = new CANNON.NaiveBroadphase();
-        STATE.physics.world.solver.iterations = 10;
-        
-        console.log('Physics world created successfully');
-        
-        // Create bronchial tree geometry
-        createBronchialTree();
-        
-        // Initialize airflow simulation
-        initializeAirflow();
-        
-    } catch (error) {
-        console.error('Failed to initialize physics:', error);
-        throw new Error(`Physics initialization failed: ${error.message}`);
-    }
-}
-        
+            console.log('Initializing physics engine...');
+            
+            // Check if CANNON is available
+            if (typeof CANNON !== 'undefined') {
+                try {
+                    // Create physics world
+                    STATE.physics.world = new CANNON.World();
+                    STATE.physics.world.gravity.set(0, CONFIG.PHYSICS.GRAVITY, 0);
+                    STATE.physics.world.broadphase = new CANNON.NaiveBroadphase();
+                    STATE.physics.world.solver.iterations = 10;
+                    
+                    console.log('✓ Physics world created successfully');
+                    
+                } catch (error) {
+                    console.error('Failed to initialize CANNON:', error);
+                    createSimplifiedPhysics();
+                }
+            } else {
+                console.log('Using simplified physics simulation');
+                createSimplifiedPhysics();
+            }
+            
+            // Create bronchial tree geometry
+            createBronchialTree();
+            
+            // Initialize airflow simulation
+            initializeAirflow();
+        }
+
+        function createSimplifiedPhysics() {
+            // Create a simplified physics simulation without CANNON
+            console.log('Creating simplified physics simulation');
+            STATE.physics.world = {
+                step: function() {},
+                gravity: { set: function() {} }
+            };
+        }
+
         function createBronchialTree() {
             // Simplified bronchial tree model
             const levels = 6;
@@ -1406,7 +1402,7 @@ const CONFIG = {
                 }
             }
         }
-        
+
         function initializeAirflow() {
             STATE.physics.airflow = {
                 volume: 0,
@@ -1417,13 +1413,13 @@ const CONFIG = {
                 cycleTime: 0
             };
         }
-        
+
         function calculateResistance(radius, length) {
             // Poiseuille's Law: R = 8ηL/πr⁴
             const viscosity = CONFIG.PHYSICS.VISCOSITY;
             return (8 * viscosity * length) / (Math.PI * Math.pow(radius, 4));
         }
-        
+
         function calculatePosition(level, branch) {
             const angle = (branch / Math.pow(2, level)) * Math.PI * 2;
             const distance = 0.5 * level;
@@ -1433,9 +1429,9 @@ const CONFIG = {
                 z: Math.sin(angle) * distance
             };
         }
-        
+
         function updatePhysics(deltaTime) {
-            if (!STATE.physics.world || !STATE.threejs.isAnimating) return;
+            if (!STATE.threejs.isAnimating) return;
             
             STATE.physics.time += deltaTime;
             
@@ -1448,10 +1444,12 @@ const CONFIG = {
             // Update particle positions
             updateParticles(deltaTime);
             
-            // Step physics world
-            STATE.physics.world.step(CONFIG.PHYSICS.TIME_STEP);
+            // Step physics world if it exists
+            if (STATE.physics.world && STATE.physics.world.step) {
+                STATE.physics.world.step(CONFIG.PHYSICS.TIME_STEP);
+            }
         }
-        
+
         function updateRespiratoryCycle(deltaTime) {
             const cycleDuration = 60 / STATE.physiology.respiratoryRate;
             STATE.physics.airflow.cycleTime += deltaTime;
@@ -1475,7 +1473,7 @@ const CONFIG = {
             $('#metricFlow').text(STATE.physics.airflow.flowRate.toFixed(2));
             $('#metricPressure').text(STATE.physics.airflow.pressure.toFixed(1));
         }
-        
+
         function updateAirflow(deltaTime) {
             // Simulate airflow through bronchial tree
             let totalResistance = 0;
@@ -1498,7 +1496,7 @@ const CONFIG = {
             // Update global resistance
             STATE.physiology.resistance = totalResistance / STATE.physics.bronchialTree.length;
         }
-        
+
         function updateBronchusParticles(bronchus, flow, deltaTime) {
             // Add new particles
             if (Math.random() < 0.1 * Math.abs(flow)) {
@@ -1521,7 +1519,7 @@ const CONFIG = {
                 }
             }
         }
-        
+
         function updateParticles(deltaTime) {
             if (!STATE.threejs.particles) return;
             
@@ -1548,7 +1546,7 @@ const CONFIG = {
             
             STATE.threejs.particles.geometry.attributes.position.needsUpdate = true;
         }
-        
+
         // ====== 3D VISUALIZATION ======
         function initializeVisualization() {
             const canvas = document.getElementById('visualization-canvas');
@@ -1613,7 +1611,7 @@ const CONFIG = {
             // Handle window resize
             window.addEventListener('resize', onWindowResize);
         }
-        
+
         function createBronchialVisualization() {
             const bronchialGroup = new THREE.Group();
             
@@ -1663,7 +1661,7 @@ const CONFIG = {
             STATE.threejs.scene.add(bronchialGroup);
             STATE.threejs.bronchialGroup = bronchialGroup;
         }
-        
+
         function createParticleSystem() {
             // Particle system for airflow visualization
             const particleCount = 1000;
@@ -1696,7 +1694,7 @@ const CONFIG = {
             STATE.threejs.particles = new THREE.Points(geometry, material);
             STATE.threejs.scene.add(STATE.threejs.particles);
         }
-        
+
         function onWindowResize() {
             const canvas = document.getElementById('visualization-canvas');
             const container = canvas.parentElement;
@@ -1705,7 +1703,7 @@ const CONFIG = {
             STATE.threejs.camera.updateProjectionMatrix();
             STATE.threejs.renderer.setSize(container.clientWidth, container.clientHeight);
         }
-        
+
         // ====== AI MODELS ======
         function initializeAIModels() {
             // In a real implementation, this would load TensorFlow.js models
@@ -1714,7 +1712,7 @@ const CONFIG = {
             // Initialize risk prediction charts
             initializeCharts();
         }
-        
+
         function predictExacerbationRisk() {
             // Simplified risk calculation
             const baseRisk = 10;
@@ -1737,7 +1735,7 @@ const CONFIG = {
                     `24-hour risk: ${Math.round(STATE.predictions.exacerbationRisk24h)}%. Consider preventive measures.`);
             }
         }
-        
+
         function predictTreatmentResponse() {
             // Simplified response prediction
             const inflammationLevel = STATE.inflammation.eosinophils / 100;
@@ -1750,7 +1748,7 @@ const CONFIG = {
             
             updatePredictionsUI();
         }
-        
+
         // ====== UI UPDATES ======
         function updatePatientUI() {
             if (!STATE.patient) return;
@@ -1787,7 +1785,7 @@ const CONFIG = {
             $('#patientStatus').removeClass().addClass('status-indicator ' + statusClass);
             $('#patientStatusText').text(status);
         }
-        
+
         function updatePhysiology(param, value) {
             value = parseFloat(value);
             
@@ -1810,7 +1808,7 @@ const CONFIG = {
             predictExacerbationRisk();
             predictTreatmentResponse();
         }
-        
+
         function updateInflammation(param, value) {
             value = parseInt(value);
             
@@ -1836,7 +1834,7 @@ const CONFIG = {
             predictExacerbationRisk();
             predictTreatmentResponse();
         }
-        
+
         function updateInflammationVisualization() {
             if (!STATE.threejs.bronchialGroup) return;
             
@@ -1853,7 +1851,7 @@ const CONFIG = {
                 mesh.material.opacity = 0.5 + (inflammationLevel * 0.3);
             });
         }
-        
+
         function updatePredictionsUI() {
             $('#risk24h').text(`${Math.round(STATE.predictions.exacerbationRisk24h)}%`);
             $('#risk7d').text(`${Math.round(STATE.predictions.exacerbationRisk7d)}%`);
@@ -1865,14 +1863,14 @@ const CONFIG = {
             
             updateRiskChart();
         }
-        
+
         function updateClinicalUI() {
             $('#clinicalFEV1').text(`${STATE.clinicalData.fev1}%`);
             $('#clinicalPEF').text(STATE.clinicalData.pef);
             $('#clinicalFVC').text(`${STATE.clinicalData.fvc}%`);
             $('#clinicalACQ').text(STATE.clinicalData.acq.toFixed(1));
         }
-        
+
         // ====== CHARTS ======
         function initializeCharts() {
             // Risk Chart
@@ -1920,7 +1918,7 @@ const CONFIG = {
             
             updateRiskChart();
         }
-        
+
         function updateRiskChart() {
             if (!STATE.charts.risk) return;
             
@@ -1935,7 +1933,7 @@ const CONFIG = {
             STATE.charts.risk.data.datasets[0].data = riskData;
             STATE.charts.risk.update();
         }
-        
+
         // ====== SIMULATION CONTROLS ======
         function setViewMode(mode) {
             $('.viz-control-btn').removeClass('active');
@@ -1947,7 +1945,7 @@ const CONFIG = {
             // Update visualization based on mode
             updateViewMode(mode);
         }
-        
+
         function getViewTitle(mode) {
             const titles = {
                 'airflow': 'Airflow Dynamics',
@@ -1957,7 +1955,7 @@ const CONFIG = {
             };
             return titles[mode] || 'Airway Simulation';
         }
-        
+
         function getViewSubtitle(mode) {
             const subtitles = {
                 'airflow': 'Real-time particle flow visualization',
@@ -1967,17 +1965,17 @@ const CONFIG = {
             };
             return subtitles[mode] || 'Interactive simulation';
         }
-        
+
         function updateViewMode(mode) {
             // In a full implementation, this would switch shaders/materials
             console.log(`Switched to ${mode} view`);
         }
-        
+
         function toggleSimulation() {
             STATE.threejs.isAnimating = !STATE.threejs.isAnimating;
             $('#simToggleBtn').text(STATE.threejs.isAnimating ? 'Pause' : 'Play');
         }
-        
+
         function runExacerbationScenario() {
             showNotification('Starting exacerbation simulation...', 'info');
             
@@ -1996,7 +1994,7 @@ const CONFIG = {
                 predictExacerbationRisk();
             }, 1000);
         }
-        
+
         function runTreatmentScenario() {
             showNotification('Simulating treatment effect...', 'info');
             
@@ -2019,7 +2017,7 @@ const CONFIG = {
                 predictTreatmentResponse();
             }, 1000);
         }
-        
+
         function resetToBaseline() {
             showNotification('Resetting to baseline...', 'info');
             
@@ -2042,7 +2040,7 @@ const CONFIG = {
                 predictTreatmentResponse();
             }, 1000);
         }
-        
+
         // ====== ANIMATION LOOP ======
         function startAnimationLoop() {
             let lastTime = 0;
@@ -2067,7 +2065,7 @@ const CONFIG = {
             
             animate(0);
         }
-        
+
         // ====== UTILITY FUNCTIONS ======
         function updateLoading(stepId, status, message) {
             const step = $(`#${stepId}`);
@@ -2085,7 +2083,7 @@ const CONFIG = {
                 $('#loadingText').text(message);
             }
         }
-        
+
         function updateConnectionStatus(connected) {
             const status = $('#connectionStatus');
             const dot = status.find('.status-dot');
@@ -2098,7 +2096,7 @@ const CONFIG = {
                 status.find('span').text('Disconnected');
             }
         }
-        
+
         function showNotification(message, type = 'info') {
             // Create notification element
             const notification = $(`
@@ -2118,7 +2116,7 @@ const CONFIG = {
                 notification.fadeOut(300, function() { $(this).remove(); });
             }, 3000);
         }
-        
+
         function getNotificationColor(type) {
             const colors = {
                 'success': '#10b981',
@@ -2128,7 +2126,7 @@ const CONFIG = {
             };
             return colors[type] || '#3b82f6';
         }
-        
+
         function showAlert(title, content) {
             $('#alertTitle').text(title);
             $('#alertContent').text(content);
@@ -2138,7 +2136,7 @@ const CONFIG = {
                 $('#alertContainer').fadeOut(500);
             }, 5000);
         }
-        
+
         function switchTab(tabName) {
             $('.tab').removeClass('active');
             $(`.tab[data-tab="${tabName}"]`).addClass('active');
@@ -2146,7 +2144,7 @@ const CONFIG = {
             $('.tab-pane').removeClass('active');
             $(`#${tabName}Tab`).addClass('active');
         }
-        
+
         async function startSystems() {
             // Initialize clinical data
             STATE.clinicalData.lastUpdated = new Date();
@@ -2169,7 +2167,7 @@ const CONFIG = {
                 }
             }, 30000); // Every 30 seconds
         }
-        
+
         // ====== EXPORT FUNCTIONS ======
         function exportClinicalData() {
             const data = {
@@ -2191,33 +2189,33 @@ const CONFIG = {
             
             showNotification('Clinical data exported', 'success');
         }
-        
+
         function generateReport() {
             showNotification('Generating clinical report...', 'info');
             // In full implementation, generate PDF report
         }
-        
+
         // ====== EVENT HANDLERS ======
         function updateFromDatabase(data) {
             console.log('Update from database:', data);
             // Handle real-time updates from database
         }
-        
+
         function optimizeTreatment(treatment, value) {
             console.log(`Optimizing ${treatment}: ${value}`);
             // In full implementation, run treatment optimization algorithm
         }
-        
+
         function simulateTreatment(action) {
             showNotification(`Simulating ${action.replace('_', ' ')}...`, 'info');
             // In full implementation, run treatment simulation
         }
-        
+
         function runScenario(scenario) {
             showNotification(`Running ${scenario} scenario...`, 'info');
             // In full implementation, run scenario simulation
         }
-        
+
         // ====== WINDOW EXPORTS ======
         window.setViewMode = setViewMode;
         window.toggleSimulation = toggleSimulation;
@@ -2232,7 +2230,7 @@ const CONFIG = {
         window.generateReport = generateReport;
         window.exportClinicalData = exportClinicalData;
         window.switchTab = switchTab;
-        
+
         // Initialize when page loads
         $(document).ready(function() {
             // Add CSS animation
