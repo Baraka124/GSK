@@ -1830,46 +1830,26 @@
         }
         
         // ====== TAB SYSTEM ======
-        function initializeTabs() {
-            $('.tab-btn').click(function() {
-                const tabId = $(this).data('tab');
+    function initializeTabs() {
+    $('.tab-btn').click(function() {
+        const tabId = $(this).data('tab');
+        
+        // Update active tab button
+        $('.tab-btn').removeClass('active');
+        $(this).addClass('active');
                 
-                // Update active tab button
-                $('.tab-btn').removeClass('active');
-                $(this).addClass('active');
-                // Add with other button click handlers
-    // PASS REAL DATA
-    const encodedData = encodeURIComponent(JSON.stringify({
-        patient: AppState.currentPatient,
-        traits: AppState.currentTraits,
-        connections: AppState.currentConnections,
-        disease: AppState.currentDisease,
-        timestamp: new Date().toISOString()
-    }));
-    
-    window.open(`avatar.html?data=${encodedData}`, '_blank');
-});
-    
-    // Launch avatar in new window
-    window.open(
-        `avatar.html?patient=${AppState.currentPatient.id}&disease=${AppState.currentDisease.id}`, 
-        '_blank', 
-        'width=1400,height=900,menubar=no,toolbar=no'
-    );
-});
-                
-                // Show active tab content
-                $('.tab-pane').removeClass('active');
-                $(`#${tabId}-tab`).addClass('active');
-                
-                // Load data for tab if needed
-                if (tabId === 'patients' && AppState.patients.length === 0) {
-                    loadPatientSelect();
-                } else if (tabId === 'analytics') {
-                    updateAnalytics();
-                }
-            });
+        // Show active tab content
+        $('.tab-pane').removeClass('active');
+        $(`#${tabId}-tab`).addClass('active');
+        
+        // Load data for tab if needed
+        if (tabId === 'patients' && AppState.patients.length === 0) {
+            loadPatientSelect();
+        } else if (tabId === 'analytics') {
+            updateAnalytics();
         }
+    });
+}
         
         // ====== SIDEBAR TOGGLE ======
         function initializeSidebarToggle() {
