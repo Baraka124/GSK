@@ -1,94 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Check Database Schema</title>
+    <title>Database Test - Correct Key</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
-<body>
-    <div id="result" style="padding: 20px; font-family: Arial;"></div>
+<body style="padding: 20px; font-family: Arial;">
+    <h1>Testing Database with Correct Key</h1>
+    <div id="result" style="margin-top: 20px;"></div>
     
     <script>
-        async function checkDatabase() {
+        const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_';
+        
+        async function testConnection() {
             const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '<h2>Checking database schema...</h2>';
             
             try {
-                // Use the URL but NOT the secret key
-                const supabaseUrl = 'https://timmylvmumneqhpkvcgb.supabase.co';
+                resultDiv.innerHTML = '<h3>Connecting to database...</h3>';
                 
-                // First, let's see if we can even connect with ANY key
-                resultDiv.innerHTML += '<p>Trying to connect to Supabase...</p>';
+                // Initialize Supabase client
+                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                // Try to fetch the OpenAPI schema (no key needed)
-                try {
-                    const response = await fetch(`${supabaseUrl}/rest/v1/`, {
-                        headers: {
-                            'apikey': 'any_key_will_work_for_schema'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        resultDiv.innerHTML += '<p style="color: green;">✅ Supabase project is accessible</p>';
-                        
-                        // Now check what tables might exist
-                        const tablesToCheck = [
-                            'diseases', 'treatable_traits', 'disease_traits', 
-                            'trait_networks', 'patients', 'treatments'
-                        ];
-                        
-                        for (const table of tablesToCheck) {
-                            try {
-                                const tableResponse = await fetch(`${supabaseUrl}/rest/v1/${table}?limit=0`, {
-                                    headers: {
-                                        'apikey': 'any_key',
-                                        'Authorization': 'Bearer any_key'
-                                    }
-                                });
-                                
-                                const status = tableResponse.status;
-                                if (status === 200) {
-                                    resultDiv.innerHTML += `<p style="color: green;">✅ Table "${table}" exists</p>`;
-                                } else if (status === 401) {
-                                    resultDiv.innerHTML += `<p style="color: orange;">🔒 Table "${table}" exists but needs valid key</p>`;
-                                } else if (status === 404) {
-                                    resultDiv.innerHTML += `<p style="color: red;">❌ Table "${table}" does not exist</p>`;
-                                }
-                            } catch (e) {
-                                resultDiv.innerHTML += `<p style="color: gray;">❓ Table "${table}" - Could not check</p>`;
-                            }
-                        }
-                        
-                    } else {
-                        resultDiv.innerHTML += `<p style="color: red;">❌ Cannot access Supabase (Status: ${response.status})</p>`;
-                    }
-                } catch (fetchError) {
-                    resultDiv.innerHTML += `<p style="color: red;">❌ Network error: ${fetchError.message}</p>`;
+                // Test 1: Check if we can connect
+                resultDiv.innerHTML += '<p>Testing connection...</p>';
+                
+                const { data: testData, error: testError } = await supabase
+                    .from('diseases')
+                    .select('count')
+                    .limit(1);
+                
+                if (testError) {
+                    resultDiv.innerHTML += `<p style="color: orange;">⚠️ Count query failed: ${testError.message}</p>`;
+                    resultDiv.innerHTML += '<p>Trying simple select instead...</p>';
+                } else {
+                    resultDiv.innerHTML += '<p style="color: green;">✅ Count query successful</p>';
                 }
                 
-                // Add security warning
-                resultDiv.innerHTML += `
-                    <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin-top: 20px;">
-                        <h3 style="color: #856404;">⚠️ CRITICAL SECURITY ALERT</h3>
-                        <p>You shared your SECRET SERVICE ROLE KEY in the chat:</p>
-                        <code style="background: #f8d7da; padding: 5px; display: block; margin: 10px 0;">
-                            sb_secret_rs5K0cw_tPMJr2PsQFprUQ_uHjcbc7W
-                        </code>
-                        <p><strong>IMMEDIATE ACTION REQUIRED:</strong></p>
-                        <ol>
-                            <li>Go to Supabase Dashboard NOW</li>
-                            <li>Navigate to: Project Settings → API</li>
-                            <li>Click "Regenerate" next to service_role key</li>
-                            <li>Use the ANON/PUBLIC key for frontend code</li>
-                        </ol>
-                    </div>
-                `;
+                // Test 2: Try to get actual data
+                const { data: diseases, error: diseaseError } = await supabase
+                    .from('diseases')
+                    .select('*')
+                    .limit(5);
+                
+                if (diseaseError) {
+                    resultDiv.innerHTML += `<p style="color: red;">❌ Diseases query failed: ${diseaseError.message}</p>`;
+                } else {
+                    resultDiv.innerHTML += `<p style="color: green;">✅ Diseases table accessible (${diseases.length} records)</p>`;
+                    diseases.forEach(d => {
+                        resultDiv.innerHTML += `<div style="margin-left: 20px;">• ${d.disease_name} (ID: ${d.id})</div>`;
+                    });
+                }
+                
+                // Test 3: Check other tables
+                const tables = ['treatable_traits', 'disease_traits', 'trait_networks'];
+                
+                for (const table of tables) {
+                    try {
+                        const { data, error } = await supabase
+                            .from(table)
+                            .select('*')
+                            .limit(2);
+                        
+                        if (error) {
+                            resultDiv.innerHTML += `<p style="color: orange;">⚠️ Table "${table}": ${error.message}</p>`;
+                        } else {
+                            resultDiv.innerHTML += `<p style="color: green;">✅ Table "${table}" accessible (${data.length} records)</p>`;
+                        }
+                    } catch (e) {
+                        resultDiv.innerHTML += `<p style="color: red;">❌ Table "${table}" error: ${e.message}</p>`;
+                    }
+                }
+                
+                // Test 4: Check RLS (Row Level Security)
+                resultDiv.innerHTML += '<h4>Checking Row Level Security...</h4>';
+                
+                try {
+                    const { data: rlsData, error: rlsError } = await supabase
+                        .from('diseases')
+                        .insert([{ disease_name: 'Test Disease', description: 'Test' }]);
+                    
+                    if (rlsError && rlsError.code === '42501') {
+                        resultDiv.innerHTML += '<p style="color: green;">✅ RLS is enabled (good for security)</p>';
+                    } else if (rlsError) {
+                        resultDiv.innerHTML += `<p style="color: orange;">⚠️ Insert failed: ${rlsError.message}</p>`;
+                    } else {
+                        resultDiv.innerHTML += '<p style="color: red;">⚠️ RLS might not be enabled</p>';
+                    }
+                } catch (e) {
+                    resultDiv.innerHTML += `<p style="color: gray;">❓ Could not test RLS: ${e.message}</p>`;
+                }
+                
+                resultDiv.innerHTML += '<h3 style="color: green;">✅ Database connection successful!</h3>';
                 
             } catch (error) {
-                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+                resultDiv.innerHTML = `
+                    <div style="color: red;">
+                        <h3>❌ Connection Failed</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>Possible issues:</p>
+                        <ul>
+                            <li>CORS not configured</li>
+                            <li>RLS blocking access</li>
+                            <li>Network issues</li>
+                        </ul>
+                        <p>Check Supabase Dashboard → Settings → API → CORS Origins</p>
+                    </div>
+                `;
             }
         }
         
-        checkDatabase();
+        // Add security warning
+        document.getElementById('result').innerHTML = `
+            <div style="background: #fff3cd; padding: 15px; margin-bottom: 20px;">
+                <strong>⚠️ SECURITY ALERT:</strong> You still need to regenerate your secret key!
+                The secret key <code>sb_secret_rs5K0cw_tPMJr2PsQFprUQ_uHjcbc7W</code> is exposed.
+            </div>
+        `;
+        
+        // Run test
+        testConnection();
     </script>
 </body>
 </html>
