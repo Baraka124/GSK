@@ -1087,6 +1087,31 @@
         // ============================================================================
         // AIRWAY DIGITAL TWIN v2.0 - Predictive Physiology Engine
         // ============================================================================
+        // ====== LIBRARY CHECK ======
+console.log('Checking libraries...');
+console.log('CANNON loaded:', typeof CANNON !== 'undefined');
+console.log('THREE loaded:', typeof THREE !== 'undefined');
+console.log('supabase loaded:', typeof supabase !== 'undefined');
+
+// If CANNON isn't loaded, try to load it dynamically
+if (typeof CANNON === 'undefined') {
+    console.error('CANNON physics engine not loaded. Loading dynamically...');
+    loadPhysicsEngine();
+}
+
+function loadPhysicsEngine() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.browser.min.js';
+    script.onload = () => {
+        console.log('CANNON loaded dynamically');
+        // You might want to re-initialize your app here
+    };
+    script.onerror = () => {
+        console.error('Failed to load physics engine');
+        showNotification('Physics engine failed to load. Some features may be unavailable.', 'error');
+    };
+    document.head.appendChild(script);
+}
         
        // ====== CONFIGURATION ======
 const CONFIG = {
@@ -1330,18 +1355,33 @@ const CONFIG = {
         
         // ====== PHYSICS ENGINE ======
         function initializePhysics() {
-            // Create physics world
-            STATE.physics.world = new CANNON.World();
-            STATE.physics.world.gravity.set(0, CONFIG.PHYSICS.GRAVITY, 0);
-            STATE.physics.world.broadphase = new CANNON.NaiveBroadphase();
-            STATE.physics.world.solver.iterations = 10;
-            
-            // Create bronchial tree geometry
-            createBronchialTree();
-            
-            // Initialize airflow simulation
-            initializeAirflow();
-        }
+    // Check if CANNON is loaded
+    if (typeof CANNON === 'undefined') {
+        throw new Error('CANNON physics engine not loaded. Please refresh the page.');
+    }
+    
+    console.log('CANNON version:', CANNON.version);
+    
+    try {
+        // Create physics world
+        STATE.physics.world = new CANNON.World();
+        STATE.physics.world.gravity.set(0, CONFIG.PHYSICS.GRAVITY, 0);
+        STATE.physics.world.broadphase = new CANNON.NaiveBroadphase();
+        STATE.physics.world.solver.iterations = 10;
+        
+        console.log('Physics world created successfully');
+        
+        // Create bronchial tree geometry
+        createBronchialTree();
+        
+        // Initialize airflow simulation
+        initializeAirflow();
+        
+    } catch (error) {
+        console.error('Failed to initialize physics:', error);
+        throw new Error(`Physics initialization failed: ${error.message}`);
+    }
+}
         
         function createBronchialTree() {
             // Simplified bronchial tree model
