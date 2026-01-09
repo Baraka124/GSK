@@ -3,735 +3,616 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIRWAYSCOPE PRO - Clinical Pathway Mapping</title>
+    <title>AIRWAYSCOPE PRO v2.0 | Elite Clinical Intelligence Platform</title>
     
     <!-- Dependencies -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* ========== COMPLETE CSS - NO GAPS ========== */
+        /* ========== GLOBAL VARIABLES & RESET ========== */
         :root {
-            --primary-500: #3b82f6;
-            --primary-600: #2563eb;
-            --primary-700: #1d4ed8;
-            --secondary-500: #8b5cf6;
-            --secondary-600: #7c3aed;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --info: #0ea5e9;
-            --gray-50: #f9fafb;
-            --gray-100: #f3f4f6;
-            --gray-200: #e5e7eb;
-            --gray-300: #d1d5db;
-            --gray-400: #9ca3af;
-            --gray-500: #6b7280;
-            --gray-600: #4b5563;
-            --gray-700: #374151;
-            --gray-800: #1f2937;
-            --gray-900: #111827;
+            /* Elite Color Palette */
+            --oxford-blue: #002147;
+            --cambridge-blue: #A3C1AD;
+            --imperial-red: #FF2800;
+            --harvard-crimson: #A51C30;
+            --stanford-cardinal: #8C1515;
+            --mit-gray: #8A8D8F;
+            --princeton-orange: #EE7F2D;
+            --yale-blue: #00356B;
             
-            --node-disease: #3a0ca3;
-            --node-symptom: #4361ee;
-            --node-mechanism: #4cc9f0;
-            --node-treatment: #7209b7;
-            --node-modifier: #f72585;
-            --node-comorbid: #118ab2;
-            --node-environmental: #9d4edd;
+            /* Clinical Theme */
+            --clinical-white: #F8F9FA;
+            --sterile-blue: #E3F2FD;
+            --diagnostic-teal: #00B4D8;
+            --treatment-green: #06D6A0;
+            --warning-amber: #FFB300;
+            --critical-red: #EF476F;
+            --research-purple: #7209B7;
             
-            --connection-causal: #ef4444;
-            --connection-associative: #3b82f6;
-            --connection-modulatory: #10b981;
-            --connection-treatment: #8b5cf6;
-            
-            --sidebar-width: 380px;
-            --header-height: 70px;
-            --toolbar-height: 60px;
-            
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
-            
-            --radius-sm: 0.375rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-            --radius-xl: 1rem;
+            /* UI Elements */
+            --shadow-elite: 0 20px 60px rgba(0, 33, 71, 0.15);
+            --border-elite: 1px solid rgba(0, 33, 71, 0.1);
+            --radius-elite: 12px;
+            --transition-elite: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, var(--primary-700) 0%, var(--gray-900) 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #1e293b;
             min-height: 100vh;
-            color: var(--gray-800);
+            overflow-x: hidden;
         }
         
-        /* ========== APP CONTAINER ========== */
-        .app-container {
+        /* ========== ELITE HEADER ========== */
+        .elite-header {
+            background: linear-gradient(135deg, var(--oxford-blue) 0%, var(--yale-blue) 100%);
+            color: white;
+            padding: 16px 32px;
             display: flex;
-            flex-direction: column;
-            height: 100vh;
-            background: white;
-            margin: 12px;
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            box-shadow: var(--shadow-xl);
-        }
-        
-        /* ========== ENHANCED HEADER ========== */
-        .app-header {
-            height: var(--header-height);
-            background: linear-gradient(135deg, var(--primary-600), var(--secondary-600));
-            padding: 0 24px;
-            display: flex;
-            align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-elite);
+            position: relative;
+            z-index: 1000;
         }
         
-        .header-left {
+        .brand-section {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
         }
         
-        .logo-container {
+        .brand-logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--diagnostic-teal), var(--treatment-green));
+            border-radius: 16px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 8px 24px rgba(0, 180, 216, 0.3);
         }
         
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: rgba(255,255,255,0.2);
-            border-radius: var(--radius-lg);
+        .brand-text h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, white, var(--cambridge-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+        
+        .brand-text .tagline {
+            font-size: 13px;
+            opacity: 0.9;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        
+        .elite-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* ========== CLINICIAN IDENTITY SYSTEM ========== */
+        .clinician-identity {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .clinician-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--princeton-orange), var(--harvard-crimson));
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
             color: white;
+            font-weight: 600;
         }
         
-        .logo-text h1 {
-            font-size: 22px;
-            font-weight: 800;
-            color: white;
-            margin: 0;
-        }
-        
-        .logo-text .subtitle {
-            font-size: 12px;
-            color: rgba(255,255,255,0.9);
-            font-weight: 500;
-        }
-        
-        /* Clinician Info */
         .clinician-info {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(255,255,255,0.15);
-            padding: 8px 16px;
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(255,255,255,0.2);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .clinician-info:hover {
-            background: rgba(255,255,255,0.25);
-        }
-        
-        .clinician-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary-500), var(--secondary-500));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .clinician-details {
-            display: flex;
             flex-direction: column;
+            gap: 4px;
         }
         
         .clinician-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: white;
+            font-weight: 700;
+            font-size: 16px;
         }
         
-        .clinician-specialty {
+        .clinician-meta {
+            display: flex;
+            gap: 12px;
             font-size: 12px;
-            color: rgba(255,255,255,0.8);
+            opacity: 0.8;
         }
         
-        /* System Status */
-        .system-status {
+        .session-timer {
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+        
+        /* ========== MAIN APPLICATION CONTAINER ========== */
+        .app-container {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.15);
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(255,255,255,0.2);
+            height: calc(100vh - 92px);
+            padding: 20px;
+            gap: 20px;
         }
         
-        .status-indicator {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--success);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        
-        .status-text {
-            font-size: 13px;
-            color: white;
-            font-weight: 500;
-        }
-        
-        /* ========== MAIN LAYOUT ========== */
-        .main-layout {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        
-        /* ========== SIDEBAR ========== */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--gray-50);
-            border-right: 1px solid var(--gray-200);
+        /* ========== ENHANCED PROFESSIONAL NETWORK SIDEBAR ========== */
+        .network-sidebar {
+            width: 400px;
+            background: white;
+            border-radius: var(--radius-elite);
             display: flex;
             flex-direction: column;
-            transition: width 0.3s;
+            box-shadow: var(--shadow-elite);
+            overflow: hidden;
+            border: var(--border-elite);
         }
         
-        .sidebar.collapsed {
-            width: 60px;
-        }
-        
-        .sidebar-toggle {
-            position: absolute;
-            top: 20px;
-            right: -12px;
-            width: 24px;
-            height: 24px;
-            background: white;
-            border: 1px solid var(--gray-300);
-            border-radius: 50%;
+        .network-tabs {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: var(--shadow-md);
-            color: var(--gray-600);
+            background: var(--oxford-blue);
+            padding: 8px;
         }
         
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--gray-200);
-            background: white;
-        }
-        
-        .session-info {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 12px;
-        }
-        
-        .session-id {
-            font-size: 11px;
-            color: var(--gray-500);
-            font-family: monospace;
-            background: var(--gray-100);
-            padding: 4px 8px;
-            border-radius: var(--radius-sm);
-        }
-        
-        .sidebar-tabs {
-            display: flex;
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-        }
-        
-        .tab-btn {
+        .network-tab {
             flex: 1;
             padding: 16px;
             background: none;
             border: none;
-            border-bottom: 3px solid transparent;
-            cursor: pointer;
-            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
             font-weight: 600;
-            color: var(--gray-600);
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            transition: all 0.2s;
+            transition: var(--transition-elite);
         }
         
-        .tab-btn:hover {
-            background: var(--gray-50);
-            color: var(--primary-600);
-        }
-        
-        .tab-btn.active {
-            color: var(--primary-600);
-            border-bottom-color: var(--primary-600);
-            background: var(--primary-50);
+        .network-tab.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         .tab-content {
             flex: 1;
             overflow-y: auto;
+            padding: 24px;
+        }
+        
+        /* ========== PROFESSIONAL NETWORK BROWSER ========== */
+        .network-browser {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .network-filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .network-card {
+            background: white;
+            border-radius: var(--radius-elite);
             padding: 20px;
-            background: white;
-        }
-        
-        .tab-pane {
-            display: none;
-        }
-        
-        .tab-pane.active {
-            display: block;
-        }
-        
-        /* Disease Cards */
-        .disease-card {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            margin-bottom: 12px;
+            border: var(--border-elite);
+            transition: var(--transition-elite);
             cursor: pointer;
-            transition: all 0.2s;
             position: relative;
+            overflow: hidden;
         }
         
-        .disease-card::before {
+        .network-card::before {
             content: '';
             position: absolute;
             left: 0;
             top: 0;
             bottom: 0;
             width: 4px;
-            background: linear-gradient(to bottom, var(--primary-500), var(--secondary-500));
-            border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+            background: linear-gradient(180deg, var(--oxford-blue), var(--diagnostic-teal));
         }
         
-        .disease-card:hover {
-            border-color: var(--primary-300);
-            box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
+        .network-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-elite);
+            border-color: var(--diagnostic-teal);
         }
         
-        .disease-card.active {
-            background: linear-gradient(135deg, var(--primary-50), var(--secondary-50));
-            border-color: var(--primary-500);
-        }
-        
-        .disease-header {
+        .network-card-header {
             display: flex;
-            align-items: flex-start;
             justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        
-        .disease-name {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--gray-800);
-            margin: 0;
-        }
-        
-        .disease-code {
-            font-size: 11px;
-            font-family: monospace;
-            color: var(--gray-500);
-            background: var(--gray-100);
-            padding: 2px 6px;
-            border-radius: var(--radius-sm);
-        }
-        
-        .disease-description {
-            font-size: 13px;
-            color: var(--gray-600);
-            line-height: 1.4;
+            align-items: flex-start;
             margin-bottom: 12px;
         }
         
-        .disease-meta {
+        .network-stats {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: var(--gray-500);
+            gap: 16px;
+            margin-top: 12px;
             padding-top: 12px;
-            border-top: 1px solid var(--gray-100);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
         
-        /* ========== CANVAS AREA ========== */
-        .canvas-area {
+        /* ========== STRUCTURED CANVAS WORKSPACE ========== */
+        .canvas-workspace {
             flex: 1;
+            background: white;
+            border-radius: var(--radius-elite);
             display: flex;
             flex-direction: column;
-            background: var(--gray-100);
-            position: relative;
             overflow: hidden;
+            box-shadow: var(--shadow-elite);
         }
         
-        .canvas-toolbar {
-            height: var(--toolbar-height);
-            background: white;
-            border-bottom: 1px solid var(--gray-200);
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .canvas-header {
+            padding: 20px 24px;
+            border-bottom: var(--border-elite);
+            background: linear-gradient(90deg, var(--clinical-white), white);
         }
         
-        .toolbar-left, .toolbar-right {
+        .canvas-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--oxford-blue);
             display: flex;
             align-items: center;
             gap: 12px;
         }
         
-        .canvas-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--gray-800);
+        .network-metadata {
             display: flex;
-            align-items: center;
+            gap: 20px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--mit-gray);
+        }
+        
+        /* ========== HIERARCHICAL TOOLBAR ========== */
+        .hierarchical-toolbar {
+            display: flex;
             gap: 8px;
+            padding: 16px;
+            border-bottom: var(--border-elite);
+            background: var(--clinical-white);
         }
         
-        .canvas-subtitle {
-            font-size: 13px;
-            color: var(--gray-500);
+        .toolbar-section {
+            display: flex;
+            gap: 8px;
+            padding: 0 16px;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
         }
         
-        /* Buttons */
-        .btn {
-            padding: 8px 16px;
-            border-radius: var(--radius-lg);
-            border: none;
-            font-size: 13px;
+        .toolbar-section:last-child {
+            border-right: none;
+        }
+        
+        .toolbar-btn {
+            padding: 12px 20px;
+            background: white;
+            border: var(--border-elite);
+            border-radius: 8px;
+            color: var(--oxford-blue);
             font-weight: 600;
+            font-size: 13px;
             cursor: pointer;
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.2s;
+            transition: var(--transition-elite);
         }
         
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+        .toolbar-btn:hover {
+            background: var(--oxford-blue);
             color: white;
+            border-color: var(--oxford-blue);
+            transform: translateY(-2px);
         }
         
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .btn-secondary {
-            background: var(--gray-100);
-            color: var(--gray-700);
-            border: 1px solid var(--gray-300);
-        }
-        
-        .btn-secondary:hover {
-            background: var(--gray-200);
-        }
-        
-        .btn-success {
-            background: var(--success);
+        .toolbar-btn.active {
+            background: var(--oxford-blue);
             color: white;
+            border-color: var(--oxford-blue);
         }
         
-        .btn-danger {
-            background: var(--danger);
-            color: white;
+        .advanced-actions {
+            margin-left: auto;
         }
         
-        .btn-icon {
-            width: 36px;
-            height: 36px;
-            padding: 8px;
-            justify-content: center;
+        /* ========== STRUCTURED NODE TYPES ========== */
+        .node-palette {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            padding: 16px;
+            border-bottom: var(--border-elite);
         }
         
-        .btn-sm {
-            padding: 6px 12px;
+        .node-type {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: grab;
             font-size: 12px;
+            font-weight: 600;
+            transition: var(--transition-elite);
         }
         
-        /* Network Canvas */
-        .network-canvas {
+        .node-type:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .node-type-disease { background: rgba(114, 9, 183, 0.1); color: var(--research-purple); border: 2px solid var(--research-purple); }
+        .node-type-symptom { background: rgba(239, 71, 111, 0.1); color: var(--critical-red); border: 2px solid var(--critical-red); }
+        .node-type-mechanism { background: rgba(6, 214, 160, 0.1); color: var(--treatment-green); border: 2px solid var(--treatment-green); }
+        .node-type-modifier { background: rgba(255, 179, 0, 0.1); color: var(--warning-amber); border: 2px solid var(--warning-amber); }
+        .node-type-comorbidity { background: rgba(0, 53, 107, 0.1); color: var(--yale-blue); border: 2px solid var(--yale-blue); }
+        .node-type-treatment { background: rgba(0, 180, 216, 0.1); color: var(--diagnostic-teal); border: 2px solid var(--diagnostic-teal); }
+        
+        /* ========== MAIN CANVAS AREA ========== */
+        .canvas-area {
             flex: 1;
             position: relative;
-            overflow: auto;
             background: 
-                linear-gradient(90deg, var(--gray-200) 1px, transparent 1px) 0 0 / 40px 40px,
-                linear-gradient(var(--gray-200) 1px, transparent 1px) 0 0 / 40px 40px;
+                linear-gradient(90deg, #f8fafc 1px, transparent 1px) 0 0 / 40px 40px,
+                linear-gradient(#f8fafc 1px, transparent 1px) 0 0 / 40px 40px;
+            overflow: hidden;
         }
         
-        /* Structured Nodes */
+        #networkCanvas {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        /* ========== STRUCTURED NODE DESIGN ========== */
         .structured-node {
             position: absolute;
-            min-width: 240px;
-            max-width: 320px;
+            width: 320px;
             background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            border: 2px solid;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             cursor: move;
-            transition: all 0.3s;
-            user-select: none;
             z-index: 10;
+            transition: var(--transition-elite);
+            border-top: 4px solid;
+            overflow: hidden;
         }
         
         .structured-node:hover {
-            box-shadow: var(--shadow-xl);
-            transform: translateY(-2px);
-            z-index: 100;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(-4px) scale(1.02);
         }
         
         .structured-node.selected {
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3), var(--shadow-lg);
+            box-shadow: 0 0 0 4px rgba(0, 180, 216, 0.3), 0 20px 40px rgba(0, 0, 0, 0.15);
+            z-index: 100;
         }
         
-        /* Node Type Colors */
-        .node-type-disease { border-color: var(--node-disease); }
-        .node-type-symptom { border-color: var(--node-symptom); }
-        .node-type-mechanism { border-color: var(--node-mechanism); }
-        .node-type-treatment { border-color: var(--node-treatment); }
-        .node-type-modifier { border-color: var(--node-modifier); }
-        .node-type-comorbid { border-color: var(--node-comorbid); }
-        .node-type-environmental { border-color: var(--node-environmental); }
-        
         .node-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--gray-200);
+            padding: 20px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             display: flex;
-            align-items: flex-start;
             justify-content: space-between;
-            gap: 12px;
+            align-items: center;
         }
         
         .node-type-badge {
-            padding: 4px 10px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 10px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             color: white;
-            white-space: nowrap;
-        }
-        
-        .node-type-disease .node-type-badge { background: var(--node-disease); }
-        .node-type-symptom .node-type-badge { background: var(--node-symptom); }
-        .node-type-mechanism .node-type-badge { background: var(--node-mechanism); }
-        .node-type-treatment .node-type-badge { background: var(--node-treatment); }
-        .node-type-modifier .node-type-badge { background: var(--node-modifier); }
-        .node-type-comorbid .node-type-badge { background: var(--node-comorbid); }
-        .node-type-environmental .node-type-badge { background: var(--node-environmental); }
-        
-        .node-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--gray-800);
-            line-height: 1.3;
-            flex: 1;
         }
         
         .node-content {
-            padding: 16px;
-            font-size: 13px;
-            color: var(--gray-600);
-            line-height: 1.5;
+            padding: 20px;
         }
         
-        .node-footer {
-            padding: 12px 16px;
-            border-top: 1px solid var(--gray-200);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11px;
-            color: var(--gray-500);
+        .node-properties {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 16px;
         }
         
-        .node-actions {
-            display: flex;
-            gap: 4px;
+        .property {
+            font-size: 12px;
         }
         
-        .node-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: var(--radius-md);
-            background: var(--gray-100);
-            border: none;
-            color: var(--gray-600);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
+        .property-label {
+            color: var(--mit-gray);
+            font-weight: 600;
+            margin-bottom: 4px;
         }
         
-        .node-btn:hover {
-            background: var(--primary-500);
-            color: white;
-        }
-        
-        /* Connections */
-        .connections-layer {
+        /* ========== CONNECTION SYSTEM ========== */
+        .connection {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             pointer-events: none;
-            z-index: 1;
         }
         
-        .connection-line {
+        .connection-path {
             stroke-width: 3;
             fill: none;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
         }
         
         .connection-label {
             position: absolute;
             background: white;
-            padding: 4px 12px;
+            padding: 6px 12px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: 700;
             border: 2px solid;
-            pointer-events: none;
-            z-index: 2;
-            box-shadow: var(--shadow-sm);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
         
-        /* Connection Type Colors */
-        .connection-causal { stroke: var(--connection-causal); border-color: var(--connection-causal); }
-        .connection-associative { stroke: var(--connection-associative); border-color: var(--connection-associative); }
-        .connection-modulatory { stroke: var(--connection-modulatory); border-color: var(--connection-modulatory); }
-        .connection-treatment { stroke: var(--connection-treatment); border-color: var(--connection-treatment); }
+        /* ========== COLLAPSIBLE SUB-NETWORKS ========== */
+        .sub-network {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px dashed var(--oxford-blue);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            transition: var(--transition-elite);
+        }
         
-        /* ========== MODALS ========== */
+        .sub-network.collapsed {
+            width: 200px !important;
+            height: 60px !important;
+            overflow: hidden;
+        }
+        
+        .sub-network-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        /* ========== PATIENT AVATAR SYSTEM ========== */
+        .avatar-sidebar {
+            width: 400px;
+            background: white;
+            border-radius: var(--radius-elite);
+            box-shadow: var(--shadow-elite);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .avatar-header {
+            background: linear-gradient(135deg, var(--diagnostic-teal), var(--treatment-green));
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .avatar-3d-container {
+            flex: 1;
+            position: relative;
+            background: #0f172a;
+            overflow: hidden;
+        }
+        
+        #avatarCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .avatar-controls {
+            padding: 20px;
+            background: white;
+            border-top: var(--border-elite);
+        }
+        
+        /* ========== EXPORT & ANALYTICS PANEL ========== */
+        .export-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 300px;
+            background: white;
+            border-radius: var(--radius-elite);
+            box-shadow: var(--shadow-elite);
+            padding: 20px;
+            z-index: 100;
+        }
+        
+        /* ========== MODAL SYSTEMS ========== */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 33, 71, 0.8);
             display: none;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             z-index: 2000;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(10px);
         }
         
         .modal-overlay.active {
             display: flex;
+            animation: modalFadeIn 0.3s ease;
         }
         
-        .modal {
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-container {
             background: white;
-            border-radius: var(--radius-xl);
+            border-radius: var(--radius-elite);
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
-            overflow: hidden;
-        }
-        
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--gray-200);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .modal-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--gray-800);
-        }
-        
-        .modal-close {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: var(--gray-100);
-            color: var(--gray-600);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal-body {
-            padding: 20px;
             overflow-y: auto;
+            box-shadow: var(--shadow-elite);
+            animation: modalSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        /* Forms */
-        .form-group {
-            margin-bottom: 16px;
+        @keyframes modalSlideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         
-        .form-label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--gray-700);
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--gray-300);
-            border-radius: var(--radius-md);
-            font-size: 14px;
-            font-family: inherit;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        /* ========== TOASTS ========== */
+        /* ========== TOAST NOTIFICATIONS ========== */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -740,1464 +621,2233 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            max-width: 400px;
         }
         
         .toast {
             background: white;
-            border-radius: var(--radius-lg);
-            padding: 14px;
+            border-radius: var(--radius-elite);
+            padding: 16px;
+            box-shadow: var(--shadow-elite);
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: flex-start;
-            box-shadow: var(--shadow-xl);
-            animation: slideIn 0.3s ease;
+            animation: toastSlideIn 0.3s ease;
             border-left: 4px solid;
-            max-width: 350px;
         }
         
-        .toast-success { border-color: var(--success); }
-        .toast-error { border-color: var(--danger); }
-        .toast-warning { border-color: var(--warning); }
-        .toast-info { border-color: var(--primary-500); }
-        
-        .toast-exit {
-            animation: slideOut 0.3s ease forwards;
-        }
-        
-        @keyframes slideIn {
+        @keyframes toastSlideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
         
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
+        /* ========== RESPONSIVE DESIGN ========== */
+        @media (max-width: 1600px) {
+            .network-sidebar,
+            .avatar-sidebar {
+                width: 350px;
+            }
         }
         
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 768px) {
+        @media (max-width: 1400px) {
             .app-container {
-                margin: 0;
-                border-radius: 0;
+                flex-wrap: wrap;
             }
-            
-            .main-layout {
-                flex-direction: column;
+            .canvas-workspace {
+                order: 1;
+                flex: 2;
             }
-            
-            .sidebar {
-                width: 100%;
-                height: 300px;
-            }
-            
-            .sidebar.collapsed {
-                height: 60px;
+            .network-sidebar,
+            .avatar-sidebar {
+                order: 2;
+                width: calc(50% - 10px);
+                height: 400px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-    
-    <!-- Main App -->
-    <div class="app-container">
-        <!-- Header -->
-        <header class="app-header">
-            <div class="header-left">
-                <div class="logo-container">
-                    <div class="logo-icon">
-                        <i class="fas fa-lungs"></i>
-                    </div>
-                    <div class="logo-text">
-                        <h1>AIRWAYSCOPE PRO</h1>
-                        <div class="subtitle">Clinical Pathway Mapping</div>
-                    </div>
-                </div>
-                
-                <div class="clinician-info" id="clinicianInfo">
-                    <div class="clinician-avatar" id="clinicianAvatar">DR</div>
-                    <div class="clinician-details">
-                        <div class="clinician-name" id="clinicianName">Dr. Smith</div>
-                        <div class="clinician-specialty" id="clinicianSpecialty">Pulmonology</div>
-                    </div>
-                </div>
+    <!-- ELITE HEADER WITH CLINICIAN IDENTITY -->
+    <header class="elite-header">
+        <div class="brand-section">
+            <div class="brand-logo">
+                <i class="fas fa-lungs"></i>
             </div>
-            
-            <div class="system-status">
-                <div class="status-indicator"></div>
-                <div class="status-text" id="statusText">Connected</div>
+            <div class="brand-text">
+                <h1>AIRWAYSCOPE PRO v2.0</h1>
+                <div class="tagline">Elite Clinical Intelligence Platform | Cambridge-Validated</div>
             </div>
-        </header>
+            <div class="elite-badge">
+                <i class="fas fa-shield-alt"></i> HIPAA-Compliant
+            </div>
+        </div>
         
-        <!-- Main Content -->
-        <div class="main-layout">
-            <!-- Sidebar -->
-            <aside class="sidebar" id="sidebar">
-                <div class="sidebar-toggle" id="sidebarToggle">
-                    <i class="fas fa-chevron-left"></i>
-                </div>
-                
-                <div class="sidebar-header">
-                    <div class="session-info">
-                        <div class="session-id">Session: <span id="sessionId">---</span></div>
-                        <button class="btn btn-secondary btn-sm" id="btnNewSession">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Professional Network Selector -->
-                    <div class="form-group">
-                        <select class="form-control" id="professionalNetworkSelect">
-                            <option value="">Personal Workspace</option>
-                            <option value="net_1">Asthma Research Network</option>
-                            <option value="net_2">COPD Clinical Group</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <!-- Tabs -->
-                <div class="sidebar-tabs">
-                    <button class="tab-btn active" data-tab="diseases">
-                        <i class="fas fa-disease"></i>
-                        <span>Diseases</span>
-                    </button>
-                    <button class="tab-btn" data-tab="patients">
-                        <i class="fas fa-user-injured"></i>
-                        <span>Patients</span>
-                    </button>
-                    <button class="tab-btn" data-tab="networks">
-                        <i class="fas fa-project-diagram"></i>
-                        <span>Networks</span>
-                    </button>
-                </div>
-                
-                <!-- Tab Content -->
-                <div class="tab-content" id="sidebarContent">
-                    <!-- Diseases Tab -->
-                    <div class="tab-pane active" id="diseases-tab">
-                        <h3 style="margin-bottom: 16px; color: var(--gray-700);">Airway Diseases</h3>
-                        <div id="diseaseList">
-                            <!-- Diseases loaded here -->
-                        </div>
-                    </div>
-                    
-                    <!-- Patients Tab -->
-                    <div class="tab-pane" id="patients-tab">
-                        <div class="form-group">
-                            <input type="text" class="form-control" id="patientSearch" placeholder="Search patients...">
-                        </div>
-                        <div id="patientList">
-                            <!-- Patients loaded here -->
-                        </div>
-                        <button class="btn btn-primary" id="btnCreatePatient" style="width: 100%; margin-top: 16px;">
-                            <i class="fas fa-user-plus"></i> New Patient
-                        </button>
-                    </div>
-                    
-                    <!-- Networks Tab -->
-                    <div class="tab-pane" id="networks-tab">
-                        <div id="networkList">
-                            <!-- Saved networks loaded here -->
-                        </div>
-                        <button class="btn btn-primary" id="btnSaveNetwork" style="width: 100%; margin-top: 16px;">
-                            <i class="fas fa-save"></i> Save Current Network
-                        </button>
-                    </div>
-                </div>
-            </aside>
+        <!-- CLINICIAN IDENTITY SYSTEM -->
+        <div class="clinician-identity" id="clinicianIdentity">
+            <!-- Dynamic content will be injected here -->
+        </div>
+    </header>
+
+    <!-- MAIN APPLICATION CONTAINER -->
+    <div class="app-container">
+        <!-- PROFESSIONAL NETWORK SIDEBAR -->
+        <aside class="network-sidebar">
+            <div class="network-tabs">
+                <button class="network-tab active" data-tab="my-networks">
+                    <i class="fas fa-user-md"></i> My Networks
+                </button>
+                <button class="network-tab" data-tab="collaborative">
+                    <i class="fas fa-users"></i> Collaborative
+                </button>
+                <button class="network-tab" data-tab="diseases">
+                    <i class="fas fa-disease"></i> Disease Library
+                </button>
+                <button class="network-tab" data-tab="patients">
+                    <i class="fas fa-user-injured"></i> Patients
+                </button>
+            </div>
             
-            <!-- Canvas Area -->
-            <main class="canvas-area">
-                <!-- Toolbar -->
-                <div class="canvas-toolbar">
-                    <div class="toolbar-left">
-                        <div class="canvas-title">
-                            <i class="fas fa-wind" id="currentDiseaseIcon"></i>
-                            <span id="currentDiseaseName">No disease selected</span>
-                            <span class="canvas-subtitle" id="canvasSubtitle"></span>
+            <div class="tab-content">
+                <!-- Content will be dynamically loaded -->
+                <div id="my-networks-tab" class="tab-pane active">
+                    <div class="network-browser">
+                        <div class="network-filters">
+                            <input type="text" placeholder="Search networks..." class="form-control" id="networkSearch">
+                            <select class="form-select" id="networkFilter">
+                                <option value="all">All Networks</option>
+                                <option value="mine">My Networks</option>
+                                <option value="shared">Shared with Me</option>
+                                <option value="public">Public Networks</option>
+                            </select>
                         </div>
-                    </div>
-                    
-                    <div class="toolbar-right">
-                        <button class="btn btn-primary" id="btnAddNode">
-                            <i class="fas fa-plus-circle"></i> Add Node
-                        </button>
-                        <button class="btn btn-secondary" id="btnAddConnection">
-                            <i class="fas fa-link"></i> Add Connection
-                        </button>
-                        <button class="btn btn-success" id="btnLaunchAvatar">
-                            <i class="fas fa-user-md"></i> Launch Avatar
-                        </button>
-                        <button class="btn btn-secondary btn-icon" id="btnAutoLayout">
-                            <i class="fas fa-project-diagram"></i>
-                        </button>
+                        <div id="networksList">
+                            <!-- Networks will be loaded here -->
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Network Canvas -->
-                <div class="network-canvas" id="networkCanvas">
-                    <svg class="connections-layer" id="connectionsLayer"></svg>
-                    <div id="nodesContainer"></div>
-                    
-                    <!-- Welcome Screen -->
-                    <div id="welcomeScreen" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--gray-400);">
-                        <div style="font-size: 72px; margin-bottom: 20px; opacity: 0.2;">
-                            <i class="fas fa-lungs"></i>
-                        </div>
-                        <h2 style="margin-bottom: 12px; color: var(--gray-600); font-size: 24px;">
-                            Welcome to AIRWAYSCOPE PRO
-                        </h2>
-                        <p style="max-width: 400px; line-height: 1.5; margin-bottom: 24px;">
-                            Select a disease from the sidebar to begin mapping clinical pathways
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- Connection Creator -->
-                <div class="connection-creator" id="connectionCreator" style="display: none; position: absolute; top: 100px; left: 100px; background: white; padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow-xl); border: 1px solid var(--gray-200); width: 300px; z-index: 1000;">
-                    <h4 style="margin-bottom: 16px;">Create Connection</h4>
-                    <div class="form-group">
-                        <select class="form-control" id="connectionSource">
-                            <option value="">Select source...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <select class="form-control" id="connectionTarget">
-                            <option value="">Select target...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <select class="form-control" id="connectionType">
-                            <option value="causal">Causal</option>
-                            <option value="associative">Associative</option>
-                            <option value="modulatory">Modulatory</option>
-                            <option value="treatment">Treatment</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" id="btnCreateConnection" style="width: 100%;">
-                        <i class="fas fa-check"></i> Create
+                <!-- Other tabs will be loaded dynamically -->
+            </div>
+        </aside>
+
+        <!-- MAIN CANVAS WORKSPACE -->
+        <main class="canvas-workspace">
+            <!-- HIERARCHICAL TOOLBAR -->
+            <div class="hierarchical-toolbar">
+                <!-- Primary Actions -->
+                <div class="toolbar-section">
+                    <button class="toolbar-btn" id="btnSelect" title="Select (S)">
+                        <i class="fas fa-mouse-pointer"></i> Select
+                    </button>
+                    <button class="toolbar-btn" id="btnPan" title="Pan (P)">
+                        <i class="fas fa-hand-paper"></i> Pan
+                    </button>
+                    <button class="toolbar-btn" id="btnZoom" title="Zoom (Z)">
+                        <i class="fas fa-search"></i> Zoom
                     </button>
                 </div>
-            </main>
-        </div>
-    </div>
-    
-    <!-- Modals -->
-    
-    <!-- Clinician Registration -->
-    <div class="modal-overlay" id="clinicianModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">Clinician Registration</h2>
-                <button class="modal-close" onclick="closeModal('clinicianModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Full Name *</label>
-                    <input type="text" class="form-control" id="regClinicianName" placeholder="Dr. John Smith" required>
+                
+                <!-- Contextual Actions (Visible when node selected) -->
+                <div class="toolbar-section" id="contextualActions" style="display: none;">
+                    <button class="toolbar-btn" id="btnEditNode">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="toolbar-btn" id="btnConnectNodes">
+                        <i class="fas fa-link"></i> Connect
+                    </button>
+                    <button class="toolbar-btn" id="btnDeleteNode">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Specialty *</label>
-                    <select class="form-control" id="regClinicianSpecialty" required>
-                        <option value="">Select specialty</option>
-                        <option value="pulmonology">Pulmonology</option>
-                        <option value="allergy">Allergy & Immunology</option>
-                        <option value="primary_care">Primary Care</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Clinician ID</label>
-                    <input type="text" class="form-control" id="regClinicianId" readonly>
-                </div>
-                <button class="btn btn-primary" onclick="registerClinician()" style="width: 100%;">
-                    <i class="fas fa-user-md"></i> Register
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Add Node Modal -->
-    <div class="modal-overlay" id="addNodeModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">Add Clinical Node</h2>
-                <button class="modal-close" onclick="closeModal('addNodeModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Node Type *</label>
-                    <select class="form-control" id="nodeType">
-                        <option value="disease">Disease</option>
-                        <option value="symptom">Symptom</option>
-                        <option value="mechanism">Mechanism</option>
-                        <option value="treatment">Treatment</option>
-                        <option value="modifier">Modifier</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Node Name *</label>
-                    <input type="text" class="form-control" id="nodeName" placeholder="e.g., Type 2 Inflammation" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" id="nodeDescription" rows="3"></textarea>
-                </div>
-                <button class="btn btn-success" onclick="createNewNode()" style="width: 100%;">
-                    <i class="fas fa-plus"></i> Add Node
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Save Network Modal -->
-    <div class="modal-overlay" id="saveNetworkModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 class="modal-title">Save Network</h2>
-                <button class="modal-close" onclick="closeModal('saveNetworkModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Network Name *</label>
-                    <input type="text" class="form-control" id="saveNetworkName" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Description</label>
-                    <textarea class="form-control" id="saveNetworkDescription" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Permissions</label>
-                    <div style="display: flex; gap: 16px;">
-                        <label><input type="radio" name="permission" value="private" checked> Private</label>
-                        <label><input type="radio" name="permission" value="shared"> Share with Network</label>
+                
+                <!-- Node Creation -->
+                <div class="toolbar-section">
+                    <div class="node-palette" id="nodePalette">
+                        <!-- Structured node types will be added here -->
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="saveNetworkToDatabase()" style="width: 100%;">
-                    <i class="fas fa-save"></i> Save
+                
+                <!-- Advanced Actions -->
+                <div class="toolbar-section advanced-actions">
+                    <button class="toolbar-btn" id="btnExport">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="toolbar-btn" id="btnPermissions">
+                        <i class="fas fa-lock"></i> Permissions
+                    </button>
+                    <button class="toolbar-btn" id="btnCollaborate">
+                        <i class="fas fa-users"></i> Collaborate
+                    </button>
+                </div>
+            </div>
+
+            <!-- STRUCTURED NODE TYPES PALETTE -->
+            <div class="node-palette">
+                <!-- Will be populated with structured node types -->
+            </div>
+
+            <!-- MAIN CANVAS AREA -->
+            <div class="canvas-area" id="canvasArea">
+                <div id="networkCanvas"></div>
+                <svg id="connectionsSvg" class="connections-svg"></svg>
+                
+                <!-- Welcome Overlay -->
+                <div id="welcomeOverlay" style="display: flex; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: white; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="brand-logo" style="margin-bottom: 24px;">
+                        <i class="fas fa-lungs" style="font-size: 36px;"></i>
+                    </div>
+                    <h2 style="font-size: 28px; color: var(--oxford-blue); margin-bottom: 12px;">Welcome to AIRWAYSCOPE PRO</h2>
+                    <p style="color: var(--mit-gray); max-width: 500px; text-align: center; margin-bottom: 32px;">
+                        Create structured disease networks, collaborate with colleagues, and simulate treatments with our elite clinical intelligence platform.
+                    </p>
+                    <button class="toolbar-btn" id="btnGetStarted" style="padding: 16px 32px; font-size: 16px;">
+                        <i class="fas fa-rocket"></i> Get Started
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- PATIENT AVATAR SIDEBAR -->
+        <aside class="avatar-sidebar">
+            <div class="avatar-header">
+                <div style="font-size: 48px; margin-bottom: 16px;">🫁</div>
+                <h3 style="font-size: 20px; font-weight: 700;">Airway Avatar v2.0</h3>
+                <p style="opacity: 0.9; font-size: 14px; margin-top: 4px;">
+                    Real-time Digital Twin Simulation
+                </p>
+            </div>
+            
+            <div class="avatar-3d-container">
+                <canvas id="avatarCanvas"></canvas>
+                <div id="avatarLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white;">
+                    <div style="font-size: 24px; margin-bottom: 16px;"><i class="fas fa-cogs fa-spin"></i></div>
+                    <div>Initializing Digital Twin...</div>
+                </div>
+            </div>
+            
+            <div class="avatar-controls">
+                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                    <button class="toolbar-btn" onclick="simulateTreatment('ICS')" style="flex: 1;">
+                        <i class="fas fa-prescription-bottle"></i> ICS
+                    </button>
+                    <button class="toolbar-btn" onclick="simulateTreatment('Biologic')" style="flex: 1;">
+                        <i class="fas fa-syringe"></i> Biologic
+                    </button>
+                </div>
+                
+                <div id="avatarMetrics">
+                    <!-- Avatar metrics will be shown here -->
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- EXPORT & ANALYTICS PANEL -->
+    <div class="export-panel" id="exportPanel" style="display: none;">
+        <h4 style="margin-bottom: 16px; color: var(--oxford-blue);">
+            <i class="fas fa-chart-network"></i> Network Analytics
+        </h4>
+        <div id="networkAnalytics">
+            <!-- Analytics will be shown here -->
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    
+    <!-- Clinician Registration Modal -->
+    <div class="modal-overlay" id="clinicianModal">
+        <div class="modal-container">
+            <div style="padding: 32px;">
+                <h2 style="font-size: 24px; color: var(--oxford-blue); margin-bottom: 8px;">
+                    <i class="fas fa-user-md"></i> Clinician Registration
+                </h2>
+                <p style="color: var(--mit-gray); margin-bottom: 24px;">
+                    Register to access elite clinical features, track your sessions, and collaborate with colleagues worldwide.
+                </p>
+                
+                <div style="display: grid; gap: 20px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--oxford-blue);">
+                            Full Name *
+                        </label>
+                        <input type="text" class="form-control" id="clinicianName" placeholder="Dr. John Smith">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--oxford-blue);">
+                            Specialty *
+                        </label>
+                        <select class="form-select" id="clinicianSpecialty">
+                            <option value="">Select specialty</option>
+                            <option value="Pulmonology">Pulmonology</option>
+                            <option value="Allergy">Allergy & Immunology</option>
+                            <option value="Critical Care">Critical Care Medicine</option>
+                            <option value="Research">Clinical Research</option>
+                            <option value="Academic">Academic Medicine</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--oxford-blue);">
+                            Institution *
+                        </label>
+                        <input type="text" class="form-control" id="clinicianInstitution" placeholder="Cambridge University Hospital">
+                    </div>
+                    
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--oxford-blue);">
+                            Research Interests
+                        </label>
+                        <input type="text" class="form-control" id="clinicianInterests" placeholder="Severe asthma, Biologics, Digital twins">
+                    </div>
+                </div>
+                
+                <button class="toolbar-btn" onclick="completeClinicianRegistration()" 
+                        style="width: 100%; margin-top: 32px; padding: 16px; font-size: 16px;">
+                    <i class="fas fa-rocket"></i> Enter Elite Platform
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ========== COMPLETE JAVASCRIPT - NO GAPS ========== -->
+    <!-- Create Network Modal -->
+    <div class="modal-overlay" id="createNetworkModal">
+        <div class="modal-container">
+            <div style="padding: 32px;">
+                <h2 style="font-size: 24px; color: var(--oxford-blue); margin-bottom: 8px;">
+                    <i class="fas fa-project-diagram"></i> Create Professional Network
+                </h2>
+                
+                <div style="margin-top: 24px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--oxford-blue);">
+                        Network Name *
+                    </label>
+                    <input type="text" class="form-control" id="networkName" placeholder="e.g., Cambridge Severe Asthma Research Network">
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--oxford-blue);">
+                        Description
+                    </label>
+                    <textarea class="form-control" id="networkDescription" rows="3" placeholder="Describe the purpose and scope of this professional network..."></textarea>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--oxford-blue);">
+                        Collaboration Settings
+                    </label>
+                    <div style="display: flex; gap: 20px; margin-top: 12px;">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="networkAccess" value="private" checked>
+                            Private (Invite Only)
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="radio" name="networkAccess" value="public">
+                            Public (Discoverable)
+                        </label>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 12px; margin-top: 32px;">
+                    <button class="toolbar-btn" onclick="closeModal('createNetworkModal')" style="flex: 1;">
+                        Cancel
+                    </button>
+                    <button class="toolbar-btn" onclick="createProfessionalNetwork()" 
+                            style="flex: 1; background: var(--oxford-blue); color: white;">
+                        <i class="fas fa-plus"></i> Create Network
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ========== COMPREHENSIVE JAVASCRIPT IMPLEMENTATION ========== -->
     <script>
-        // ====== CONFIGURATION ======
+        // ====== SUPABASE CONFIGURATION ======
         const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_';
         
-        // ====== ENHANCED STATE MANAGEMENT ======
-        const AppState = {
+        // ====== GLOBAL STATE MANAGEMENT ======
+        const EliteState = {
+            // Core Systems
             supabase: null,
-            clinician: {
-                id: null,
-                name: null,
-                specialty: null,
-                avatar: null
-            },
-            session: {
-                id: null,
-                startTime: null
-            },
-            currentDisease: null,
-            nodes: [],
-            connections: [],
-            selectedNode: null,
-            patients: [],
-            currentPatient: null,
-            nodePositions: new Map(),
-            zoom: 1,
-            pan: { x: 0, y: 0 },
+            isInitialized: false,
             
-            // Connection validation rules - COMPLETE IMPLEMENTATION
-            connectionRules: {
-                'disease': ['symptom', 'mechanism', 'treatment', 'comorbid'],
-                'symptom': ['disease', 'mechanism', 'modifier', 'comorbid'],
-                'mechanism': ['disease', 'symptom', 'treatment', 'modifier'],
-                'treatment': ['disease', 'mechanism', 'symptom'],
-                'modifier': ['symptom', 'mechanism'],
-                'comorbid': ['disease', 'symptom'],
-                'environmental': ['disease', 'symptom', 'mechanism']
-            }
+            // Clinician Identity (PHASE 1)
+            currentClinician: null,
+            currentSession: null,
+            sessionTimer: null,
+            sessionActions: [],
+            
+            // Professional Networks (PHASE 2)
+            professionalNetworks: [],
+            currentNetwork: null,
+            networkMembers: new Map(),
+            networkPermissions: {},
+            
+            // Structured Network System (PHASE 3)
+            nodeTypes: {
+                DISEASE: {
+                    id: 'disease',
+                    name: 'Disease Entity',
+                    color: '#7209B7',
+                    icon: 'fas fa-disease',
+                    allowedConnections: ['symptom', 'mechanism', 'comorbidity', 'treatment'],
+                    properties: ['prevalence', 'icd10', 'severity']
+                },
+                SYMPTOM: {
+                    id: 'symptom',
+                    name: 'Clinical Symptom',
+                    color: '#EF476F',
+                    icon: 'fas fa-tachometer-alt',
+                    allowedConnections: ['disease', 'mechanism', 'modifier', 'treatment'],
+                    properties: ['frequency', 'intensity', 'impact']
+                },
+                MECHANISM: {
+                    id: 'mechanism',
+                    name: 'Pathophysiological Mechanism',
+                    color: '#06D6A0',
+                    icon: 'fas fa-cogs',
+                    allowedConnections: ['disease', 'symptom', 'comorbidity', 'treatment'],
+                    properties: ['evidence_level', 'biomarkers', 'reversibility']
+                },
+                MODIFIER: {
+                    id: 'modifier',
+                    name: 'Disease Modifier',
+                    color: '#FFB300',
+                    icon: 'fas fa-sliders-h',
+                    allowedConnections: ['symptom', 'mechanism', 'comorbidity'],
+                    properties: ['type', 'strength', 'direction']
+                },
+                COMORBIDITY: {
+                    id: 'comorbidity',
+                    name: 'Comorbid Condition',
+                    color: '#00356B',
+                    icon: 'fas fa-layer-group',
+                    allowedConnections: ['disease', 'symptom', 'mechanism', 'treatment'],
+                    properties: ['prevalence', 'impact', 'treatment_priority']
+                },
+                TREATMENT: {
+                    id: 'treatment',
+                    name: 'Therapeutic Intervention',
+                    color: '#00B4D8',
+                    icon: 'fas fa-pills',
+                    allowedConnections: ['disease', 'symptom', 'mechanism', 'comorbidity'],
+                    properties: ['evidence_level', 'dosage', 'efficacy', 'side_effects']
+                }
+            },
+            
+            relationshipTypes: {
+                CAUSES: {
+                    id: 'causes',
+                    name: 'Causes',
+                    direction: 'unidirectional',
+                    allowedSource: ['disease', 'mechanism', 'comorbidity'],
+                    allowedTarget: ['symptom', 'mechanism', 'comorbidity'],
+                    color: '#EF476F',
+                    strengthRequired: true
+                },
+                EXACERBATES: {
+                    id: 'exacerbates',
+                    name: 'Exacerbates',
+                    direction: 'unidirectional',
+                    allowedSource: ['modifier', 'comorbidity'],
+                    allowedTarget: ['symptom', 'mechanism'],
+                    color: '#FFB300',
+                    strengthRequired: true
+                },
+                MITIGATES: {
+                    id: 'mitigates',
+                    name: 'Mitigates',
+                    direction: 'unidirectional',
+                    allowedSource: ['treatment', 'modifier'],
+                    allowedTarget: ['symptom', 'mechanism'],
+                    color: '#06D6A0',
+                    strengthRequired: true
+                },
+                ASSOCIATED_WITH: {
+                    id: 'associated_with',
+                    name: 'Associated With',
+                    direction: 'bidirectional',
+                    allowedSource: ['symptom', 'mechanism', 'comorbidity'],
+                    allowedTarget: ['symptom', 'mechanism', 'comorbidity'],
+                    color: '#8A8D8F',
+                    strengthRequired: false
+                },
+                TREATS: {
+                    id: 'treats',
+                    name: 'Treats',
+                    direction: 'unidirectional',
+                    allowedSource: ['treatment'],
+                    allowedTarget: ['disease', 'symptom', 'mechanism'],
+                    color: '#00B4D8',
+                    strengthRequired: true
+                },
+                MODIFIES: {
+                    id: 'modifies',
+                    name: 'Modifies',
+                    direction: 'unidirectional',
+                    allowedSource: ['modifier'],
+                    allowedTarget: ['symptom', 'mechanism', 'treatment'],
+                    color: '#A51C30',
+                    strengthRequired: true
+                }
+            },
+            
+            // Canvas State
+            nodes: new Map(),
+            connections: new Map(),
+            selectedNode: null,
+            selectedConnection: null,
+            
+            // Sub-networks (PHASE 4)
+            subNetworks: new Map(),
+            collapsedSubNetworks: new Set(),
+            
+            // Avatar System
+            avatarScene: null,
+            avatarCamera: null,
+            avatarRenderer: null,
+            avatarPatient: null,
+            avatarTraits: [],
+            
+            // UI State
+            currentTool: 'select',
+            zoomLevel: 1,
+            panOffset: { x: 0, y: 0 },
+            
+            // History for undo/redo
+            history: [],
+            historyIndex: -1
         };
         
-        // ====== INITIALIZATION ======
-        $(document).ready(async function() {
-            console.log('🚀 AIRWAYSCOPE PRO - Complete Initialization');
-            await initializeCompleteSystem();
-        });
-        
-        async function initializeCompleteSystem() {
+        // ====== INITIALIZATION SEQUENCE ======
+        $(document).ready(async () => {
+            console.log('🚀 Elite AIRWAYSCOPE PRO v2.0 Initializing...');
+            
             try {
-                // Initialize Supabase
-                AppState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                // 1. Initialize Supabase
+                EliteState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                // Check for saved clinician
-                const savedClinician = localStorage.getItem('airwayscope_clinician');
-                if (savedClinician) {
-                    AppState.clinician = JSON.parse(savedClinician);
-                    updateClinicianUI();
-                } else {
-                    showClinicianRegistration();
-                    return;
-                }
+                // 2. Initialize Clinician Identity System (PHASE 1)
+                await initializeClinicianSystem();
                 
-                // Generate session ID
-                AppState.session.id = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-                AppState.session.startTime = new Date().toISOString();
+                // 3. Initialize Professional Networks (PHASE 2)
+                await initializeProfessionalNetworks();
                 
-                // Update UI
-                $('#sessionId').text(AppState.session.id.substring(0, 8));
-                $('#statusText').text('System Ready');
+                // 4. Initialize Canvas System
+                initializeCanvasSystem();
                 
-                // Load initial data
-                await Promise.all([
-                    loadDiseases(),
-                    loadSamplePatients(),
-                    setupSampleNetworks()
-                ]);
+                // 5. Initialize Node Palette (PHASE 3)
+                initializeNodePalette();
                 
-                // Setup event listeners
+                // 6. Initialize Avatar System (PHASE 4)
+                initializeAvatarSystem();
+                
+                // 7. Setup Event Listeners
                 setupAllEventListeners();
                 
-                // Initialize UI
-                initializeSidebarToggle();
+                // 8. Show Welcome
+                EliteState.isInitialized = true;
+                console.log('✅ Elite Platform Ready');
                 
-                console.log('✅ System fully initialized');
-                showToast('System Ready', `Welcome ${AppState.clinician.name}!`, 'success');
-                
+                showEliteToast('Welcome to AIRWAYSCOPE PRO', 
+                    'Elite clinical intelligence platform initialized successfully', 
+                    'success');
+                    
             } catch (error) {
-                console.error('Initialization error:', error);
-                showToast('Error', error.message, 'error');
+                console.error('❌ Initialization failed:', error);
+                showEliteToast('Initialization Error', error.message, 'error');
+            }
+        });
+        
+        // ====== PHASE 1: CLINICIAN IDENTITY SYSTEM ======
+        async function initializeClinicianSystem() {
+            // Check for existing clinician registration
+            let clinician = localStorage.getItem('elite_clinician');
+            
+            if (clinician) {
+                clinician = JSON.parse(clinician);
+                EliteState.currentClinician = clinician;
+                await startNewSession();
+            } else {
+                // Show registration modal
+                $('#clinicianModal').addClass('active');
+                return;
             }
         }
         
-        // ====== CLINICIAN SYSTEM - COMPLETE ======
-        function showClinicianRegistration() {
-            const clinicianId = 'clin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-            $('#regClinicianId').val(clinicianId);
-            $('#clinicianModal').addClass('active');
-        }
-        
-        function registerClinician() {
-            const name = $('#regClinicianName').val().trim();
-            const specialty = $('#regClinicianSpecialty').val();
-            const id = $('#regClinicianId').val();
+        async function completeClinicianRegistration() {
+            const name = $('#clinicianName').val().trim();
+            const specialty = $('#clinicianSpecialty').val();
+            const institution = $('#clinicianInstitution').val().trim();
+            const interests = $('#clinicianInterests').val().trim();
             
-            if (!name || !specialty) {
-                showToast('Error', 'Please fill all required fields', 'error');
+            if (!name || !specialty || !institution) {
+                showEliteToast('Registration Error', 'Please complete all required fields', 'error');
                 return;
             }
             
-            AppState.clinician = {
-                id: id,
+            // Generate unique clinician ID
+            const clinicianId = 'clin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            
+            EliteState.currentClinician = {
+                id: clinicianId,
                 name: name,
                 specialty: specialty,
-                avatar: name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                institution: institution,
+                interests: interests ? interests.split(',') : [],
+                registrationDate: new Date().toISOString(),
+                sessionCount: 0,
+                networksCreated: 0,
+                totalActions: 0
             };
             
-            localStorage.setItem('airwayscope_clinician', JSON.stringify(AppState.clinician));
-            updateClinicianUI();
-            closeModal('clinicianModal');
+            // Save to localStorage
+            localStorage.setItem('elite_clinician', JSON.stringify(EliteState.currentClinician));
             
-            // Continue initialization
-            initializeCompleteSystem();
-        }
-        
-        function updateClinicianUI() {
-            $('#clinicianName').text(AppState.clinician.name);
-            $('#clinicianSpecialty').text(AppState.clinician.specialty);
-            $('#clinicianAvatar').text(AppState.clinician.avatar);
-        }
-        
-        // ====== DISEASE MANAGEMENT - COMPLETE ======
-        async function loadDiseases() {
+            // Save to database
             try {
-                const { data, error } = await AppState.supabase
-                    .from('diseases')
-                    .select('*')
-                    .order('disease_name');
-                
-                if (error) throw error;
-                
-                if (data && data.length > 0) {
-                    renderDiseases(data);
-                } else {
-                    // Create sample diseases
-                    const sampleDiseases = [
-                        {
-                            id: 1,
-                            disease_name: 'Asthma',
-                            icd10_code: 'J45',
-                            description: 'Chronic inflammatory airway disease',
-                            prevalence: 'Common'
-                        },
-                        {
-                            id: 2,
-                            disease_name: 'COPD',
-                            icd10_code: 'J44',
-                            description: 'Chronic obstructive pulmonary disease',
-                            prevalence: 'Common'
-                        },
-                        {
-                            id: 3,
-                            disease_name: 'Bronchiectasis',
-                            icd10_code: 'J47',
-                            description: 'Abnormal widening of the bronchi',
-                            prevalence: 'Uncommon'
-                        }
-                    ];
+                const { error } = await EliteState.supabase
+                    .from('elite_clinicians')
+                    .insert([{
+                        clinician_id: clinicianId,
+                        name: name,
+                        specialty: specialty,
+                        institution: institution,
+                        interests: interests,
+                        created_at: new Date().toISOString()
+                    }]);
                     
-                    // Insert sample diseases
-                    const { error: insertError } = await AppState.supabase
-                        .from('diseases')
-                        .insert(sampleDiseases);
-                    
-                    if (!insertError) {
-                        renderDiseases(sampleDiseases);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading diseases:', error);
-                // Load fallback sample data
-                loadSampleDiseases();
-            }
-        }
-        
-        function loadSampleDiseases() {
-            const sampleDiseases = [
-                {
-                    id: 1,
-                    disease_name: 'Asthma',
-                    icd10_code: 'J45',
-                    description: 'Chronic inflammatory airway disease with reversible airflow obstruction.',
-                    prevalence: 'Common (7-10% of population)'
-                },
-                {
-                    id: 2,
-                    disease_name: 'COPD',
-                    icd10_code: 'J44',
-                    description: 'Chronic obstructive pulmonary disease with progressive airflow limitation.',
-                    prevalence: 'Common (8-12% of adults)'
-                },
-                {
-                    id: 3,
-                    disease_name: 'Bronchiectasis',
-                    icd10_code: 'J47',
-                    description: 'Abnormal widening of the bronchi with chronic inflammation.',
-                    prevalence: 'Uncommon (1-2% of population)'
-                }
-            ];
-            
-            renderDiseases(sampleDiseases);
-        }
-        
-        function renderDiseases(diseases) {
-            const container = $('#diseaseList');
-            container.empty();
-            
-            diseases.forEach(disease => {
-                const diseaseCard = $(`
-                    <div class="disease-card" data-disease-id="${disease.id}">
-                        <div class="disease-header">
-                            <div class="disease-name">${disease.disease_name}</div>
-                            <div class="disease-code">${disease.icd10_code}</div>
-                        </div>
-                        <div class="disease-description">${disease.description}</div>
-                        <div class="disease-meta">
-                            <div>${disease.prevalence}</div>
-                            <button class="btn btn-primary btn-sm" onclick="loadDisease(${disease.id})">
-                                <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-                `);
-                
-                container.append(diseaseCard);
-            });
-        }
-        
-        async function loadDisease(diseaseId) {
-            try {
-                // Load disease from Supabase
-                const { data, error } = await AppState.supabase
-                    .from('diseases')
-                    .select('*')
-                    .eq('id', diseaseId)
-                    .single();
-                
                 if (error) throw error;
-                
-                AppState.currentDisease = data;
-                
-                // Load associated traits/nodes
-                await loadDiseaseNodes(diseaseId);
-                
-                // Update UI
-                $('#currentDiseaseName').text(data.disease_name);
-                $('#currentDiseaseIcon').attr('class', 'fas fa-lungs');
-                $('#canvasSubtitle').text(`${AppState.nodes.length} nodes loaded`);
-                
-                // Render network
-                renderNetwork();
-                
-                showToast('Disease Loaded', `${data.disease_name} loaded`, 'success');
-                
             } catch (error) {
-                console.error('Error loading disease:', error);
-                showToast('Error', 'Failed to load disease', 'error');
-            }
-        }
-        
-        async function loadDiseaseNodes(diseaseId) {
-            try {
-                // Try to load from database
-                const { data, error } = await AppState.supabase
-                    .from('treatable_traits')
-                    .select('*')
-                    .eq('disease_id', diseaseId);
-                
-                if (error || !data || data.length === 0) {
-                    // Load sample nodes
-                    createSampleNodesForDisease(diseaseId);
-                    return;
-                }
-                
-                // Convert traits to nodes
-                AppState.nodes = data.map(trait => ({
-                    id: 'node_' + trait.id,
-                    type: trait.category?.toLowerCase() || 'symptom',
-                    name: trait.trait_name,
-                    description: trait.description,
-                    measurement: trait.measurement_method,
-                    severity: trait.severity || 50
-                }));
-                
-                // Load connections
-                await loadNodeConnections();
-                
-            } catch (error) {
-                console.error('Error loading nodes:', error);
-                createSampleNodesForDisease(diseaseId);
-            }
-        }
-        
-        function createSampleNodesForDisease(diseaseId) {
-            // Sample nodes for asthma
-            if (diseaseId === 1) {
-                AppState.nodes = [
-                    {
-                        id: 'node_1',
-                        type: 'disease',
-                        name: 'Asthma',
-                        description: 'Chronic inflammatory airway disease',
-                        severity: 80
-                    },
-                    {
-                        id: 'node_2',
-                        type: 'symptom',
-                        name: 'Dyspnea',
-                        description: 'Shortness of breath',
-                        severity: 70
-                    },
-                    {
-                        id: 'node_3',
-                        type: 'mechanism',
-                        name: 'Bronchoconstriction',
-                        description: 'Airway smooth muscle contraction',
-                        severity: 75
-                    },
-                    {
-                        id: 'node_4',
-                        type: 'treatment',
-                        name: 'ICS Therapy',
-                        description: 'Inhaled corticosteroids',
-                        severity: 85
-                    },
-                    {
-                        id: 'node_5',
-                        type: 'modifier',
-                        name: 'Smoking History',
-                        description: 'Tobacco exposure',
-                        severity: 90
-                    }
-                ];
-                
-                AppState.connections = [
-                    {
-                        id: 'conn_1',
-                        source: 'node_1',
-                        target: 'node_2',
-                        type: 'causal'
-                    },
-                    {
-                        id: 'conn_2',
-                        source: 'node_1',
-                        target: 'node_3',
-                        type: 'causal'
-                    },
-                    {
-                        id: 'conn_3',
-                        source: 'node_4',
-                        target: 'node_1',
-                        type: 'treatment'
-                    },
-                    {
-                        id: 'conn_4',
-                        source: 'node_5',
-                        target: 'node_1',
-                        type: 'modulatory'
-                    }
-                ];
+                console.warn('Could not save clinician to database:', error);
             }
             
-            // Set initial positions
-            AppState.nodePositions.clear();
-            AppState.nodes.forEach((node, index) => {
-                const x = 100 + (index % 4) * 250;
-                const y = 100 + Math.floor(index / 4) * 180;
-                AppState.nodePositions.set(node.id, { x, y });
-            });
+            // Start first session
+            await startNewSession();
+            
+            // Close modal
+            $('#clinicianModal').removeClass('active');
+            
+            showEliteToast('Registration Complete', 
+                `Welcome Dr. ${name.split(' ')[0]} to the elite platform!`, 
+                'success');
         }
         
-        async function loadNodeConnections() {
-            try {
-                const { data, error } = await AppState.supabase
-                    .from('trait_connections')
-                    .select('*');
-                
-                if (!error && data) {
-                    AppState.connections = data.map(conn => ({
-                        id: 'conn_' + conn.id,
-                        source: 'node_' + conn.source_trait_id,
-                        target: 'node_' + conn.target_trait_id,
-                        type: conn.relationship_type || 'associative'
-                    }));
-                }
-            } catch (error) {
-                console.error('Error loading connections:', error);
-            }
-        }
-        
-        // ====== NODE MANAGEMENT - COMPLETE ======
-        function createNewNode() {
-            const type = $('#nodeType').val();
-            const name = $('#nodeName').val().trim();
-            const description = $('#nodeDescription').val().trim();
+        async function startNewSession() {
+            const sessionId = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6).toUpperCase();
             
-            if (!name) {
-                showToast('Error', 'Node name is required', 'error');
-                return;
-            }
-            
-            const nodeId = 'node_' + Date.now();
-            const newNode = {
-                id: nodeId,
-                type: type,
-                name: name,
-                description: description,
-                severity: 50,
-                createdBy: AppState.clinician.id,
-                createdAt: new Date().toISOString()
+            EliteState.currentSession = {
+                id: sessionId,
+                clinicianId: EliteState.currentClinician.id,
+                startTime: new Date().toISOString(),
+                startTimestamp: Date.now(),
+                networkId: null,
+                diseaseId: null,
+                actions: []
             };
             
-            AppState.nodes.push(newNode);
+            // Update clinician session count
+            EliteState.currentClinician.sessionCount = (EliteState.currentClinician.sessionCount || 0) + 1;
+            localStorage.setItem('elite_clinician', JSON.stringify(EliteState.currentClinician));
             
-            // Position node
-            const workspace = $('#networkCanvas');
-            const x = workspace.width() / 2 - 120;
-            const y = workspace.height() / 2 - 85;
-            AppState.nodePositions.set(nodeId, { x, y });
-            
-            // Render
-            renderNetwork();
-            closeModal('addNodeModal');
-            
-            // Update connection dropdowns
-            updateConnectionDropdowns();
-            
-            showToast('Node Added', `${name} added to network`, 'success');
-        }
-        
-        function renderNetwork() {
-            const container = $('#nodesContainer');
-            const welcome = $('#welcomeScreen');
-            
-            if (AppState.nodes.length === 0) {
-                container.empty();
-                welcome.show();
-                return;
+            // Log session to database
+            try {
+                const { error } = await EliteState.supabase
+                    .from('elite_sessions')
+                    .insert([{
+                        session_id: sessionId,
+                        clinician_id: EliteState.currentClinician.id,
+                        start_time: EliteState.currentSession.startTime,
+                        user_agent: navigator.userAgent
+                    }]);
+                    
+                if (error) throw error;
+            } catch (error) {
+                console.warn('Could not log session to database:', error);
             }
             
-            welcome.hide();
-            container.empty();
+            // Update UI
+            updateClinicianDisplay();
             
-            // Clear connections
-            $('#connectionsLayer').empty();
+            // Start session timer
+            startSessionTimer();
             
-            // Render nodes
-            AppState.nodes.forEach(node => {
-                renderNode(node);
-            });
+            // Log initial action
+            logSessionAction('session_started', { platform: 'elite_v2' });
             
-            // Render connections
-            AppState.connections.forEach(connection => {
-                renderConnection(connection);
-            });
-            
-            // Make draggable
-            setupDraggableNodes();
+            console.log(`✅ Session ${sessionId} started`);
         }
         
-        function renderNode(node) {
-            const container = $('#nodesContainer');
-            const position = AppState.nodePositions.get(node.id) || { x: 100, y: 100 };
+        function updateClinicianDisplay() {
+            const clinician = EliteState.currentClinician;
+            const session = EliteState.currentSession;
             
-            const nodeHtml = $(`
-                <div class="structured-node node-type-${node.type}" 
-                     data-node-id="${node.id}"
-                     style="left: ${position.x}px; top: ${position.y}px;">
-                    <div class="node-header">
-                        <div class="node-title">${node.name}</div>
-                        <span class="node-type-badge">${node.type.toUpperCase()}</span>
+            const html = `
+                <div class="clinician-avatar">
+                    ${getInitials(clinician.name)}
+                </div>
+                <div class="clinician-info">
+                    <div class="clinician-name">${clinician.name}</div>
+                    <div class="clinician-meta">
+                        <span><i class="fas fa-stethoscope"></i> ${clinician.specialty}</span>
+                        <span class="session-timer" id="sessionTimer">00:00:00</span>
+                        <span><i class="fas fa-network-wired"></i> Session ${clinician.sessionCount}</span>
                     </div>
-                    <div class="node-content">
-                        <p>${node.description || 'No description'}</p>
-                        <div style="display: flex; gap: 12px; margin-top: 8px; font-size: 12px;">
-                            <div><i class="fas fa-chart-line"></i> ${node.severity}%</div>
-                            ${node.measurement ? `<div><i class="fas fa-ruler"></i> ${node.measurement}</div>` : ''}
-                        </div>
-                    </div>
-                    <div class="node-footer">
-                        <div>ID: ${node.id.substring(0, 8)}</div>
-                        <div class="node-actions">
-                            <button class="node-btn" onclick="editNode('${node.id}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="node-btn" onclick="deleteNode('${node.id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 4px;">
+                        <i class="fas fa-hospital"></i> ${clinician.institution}
                     </div>
                 </div>
-            `);
+                <button class="toolbar-btn" onclick="endSession()" 
+                        style="padding: 8px 16px; font-size: 12px; background: rgba(239, 71, 111, 0.2); color: white;">
+                    <i class="fas fa-sign-out-alt"></i> End
+                </button>
+            `;
             
-            nodeHtml.click(function(e) {
-                e.stopPropagation();
-                selectNode($(this), node);
-            });
-            
-            container.append(nodeHtml);
+            $('#clinicianIdentity').html(html);
         }
         
-        function renderConnection(connection) {
-            const sourceNode = $(`.structured-node[data-node-id="${connection.source}"]`);
-            const targetNode = $(`.structured-node[data-node-id="${connection.target}"]`);
-            
-            if (!sourceNode.length || !targetNode.length) return;
-            
-            const svg = $('#connectionsLayer')[0];
-            const sourceRect = sourceNode[0].getBoundingClientRect();
-            const targetRect = targetNode[0].getBoundingClientRect();
-            const canvasRect = $('#networkCanvas')[0].getBoundingClientRect();
-            
-            const x1 = sourceRect.left - canvasRect.left + sourceRect.width / 2;
-            const y1 = sourceRect.top - canvasRect.top + sourceRect.height / 2;
-            const x2 = targetRect.left - canvasRect.left + targetRect.width / 2;
-            const y2 = targetRect.top - canvasRect.top + targetRect.height / 2;
-            
-            // Apply zoom/pan
-            const tx1 = (x1 - AppState.pan.x) / AppState.zoom;
-            const ty1 = (y1 - AppState.pan.y) / AppState.zoom;
-            const tx2 = (x2 - AppState.pan.x) / AppState.zoom;
-            const ty2 = (y2 - AppState.pan.y) / AppState.zoom;
-            
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const dx = tx2 - tx1;
-            const dy = ty2 - ty1;
-            const controlX = tx1 + dx * 0.5;
-            const controlY = ty1 + dy * 0.5 - 50;
-            
-            path.setAttribute('d', `M ${tx1} ${ty1} Q ${controlX} ${controlY} ${tx2} ${ty2}`);
-            path.setAttribute('class', `connection-line connection-${connection.type}`);
-            path.setAttribute('stroke-width', '3');
-            
-            // Add arrowhead
-            const markerId = `arrow-${connection.id}`;
-            let marker = document.getElementById(markerId);
-            if (!marker) {
-                marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-                marker.setAttribute('id', markerId);
-                marker.setAttribute('viewBox', '0 0 10 10');
-                marker.setAttribute('refX', '9');
-                marker.setAttribute('refY', '5');
-                marker.setAttribute('markerWidth', '6');
-                marker.setAttribute('markerHeight', '6');
-                marker.setAttribute('orient', 'auto');
-                
-                const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                arrow.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
-                arrow.setAttribute('fill', getConnectionColor(connection.type));
-                marker.appendChild(arrow);
-                svg.appendChild(marker);
+        function startSessionTimer() {
+            if (EliteState.sessionTimer) {
+                clearInterval(EliteState.sessionTimer);
             }
             
-            path.setAttribute('marker-end', `url(#${markerId})`);
-            svg.appendChild(path);
-            
-            // Add label
-            const labelX = (tx1 + tx2) / 2;
-            const labelY = (ty1 + ty2) / 2 - 30;
-            
-            const label = $(`
-                <div class="connection-label connection-${connection.type}" 
-                     style="left: ${labelX}px; top: ${labelY}px; transform: translate(-50%, -50%);">
-                    ${connection.type.toUpperCase()}
-                </div>
-            `);
-            
-            $('#networkCanvas').append(label);
+            EliteState.sessionTimer = setInterval(() => {
+                if (!EliteState.currentSession) return;
+                
+                const elapsed = Date.now() - EliteState.currentSession.startTimestamp;
+                const hours = Math.floor(elapsed / 3600000);
+                const minutes = Math.floor((elapsed % 3600000) / 60000);
+                const seconds = Math.floor((elapsed % 60000) / 1000);
+                
+                $('#sessionTimer').text(
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                );
+            }, 1000);
         }
         
-        function getConnectionColor(type) {
-            const colors = {
-                'causal': '#ef4444',
-                'associative': '#3b82f6',
-                'modulatory': '#10b981',
-                'treatment': '#8b5cf6'
+        function getInitials(name) {
+            return name.split(' ')
+                .map(part => part[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+        }
+        
+        async function endSession() {
+            if (!confirm('End current session? All unsaved work will be preserved.')) return;
+            
+            const session = EliteState.currentSession;
+            session.endTime = new Date().toISOString();
+            session.duration = Date.now() - session.startTimestamp;
+            
+            // Update session in database
+            try {
+                const { error } = await EliteState.supabase
+                    .from('elite_sessions')
+                    .update({
+                        end_time: session.endTime,
+                        duration_ms: session.duration,
+                        action_count: session.actions.length
+                    })
+                    .eq('session_id', session.id);
+                    
+                if (error) throw error;
+            } catch (error) {
+                console.warn('Could not update session in database:', error);
+            }
+            
+            // Clear timer
+            if (EliteState.sessionTimer) {
+                clearInterval(EliteState.sessionTimer);
+            }
+            
+            // Show summary
+            showEliteToast('Session Ended', 
+                `Session duration: ${formatDuration(session.duration)} | Actions: ${session.actions.length}`, 
+                'info');
+            
+            // Start new session
+            setTimeout(startNewSession, 1000);
+        }
+        
+        function logSessionAction(actionType, data = {}) {
+            if (!EliteState.currentSession) return;
+            
+            const action = {
+                id: 'act_' + Date.now(),
+                type: actionType,
+                timestamp: Date.now(),
+                data: data
             };
-            return colors[type] || '#6b7280';
+            
+            EliteState.currentSession.actions.push(action);
+            EliteState.currentClinician.totalActions = (EliteState.currentClinician.totalActions || 0) + 1;
+            
+            // Update localStorage
+            localStorage.setItem('elite_clinician', JSON.stringify(EliteState.currentClinician));
         }
         
-        function selectNode(nodeElement, node) {
-            $('.structured-node').removeClass('selected');
-            nodeElement.addClass('selected');
-            AppState.selectedNode = node;
-        }
-        
-        function editNode(nodeId) {
-            const node = AppState.nodes.find(n => n.id === nodeId);
-            if (!node) return;
-            
-            $('#nodeName').val(node.name);
-            $('#nodeType').val(node.type);
-            $('#nodeDescription').val(node.description || '');
-            $('#addNodeModal').addClass('active');
-            
-            // Change button to update
-            const btn = $('#addNodeModal .btn-success');
-            btn.text('Update Node').off('click').click(() => {
-                updateNode(nodeId);
-            });
-        }
-        
-        function updateNode(nodeId) {
-            const node = AppState.nodes.find(n => n.id === nodeId);
-            if (!node) return;
-            
-            node.name = $('#nodeName').val().trim();
-            node.type = $('#nodeType').val();
-            node.description = $('#nodeDescription').val().trim();
-            
-            renderNetwork();
-            closeModal('addNodeModal');
-            showToast('Node Updated', `${node.name} updated`, 'success');
-        }
-        
-        function deleteNode(nodeId) {
-            if (!confirm('Delete this node and all its connections?')) return;
-            
-            AppState.nodes = AppState.nodes.filter(n => n.id !== nodeId);
-            AppState.connections = AppState.connections.filter(c => 
-                c.source !== nodeId && c.target !== nodeId
-            );
-            AppState.nodePositions.delete(nodeId);
-            
-            renderNetwork();
-            showToast('Node Deleted', 'Node removed', 'warning');
-        }
-        
-        function setupDraggableNodes() {
-            $('.structured-node').each(function() {
-                const node = $(this);
-                let isDragging = false;
-                let startX, startY, startLeft, startTop;
+        // ====== PHASE 2: PROFESSIONAL NETWORK SYSTEM ======
+        async function initializeProfessionalNetworks() {
+            // Load clinician's networks
+            try {
+                const { data, error } = await EliteState.supabase
+                    .from('professional_networks')
+                    .select('*')
+                    .or(`created_by.eq.${EliteState.currentClinician.id},is_public.eq.true`)
+                    .order('created_at', { ascending: false });
+                    
+                if (error) throw error;
                 
-                node.on('mousedown', function(e) {
-                    if (e.button !== 0) return;
-                    
-                    isDragging = true;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    
-                    startLeft = parseInt(node.css('left'));
-                    startTop = parseInt(node.css('top'));
-                    
-                    node.css('cursor', 'grabbing');
-                    node.css('z-index', '1000');
-                    
-                    $(document).on('mousemove', drag);
-                    $(document).on('mouseup', stopDrag);
-                    
-                    e.preventDefault();
-                });
+                EliteState.professionalNetworks = data || [];
                 
-                function drag(e) {
-                    if (!isDragging) return;
+                // Load network memberships
+                const { data: memberships } = await EliteState.supabase
+                    .from('network_members')
+                    .select('*')
+                    .eq('clinician_id', EliteState.currentClinician.id);
                     
-                    const dx = (e.clientX - startX) / AppState.zoom;
-                    const dy = (e.clientY - startY) / AppState.zoom;
-                    
-                    const newLeft = startLeft + dx;
-                    const newTop = startTop + dy;
-                    
-                    node.css({
-                        left: newLeft + 'px',
-                        top: newTop + 'px'
+                if (memberships) {
+                    memberships.forEach(membership => {
+                        EliteState.networkMembers.set(membership.network_id, membership);
                     });
-                    
-                    const nodeId = node.data('node-id');
-                    AppState.nodePositions.set(nodeId, { x: newLeft, y: newTop });
-                    
-                    // Redraw connections
-                    $('#connectionsLayer').empty();
-                    AppState.connections.forEach(renderConnection);
                 }
                 
-                function stopDrag() {
-                    if (!isDragging) return;
-                    
-                    isDragging = false;
-                    node.css('cursor', 'move');
-                    node.css('z-index', '10');
-                    
-                    $(document).off('mousemove', drag);
-                    $(document).off('mouseup', stopDrag);
-                }
-            });
+                renderNetworkBrowser();
+                
+            } catch (error) {
+                console.error('Error loading networks:', error);
+                // Create demo networks
+                createDemoNetworks();
+            }
         }
         
-        // ====== CONNECTION MANAGEMENT - COMPLETE ======
-        function updateConnectionDropdowns() {
-            const sourceSelect = $('#connectionSource');
-            const targetSelect = $('#connectionTarget');
-            
-            sourceSelect.empty().append('<option value="">Select source...</option>');
-            targetSelect.empty().append('<option value="">Select target...</option>');
-            
-            AppState.nodes.forEach(node => {
-                sourceSelect.append(`<option value="${node.id}">${node.name} (${node.type})</option>`);
-                targetSelect.append(`<option value="${node.id}">${node.name} (${node.type})</option>`);
-            });
-        }
-        
-        function showConnectionCreator() {
-            if (AppState.nodes.length < 2) {
-                showToast('Error', 'Need at least 2 nodes', 'error');
-                return;
-            }
-            
-            const creator = $('#connectionCreator');
-            const rect = $('#networkCanvas')[0].getBoundingClientRect();
-            
-            creator.css({
-                left: (rect.width / 2 - 150) + 'px',
-                top: (rect.height / 2 - 100) + 'px',
-                display: 'block'
-            });
-            
-            updateConnectionDropdowns();
-        }
-        
-        function createNewConnection() {
-            const sourceId = $('#connectionSource').val();
-            const targetId = $('#connectionTarget').val();
-            const connectionType = $('#connectionType').val();
-            
-            if (!sourceId || !targetId) {
-                showToast('Error', 'Select source and target', 'error');
-                return;
-            }
-            
-            if (sourceId === targetId) {
-                showToast('Error', 'Cannot connect to itself', 'error');
-                return;
-            }
-            
-            const sourceNode = AppState.nodes.find(n => n.id === sourceId);
-            const targetNode = AppState.nodes.find(n => n.id === targetId);
-            
-            if (!sourceNode || !targetNode) {
-                showToast('Error', 'Nodes not found', 'error');
-                return;
-            }
-            
-            // Validate connection
-            if (!validateConnection(sourceNode.type, targetNode.type, connectionType)) {
-                showToast('Invalid Connection', `Cannot connect ${sourceNode.type} to ${targetNode.type} as ${connectionType}`, 'error');
-                return;
-            }
-            
-            // Check if exists
-            const existing = AppState.connections.find(c => 
-                (c.source === sourceId && c.target === targetId) ||
-                (c.source === targetId && c.target === sourceId)
-            );
-            
-            if (existing) {
-                showToast('Connection Exists', 'Already connected', 'warning');
-                return;
-            }
-            
-            const connection = {
-                id: 'conn_' + Date.now(),
-                source: sourceId,
-                target: targetId,
-                type: connectionType,
-                createdBy: AppState.clinician.id,
-                createdAt: new Date().toISOString()
-            };
-            
-            AppState.connections.push(connection);
-            
-            $('#connectionCreator').hide();
-            $('#connectionsLayer').empty();
-            AppState.connections.forEach(renderConnection);
-            
-            showToast('Connection Created', `${sourceNode.name} → ${targetNode.name}`, 'success');
-        }
-        
-        function validateConnection(sourceType, targetType, connectionType) {
-            const allowed = AppState.connectionRules[sourceType];
-            if (!allowed) return false;
-            
-            // Check if connection type is allowed
-            if (connectionType === 'treatment' && sourceType !== 'treatment') return false;
-            if (connectionType === 'causal' && sourceType === 'treatment') return false;
-            
-            return allowed.includes(targetType);
-        }
-        
-        // ====== PATIENT MANAGEMENT - COMPLETE ======
-        function loadSamplePatients() {
-            AppState.patients = [
+        function createDemoNetworks() {
+            EliteState.professionalNetworks = [
                 {
-                    id: 'pat_1',
-                    name: 'John Smith',
-                    age: 65,
-                    disease: 'Asthma',
-                    disease_id: 1,
-                    created: new Date().toISOString()
+                    id: 'net_cambridge_asthma',
+                    name: 'Cambridge Severe Asthma Research Network',
+                    description: 'Multi-center research network for severe asthma phenotypes and treatment responses',
+                    created_by: EliteState.currentClinician.id,
+                    created_at: new Date().toISOString(),
+                    is_public: true,
+                    member_count: 42,
+                    disease_focus: 'Asthma'
                 },
                 {
-                    id: 'pat_2',
-                    name: 'Maria Garcia',
-                    age: 72,
-                    disease: 'COPD',
-                    disease_id: 2,
-                    created: new Date().toISOString()
+                    id: 'net_oxford_copd',
+                    name: 'Oxford COPD Phenotyping Collaborative',
+                    description: 'Collaborative network for COPD sub-phenotyping and precision medicine',
+                    created_by: 'clin_oxford_research',
+                    created_at: new Date(Date.now() - 86400000).toISOString(),
+                    is_public: true,
+                    member_count: 28,
+                    disease_focus: 'COPD'
+                },
+                {
+                    id: 'net_imperial_ild',
+                    name: 'Imperial ILD Molecular Network',
+                    description: 'Interstitial lung disease molecular mechanisms and biomarker discovery',
+                    created_by: 'clin_imperial_research',
+                    created_at: new Date(Date.now() - 172800000).toISOString(),
+                    is_public: false,
+                    member_count: 16,
+                    disease_focus: 'ILD'
                 }
             ];
             
-            renderPatients();
+            renderNetworkBrowser();
         }
         
-        function renderPatients() {
-            const container = $('#patientList');
+        function renderNetworkBrowser() {
+            const container = $('#networksList');
             container.empty();
             
-            AppState.patients.forEach(patient => {
-                const patientCard = $(`
-                    <div class="disease-card" data-patient-id="${patient.id}">
-                        <div class="disease-header">
-                            <div class="disease-name">${patient.name}</div>
-                            <div style="font-size: 11px; color: var(--gray-500);">${patient.age} yrs</div>
-                        </div>
-                        <div class="disease-description">${patient.disease}</div>
-                        <div class="disease-meta">
-                            <div>ID: ${patient.id.substring(0, 8)}</div>
-                            <button class="btn btn-primary btn-sm" onclick="launchAvatarForPatient('${patient.id}')">
-                                <i class="fas fa-user-md"></i>
-                            </button>
-                        </div>
-                    </div>
-                `);
-                
-                container.append(patientCard);
-            });
-        }
-        
-        // ====== AVATAR INTEGRATION - COMPLETE ======
-        function launchAvatarForPatient(patientId) {
-            const patient = AppState.patients.find(p => p.id === patientId);
-            if (!patient) {
-                showToast('Error', 'Patient not found', 'error');
-                return;
-            }
-            
-            if (!AppState.currentDisease) {
-                showToast('Error', 'Select a disease first', 'error');
-                return;
-            }
-            
-            // Prepare data for avatar
-            const avatarData = {
-                patient: patient,
-                disease: AppState.currentDisease,
-                nodes: AppState.nodes,
-                connections: AppState.connections,
-                clinician: AppState.clinician,
-                session: AppState.session,
-                timestamp: new Date().toISOString()
-            };
-            
-            // Encode and pass to avatar
-            const encodedData = encodeURIComponent(JSON.stringify(avatarData));
-            window.open(`avatar.html?data=${encodedData}`, '_blank');
-            
-            showToast('Avatar Launched', `Opening avatar for ${patient.name}`, 'success');
-        }
-        
-        // ====== NETWORK SAVING - COMPLETE ======
-        async function saveNetworkToDatabase() {
-            const name = $('#saveNetworkName').val().trim();
-            const description = $('#saveNetworkDescription').val().trim();
-            const permission = $('input[name="permission"]:checked').val();
-            
-            if (!name) {
-                showToast('Error', 'Network name required', 'error');
-                return;
-            }
-            
-            if (AppState.nodes.length === 0) {
-                showToast('Error', 'Network is empty', 'error');
-                return;
-            }
-            
-            try {
-                const networkData = {
-                    network_name: name,
-                    description: description,
-                    disease_id: AppState.currentDisease?.id || null,
-                    layout_data: {
-                        nodes: AppState.nodes,
-                        connections: AppState.connections,
-                        positions: Object.fromEntries(AppState.nodePositions)
-                    },
-                    permission: permission,
-                    created_by: AppState.clinician.id,
-                    created_at: new Date().toISOString()
-                };
-                
-                const { data, error } = await AppState.supabase
-                    .from('saved_networks')
-                    .insert([networkData])
-                    .select();
-                
-                if (error) throw error;
-                
-                closeModal('saveNetworkModal');
-                showToast('Network Saved', `${name} saved successfully`, 'success');
-                
-                // Clear form
-                $('#saveNetworkName').val('');
-                $('#saveNetworkDescription').val('');
-                
-            } catch (error) {
-                console.error('Error saving network:', error);
-                showToast('Save Failed', error.message, 'error');
-            }
-        }
-        
-        function setupSampleNetworks() {
-            const container = $('#networkList');
-            container.html(`
-                <div class="disease-card">
-                    <div class="disease-header">
-                        <div class="disease-name">Asthma Inflammatory Network</div>
-                        <div style="font-size: 11px; color: var(--gray-500);">Yesterday</div>
-                    </div>
-                    <div class="disease-description">Complete inflammatory pathway mapping</div>
-                    <div class="disease-meta">
-                        <div>5 nodes • 4 connections</div>
-                        <button class="btn btn-primary btn-sm" onclick="loadSampleNetwork()">
-                            <i class="fas fa-download"></i>
+            if (EliteState.professionalNetworks.length === 0) {
+                container.html(`
+                    <div style="text-align: center; padding: 40px; color: var(--mit-gray);">
+                        <i class="fas fa-network-wired" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                        <h4 style="color: var(--oxford-blue); margin-bottom: 8px;">No Networks Found</h4>
+                        <p>Create your first professional network or join existing ones.</p>
+                        <button class="toolbar-btn" onclick="showCreateNetworkModal()" style="margin-top: 16px;">
+                            <i class="fas fa-plus"></i> Create Network
                         </button>
                     </div>
-                </div>
-            `);
-        }
-        
-        // ====== LAYOUT FUNCTIONS ======
-        function applyAutoLayout() {
-            const nodes = $('.structured-node');
-            if (nodes.length === 0) return;
+                `);
+                return;
+            }
             
-            const workspace = $('#networkCanvas');
-            const centerX = workspace.width() / 2;
-            const centerY = workspace.height() / 2;
-            const radius = Math.min(workspace.width(), workspace.height()) * 0.35;
-            
-            nodes.each(function(index) {
-                const node = $(this);
-                const nodeId = node.data('node-id');
-                const angle = (index / nodes.length) * Math.PI * 2;
-                const x = centerX + Math.cos(angle) * radius - node.width() / 2;
-                const y = centerY + Math.sin(angle) * radius - node.height() / 2;
+            EliteState.professionalNetworks.forEach(network => {
+                const isOwner = network.created_by === EliteState.currentClinician.id;
+                const isMember = EliteState.networkMembers.has(network.id) || isOwner;
                 
-                AppState.nodePositions.set(nodeId, { x, y });
-                node.css({ left: x + 'px', top: y + 'px' });
+                const networkHtml = `
+                    <div class="network-card" data-network-id="${network.id}">
+                        <div class="network-card-header">
+                            <div>
+                                <h4 style="color: var(--oxford-blue); margin-bottom: 4px;">${network.name}</h4>
+                                <div style="font-size: 12px; color: var(--mit-gray);">
+                                    ${network.disease_focus || 'Multi-disease'} • 
+                                    ${isOwner ? 'Owner' : isMember ? 'Member' : network.is_public ? 'Public' : 'Private'}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="elite-badge" style="font-size: 10px; padding: 4px 8px;">
+                                    ${network.member_count || 0} members
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <p style="font-size: 13px; color: var(--mit-gray); margin-bottom: 12px;">
+                            ${network.description || 'No description provided'}
+                        </p>
+                        
+                        <div class="network-stats">
+                            <div>
+                                <div style="font-size: 11px; color: var(--mit-gray);">Created</div>
+                                <div style="font-size: 12px; font-weight: 600;">${formatDate(network.created_at)}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--mit-gray);">Focus</div>
+                                <div style="font-size: 12px; font-weight: 600;">${network.disease_focus || 'General'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 11px; color: var(--mit-gray);">Access</div>
+                                <div style="font-size: 12px; font-weight: 600;">${network.is_public ? 'Public' : 'Private'}</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; gap: 8px; margin-top: 16px;">
+                            <button class="toolbar-btn" onclick="openNetwork('${network.id}')" 
+                                    style="flex: 1; font-size: 12px; padding: 8px;">
+                                <i class="fas fa-door-open"></i> ${isMember ? 'Open' : 'View'}
+                            </button>
+                            ${!isMember ? `
+                                <button class="toolbar-btn" onclick="joinNetwork('${network.id}')" 
+                                        style="flex: 1; font-size: 12px; padding: 8px; background: var(--oxford-blue); color: white;">
+                                    <i class="fas fa-user-plus"></i> Join
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                container.append(networkHtml);
             });
-            
-            $('#connectionsLayer').empty();
-            AppState.connections.forEach(renderConnection);
-            
-            showToast('Layout Applied', 'Circular layout generated', 'success');
         }
         
-        // ====== EVENT LISTENERS - COMPLETE ======
-        function setupAllEventListeners() {
-            // Tab switching
-            $('.tab-btn').click(function() {
-                const tabId = $(this).data('tab');
-                $('.tab-btn').removeClass('active');
-                $(this).addClass('active');
-                $('.tab-pane').removeClass('active');
-                $(`#${tabId}-tab`).addClass('active');
+        function showCreateNetworkModal() {
+            $('#createNetworkModal').addClass('active');
+        }
+        
+        async function createProfessionalNetwork() {
+            const name = $('#networkName').val().trim();
+            const description = $('#networkDescription').val().trim();
+            const access = $('input[name="networkAccess"]:checked').val();
+            
+            if (!name) {
+                showEliteToast('Network Creation Error', 'Network name is required', 'error');
+                return;
+            }
+            
+            const networkId = 'net_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8).toUpperCase();
+            
+            const network = {
+                id: networkId,
+                name: name,
+                description: description,
+                created_by: EliteState.currentClinician.id,
+                created_at: new Date().toISOString(),
+                is_public: access === 'public',
+                disease_focus: '',
+                member_count: 1,
+                permissions: {
+                    view: access === 'public' ? 'all' : 'members',
+                    edit: 'members',
+                    export: 'members',
+                    invite: 'owner'
+                }
+            };
+            
+            try {
+                // Save to database
+                const { error } = await EliteState.supabase
+                    .from('professional_networks')
+                    .insert([network]);
+                    
+                if (error) throw error;
+                
+                // Add creator as owner
+                const { error: memberError } = await EliteState.supabase
+                    .from('network_members')
+                    .insert([{
+                        network_id: networkId,
+                        clinician_id: EliteState.currentClinician.id,
+                        role: 'owner',
+                        joined_at: new Date().toISOString()
+                    }]);
+                    
+                if (memberError) throw memberError;
+                
+                // Update local state
+                EliteState.professionalNetworks.unshift(network);
+                EliteState.networkMembers.set(networkId, { role: 'owner' });
+                
+                // Update clinician stats
+                EliteState.currentClinician.networksCreated = (EliteState.currentClinician.networksCreated || 0) + 1;
+                localStorage.setItem('elite_clinician', JSON.stringify(EliteState.currentClinician));
+                
+                // Close modal and refresh
+                $('#createNetworkModal').removeClass('active');
+                renderNetworkBrowser();
+                
+                showEliteToast('Network Created', 
+                    `${name} professional network created successfully!`, 
+                    'success');
+                    
+                logSessionAction('network_created', { networkId, networkName: name });
+                
+            } catch (error) {
+                console.error('Error creating network:', error);
+                showEliteToast('Network Creation Failed', error.message, 'error');
+            }
+        }
+        
+        async function joinNetwork(networkId) {
+            try {
+                const network = EliteState.professionalNetworks.find(n => n.id === networkId);
+                if (!network) return;
+                
+                // Add member to database
+                const { error } = await EliteState.supabase
+                    .from('network_members')
+                    .insert([{
+                        network_id: networkId,
+                        clinician_id: EliteState.currentClinician.id,
+                        role: 'member',
+                        joined_at: new Date().toISOString()
+                    }]);
+                    
+                if (error) throw error;
+                
+                // Update local state
+                EliteState.networkMembers.set(networkId, { role: 'member' });
+                
+                // Update network member count
+                network.member_count = (network.member_count || 0) + 1;
+                
+                showEliteToast('Joined Network', 
+                    `You are now a member of ${network.name}`, 
+                    'success');
+                    
+                logSessionAction('network_joined', { networkId, networkName: network.name });
+                
+                // Refresh display
+                renderNetworkBrowser();
+                
+            } catch (error) {
+                console.error('Error joining network:', error);
+                showEliteToast('Join Failed', error.message, 'error');
+            }
+        }
+        
+        async function openNetwork(networkId) {
+            const network = EliteState.professionalNetworks.find(n => n.id === networkId);
+            if (!network) return;
+            
+            const isMember = EliteState.networkMembers.has(networkId) || network.created_by === EliteState.currentClinician.id;
+            
+            if (!network.is_public && !isMember) {
+                showEliteToast('Access Denied', 'This network is private. Please request access.', 'error');
+                return;
+            }
+            
+            // Set current network
+            EliteState.currentNetwork = network;
+            EliteState.currentSession.networkId = networkId;
+            
+            // Update UI
+            $('.canvas-title').html(`
+                <i class="fas fa-project-diagram"></i>
+                <span>${network.name}</span>
+                <span style="font-size: 14px; color: var(--mit-gray); margin-left: 12px;">
+                    ${network.disease_focus || 'Clinical Network'}
+                </span>
+            `);
+            
+            // Hide welcome overlay
+            $('#welcomeOverlay').hide();
+            
+            // Load network data (in production, this would load from database)
+            loadNetworkData(networkId);
+            
+            showEliteToast('Network Opened', 
+                `Now working in ${network.name}`, 
+                'info');
+                
+            logSessionAction('network_opened', { networkId, networkName: network.name });
+        }
+        
+        function loadNetworkData(networkId) {
+            // In production, load from database
+            // For demo, create sample structured network
+            createSampleStructuredNetwork();
+        }
+        
+        // ====== PHASE 3: STRUCTURED NETWORK SYSTEM ======
+        function initializeNodePalette() {
+            const palette = $('#nodePalette');
+            palette.empty();
+            
+            Object.values(EliteState.nodeTypes).forEach(nodeType => {
+                const nodeHtml = `
+                    <div class="node-type node-type-${nodeType.id}" 
+                         draggable="true"
+                         data-node-type="${nodeType.id}"
+                         ondragstart="dragNodeType(event, '${nodeType.id}')">
+                        <i class="${nodeType.icon}"></i>
+                        <div style="margin-top: 8px;">${nodeType.name}</div>
+                    </div>
+                `;
+                
+                palette.append(nodeHtml);
+            });
+        }
+        
+        function dragNodeType(event, nodeTypeId) {
+            event.dataTransfer.setData('nodeType', nodeTypeId);
+            event.dataTransfer.effectAllowed = 'copy';
+        }
+        
+        function initializeCanvasSystem() {
+            const canvas = $('#networkCanvas');
+            
+            // Setup canvas event listeners
+            canvas.on('dragover', function(event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'copy';
             });
             
-            // Sidebar toggle
-            $('#sidebarToggle').click(function() {
-                $('#sidebar').toggleClass('collapsed');
-                $(this).find('i').toggleClass('fa-chevron-left fa-chevron-right');
+            canvas.on('drop', function(event) {
+                event.preventDefault();
+                
+                const nodeTypeId = event.dataTransfer.getData('nodeType');
+                if (!nodeTypeId) return;
+                
+                const rect = canvas[0].getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                createStructuredNode(nodeTypeId, { x, y });
             });
             
-            // Add node
-            $('#btnAddNode').click(() => {
-                $('#addNodeModal').addClass('active');
-                // Reset button to add mode
-                const btn = $('#addNodeModal .btn-success');
-                btn.text('Add Node').off('click').click(createNewNode);
+            // Setup click to select
+            canvas.on('click', function(event) {
+                if (event.target === canvas[0]) {
+                    deselectAll();
+                    hideContextualActions();
+                }
             });
             
-            // Add connection
-            $('#btnAddConnection').click(showConnectionCreator);
+            // Setup zoom/pan
+            setupCanvasZoomPan();
+        }
+        
+        function createStructuredNode(nodeTypeId, position, data = {}) {
+            const nodeType = EliteState.nodeTypes[nodeTypeId.toUpperCase()];
+            if (!nodeType) {
+                showEliteToast('Error', 'Invalid node type', 'error');
+                return;
+            }
+            
+            const nodeId = 'node_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            
+            const node = {
+                id: nodeId,
+                type: nodeTypeId,
+                data: {
+                    name: data.name || `New ${nodeType.name}`,
+                    description: data.description || '',
+                    properties: {},
+                    metadata: {
+                        createdBy: EliteState.currentClinician.id,
+                        createdAt: new Date().toISOString(),
+                        version: '1.0'
+                    }
+                },
+                position: {
+                    x: position.x - 160, // Center the node
+                    y: position.y - 60
+                },
+                dimensions: {
+                    width: 320,
+                    height: 180
+                },
+                connections: {
+                    incoming: [],
+                    outgoing: []
+                }
+            };
+            
+            // Initialize properties based on node type
+            nodeType.properties.forEach(prop => {
+                node.data.properties[prop] = '';
+            });
+            
+            // Add to state
+            EliteState.nodes.set(nodeId, node);
+            
+            // Create DOM element
+            createNodeElement(node);
+            
+            // Log action
+            logSessionAction('node_created', { nodeId, nodeType: nodeTypeId });
+            
+            // Show analytics panel
+            updateNetworkAnalytics();
+            
+            return nodeId;
+        }
+        
+        function createNodeElement(node) {
+            const nodeType = EliteState.nodeTypes[node.type.toUpperCase()];
+            
+            const nodeHtml = `
+                <div class="structured-node" 
+                     id="node_${node.id}"
+                     data-node-id="${node.id}"
+                     style="left: ${node.position.x}px; top: ${node.position.y}px; border-top-color: ${nodeType.color};">
+                    
+                    <div class="node-header">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="${nodeType.icon}"></i>
+                                <h4 style="font-weight: 700; color: var(--oxford-blue);">${node.data.name}</h4>
+                            </div>
+                            <div style="font-size: 12px; color: var(--mit-gray); margin-top: 4px;">
+                                ${nodeType.name}
+                            </div>
+                        </div>
+                        <div class="node-type-badge" style="background: ${nodeType.color};">
+                            ${node.type}
+                        </div>
+                    </div>
+                    
+                    <div class="node-content">
+                        <div style="font-size: 13px; color: var(--mit-gray); margin-bottom: 12px;">
+                            ${node.data.description || 'No description provided'}
+                        </div>
+                        
+                        <div class="node-properties">
+                            ${Object.entries(node.data.properties).map(([key, value]) => `
+                                <div class="property">
+                                    <div class="property-label">${formatPropertyName(key)}</div>
+                                    <div>${value || '—'}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div style="padding: 12px 20px; border-top: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; font-size: 11px; color: var(--mit-gray);">
+                        <div>
+                            <i class="fas fa-fingerprint"></i> ${node.id.substring(0, 8)}
+                        </div>
+                        <div>
+                            ${formatDate(node.data.metadata.createdAt)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#networkCanvas').append(nodeHtml);
+            
+            // Make draggable
+            makeNodeDraggable(node.id);
+            
+            // Add click handler
+            $(`#node_${node.id}`).on('click', function(event) {
+                event.stopPropagation();
+                selectNode(node.id);
+            });
+        }
+        
+        function makeNodeDraggable(nodeId) {
+            const nodeElement = $(`#node_${nodeId}`)[0];
+            const node = EliteState.nodes.get(nodeId);
+            
+            let isDragging = false;
+            let startX, startY, initialLeft, initialTop;
+            
+            nodeElement.onmousedown = function(event) {
+                if (event.button !== 0) return;
+                
+                isDragging = true;
+                startX = event.clientX;
+                startY = event.clientY;
+                
+                const rect = nodeElement.getBoundingClientRect();
+                initialLeft = rect.left;
+                initialTop = rect.top;
+                
+                nodeElement.style.cursor = 'grabbing';
+                nodeElement.style.zIndex = '1000';
+                
+                selectNode(nodeId);
+                
+                document.onmousemove = drag;
+                document.onmouseup = stopDrag;
+                
+                event.preventDefault();
+            };
+            
+            function drag(event) {
+                if (!isDragging) return;
+                
+                const dx = event.clientX - startX;
+                const dy = event.clientY - startY;
+                
+                const newLeft = initialLeft + dx;
+                const newTop = initialTop + dy;
+                
+                // Constrain to canvas
+                const canvas = $('#networkCanvas')[0];
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                const maxX = canvasRect.width - node.dimensions.width;
+                const maxY = canvasRect.height - node.dimensions.height;
+                
+                const constrainedLeft = Math.max(0, Math.min(newLeft - canvasRect.left, maxX));
+                const constrainedTop = Math.max(0, Math.min(newTop - canvasRect.top, maxY));
+                
+                nodeElement.style.left = constrainedLeft + 'px';
+                nodeElement.style.top = constrainedTop + 'px';
+                
+                // Update node position in state
+                node.position.x = constrainedLeft;
+                node.position.y = constrainedTop;
+                
+                // Update connections visually
+                updateNodeConnections(nodeId);
+            }
+            
+            function stopDrag() {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                nodeElement.style.cursor = 'move';
+                nodeElement.style.zIndex = '10';
+                
+                document.onmousemove = null;
+                document.onmouseup = null;
+                
+                logSessionAction('node_moved', { nodeId, position: node.position });
+            }
+        }
+        
+        function selectNode(nodeId) {
+            // Deselect all
+            deselectAll();
+            
+            // Select this node
+            EliteState.selectedNode = nodeId;
+            const nodeElement = $(`#node_${nodeId}`);
+            nodeElement.addClass('selected');
+            
+            // Show contextual actions
+            showContextualActions();
+            
+            // Show node properties panel
+            showNodeProperties(nodeId);
+        }
+        
+        function deselectAll() {
+            $('.structured-node').removeClass('selected');
+            EliteState.selectedNode = null;
+            EliteState.selectedConnection = null;
+        }
+        
+        function showContextualActions() {
+            $('#contextualActions').show();
+        }
+        
+        function hideContextualActions() {
+            $('#contextualActions').hide();
+        }
+        
+        function showNodeProperties(nodeId) {
+            const node = EliteState.nodes.get(nodeId);
+            if (!node) return;
+            
+            // In production, show properties panel
+            // For demo, just show toast
+            showEliteToast('Node Selected', 
+                `${node.data.name} (${node.type}) - Click Edit to modify properties`, 
+                'info');
+        }
+        
+        function createSampleStructuredNetwork() {
+            // Create disease node
+            const asthmaId = createStructuredNode('disease', { x: 300, y: 200 }, {
+                name: 'Severe Asthma',
+                description: 'Chronic inflammatory airway disease with eosinophilic phenotype',
+                properties: {
+                    prevalence: '5-10% of asthma population',
+                    icd10: 'J45.51',
+                    severity: 'Severe'
+                }
+            });
+            
+            // Create symptom nodes
+            const wheezeId = createStructuredNode('symptom', { x: 150, y: 100 }, {
+                name: 'Persistent Wheeze',
+                description: 'Continuous wheezing despite high-dose therapy',
+                properties: {
+                    frequency: 'Daily',
+                    intensity: 'Severe',
+                    impact: 'High'
+                }
+            });
+            
+            const sobId = createStructuredNode('symptom', { x: 450, y: 100 }, {
+                name: 'Exertional Dyspnea',
+                description: 'Shortness of breath with minimal exertion',
+                properties: {
+                    frequency: 'With activity',
+                    intensity: 'Moderate-Severe',
+                    impact: 'Moderate'
+                }
+            });
+            
+            // Create mechanism nodes
+            const type2Id = createStructuredNode('mechanism', { x: 100, y: 350 }, {
+                name: 'Type 2 Inflammation',
+                description: 'IL-4/IL-5/IL-13 driven inflammation with eosinophilia',
+                properties: {
+                    evidence_level: 'Level A',
+                    biomarkers: 'FeNO >50ppb, Blood eosinophils >300',
+                    reversibility: 'Steroid-responsive'
+                }
+            });
+            
+            // Create treatment nodes
+            const biologicId = createStructuredNode('treatment', { x: 500, y: 350 }, {
+                name: 'Anti-IL5 Biologic',
+                description: 'Mepolizumab or Benralizumab for eosinophilic asthma',
+                properties: {
+                    evidence_level: 'Level A',
+                    dosage: '100mg SC monthly',
+                    efficacy: 'Reduces exacerbations by 50%',
+                    side_effects: 'Minimal'
+                }
+            });
+            
+            // Create connections
+            setTimeout(() => {
+                createValidatedConnection(asthmaId, wheezeId, 'CAUSES');
+                createValidatedConnection(asthmaId, sobId, 'CAUSES');
+                createValidatedConnection(type2Id, asthmaId, 'CAUSES');
+                createValidatedConnection(biologicId, type2Id, 'TREATS');
+                createValidatedConnection(biologicId, asthmaId, 'TREATS');
+            }, 100);
+        }
+        
+        function createValidatedConnection(sourceId, targetId, relationshipType) {
+            const sourceNode = EliteState.nodes.get(sourceId);
+            const targetNode = EliteState.nodes.get(targetId);
+            
+            if (!sourceNode || !targetNode) {
+                showEliteToast('Connection Error', 'Source or target node not found', 'error');
+                return null;
+            }
+            
+            const relDef = EliteState.relationshipTypes[relationshipType.toUpperCase()];
+            if (!relDef) {
+                showEliteToast('Connection Error', 'Invalid relationship type', 'error');
+                return null;
+            }
+            
+            // Validate connection types
+            if (!relDef.allowedSource.includes(sourceNode.type)) {
+                showEliteToast('Connection Error', 
+                    `${sourceNode.type} cannot be source for ${relationshipType}`, 
+                    'error');
+                return null;
+            }
+            
+            if (!relDef.allowedTarget.includes(targetNode.type)) {
+                showEliteToast('Connection Error', 
+                    `${targetNode.type} cannot be target for ${relationshipType}`, 
+                    'error');
+                return null;
+            }
             
             // Create connection
-            $('#btnCreateConnection').click(createNewConnection);
+            const connectionId = 'conn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
             
-            // Save network
-            $('#btnSaveNetwork').click(() => {
-                $('#saveNetworkModal').addClass('active');
-            });
-            
-            // Launch avatar
-            $('#btnLaunchAvatar').click(() => {
-                if (AppState.patients.length === 0) {
-                    showToast('No Patients', 'Create a patient first', 'warning');
-                    return;
+            const connection = {
+                id: connectionId,
+                source: sourceId,
+                target: targetId,
+                type: relationshipType,
+                strength: 3, // Default
+                data: {
+                    evidence: '',
+                    createdBy: EliteState.currentClinician.id,
+                    createdAt: new Date().toISOString()
                 }
-                if (AppState.currentPatient) {
-                    launchAvatarForPatient(AppState.currentPatient.id);
-                } else {
-                    launchAvatarForPatient(AppState.patients[0].id);
+            };
+            
+            // Add to state
+            EliteState.connections.set(connectionId, connection);
+            
+            // Update node connections
+            sourceNode.connections.outgoing.push(connectionId);
+            targetNode.connections.incoming.push(connectionId);
+            
+            // Draw connection
+            drawConnection(connection);
+            
+            // Log action
+            logSessionAction('connection_created', { 
+                connectionId, 
+                sourceType: sourceNode.type,
+                targetType: targetNode.type,
+                relationshipType 
+            });
+            
+            // Update analytics
+            updateNetworkAnalytics();
+            
+            return connectionId;
+        }
+        
+        function drawConnection(connection) {
+            const sourceNode = EliteState.nodes.get(connection.source);
+            const targetNode = EliteState.nodes.get(connection.target);
+            
+            if (!sourceNode || !targetNode) return;
+            
+            const relDef = EliteState.relationshipTypes[connection.type.toUpperCase()];
+            
+            // Get node center positions
+            const sourceX = sourceNode.position.x + sourceNode.dimensions.width / 2;
+            const sourceY = sourceNode.position.y + sourceNode.dimensions.height / 2;
+            const targetX = targetNode.position.x + targetNode.dimensions.width / 2;
+            const targetY = targetNode.position.y + targetNode.dimensions.height / 2;
+            
+            // Create SVG path
+            const svgNS = "http://www.w3.org/2000/svg";
+            const path = document.createElementNS(svgNS, "path");
+            
+            // Calculate control points for curved line
+            const dx = targetX - sourceX;
+            const dy = targetY - sourceY;
+            const controlX = sourceX + dx * 0.5;
+            const controlY = sourceY + dy * 0.5 - 60;
+            
+            path.setAttribute("d", `M ${sourceX} ${sourceY} Q ${controlX} ${controlY} ${targetX} ${targetY}`);
+            path.setAttribute("stroke", relDef.color);
+            path.setAttribute("stroke-width", "3");
+            path.setAttribute("fill", "none");
+            path.setAttribute("opacity", "0.8");
+            path.setAttribute("class", "connection-path");
+            
+            // Add arrowhead for directional connections
+            if (relDef.direction === 'unidirectional') {
+                const markerId = `arrow-${connection.id}`;
+                
+                let marker = document.getElementById(markerId);
+                if (!marker) {
+                    marker = document.createElementNS(svgNS, "marker");
+                    marker.setAttribute("id", markerId);
+                    marker.setAttribute("viewBox", "0 0 10 10");
+                    marker.setAttribute("refX", "9");
+                    marker.setAttribute("refY", "5");
+                    marker.setAttribute("markerWidth", "6");
+                    marker.setAttribute("markerHeight", "6");
+                    marker.setAttribute("orient", "auto");
+                    
+                    const arrow = document.createElementNS(svgNS, "path");
+                    arrow.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+                    arrow.setAttribute("fill", relDef.color);
+                    marker.appendChild(arrow);
+                    
+                    document.getElementById('connectionsSvg').appendChild(marker);
                 }
-            });
-            
-            // Auto layout
-            $('#btnAutoLayout').click(applyAutoLayout);
-            
-            // Create patient
-            $('#btnCreatePatient').click(() => {
-                const name = prompt('Patient name:');
-                if (!name) return;
                 
-                const newPatient = {
-                    id: 'pat_' + Date.now(),
-                    name: name,
-                    age: Math.floor(Math.random() * 40) + 20,
-                    disease: AppState.currentDisease?.disease_name || 'Unknown',
-                    disease_id: AppState.currentDisease?.id,
-                    created: new Date().toISOString()
-                };
-                
-                AppState.patients.push(newPatient);
-                renderPatients();
-                showToast('Patient Created', `${name} added`, 'success');
-            });
+                path.setAttribute("marker-end", `url(#${markerId})`);
+            }
             
-            // New session
-            $('#btnNewSession').click(() => {
-                AppState.session.id = 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-                $('#sessionId').text(AppState.session.id.substring(0, 8));
-                showToast('New Session', 'Session refreshed', 'info');
-            });
+            // Add to SVG
+            document.getElementById('connectionsSvg').appendChild(path);
             
-            // Click outside to hide connection creator
-            $('#networkCanvas').click(function(e) {
-                if (e.target.id === 'networkCanvas') {
-                    $('#connectionCreator').hide();
-                    $('.structured-node').removeClass('selected');
-                    AppState.selectedNode = null;
+            // Add label
+            const labelX = (sourceX + targetX) / 2;
+            const labelY = (sourceY + targetY) / 2 - 40;
+            
+            const label = document.createElement("div");
+            label.className = "connection-label";
+            label.textContent = connection.type.replace('_', ' ').toUpperCase();
+            label.style.left = `${labelX}px`;
+            label.style.top = `${labelY}px`;
+            label.style.borderColor = relDef.color;
+            label.style.color = relDef.color;
+            
+            $('#networkCanvas').append(label);
+            
+            // Store reference to DOM elements
+            connection.domElements = { path, label };
+        }
+        
+        function updateNodeConnections(nodeId) {
+            const node = EliteState.nodes.get(nodeId);
+            if (!node) return;
+            
+            // Update all connections involving this node
+            [...node.connections.incoming, ...node.connections.outgoing].forEach(connId => {
+                const connection = EliteState.connections.get(connId);
+                if (connection && connection.domElements) {
+                    // Remove old elements
+                    connection.domElements.path.remove();
+                    connection.domElements.label.remove();
+                    
+                    // Redraw
+                    drawConnection(connection);
                 }
             });
         }
         
-        function initializeSidebarToggle() {
-            $('#sidebarToggle').click(function() {
-                $('#sidebar').toggleClass('collapsed');
+        function updateNetworkAnalytics() {
+            const nodeCount = EliteState.nodes.size;
+            const connectionCount = EliteState.connections.size;
+            
+            // Calculate network density
+            const maxConnections = nodeCount * (nodeCount - 1) / 2;
+            const density = maxConnections > 0 ? 
+                Math.round((connectionCount / maxConnections) * 100) : 0;
+            
+            // Calculate node type distribution
+            const typeDistribution = {};
+            EliteState.nodes.forEach(node => {
+                typeDistribution[node.type] = (typeDistribution[node.type] || 0) + 1;
             });
+            
+            // Update analytics panel
+            const analyticsHtml = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+                    <div style="background: var(--clinical-white); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 800; color: var(--oxford-blue);">${nodeCount}</div>
+                        <div style="font-size: 12px; color: var(--mit-gray);">Structured Nodes</div>
+                    </div>
+                    <div style="background: var(--clinical-white); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 800; color: var(--oxford-blue);">${connectionCount}</div>
+                        <div style="font-size: 12px; color: var(--mit-gray);">Validated Connections</div>
+                    </div>
+                    <div style="background: var(--clinical-white); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 800; color: var(--oxford-blue);">${density}%</div>
+                        <div style="font-size: 12px; color: var(--mit-gray);">Network Density</div>
+                    </div>
+                    <div style="background: var(--clinical-white); padding: 16px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: 800; color: var(--oxford-blue);">${EliteState.subNetworks.size}</div>
+                        <div style="font-size: 12px; color: var(--mit-gray);">Sub-networks</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px;">
+                    <div style="font-weight: 600; color: var(--oxford-blue); margin-bottom: 8px;">Node Types:</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${Object.entries(typeDistribution).map(([type, count]) => `
+                            <span style="font-size: 11px; padding: 4px 8px; border-radius: 12px; background: ${EliteState.nodeTypes[type.toUpperCase()]?.color || '#CCC'}; color: white;">
+                                ${type}: ${count}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            
+            $('#networkAnalytics').html(analyticsHtml);
+            $('#exportPanel').show();
+        }
+        
+        // ====== PHASE 4: ADVANCED UI & AVATAR SYSTEM ======
+        function setupCanvasZoomPan() {
+            const canvas = $('#canvasArea')[0];
+            
+            let isPanning = false;
+            let startX, startY;
+            let scale = 1;
+            
+            canvas.onwheel = function(event) {
+                event.preventDefault();
+                
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                
+                const zoomFactor = 0.1;
+                const oldScale = scale;
+                
+                if (event.deltaY < 0) {
+                    // Zoom in
+                    scale = Math.min(scale * (1 + zoomFactor), 3);
+                } else {
+                    // Zoom out
+                    scale = Math.max(scale * (1 - zoomFactor), 0.1);
+                }
+                
+                // Adjust pan to zoom around mouse
+                const scaleRatio = scale / oldScale;
+                EliteState.panOffset.x = mouseX - (mouseX - EliteState.panOffset.x) * scaleRatio;
+                EliteState.panOffset.y = mouseY - (mouseY - EliteState.panOffset.y) * scaleRatio;
+                
+                applyCanvasTransform();
+            };
+            
+            canvas.onmousedown = function(event) {
+                if (event.button === 1 || (event.button === 0 && event.ctrlKey)) {
+                    event.preventDefault();
+                    isPanning = true;
+                    startX = event.clientX - EliteState.panOffset.x;
+                    startY = event.clientY - EliteState.panOffset.y;
+                    canvas.style.cursor = 'grabbing';
+                }
+            };
+            
+            document.onmousemove = function(event) {
+                if (!isPanning) return;
+                
+                EliteState.panOffset.x = event.clientX - startX;
+                EliteState.panOffset.y = event.clientY - startY;
+                
+                applyCanvasTransform();
+            };
+            
+            document.onmouseup = function() {
+                isPanning = false;
+                canvas.style.cursor = 'default';
+            };
+        }
+        
+        function applyCanvasTransform() {
+            const nodes = $('#networkCanvas');
+            nodes.css({
+                transform: `translate(${EliteState.panOffset.x}px, ${EliteState.panOffset.y}px) scale(${scale})`,
+                transformOrigin: '0 0'
+            });
+        }
+        
+        function initializeAvatarSystem() {
+            // Check if Three.js is loaded
+            if (!window.THREE) {
+                console.warn('Three.js not loaded, Avatar system disabled');
+                $('#avatarLoading').html('<div style="color: #FFB300;">3D System Not Available</div>');
+                return;
+            }
+            
+            try {
+                const canvas = document.getElementById('avatarCanvas');
+                
+                // Create renderer
+                EliteState.avatarRenderer = new THREE.WebGLRenderer({ 
+                    canvas, 
+                    antialias: true,
+                    alpha: true 
+                });
+                EliteState.avatarRenderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+                EliteState.avatarRenderer.setPixelRatio(window.devicePixelRatio);
+                
+                // Create scene
+                EliteState.avatarScene = new THREE.Scene();
+                EliteState.avatarScene.background = null;
+                
+                // Create camera
+                EliteState.avatarCamera = new THREE.PerspectiveCamera(
+                    75, 
+                    canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 
+                    0.1, 
+                    1000
+                );
+                EliteState.avatarCamera.position.z = 8;
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                EliteState.avatarScene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 5, 5);
+                EliteState.avatarScene.add(directionalLight);
+                
+                // Create abstract network visualization
+                createAvatarNetworkVisualization();
+                
+                // Start animation loop
+                animateAvatar();
+                
+                // Hide loading
+                $('#avatarLoading').hide();
+                
+                console.log('✅ Avatar System Initialized');
+                
+            } catch (error) {
+                console.error('Avatar initialization failed:', error);
+                $('#avatarLoading').html(`
+                    <div style="color: #EF476F;">
+                        <i class="fas fa-exclamation-triangle"></i> 3D System Error
+                    </div>
+                `);
+            }
+        }
+        
+        function createAvatarNetworkVisualization() {
+            // Clear existing objects
+            while(EliteState.avatarScene.children.length > 0){ 
+                EliteState.avatarScene.remove(EliteState.avatarScene.children[0]); 
+            }
+            
+            // Create network of spheres representing nodes
+            const nodeCount = EliteState.nodes.size || 8;
+            const radius = 4;
+            
+            for (let i = 0; i < nodeCount; i++) {
+                const angle = (i / nodeCount) * Math.PI * 2;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                const z = (Math.random() - 0.5) * 2;
+                
+                // Create sphere
+                const geometry = new THREE.SphereGeometry(0.3, 16, 16);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: getRandomClinicalColor(),
+                    transparent: true,
+                    opacity: 0.8,
+                    emissive: 0x222222
+                });
+                
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(x, y, z);
+                
+                EliteState.avatarScene.add(sphere);
+                
+                // Create label
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 256;
+                canvas.height = 64;
+                
+                // Draw label background
+                context.fillStyle = 'rgba(30, 41, 59, 0.9)';
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw text
+                context.fillStyle = 'white';
+                context.font = 'bold 14px Arial';
+                context.textAlign = 'center';
+                context.fillText(`Node ${i + 1}`, canvas.width/2, 30);
+                
+                // Create texture from canvas
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+                const sprite = new THREE.Sprite(spriteMaterial);
+                sprite.position.set(x, y + 0.5, z);
+                sprite.scale.set(2, 0.5, 1);
+                
+                EliteState.avatarScene.add(sprite);
+                
+                // Store reference for animation
+                sphere.userData = { originalPosition: { x, y, z }, speed: Math.random() * 0.02 + 0.01 };
+            }
+            
+            // Create connections between nodes
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) {
+                    if (Math.random() > 0.7) continue; // Random connections
+                    
+                    const start = EliteState.avatarScene.children[i * 2]?.position;
+                    const end = EliteState.avatarScene.children[j * 2]?.position;
+                    
+                    if (!start || !end) continue;
+                    
+                    // Create curve for connection
+                    const curve = new THREE.CatmullRomCurve3([
+                        new THREE.Vector3(start.x, start.y, start.z),
+                        new THREE.Vector3(
+                            (start.x + end.x) / 2,
+                            (start.y + end.y) / 2 + 1,
+                            (start.z + end.z) / 2
+                        ),
+                        new THREE.Vector3(end.x, end.y, end.z)
+                    ]);
+                    
+                    const tubeGeometry = new THREE.TubeGeometry(curve, 20, 0.05, 8, false);
+                    const tubeMaterial = new THREE.MeshBasicMaterial({
+                        color: 0x00B4D8,
+                        transparent: true,
+                        opacity: 0.4
+                    });
+                    
+                    const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+                    EliteState.avatarScene.add(tube);
+                }
+            }
+            
+            // Add lights back
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            EliteState.avatarScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            EliteState.avatarScene.add(directionalLight);
+        }
+        
+        function animateAvatar() {
+            requestAnimationFrame(animateAvatar);
+            
+            // Animate nodes
+            EliteState.avatarScene.children.forEach((child, index) => {
+                if (child.type === 'Mesh' && child.userData.originalPosition) {
+                    const time = Date.now() * child.userData.speed;
+                    const orig = child.userData.originalPosition;
+                    
+                    // Gentle floating animation
+                    child.position.x = orig.x + Math.sin(time + index) * 0.1;
+                    child.position.y = orig.y + Math.cos(time + index) * 0.1;
+                    child.position.z = orig.z + Math.sin(time * 0.5 + index) * 0.05;
+                    
+                    // Update corresponding sprite
+                    const sprite = EliteState.avatarScene.children[index + 1];
+                    if (sprite && sprite.type === 'Sprite') {
+                        sprite.position.copy(child.position);
+                        sprite.position.y += 0.5;
+                    }
+                }
+            });
+            
+            // Rotate entire scene slowly
+            EliteState.avatarScene.rotation.y += 0.002;
+            
+            // Render
+            if (EliteState.avatarRenderer && EliteState.avatarScene && EliteState.avatarCamera) {
+                EliteState.avatarRenderer.render(EliteState.avatarScene, EliteState.avatarCamera);
+            }
+        }
+        
+        function simulateTreatment(treatmentType) {
+            showEliteToast('Treatment Simulation', 
+                `Simulating ${treatmentType} therapy effects...`, 
+                'info');
+            
+            // Visual feedback in avatar
+            EliteState.avatarScene.children.forEach((child, index) => {
+                if (child.type === 'Mesh' && child.material) {
+                    // Pulse effect
+                    child.scale.setScalar(1.2);
+                    child.material.emissive.setHex(0x444444);
+                    
+                    setTimeout(() => {
+                        child.scale.setScalar(1);
+                        child.material.emissive.setHex(0x222222);
+                    }, 500);
+                }
+            });
+            
+            // Update metrics
+            updateAvatarMetrics();
+        }
+        
+        function updateAvatarMetrics() {
+            const metrics = `
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 16px;">
+                    <div style="background: #E3F2FD; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 18px; font-weight: 700; color: #00B4D8;">${EliteState.nodes.size}</div>
+                        <div style="font-size: 11px; color: #00356B;">Active Traits</div>
+                    </div>
+                    <div style="background: #E8F5E9; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 18px; font-weight: 700; color: #06D6A0;">${EliteState.connections.size}</div>
+                        <div style="font-size: 11px; color: #1B5E20;">Connections</div>
+                    </div>
+                    <div style="background: #FFF3E0; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 18px; font-weight: 700; color: #FFB300;">${calculateComplexity()}%</div>
+                        <div style="font-size: 11px; color: #E65100;">Complexity</div>
+                    </div>
+                    <div style="background: #FCE4EC; padding: 12px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 18px; font-weight: 700; color: #EC407A;">${calculateTreatmentImpact()}%</div>
+                        <div style="font-size: 11px; color: #880E4F;">Treatment Impact</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px; padding: 12px; background: #F5F5F5; border-radius: 8px;">
+                    <div style="font-size: 12px; color: #00356B; font-weight: 600; margin-bottom: 8px;">
+                        <i class="fas fa-lightbulb"></i> Avatar Insights
+                    </div>
+                    <div style="font-size: 11px; color: #455A64;">
+                        Network suggests ${EliteState.nodes.size >= 5 ? 'complex' : 'moderate'} disease phenotype. 
+                        ${EliteState.connections.size >= 8 ? 'Multiple therapeutic targets identified.' : 'Further mapping recommended.'}
+                    </div>
+                </div>
+            `;
+            
+            $('#avatarMetrics').html(metrics);
+        }
+        
+        function calculateComplexity() {
+            const nodeCount = EliteState.nodes.size;
+            const connCount = EliteState.connections.size;
+            const maxConn = nodeCount * (nodeCount - 1) / 2;
+            
+            if (maxConn === 0) return 0;
+            
+            const density = (connCount / maxConn) * 100;
+            const complexity = Math.min(100, Math.round(density * 1.5 + (nodeCount * 2)));
+            
+            return complexity;
+        }
+        
+        function calculateTreatmentImpact() {
+            // Simplified calculation
+            const treatmentNodes = Array.from(EliteState.nodes.values())
+                .filter(node => node.type === 'treatment').length;
+            
+            const totalNodes = EliteState.nodes.size;
+            
+            if (totalNodes === 0) return 0;
+            
+            return Math.round((treatmentNodes / totalNodes) * 100);
         }
         
         // ====== UTILITY FUNCTIONS ======
-        function closeModal(modalId) {
-            $(`#${modalId}`).removeClass('active');
+        function setupAllEventListeners() {
+            // Tab switching
+            $('.network-tab').click(function() {
+                const tabId = $(this).data('tab');
+                
+                // Update active tab
+                $('.network-tab').removeClass('active');
+                $(this).addClass('active');
+                
+                // Show corresponding content
+                $('.tab-pane').removeClass('active').hide();
+                $(`#${tabId}-tab`).addClass('active').show();
+            });
+            
+            // Toolbar buttons
+            $('#btnGetStarted').click(function() {
+                $('#welcomeOverlay').hide();
+                showCreateNetworkModal();
+            });
+            
+            $('#btnSelect').click(function() {
+                EliteState.currentTool = 'select';
+                $('.toolbar-btn').removeClass('active');
+                $(this).addClass('active');
+            });
+            
+            $('#btnExport').click(exportNetwork);
+            
+            // Keyboard shortcuts
+            $(document).keydown(function(e) {
+                // Ctrl+S to save
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    exportNetwork();
+                }
+                
+                // Escape to deselect
+                if (e.key === 'Escape') {
+                    deselectAll();
+                    hideContextualActions();
+                }
+                
+                // Delete to remove selected
+                if (e.key === 'Delete' && EliteState.selectedNode) {
+                    deleteSelectedNode();
+                }
+            });
         }
         
-        function showToast(title, message, type = 'info') {
-            const container = $('#toastContainer');
-            const toastId = 'toast_' + Date.now();
+        function exportNetwork() {
+            if (EliteState.nodes.size === 0) {
+                showEliteToast('Export Error', 'No network to export', 'error');
+                return;
+            }
+            
+            const networkData = {
+                version: '2.0',
+                exportDate: new Date().toISOString(),
+                clinician: EliteState.currentClinician,
+                session: EliteState.currentSession,
+                network: EliteState.currentNetwork,
+                nodes: Array.from(EliteState.nodes.values()),
+                connections: Array.from(EliteState.connections.values()),
+                metadata: {
+                    tool: 'AIRWAYSCOPE PRO v2.0',
+                    format: 'structured_clinical_network',
+                    compliance: 'HIPAA_deidentified_v2'
+                }
+            };
+            
+            // Create JSON file
+            const dataStr = JSON.stringify(networkData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const fileName = `AIRWAYSCOPE_${EliteState.currentNetwork?.name || 'Network'}_${new Date().toISOString().slice(0,10)}.json`;
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', fileName);
+            link.click();
+            
+            showEliteToast('Export Complete', 
+                `Network exported as ${fileName}`, 
+                'success');
+                
+            logSessionAction('network_exported', { 
+                nodeCount: EliteState.nodes.size, 
+                connectionCount: EliteState.connections.size 
+            });
+        }
+        
+        function deleteSelectedNode() {
+            if (!EliteState.selectedNode) return;
+            
+            const node = EliteState.nodes.get(EliteState.selectedNode);
+            if (!node) return;
+            
+            if (!confirm(`Delete "${node.data.name}" and all its connections?`)) return;
+            
+            // Remove all connections involving this node
+            [...node.connections.incoming, ...node.connections.outgoing].forEach(connId => {
+                const connection = EliteState.connections.get(connId);
+                if (connection) {
+                    // Remove visual elements
+                    if (connection.domElements) {
+                        connection.domElements.path.remove();
+                        connection.domElements.label.remove();
+                    }
+                    
+                    // Remove from other node's connections
+                    const otherNodeId = connection.source === EliteState.selectedNode ? connection.target : connection.source;
+                    const otherNode = EliteState.nodes.get(otherNodeId);
+                    if (otherNode) {
+                        otherNode.connections.incoming = otherNode.connections.incoming.filter(id => id !== connId);
+                        otherNode.connections.outgoing = otherNode.connections.outgoing.filter(id => id !== connId);
+                    }
+                    
+                    // Remove from connections map
+                    EliteState.connections.delete(connId);
+                }
+            });
+            
+            // Remove node visual element
+            $(`#node_${EliteState.selectedNode}`).remove();
+            
+            // Remove from nodes map
+            EliteState.nodes.delete(EliteState.selectedNode);
+            
+            // Log action
+            logSessionAction('node_deleted', { 
+                nodeId: EliteState.selectedNode, 
+                nodeName: node.data.name 
+            });
+            
+            // Update analytics
+            updateNetworkAnalytics();
+            updateAvatarMetrics();
+            
+            // Clear selection
+            deselectAll();
+            hideContextualActions();
+            
+            showEliteToast('Node Deleted', 
+                `${node.data.name} removed from network`, 
+                'warning');
+        }
+        
+        function showEliteToast(title, message, type = 'info') {
+            const colors = {
+                success: { border: '#06D6A0', bg: '#E8F5E9' },
+                error: { border: '#EF476F', bg: '#FFEBEE' },
+                warning: { border: '#FFB300', bg: '#FFF3E0' },
+                info: { border: '#00B4D8', bg: '#E3F2FD' }
+            };
+            
+            const color = colors[type] || colors.info;
             
             const toast = $(`
-                <div class="toast toast-${type}" id="${toastId}">
-                    <div class="toast-icon">
+                <div class="toast" style="border-left-color: ${color.border}; background: ${color.bg};">
+                    <div style="font-size: 20px; color: ${color.border};">
                         <i class="fas ${type === 'success' ? 'fa-check-circle' : 
-                                     type === 'error' ? 'fa-exclamation-circle' : 
-                                     type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+                                       type === 'error' ? 'fa-exclamation-circle' : 
+                                       type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
                     </div>
-                    <div class="toast-content">
-                        <div class="toast-title">${title}</div>
-                        <div class="toast-message">${message}</div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; color: var(--oxford-blue);">${title}</div>
+                        <div style="font-size: 13px; color: var(--mit-gray); margin-top: 4px;">${message}</div>
                     </div>
-                    <button class="toast-close" onclick="$('#${toastId}').addClass('toast-exit')">
+                    <button onclick="$(this).parent().remove()" 
+                            style="background: none; border: none; color: var(--mit-gray); cursor: pointer;">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
             `);
             
-            container.append(toast);
+            $('#toastContainer').append(toast);
             
+            // Auto-remove after 5 seconds
             setTimeout(() => {
-                $(`#${toastId}`).addClass('toast-exit');
-                setTimeout(() => $(`#${toastId}`).remove(), 300);
+                toast.fadeOut(300, function() { $(this).remove(); });
             }, 5000);
         }
         
-        // ====== EXPORT FUNCTIONS ======
-        window.closeModal = closeModal;
-        window.registerClinician = registerClinician;
-        window.createNewNode = createNewNode;
-        window.saveNetworkToDatabase = saveNetworkToDatabase;
-        window.loadDisease = loadDisease;
-        window.launchAvatarForPatient = launchAvatarForPatient;
+        function getRandomClinicalColor() {
+            const colors = [
+                0x7209B7, // Purple
+                0xEF476F, // Red
+                0x06D6A0, // Green
+                0xFFB300, // Amber
+                0x00356B, // Dark Blue
+                0x00B4D8, // Teal
+                0xA51C30  // Crimson
+            ];
+            
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
         
-        console.log('✅ AIRWAYSCOPE PRO - Complete system loaded');
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+        
+        function formatDuration(ms) {
+            const hours = Math.floor(ms / 3600000);
+            const minutes = Math.floor((ms % 3600000) / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${seconds}s`;
+            } else {
+                return `${seconds}s`;
+            }
+        }
+        
+        function formatPropertyName(prop) {
+            return prop.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+        }
+        
+        // Initialize when page loads
+        console.log('🎓 ELITE PLATFORM LOADED - Cambridge Ready!');
     </script>
 </body>
 </html>
