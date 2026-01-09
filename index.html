@@ -1,1868 +1,4093 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AIRWAYSCOPE PRO - Complete Clinical Pathway Mapping System</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Dependencies -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <style>
-        /* ========== COMPLETE CSS ========== */
-        :root {
-            --primary: #4361ee;
-            --primary-light: #4895ef;
-            --primary-dark: #3a0ca3;
-            --secondary: #7209b7;
-            --accent: #4cc9f0;
-            --success: #4ade80;
-            --warning: #f59e0b;
-            --danger: #ef476f;
-            --info: #06d6a0;
-            
-            --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-tertiary: #f1f5f9;
-            --bg-panel: #ffffff;
-            
-            --text-primary: #1e293b;
-            --text-secondary: #475569;
-            --text-tertiary: #64748b;
-            --text-muted: #94a3b8;
-            
-            --border-light: #e2e8f0;
-            --border-medium: #cbd5e1;
-            --border-accent: #4361ee;
-            
-            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            
-            --radius-sm: 0.375rem;
-            --radius-md: 0.5rem;
-            --radius-lg: 0.75rem;
-            --radius-xl: 1rem;
-            --radius-2xl: 1.5rem;
-        }
-        
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: var(--text-primary);
-        }
-        
-        /* ========== APP CONTAINER ========== */
-        .app-container {
-            max-width: 1800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            height: 95vh;
-        }
-        
-        /* ========== HEADER ========== */
-        .app-header {
-            background: linear-gradient(to right, var(--primary), var(--secondary));
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .header-icon {
-            font-size: 28px;
-            background: rgba(255,255,255,0.2);
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .header-title {
-            font-size: 22px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-        
-        .header-subtitle {
-            font-size: 13px;
-            opacity: 0.9;
-            font-weight: 500;
-        }
-        
-        .connection-status {
-            background: rgba(255,255,255,0.2);
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-        }
-        
-        .status-connected { color: #4ade80; }
-        .status-error { color: #ef476f; }
-        
-        /* ========== MAIN LAYOUT ========== */
-        .main-layout {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        
-        /* ========== SIDEBAR ========== */
-        .sidebar {
-            width: 350px;
-            background: var(--bg-secondary);
-            border-right: 1px solid var(--border-light);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .sidebar-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border-light);
-            background: white;
-        }
-        
-        .tab-btn {
-            flex: 1;
-            padding: 15px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text-tertiary);
-            border-bottom: 3px solid transparent;
-            transition: all 0.2s;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .tab-btn:hover {
-            background: var(--bg-tertiary);
-        }
-        
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-            background: white;
-        }
-        
-        .tab-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-        
-        .tab-pane {
-            display: none;
-        }
-        
-        .tab-pane.active {
-            display: block;
-        }
-        
-        /* ========== DISEASE LIST ========== */
-        .disease-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .disease-card {
-            padding: 16px;
-            background: white;
-            border-radius: var(--radius-lg);
-            border: 2px solid var(--border-light);
-            cursor: pointer;
-            transition: all 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .disease-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .disease-card:hover {
-            border-color: var(--primary);
-            transform: translateX(5px);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .disease-card:hover::before {
-            opacity: 1;
-        }
-        
-        .disease-card.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            border-color: var(--primary);
-        }
-        
-        .disease-name {
-            font-weight: 700;
-            font-size: 15px;
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .disease-badge {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.2);
-            color: white;
-            font-weight: 600;
-        }
-        
-        .disease-code {
-            font-size: 11px;
-            opacity: 0.8;
-            margin-bottom: 8px;
-            font-family: monospace;
-        }
-        
-        .disease-description {
-            font-size: 12px;
-            color: var(--text-tertiary);
-            margin-top: 8px;
-            line-height: 1.4;
-        }
-        
-        /* ========== CANVAS AREA ========== */
-        .canvas-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-            background: var(--bg-tertiary);
-        }
-        
-        .canvas-toolbar {
-            padding: 12px 20px;
-            background: white;
-            border-bottom: 1px solid var(--border-light);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .canvas-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .toolbar-buttons {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        
-        /* ========== BUTTONS ========== */
-        .btn {
-            padding: 8px 16px;
-            border-radius: var(--radius-lg);
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: white;
-            border: none;
-            box-shadow: var(--shadow-md);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .btn-success {
-            background: var(--success);
-            color: white;
-            border: none;
-        }
-        
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-            border: none;
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-            border: none;
-        }
-        
-        .btn-outline {
-            background: white;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-        
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
-        
-        /* ========== ZOOM CONTROLS ========== */
-        .zoom-controls {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-xl);
-            padding: 8px;
-            box-shadow: var(--shadow-lg);
-            z-index: 100;
-        }
-        
-        .zoom-btn {
-            width: 32px;
-            height: 32px;
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            color: var(--text-secondary);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        
-        .zoom-display {
-            text-align: center;
-            font-size: 11px;
-            color: var(--text-tertiary);
-            padding: 4px;
-            min-width: 32px;
-            font-weight: 600;
-        }
-        
-        /* ========== NETWORK CANVAS ========== */
-        #networkCanvas {
-            flex: 1;
-            position: relative;
-            overflow: auto;
-            background: 
-                linear-gradient(90deg, #f1f5f9 1px, transparent 1px) 0 0 / 40px 40px,
-                linear-gradient(#f1f5f9 1px, transparent 1px) 0 0 / 40px 40px;
-        }
-        
-        /* ========== TRAIT NODES ========== */
-        .trait-node {
-            position: absolute;
-            width: 240px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: var(--shadow-lg);
-            cursor: move;
-            border-left: 5px solid;
-            z-index: 10;
-            transition: all 0.3s;
-            user-select: none;
-        }
-        
-        .trait-node:hover {
-            box-shadow: var(--shadow-xl);
-            transform: translateY(-2px);
-            z-index: 100;
-        }
-        
-        .trait-node.selected {
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3), var(--shadow-lg);
-        }
-        
-        .trait-node.inflammatory { border-color: #ef476f; }
-        .trait-node.physiological { border-color: #06d6a0; }
-        .trait-node.behavioral { border-color: #ffd166; }
-        .trait-node.comorbid { border-color: #118ab2; }
-        .trait-node.environmental { border-color: #9d4edd; }
-        .trait-node.treatment { border-color: #7209b7; }
-        
-        .node-header {
-            padding: 16px 16px 12px 16px;
-            border-bottom: 1px solid var(--border-light);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        
-        .node-title {
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--text-primary);
-            line-height: 1.3;
-            flex: 1;
-        }
-        
-        .node-category {
-            font-size: 10px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .node-inflammatory { background: #ef476f; }
-        .node-physiological { background: #06d6a0; }
-        .node-behavioral { background: #ffd166; color: #1a202c; }
-        .node-comorbid { background: #118ab2; }
-        .node-environmental { background: #9d4edd; }
-        .node-treatment { background: #7209b7; }
-        
-        .node-content {
-            padding: 14px 16px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-        }
-        
-        /* ========== CONNECTIONS ========== */
-        .connections-svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .connection-line {
-            stroke-width: 3;
-            fill: none;
-        }
-        
-        /* ========== MODALS ========== */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .modal.active {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-light);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .modal-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-        
-        /* ========== FORMS ========== */
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-medium);
-            border-radius: var(--radius-md);
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
-        }
-        
-        .form-select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-medium);
-            border-radius: var(--radius-md);
-            font-size: 14px;
-            background: white;
-            cursor: pointer;
-        }
-        
-        /* ========== TOAST NOTIFICATIONS ========== */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 3000;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-width: 400px;
-        }
-        
-        .toast {
-            background: white;
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            box-shadow: var(--shadow-xl);
-            animation: slideInRight 0.3s ease;
-        }
-        
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* ========== TREATMENT CARDS ========== */
-        .treatment-card {
-            background: #f0f9ff;
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid var(--primary);
-        }
-        
-        /* ========== PATIENT MANAGEMENT ========== */
-        .patient-profile {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-light);
-        }
-        
-        .trait-slider {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin: 12px 0;
-            padding: 14px;
-            background: var(--bg-tertiary);
-            border-radius: var(--radius-lg);
-        }
-        
-        .slider {
-            flex: 1;
-            height: 6px;
-            background: var(--border-light);
-            border-radius: 3px;
-            outline: none;
-            -webkit-appearance: none;
-        }
-        
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: var(--primary);
-            cursor: pointer;
-            border: 3px solid white;
-            box-shadow: var(--shadow-md);
-        }
-        
-        /* ========== STATISTICS ========== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin: 20px 0;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: var(--radius-lg);
-            padding: 16px;
-            text-align: center;
-            border: 1px solid var(--border-light);
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--primary);
-            margin-bottom: 4px;
-        }
-        
-        /* ========== LOADING STATES ========== */
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            color: var(--text-tertiary);
-            text-align: center;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--bg-tertiary);
-            border-top: 4px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 16px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* ========== UTILITIES ========== */
-        .hidden { display: none !important; }
-        
-        /* ========== RESPONSIVE ========== */
-        @media (max-width: 768px) {
-            .main-layout { flex-direction: column; }
-            .sidebar { width: 100%; height: 300px; }
-            .toolbar-buttons { justify-content: center; }
-            .btn { padding: 8px 12px; font-size: 12px; }
-        }
-    </style>
+<title>AIRWAYSCOPE PRO - Complete Clinical Pathway Mapping System</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Dependencies -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+
+<style>
+/* ========== COMPLETE CSS ========== */
+:root {
+--primary: #4361ee;
+--primary-light: #4895ef;
+--primary-dark: #3a0ca3;
+--secondary: #7209b7;
+--accent: #4cc9f0;
+--success: #4ade80;
+--warning: #f59e0b;
+--danger: #ef476f;
+--info: #06d6a0;
+
+--bg-primary: #ffffff;
+--bg-secondary: #f8fafc;
+--bg-tertiary: #f1f5f9;
+--bg-panel: #ffffff;
+
+--text-primary: #1e293b;
+--text-secondary: #475569;
+--text-tertiary: #64748b;
+--text-muted: #94a3b8;
+
+--border-light: #e2e8f0;
+--border-medium: #cbd5e1;
+--border-accent: #4361ee;
+
+--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+--shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+--radius-sm: 0.375rem;
+--radius-md: 0.5rem;
+--radius-lg: 0.75rem;
+--radius-xl: 1rem;
+--radius-2xl: 1.5rem;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+min-height: 100vh;
+padding: 20px;
+color: var(--text-primary);
+}
+
+/* ========== APP CONTAINER ========== */
+.app-container {
+max-width: 1800px;
+margin: 0 auto;
+background: white;
+border-radius: 20px;
+box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+overflow: hidden;
+display: flex;
+flex-direction: column;
+height: 95vh;
+}
+
+/* ========== HEADER ========== */
+.app-header {
+background: linear-gradient(to right, var(--primary), var(--secondary));
+color: white;
+padding: 15px 30px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.header-left {
+display: flex;
+align-items: center;
+gap: 15px;
+}
+
+.header-icon {
+font-size: 28px;
+background: rgba(255,255,255,0.2);
+width: 50px;
+height: 50px;
+border-radius: 12px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.header-title {
+font-size: 22px;
+font-weight: 800;
+letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+font-size: 13px;
+opacity: 0.9;
+font-weight: 500;
+}
+
+.connection-status {
+background: rgba(255,255,255,0.2);
+padding: 8px 16px;
+border-radius: 50px;
+font-size: 13px;
+display: flex;
+align-items: center;
+gap: 8px;
+font-weight: 500;
+}
+
+.status-connected { color: #4ade80; }
+.status-error { color: #ef476f; }
+
+/* ========== MAIN LAYOUT ========== */
+.main-layout {
+display: flex;
+flex: 1;
+overflow: hidden;
+}
+
+/* ========== ENHANCED SIDEBAR ========== */
+.sidebar {
+width: 350px;
+background: var(--bg-secondary);
+border-right: 1px solid var(--border-light);
+display: flex;
+flex-direction: column;
+overflow: hidden;
+transition: width 0.3s ease;
+}
+
+.sidebar-collapsed {
+width: 60px;
+}
+
+.sidebar-toggle {
+position: absolute;
+top: 15px;
+right: -12px;
+width: 24px;
+height: 24px;
+background: white;
+border: 1px solid var(--border-light);
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+z-index: 10;
+box-shadow: var(--shadow-sm);
+color: var(--text-tertiary);
+}
+
+.sidebar-tabs {
+display: flex;
+border-bottom: 1px solid var(--border-light);
+background: white;
+}
+
+.tab-btn {
+flex: 1;
+padding: 15px;
+background: none;
+border: none;
+cursor: pointer;
+font-weight: 600;
+color: var(--text-tertiary);
+border-bottom: 3px solid transparent;
+transition: all 0.2s;
+font-size: 13px;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+}
+
+.tab-btn:hover {
+background: var(--bg-tertiary);
+}
+
+.tab-btn.active {
+color: var(--primary);
+border-bottom-color: var(--primary);
+background: white;
+}
+
+.tab-content {
+flex: 1;
+overflow-y: auto;
+padding: 20px;
+}
+
+.tab-pane {
+display: none;
+}
+
+.tab-pane.active {
+display: block;
+}
+
+/* ========== DISEASE LIST ========== */
+.disease-list {
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+.disease-card {
+padding: 16px;
+background: white;
+border-radius: var(--radius-lg);
+border: 2px solid var(--border-light);
+cursor: pointer;
+transition: all 0.3s;
+position: relative;
+overflow: hidden;
+}
+
+.disease-card::before {
+content: '';
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+height: 3px;
+background: linear-gradient(90deg, var(--primary), var(--accent));
+opacity: 0;
+transition: opacity 0.3s;
+}
+
+.disease-card:hover {
+border-color: var(--primary);
+transform: translateX(5px);
+box-shadow: var(--shadow-md);
+}
+
+.disease-card:hover::before {
+opacity: 1;
+}
+
+.disease-card.active {
+background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+color: white;
+border-color: var(--primary);
+}
+
+.disease-card.active .disease-stats {
+color: rgba(255,255,255,0.8);
+}
+
+.disease-card.active .disease-description {
+color: rgba(255,255,255,0.9);
+}
+
+.disease-name {
+font-weight: 700;
+font-size: 15px;
+margin-bottom: 4px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+
+.disease-badge {
+font-size: 11px;
+padding: 2px 8px;
+border-radius: 20px;
+background: rgba(255,255,255,0.2);
+color: white;
+font-weight: 600;
+}
+
+.disease-code {
+font-size: 11px;
+opacity: 0.8;
+margin-bottom: 8px;
+font-family: monospace;
+}
+
+.disease-description {
+font-size: 12px;
+color: var(--text-tertiary);
+margin-top: 8px;
+line-height: 1.4;
+}
+
+.disease-stats {
+display: flex;
+justify-content: space-between;
+font-size: 11px;
+color: var(--text-muted);
+margin-top: 12px;
+padding-top: 8px;
+border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+/* ========== SAVED NETWORKS ========== */
+.saved-network {
+padding: 14px;
+background: white;
+border-radius: var(--radius-lg);
+border: 1px solid var(--border-light);
+margin-bottom: 10px;
+cursor: pointer;
+transition: all 0.2s;
+position: relative;
+}
+
+.saved-network::before {
+content: '';
+position: absolute;
+left: 0;
+top: 0;
+bottom: 0;
+width: 4px;
+background: var(--primary);
+border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+opacity: 0;
+transition: opacity 0.2s;
+}
+
+.saved-network:hover {
+border-color: var(--primary);
+box-shadow: var(--shadow-md);
+transform: translateX(3px);
+}
+
+.saved-network:hover::before {
+opacity: 1;
+}
+
+.network-name {
+font-weight: 700;
+color: var(--text-primary);
+margin-bottom: 4px;
+font-size: 14px;
+}
+
+.network-meta {
+font-size: 11px;
+color: var(--text-tertiary);
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.network-author {
+font-weight: 600;
+color: var(--primary);
+}
+
+/* ========== CANVAS AREA ========== */
+.canvas-area {
+flex: 1;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+position: relative;
+background: var(--bg-tertiary);
+}
+
+.canvas-toolbar {
+padding: 12px 20px;
+background: white;
+border-bottom: 1px solid var(--border-light);
+display: flex;
+justify-content: space-between;
+align-items: center;
+flex-wrap: wrap;
+gap: 10px;
+}
+
+.canvas-title {
+font-size: 18px;
+font-weight: 700;
+color: var(--text-primary);
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.toolbar-buttons {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+}
+
+/* ========== BUTTONS ========== */
+.btn {
+padding: 8px 16px;
+border-radius: var(--radius-lg);
+border: none;
+font-weight: 600;
+cursor: pointer;
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 13px;
+transition: all 0.2s;
+white-space: nowrap;
+position: relative;
+overflow: hidden;
+}
+
+.btn::after {
+content: '';
+position: absolute;
+top: 50%;
+left: 50%;
+width: 5px;
+height: 5px;
+background: rgba(255, 255, 255, 0.5);
+opacity: 0;
+border-radius: 50%;
+transform: scale(1, 1) translate(-50%);
+transform-origin: 50% 50%;
+}
+
+.btn:focus:not(:active)::after {
+animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+0% { transform: scale(0, 0); opacity: 0.5; }
+100% { transform: scale(20, 20); opacity: 0; }
+}
+
+.btn-primary {
+background: linear-gradient(135deg, var(--primary), var(--primary-light));
+color: white;
+border: none;
+box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+transform: translateY(-1px);
+box-shadow: var(--shadow-lg);
+}
+
+.btn-success {
+background: var(--success);
+color: white;
+border: none;
+}
+
+.btn-warning {
+background: var(--warning);
+color: white;
+border: none;
+}
+
+.btn-danger {
+background: var(--danger);
+color: white;
+border: none;
+}
+
+.btn-outline {
+background: white;
+border: 2px solid var(--primary);
+color: var(--primary);
+}
+
+.btn-outline:hover {
+background: var(--primary);
+color: white;
+}
+
+.btn-icon {
+width: 36px;
+height: 36px;
+padding: 8px;
+justify-content: center;
+}
+
+.btn-sm {
+padding: 6px 12px;
+font-size: 12px;
+}
+
+/* ========== ZOOM CONTROLS ========== */
+.zoom-controls {
+position: absolute;
+bottom: 20px;
+right: 20px;
+display: flex;
+flex-direction: column;
+gap: 8px;
+background: white;
+border: 1px solid var(--border-light);
+border-radius: var(--radius-xl);
+padding: 8px;
+box-shadow: var(--shadow-lg);
+z-index: 100;
+}
+
+.zoom-btn {
+width: 32px;
+height: 32px;
+background: white;
+border: 1px solid var(--border-light);
+border-radius: var(--radius-lg);
+color: var(--text-secondary);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.2s;
+}
+
+.zoom-btn:hover {
+background: var(--bg-tertiary);
+color: var(--text-primary);
+}
+
+.zoom-display {
+text-align: center;
+font-size: 11px;
+color: var(--text-tertiary);
+padding: 4px;
+min-width: 32px;
+font-weight: 600;
+}
+
+/* ========== NETWORK CANVAS ========== */
+#networkCanvas {
+flex: 1;
+position: relative;
+overflow: auto;
+background: 
+linear-gradient(90deg, #f1f5f9 1px, transparent 1px) 0 0 / 40px 40px,
+linear-gradient(#f1f5f9 1px, transparent 1px) 0 0 / 40px 40px;
+}
+
+/* ========== ENHANCED TRAIT NODES ========== */
+.trait-node {
+position: absolute;
+width: 240px;
+background: white;
+border-radius: 12px;
+box-shadow: var(--shadow-lg);
+cursor: move;
+border-left: 5px solid;
+z-index: 10;
+transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+user-select: none;
+transform-origin: center;
+}
+
+.trait-node:hover {
+box-shadow: var(--shadow-xl);
+transform: scale(1.03) translateY(-2px);
+z-index: 100;
+}
+
+.trait-node.selected {
+box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.3), var(--shadow-lg);
+animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+0% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.3), var(--shadow-lg); }
+70% { box-shadow: 0 0 0 10px rgba(67, 97, 238, 0), var(--shadow-lg); }
+100% { box-shadow: 0 0 0 0 rgba(67, 97, 238, 0), var(--shadow-lg); }
+}
+
+.trait-node.inflammatory { border-color: #ef476f; }
+.trait-node.physiological { border-color: #06d6a0; }
+.trait-node.behavioral { border-color: #ffd166; }
+.trait-node.comorbid { border-color: #118ab2; }
+.trait-node.environmental { border-color: #9d4edd; }
+.trait-node.treatment { border-color: #7209b7; }
+
+.node-header {
+padding: 16px 16px 12px 16px;
+border-bottom: 1px solid var(--border-light);
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+}
+
+.node-title {
+font-weight: 700;
+font-size: 15px;
+color: var(--text-primary);
+line-height: 1.3;
+flex: 1;
+}
+
+.node-category {
+font-size: 10px;
+padding: 4px 10px;
+border-radius: 12px;
+color: white;
+font-weight: 700;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+white-space: nowrap;
+}
+
+.node-inflammatory { background: #ef476f; }
+.node-physiological { background: #06d6a0; }
+.node-behavioral { background: #ffd166; color: #1a202c; }
+.node-comorbid { background: #118ab2; }
+.node-environmental { background: #9d4edd; }
+.node-treatment { background: #7209b7; }
+
+.node-content {
+padding: 14px 16px;
+font-size: 13px;
+color: var(--text-secondary);
+line-height: 1.5;
+}
+
+.node-metrics {
+display: flex;
+gap: 12px;
+margin-top: 8px;
+font-size: 11px;
+}
+
+.metric {
+display: flex;
+align-items: center;
+gap: 4px;
+color: var(--text-tertiary);
+}
+
+.metric-value {
+font-weight: 700;
+color: var(--primary);
+}
+
+.node-footer {
+padding: 12px 16px;
+border-top: 1px solid var(--border-light);
+display: flex;
+justify-content: space-between;
+font-size: 11px;
+color: var(--text-muted);
+}
+
+.node-actions {
+display: flex;
+gap: 6px;
+}
+
+.node-btn {
+width: 24px;
+height: 24px;
+border-radius: 50%;
+border: none;
+background: var(--bg-tertiary);
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.2s;
+color: var(--text-tertiary);
+}
+
+.node-btn:hover {
+background: var(--primary);
+color: white;
+transform: scale(1.1);
+}
+
+/* ========== CONNECTIONS ========== */
+.connections-svg {
+position: absolute;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+pointer-events: none;
+z-index: 1;
+}
+
+.connection-line {
+stroke-width: 3;
+fill: none;
+filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.connection-label {
+position: absolute;
+background: white;
+padding: 3px 10px;
+border-radius: 20px;
+font-size: 11px;
+font-weight: 700;
+color: var(--primary);
+border: 1px solid var(--primary);
+pointer-events: none;
+z-index: 2;
+box-shadow: var(--shadow-sm);
+backdrop-filter: blur(4px);
+}
+
+/* ========== CONNECTION CREATOR ========== */
+.connection-creator {
+position: absolute;
+background: white;
+padding: 20px;
+border-radius: var(--radius-xl);
+box-shadow: var(--shadow-xl);
+z-index: 1000;
+border: 1px solid var(--border-light);
+display: none;
+width: 320px;
+animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+from { transform: translateY(10px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
+}
+
+/* ========== PATTERN VISUALIZATION ========== */
+.patterns-panel {
+position: absolute;
+top: 20px;
+left: 20px;
+background: white;
+border: 1px solid var(--border-light);
+border-radius: var(--radius-xl);
+padding: 16px;
+width: 260px;
+box-shadow: var(--shadow-xl);
+z-index: 100;
+backdrop-filter: blur(10px);
+}
+
+.pattern-item {
+padding: 12px;
+background: var(--bg-secondary);
+border-radius: var(--radius-lg);
+margin-bottom: 8px;
+cursor: pointer;
+transition: all 0.2s;
+border-left: 4px solid;
+}
+
+.pattern-item:hover {
+background: var(--bg-tertiary);
+transform: translateX(4px);
+}
+
+.pattern-color {
+width: 12px;
+height: 12px;
+border-radius: 50%;
+display: inline-block;
+margin-right: 8px;
+vertical-align: middle;
+}
+
+/* ========== INSIGHTS PANEL ========== */
+.insights-panel {
+position: absolute;
+bottom: 20px;
+left: 20px;
+background: white;
+border: 1px solid var(--border-light);
+border-radius: var(--radius-xl);
+padding: 16px;
+width: 280px;
+box-shadow: var(--shadow-xl);
+z-index: 100;
+}
+
+.metrics-grid {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 10px;
+margin: 16px 0;
+}
+
+.metric-card {
+background: var(--bg-secondary);
+border-radius: var(--radius-lg);
+padding: 12px;
+text-align: center;
+border: 1px solid var(--border-light);
+transition: all 0.2s;
+}
+
+.metric-card:hover {
+transform: translateY(-2px);
+box-shadow: var(--shadow-md);
+}
+
+.metric-value {
+font-size: 20px;
+font-weight: 800;
+color: var(--primary);
+line-height: 1;
+margin-bottom: 4px;
+}
+
+/* ========== MODALS ========== */
+.modal {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0,0,0,0.5);
+z-index: 2000;
+justify-content: center;
+align-items: center;
+backdrop-filter: blur(5px);
+}
+
+.modal.active {
+display: flex;
+animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+.modal-content {
+background: white;
+border-radius: 16px;
+width: 90%;
+max-width: 600px;
+max-height: 90vh;
+overflow-y: auto;
+animation: modalSlide 0.3s ease;
+}
+
+@keyframes modalSlide {
+from { transform: translateY(-20px); opacity: 0; }
+to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-header {
+padding: 20px;
+border-bottom: 1px solid var(--border-light);
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+.modal-title {
+font-size: 20px;
+font-weight: 700;
+color: var(--text-primary);
+}
+
+.modal-close {
+background: none;
+border: none;
+font-size: 24px;
+cursor: pointer;
+color: var(--text-tertiary);
+width: 36px;
+height: 36px;
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: all 0.2s;
+}
+
+.modal-close:hover {
+background: var(--bg-tertiary);
+color: var(--text-primary);
+}
+
+.modal-body {
+padding: 20px;
+}
+
+/* ========== FORMS ========== */
+.form-group {
+margin-bottom: 20px;
+}
+
+.form-label {
+display: block;
+margin-bottom: 8px;
+font-weight: 600;
+color: var(--text-primary);
+font-size: 14px;
+}
+
+.form-control {
+width: 100%;
+padding: 12px;
+border: 1px solid var(--border-medium);
+border-radius: var(--radius-md);
+font-size: 14px;
+transition: all 0.2s;
+font-family: inherit;
+background: white;
+}
+
+.form-control:focus {
+outline: none;
+border-color: var(--primary);
+box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+textarea.form-control {
+min-height: 100px;
+resize: vertical;
+}
+
+.form-select {
+width: 100%;
+padding: 12px;
+border: 1px solid var(--border-medium);
+border-radius: var(--radius-md);
+font-size: 14px;
+background: white;
+cursor: pointer;
+transition: all 0.2s;
+}
+
+.form-select:focus {
+border-color: var(--primary);
+box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+/* ========== TOAST NOTIFICATIONS ========== */
+.toast-container {
+position: fixed;
+bottom: 20px;
+right: 20px;
+z-index: 3000;
+display: flex;
+flex-direction: column;
+gap: 10px;
+max-width: 400px;
+}
+
+.toast {
+background: white;
+border: 1px solid var(--border-light);
+border-radius: var(--radius-lg);
+padding: 16px;
+display: flex;
+gap: 12px;
+align-items: flex-start;
+box-shadow: var(--shadow-xl);
+animation: slideInRight 0.3s ease;
+transform: translateX(0);
+opacity: 1;
+}
+
+@keyframes slideInRight {
+from { transform: translateX(100%); opacity: 0; }
+to { transform: translateX(0); opacity: 1; }
+}
+
+.toast-exit {
+animation: slideOutRight 0.3s ease;
+transform: translateX(100%);
+opacity: 0;
+}
+
+@keyframes slideOutRight {
+from { transform: translateX(0); opacity: 1; }
+to { transform: translateX(100%); opacity: 0; }
+}
+
+.toast-icon {
+font-size: 18px;
+flex-shrink: 0;
+margin-top: 2px;
+}
+
+.toast-success .toast-icon { color: var(--success); }
+.toast-error .toast-icon { color: var(--danger); }
+.toast-warning .toast-icon { color: var(--warning); }
+.toast-info .toast-icon { color: var(--primary); }
+
+.toast-content {
+flex: 1;
+min-width: 0;
+}
+
+.toast-title {
+font-weight: 600;
+font-size: 14px;
+margin-bottom: 4px;
+color: var(--text-primary);
+}
+
+.toast-message {
+font-size: 13px;
+color: var(--text-secondary);
+line-height: 1.4;
+}
+
+.toast-close {
+background: none;
+border: none;
+color: var(--text-tertiary);
+cursor: pointer;
+padding: 4px;
+flex-shrink: 0;
+transition: color 0.2s;
+}
+
+.toast-close:hover {
+color: var(--text-primary);
+}
+
+/* ========== TREATMENT CARDS ========== */
+.treatment-card {
+background: #f0f9ff;
+border-radius: var(--radius-lg);
+padding: 16px;
+margin-bottom: 12px;
+border-left: 4px solid var(--primary);
+transition: all 0.2s;
+}
+
+.treatment-card:hover {
+transform: translateX(4px);
+box-shadow: var(--shadow-md);
+}
+
+.treatment-header {
+display: flex;
+justify-content: space-between;
+align-items: flex-start;
+margin-bottom: 12px;
+}
+
+.treatment-name {
+font-weight: 700;
+color: var(--text-primary);
+font-size: 15px;
+}
+
+.evidence-badge {
+padding: 4px 10px;
+border-radius: 20px;
+font-size: 10px;
+font-weight: 800;
+text-transform: uppercase;
+letter-spacing: 0.5px;
+}
+
+.evidence-a { background: #d4edda; color: #155724; }
+.evidence-b { background: #fff3cd; color: #856404; }
+.evidence-c { background: #f8d7da; color: #721c24; }
+
+/* ========== PATIENT MANAGEMENT ========== */
+.patient-profile {
+background: white;
+border-radius: var(--radius-lg);
+padding: 20px;
+margin-bottom: 20px;
+border: 1px solid var(--border-light);
+box-shadow: var(--shadow-sm);
+}
+
+.patient-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+}
+
+.trait-slider {
+display: flex;
+align-items: center;
+gap: 15px;
+margin: 12px 0;
+padding: 14px;
+background: var(--bg-tertiary);
+border-radius: var(--radius-lg);
+transition: all 0.2s;
+}
+
+.trait-slider:hover {
+background: var(--bg-secondary);
+}
+
+.trait-name {
+flex: 1;
+font-weight: 600;
+color: var(--text-primary);
+font-size: 13px;
+}
+
+.slider-container {
+flex: 2;
+display: flex;
+align-items: center;
+gap: 12px;
+}
+
+.slider {
+flex: 1;
+height: 6px;
+background: var(--border-light);
+border-radius: 3px;
+outline: none;
+-webkit-appearance: none;
+transition: background 0.2s;
+}
+
+.slider:hover {
+background: var(--border-medium);
+}
+
+.slider::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 20px;
+height: 20px;
+border-radius: 50%;
+background: var(--primary);
+cursor: pointer;
+border: 3px solid white;
+box-shadow: var(--shadow-md);
+transition: all 0.2s;
+}
+
+.slider::-webkit-slider-thumb:hover {
+transform: scale(1.1);
+box-shadow: var(--shadow-lg);
+}
+
+.slider-value {
+width: 40px;
+text-align: center;
+font-weight: 700;
+color: var(--primary);
+font-size: 14px;
+}
+
+/* ========== STATISTICS ========== */
+.stats-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+gap: 12px;
+margin: 20px 0;
+}
+
+.stat-card {
+background: white;
+border-radius: var(--radius-lg);
+padding: 16px;
+text-align: center;
+border: 1px solid var(--border-light);
+transition: all 0.2s;
+}
+
+.stat-card:hover {
+transform: translateY(-2px);
+box-shadow: var(--shadow-md);
+}
+
+.stat-value {
+font-size: 28px;
+font-weight: 800;
+color: var(--primary);
+margin-bottom: 4px;
+line-height: 1;
+}
+
+.stat-label {
+font-size: 11px;
+color: var(--text-tertiary);
+text-transform: uppercase;
+letter-spacing: 0.5px;
+font-weight: 600;
+}
+
+/* ========== LOADING STATES ========== */
+.loading {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 40px;
+color: var(--text-tertiary);
+text-align: center;
+}
+
+.loading-spinner {
+width: 40px;
+height: 40px;
+border: 4px solid var(--bg-tertiary);
+border-top: 4px solid var(--primary);
+border-radius: 50%;
+animation: spin 1s linear infinite;
+margin-bottom: 16px;
+}
+
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+
+/* ========== UTILITIES ========== */
+.hidden { display: none !important; }
+.scrollbar-enhanced {
+scrollbar-width: thin;
+scrollbar-color: var(--border-light) var(--bg-secondary);
+}
+
+.scrollbar-enhanced::-webkit-scrollbar {
+width: 8px;
+}
+
+.scrollbar-enhanced::-webkit-scrollbar-track {
+background: var(--bg-secondary);
+border-radius: 4px;
+}
+
+.scrollbar-enhanced::-webkit-scrollbar-thumb {
+background: var(--border-light);
+border-radius: 4px;
+}
+
+.scrollbar-enhanced::-webkit-scrollbar-thumb:hover {
+background: var(--border-medium);
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1200px) {
+.sidebar { width: 320px; }
+.patterns-panel, .insights-panel { width: 240px; }
+}
+
+@media (max-width: 768px) {
+.main-layout { flex-direction: column; }
+.sidebar { width: 100%; height: 300px; }
+.sidebar-collapsed { width: 100%; height: 60px; }
+.toolbar-buttons { justify-content: center; }
+.btn { padding: 8px 12px; font-size: 12px; }
+.zoom-controls { bottom: 10px; right: 10px; }
+.patterns-panel, .insights-panel { 
+position: relative;
+width: calc(100% - 40px);
+margin: 10px auto;
+top: auto;
+left: auto;
+}
+}
+</style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- HEADER -->
-        <header class="app-header">
-            <div class="header-left">
-                <div class="header-icon">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                <div>
-                    <div class="header-title">AIRWAYSCOPE PRO</div>
-                    <div class="header-subtitle">Clinical Pathway Mapping System</div>
-                </div>
-            </div>
-            <div class="connection-status">
-                <i class="fas fa-circle status-connected"></i>
-                <span>System: Online</span>
-            </div>
-        </header>
-        
-        <!-- MAIN CONTENT -->
-        <div class="main-layout">
-            <!-- SIDEBAR -->
-            <aside class="sidebar">
-                <div class="sidebar-tabs">
-                    <button class="tab-btn active" data-tab="diseases">
-                        <i class="fas fa-disease"></i>
-                        <span>Diseases</span>
-                    </button>
-                    <button class="tab-btn" data-tab="networks">
-                        <i class="fas fa-save"></i>
-                        <span>Networks</span>
-                    </button>
-                    <button class="tab-btn" data-tab="patients">
-                        <i class="fas fa-user-injured"></i>
-                        <span>Patients</span>
-                    </button>
-                    <button class="tab-btn" data-tab="analytics">
-                        <i class="fas fa-chart-network"></i>
-                        <span>Analytics</span>
-                    </button>
-                </div>
-                
-                <div class="tab-content">
-                    <!-- DISEASES TAB -->
-                    <div class="tab-pane active" id="diseases-tab">
-                        <h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
-                            <i class="fas fa-lungs"></i> Airway Diseases
-                        </h3>
-                        <div class="disease-list" id="diseaseList">
-                            <div class="loading">
-                                <div class="loading-spinner"></div>
-                                Loading diseases...
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- NETWORKS TAB -->
-                    <div class="tab-pane" id="networks-tab">
-                        <h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
-                            <i class="fas fa-project-diagram"></i> Saved Networks
-                        </h3>
-                        <div id="savedNetworks">
-                            <div class="loading">Loading saved networks...</div>
-                        </div>
-                    </div>
-                    
-                    <!-- PATIENTS TAB -->
-                    <div class="tab-pane" id="patients-tab">
-                        <h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
-                            <i class="fas fa-stethoscope"></i> Patient Management
-                        </h3>
-                        <div class="form-group">
-                            <select class="form-select" id="patientSelect">
-                                <option value="">Select a patient...</option>
-                                <option value="new">+ Create New Patient</option>
-                            </select>
-                        </div>
-                        <div id="patientProfile" class="hidden">
-                            <div class="patient-profile">
-                                <div id="patientInfo"></div>
-                                <div id="patientTraits"></div>
-                                <button class="btn btn-primary" onclick="generateTreatmentPlan()" style="width: 100%; margin-top: 16px;">
-                                    <i class="fas fa-file-medical"></i> Generate Treatment Plan
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- ANALYTICS TAB -->
-                    <div class="tab-pane" id="analytics-tab">
-                        <h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
-                            <i class="fas fa-chart-bar"></i> Network Analytics
-                        </h3>
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-value" id="analyticsTraits">0</div>
-                                <div style="font-size: 11px; color: var(--text-tertiary);">Active Traits</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="analyticsConnections">0</div>
-                                <div style="font-size: 11px; color: var(--text-tertiary);">Connections</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="analyticsDensity">0%</div>
-                                <div style="font-size: 11px; color: var(--text-tertiary);">Network Density</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="analyticsComplexity">0</div>
-                                <div style="font-size: 11px; color: var(--text-tertiary);">Complexity</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div style="padding: 16px; border-top: 1px solid var(--border-light);">
-                    <button class="btn btn-primary" id="btnSaveNetwork" style="width: 100%;">
-                        <i class="fas fa-save"></i> Save Current Network
-                    </button>
-                </div>
-            </aside>
-            
-            <!-- MAIN CANVAS AREA -->
-            <main class="canvas-area">
-                <div class="canvas-toolbar">
-                    <div class="canvas-title" id="canvasTitle">
-                        <i class="fas fa-project-diagram"></i>
-                        <span id="currentDiseaseName">No disease selected</span>
-                    </div>
-                    
-                    <div class="toolbar-buttons">
-                        <button class="btn btn-outline btn-sm" id="btnForceLayout">
-                            <i class="fas fa-magnet"></i> Force Layout
-                        </button>
-                        <button class="btn btn-success" id="btnLaunchAvatar">
-                            <i class="fas fa-user-md"></i> Launch Airway Avatar
-                        </button>
-                        <button class="btn btn-outline btn-sm" id="btnAddConnection">
-                            <i class="fas fa-link"></i> Add Connection
-                        </button>
-                        <button class="btn btn-outline btn-sm" id="btnAddTrait">
-                            <i class="fas fa-plus"></i> Add Trait
-                        </button>
-                        <button class="btn btn-danger btn-sm" id="btnClearCanvas">
-                            <i class="fas fa-trash"></i> Clear
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- NETWORK CANVAS -->
-                <div id="networkCanvas">
-                    <svg class="connections-svg" id="connectionsSvg"></svg>
-                    <div id="traitNodesContainer"></div>
-                    
-                    <!-- Welcome Message -->
-                    <div id="welcomeMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-tertiary); padding: 40px;">
-                        <div style="font-size: 72px; opacity: 0.2; margin-bottom: 20px;">
-                            <i class="fas fa-project-diagram"></i>
-                        </div>
-                        <h2 style="margin-bottom: 12px; color: var(--text-primary); font-weight: 700; font-size: 24px;">
-                            AIRWAYSCOPE PRO
-                        </h2>
-                        <p style="max-width: 400px; line-height: 1.5; margin: 0 auto 24px;">
-                            Select a disease from the sidebar to begin clinical pathway mapping
-                        </p>
-                    </div>
-                </div>
-                
-                <!-- Zoom Controls -->
-                <div class="zoom-controls">
-                    <button class="zoom-btn" id="zoomIn" title="Zoom In">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <div class="zoom-display" id="zoomLevel">100%</div>
-                    <button class="zoom-btn" id="zoomOut" title="Zoom Out">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <div style="width: 100%; height: 1px; background: var(--border-light); margin: 4px 0;"></div>
-                    <button class="zoom-btn" id="zoomReset" title="Reset View">
-                        <i class="fas fa-expand-alt"></i>
-                    </button>
-                </div>
-            </main>
-        </div>
-    </div>
-    
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
-    
-    <!-- MODALS -->
-    <div class="modal" id="saveNetworkModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Save Network Configuration</h2>
-                <button class="modal-close" onclick="closeModal('saveNetworkModal')">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Network Name</label>
-                    <input type="text" class="form-control" id="saveNetworkName" placeholder="e.g., Asthma Inflammatory Network">
-                </div>
-                <button class="btn btn-primary" onclick="saveCurrentNetwork()" style="width: 100%;">
-                    <i class="fas fa-save"></i> Save to Database
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="modal" id="addTraitModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Add New Treatable Trait</h2>
-                <button class="modal-close" onclick="closeModal('addTraitModal')">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">Trait Name</label>
-                    <input type="text" class="form-control" id="newTraitName" placeholder="e.g., Systemic Inflammation">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Category</label>
-                    <select class="form-select" id="newTraitCategory">
-                        <option value="Inflammatory">Inflammatory</option>
-                        <option value="Physiological">Physiological</option>
-                        <option value="Behavioral">Behavioral</option>
-                        <option value="Comorbid">Comorbid</option>
-                        <option value="Environmental">Environmental</option>
-                        <option value="Treatment">Treatment</option>
-                    </select>
-                </div>
-                <button class="btn btn-success" onclick="saveNewTrait()" style="width: 100%;">
-                    <i class="fas fa-plus"></i> Add Trait
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="modal" id="treatmentModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Treatment Recommendations</h2>
-                <button class="modal-close" onclick="closeModal('treatmentModal')">×</button>
-            </div>
-            <div class="modal-body" id="treatmentModalContent"></div>
-        </div>
-    </div>
+<div class="app-container">
+<!-- HEADER -->
+<header class="app-header">
+<div class="header-left">
+<div class="header-icon">
+<i class="fas fa-wind"></i>
+</div>
+<div>
+<div class="header-title">AIRWAYSCOPE PRO</div>
+<div class="header-subtitle">Complete Clinical Pathway Mapping System</div>
+</div>
+</div>
+<div class="connection-status" id="connectionStatus">
+<i class="fas fa-circle"></i>
+<span>Initializing system...</span>
+</div>
+</header>
 
-    <!-- ========== COMPLETE JAVASCRIPT ========== -->
-    <script>
-        // ====== GLOBAL STATE ======
-        const AppState = {
-            supabase: null,
-            currentDisease: null,
-            currentTraits: [],
-            currentConnections: [],
-            savedNetworks: [],
-            patients: [],
-            nodePositions: new Map(),
-            selectedNode: null,
-            zoom: 1,
-            pan: { x: 0, y: 0 },
-            userId: 'clinician_' + Math.random().toString(36).substr(2, 9),
-            currentPatient: null
-        };
-        
-        // ====== INITIALIZATION ======
-        $(document).ready(function() {
-            initializeSystem();
-        });
-        
-        async function initializeSystem() {
-            try {
-                // Initialize Supabase
-                const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
-                const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_';
-                AppState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                
-                // Load data
-                await Promise.all([
-                    loadDiseases(),
-                    createSamplePatients()
-                ]);
-                
-                setupEventListeners();
-                initializeZoomControls();
-                initializeTabs();
-                
-                showToast('System Ready', 'AIRWAYSCOPE PRO initialized', 'success');
-                
-            } catch (error) {
-                console.error('Initialization error:', error);
-                showToast('System Error', 'Using local data mode', 'warning');
-                loadLocalData();
-            }
-        }
-        
-        function loadLocalData() {
-            loadDiseases();
-            createSamplePatients();
-        }
-        
-        // ====== DATA LOADING ======
-        async function loadDiseases() {
-            const diseases = [
-                {
-                    id: 1,
-                    disease_name: 'Asthma',
-                    icd10_code: 'J45',
-                    description: 'Chronic inflammatory airway disease with reversible airflow obstruction.',
-                    traits_count: 12
-                },
-                {
-                    id: 2,
-                    disease_name: 'COPD',
-                    icd10_code: 'J44',
-                    description: 'Chronic obstructive pulmonary disease with progressive airflow limitation.',
-                    traits_count: 15
-                },
-                {
-                    id: 3,
-                    disease_name: 'Bronchiectasis',
-                    icd10_code: 'J47',
-                    description: 'Abnormal widening of the bronchi with chronic inflammation.',
-                    traits_count: 10
-                },
-                {
-                    id: 4,
-                    disease_name: 'Pulmonary Fibrosis',
-                    icd10_code: 'J84',
-                    description: 'Progressive scarring of lung tissue with impaired gas exchange.',
-                    traits_count: 8
-                }
-            ];
-            
-            renderDiseaseList(diseases);
-        }
-        
-        function renderDiseaseList(diseases) {
-            const container = $('#diseaseList');
-            container.empty();
-            
-            diseases.forEach(disease => {
-                const card = $(`
-                    <div class="disease-card" data-id="${disease.id}">
-                        <div class="disease-name">
-                            ${disease.disease_name}
-                            <span class="disease-badge">${disease.traits_count}+ traits</span>
-                        </div>
-                        <div class="disease-code">${disease.icd10_code}</div>
-                        <div class="disease-description">
-                            ${disease.description}
-                        </div>
-                    </div>
-                `);
-                
-                card.click(async () => {
-                    $('.disease-card').removeClass('active');
-                    card.addClass('active');
-                    
-                    AppState.currentDisease = disease;
-                    await loadTraitsForDisease(disease.id);
-                });
-                
-                container.append(card);
-            });
-        }
-        
-        async function loadTraitsForDisease(diseaseId) {
-            $('#welcomeMessage').hide();
-            $('#traitNodesContainer').html('<div class="loading"><div class="loading-spinner"></div>Loading clinical traits...</div>');
-            
-            const traits = getSampleTraitsForDisease(diseaseId);
-            const connections = getSampleConnectionsForDisease(traits);
-            
-            AppState.currentTraits = traits;
-            AppState.currentConnections = connections;
-            
-            $('#currentDiseaseName').text(AppState.currentDisease.disease_name);
-            
-            renderNetwork();
-            updateAnalytics();
-            
-            showToast('Disease Loaded', `${AppState.currentDisease.disease_name} traits loaded`, 'success');
-        }
-        
-        function getSampleTraitsForDisease(diseaseId) {
-            const baseTraits = [
-                { id: 1, trait_name: 'Type 2 Inflammation', category: 'Inflammatory', 
-                  description: 'Elevated eosinophils and IgE-mediated inflammation' },
-                { id: 2, trait_name: 'Airflow Limitation', category: 'Physiological',
-                  description: 'Reduced FEV1/FVC ratio with bronchodilator reversibility' },
-                { id: 3, trait_name: 'Smoking History', category: 'Behavioral',
-                  description: 'Current or former tobacco use' },
-                { id: 4, trait_name: 'GERD', category: 'Comorbid',
-                  description: 'Gastroesophageal reflux disease' },
-                { id: 5, trait_name: 'Allergen Sensitivity', category: 'Environmental',
-                  description: 'Sensitization to common aeroallergens' },
-                { id: 6, trait_name: 'ICS/LABA Therapy', category: 'Treatment',
-                  description: 'Inhaled corticosteroid and long-acting beta agonist combination' }
-            ];
-            
-            switch(diseaseId) {
-                case 1: return baseTraits.filter(t => [1, 2, 3, 4, 5, 6].includes(t.id));
-                case 2: return baseTraits.filter(t => [2, 3, 4, 6].includes(t.id));
-                case 3: return baseTraits.filter(t => [1, 2, 4, 6].includes(t.id));
-                case 4: return baseTraits.filter(t => [2, 4].includes(t.id));
-                default: return baseTraits.slice(0, 3);
-            }
-        }
-        
-        function getSampleConnectionsForDisease(traits) {
-            if (traits.length < 2) return [];
-            
-            const connections = [];
-            
-            if (traits.length >= 2) {
-                connections.push({
-                    id: `${traits[0].id}-${traits[1].id}`,
-                    source_trait_id: traits[0].id,
-                    target_trait_id: traits[1].id,
-                    relationship_type: 'causes',
-                    strength: 4
-                });
-            }
-            
-            if (traits.length >= 6) {
-                connections.push({
-                    id: `${traits[5].id}-${traits[0].id}`,
-                    source_trait_id: traits[5].id,
-                    target_trait_id: traits[0].id,
-                    relationship_type: 'treats',
-                    strength: 5
-                });
-            }
-            
-            return connections;
-        }
-        
-        // ====== NETWORK RENDERING ======
-        function renderNetwork() {
-            const container = $('#traitNodesContainer');
-            container.empty();
-            $('#connectionsSvg').empty();
-            
-            AppState.currentTraits.forEach((trait, index) => {
-                createTraitNodeElement(trait, index);
-            });
-            
-            drawConnections();
-            setupDraggableNodes();
-            applyCanvasTransform();
-        }
-        
-        function createTraitNodeElement(trait, index) {
-            const container = $('#traitNodesContainer');
-            
-            let pos = AppState.nodePositions.get(trait.id);
-            if (!pos) {
-                pos = {
-                    x: 100 + (index % 3) * 280,
-                    y: 100 + Math.floor(index / 3) * 200
-                };
-                AppState.nodePositions.set(trait.id, pos);
-            }
-            
-            const categoryColors = {
-                'Inflammatory': '#ef476f',
-                'Physiological': '#06d6a0',
-                'Behavioral': '#ffd166',
-                'Comorbid': '#118ab2',
-                'Environmental': '#9d4edd',
-                'Treatment': '#7209b7'
-            };
-            
-            const color = categoryColors[trait.category] || '#4361ee';
-            
-            const node = $(`
-                <div class="trait-node ${trait.category.toLowerCase()}" data-id="${trait.id}"
-                     style="left: ${pos.x}px; top: ${pos.y}px; border-left-color: ${color}">
-                    <div class="node-header">
-                        <div class="node-title">${trait.trait_name}</div>
-                        <span class="node-category node-${trait.category.toLowerCase()}" 
-                              style="background: ${color}">
-                            ${trait.category}
-                        </span>
-                    </div>
-                    <div class="node-content">
-                        ${trait.description}
-                    </div>
-                </div>
-            `);
-            
-            node.click(function(e) {
-                e.stopPropagation();
-                selectNode($(this), trait);
-            });
-            
-            container.append(node);
-        }
-        
-        function drawConnections() {
-            const svg = $('#connectionsSvg')[0];
-            
-            AppState.currentConnections.forEach(connection => {
-                const sourceNode = $(`.trait-node[data-id="${connection.source_trait_id}"]`);
-                const targetNode = $(`.trait-node[data-id="${connection.target_trait_id}"]`);
-                
-                if (!sourceNode.length || !targetNode.length) return;
-                
-                const sourceRect = sourceNode[0].getBoundingClientRect();
-                const targetRect = targetNode[0].getBoundingClientRect();
-                const workspaceRect = $('#networkCanvas')[0].getBoundingClientRect();
-                
-                const x1 = sourceRect.left - workspaceRect.left + sourceRect.width / 2;
-                const y1 = sourceRect.top - workspaceRect.top + sourceRect.height / 2;
-                const x2 = targetRect.left - workspaceRect.left + targetRect.width / 2;
-                const y2 = targetRect.top - workspaceRect.top + targetRect.height / 2;
-                
-                const transformedX1 = (x1 - AppState.pan.x) / AppState.zoom;
-                const transformedY1 = (y1 - AppState.pan.y) / AppState.zoom;
-                const transformedX2 = (x2 - AppState.pan.x) / AppState.zoom;
-                const transformedY2 = (y2 - AppState.pan.y) / AppState.zoom;
-                
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const dx = transformedX2 - transformedX1;
-                const dy = transformedY2 - transformedY1;
-                const controlX = transformedX1 + dx * 0.5;
-                const controlY = transformedY1 + dy * 0.5 - 30;
-                
-                path.setAttribute('d', `M ${transformedX1} ${transformedY1} Q ${controlX} ${controlY} ${transformedX2} ${transformedY2}`);
-                path.setAttribute('stroke', getConnectionColor(connection.relationship_type));
-                path.setAttribute('stroke-width', connection.strength || 2);
-                path.setAttribute('fill', 'none');
-                path.setAttribute('class', 'connection-line');
-                path.setAttribute('opacity', '0.8');
-                
-                svg.appendChild(path);
-                
-                const label = $(`
-                    <div class="connection-label" style="left: ${controlX}px; top: ${controlY - 20}px; transform: translate(-50%, -50%);">
-                        ${connection.relationship_type}
-                    </div>
-                `);
-                
-                $('#networkCanvas').append(label);
-            });
-        }
-        
-        function getConnectionColor(relationshipType) {
-            const colors = {
-                'causes': '#ef476f',
-                'exacerbates': '#ff9e00',
-                'mitigates': '#06d6a0',
-                'treats': '#7209b7',
-                'correlates_with': '#118ab2'
-            };
-            return colors[relationshipType] || '#4361ee';
-        }
-        
-        function setupDraggableNodes() {
-            $('.trait-node').each(function() {
-                const node = $(this);
-                let isDragging = false;
-                let startX, startY, initialLeft, initialTop;
-                
-                node.on('mousedown', function(e) {
-                    if (e.button !== 0) return;
-                    
-                    isDragging = true;
-                    startX = e.clientX;
-                    startY = e.clientY;
-                    initialLeft = parseInt(node.css('left'));
-                    initialTop = parseInt(node.css('top'));
-                    
-                    node.css('cursor', 'grabbing');
-                    
-                    const traitId = parseInt(node.data('id'));
-                    const trait = AppState.currentTraits.find(t => t.id === traitId);
-                    selectNode(node, trait);
-                    
-                    $(document).on('mousemove', drag);
-                    $(document).on('mouseup', stopDrag);
-                    
-                    e.preventDefault();
-                });
-                
-                function drag(e) {
-                    if (!isDragging) return;
-                    
-                    const dx = e.clientX - startX;
-                    const dy = e.clientY - startY;
-                    
-                    const newLeft = initialLeft + dx;
-                    const newTop = initialTop + dy;
-                    
-                    node.css('left', newLeft + 'px');
-                    node.css('top', newTop + 'px');
-                    
-                    const traitId = parseInt(node.data('id'));
-                    AppState.nodePositions.set(traitId, { x: newLeft, y: newTop });
-                    
-                    drawConnections();
-                }
-                
-                function stopDrag() {
-                    if (!isDragging) return;
-                    isDragging = false;
-                    node.css('cursor', 'move');
-                    $(document).off('mousemove', drag);
-                    $(document).off('mouseup', stopDrag);
-                }
-            });
-        }
-        
-        function selectNode(node, trait) {
-            $('.trait-node').removeClass('selected');
-            node.addClass('selected');
-            AppState.selectedNode = trait;
-        }
-        
-        // ====== UI CONTROLS ======
-        function initializeZoomControls() {
-            $('#zoomIn').click(() => {
-                AppState.zoom = Math.min(AppState.zoom * 1.2, 3);
-                updateZoomDisplay();
-                applyCanvasTransform();
-            });
-            
-            $('#zoomOut').click(() => {
-                AppState.zoom = Math.max(AppState.zoom / 1.2, 0.1);
-                updateZoomDisplay();
-                applyCanvasTransform();
-            });
-            
-            $('#zoomReset').click(() => {
-                AppState.zoom = 1;
-                AppState.pan = { x: 0, y: 0 };
-                updateZoomDisplay();
-                applyCanvasTransform();
-            });
-            
-            $('#networkCanvas').on('wheel', function(e) {
-                e.preventDefault();
-                
-                const delta = e.originalEvent.deltaY < 0 ? 1.1 : 0.9;
-                AppState.zoom = Math.max(0.1, Math.min(AppState.zoom * delta, 3));
-                
-                updateZoomDisplay();
-                applyCanvasTransform();
-            });
-        }
-        
-        function updateZoomDisplay() {
-            $('#zoomLevel').text(`${Math.round(AppState.zoom * 100)}%`);
-        }
-        
-        function applyCanvasTransform() {
-            const container = $('#traitNodesContainer');
-            container.css({
-                transform: `translate(${AppState.pan.x}px, ${AppState.pan.y}px) scale(${AppState.zoom})`,
-                transformOrigin: '0 0'
-            });
-        }
-        
-        function initializeTabs() {
-            $('.tab-btn').click(function() {
-                const tabId = $(this).data('tab');
-                
-                $('.tab-btn').removeClass('active');
-                $(this).addClass('active');
-                
-                $('.tab-pane').removeClass('active');
-                $(`#${tabId}-tab`).addClass('active');
-                
-                if (tabId === 'networks') {
-                    loadSavedNetworks();
-                }
-            });
-        }
-        
-        function setupEventListeners() {
-            $('#btnForceLayout').click(() => {
-                applyForceLayout();
-            });
-            
-            $('#btnLaunchAvatar').click(() => {
-                if (!AppState.currentDisease) {
-                    showToast('Error', 'Please select a disease first', 'error');
-                    return;
-                }
-                
-                const data = {
-                    disease: AppState.currentDisease,
-                    traits: AppState.currentTraits,
-                    connections: AppState.currentConnections,
-                    patient: AppState.currentPatient,
-                    timestamp: new Date().toISOString()
-                };
-                
-                const encodedData = encodeURIComponent(JSON.stringify(data));
-                window.open(`avatar.html?data=${encodedData}`, '_blank');
-                
-                showToast('Avatar Launched', 'Clinical avatar opened', 'success');
-            });
-            
-            $('#btnAddConnection').click(() => {
-                if (AppState.currentTraits.length < 2) {
-                    showToast('Error', 'Add at least 2 traits to create connections', 'error');
-                    return;
-                }
-                showToast('Connection Mode', 'Select source and target traits', 'info');
-            });
-            
-            $('#btnAddTrait').click(() => {
-                $('#addTraitModal').addClass('active');
-            });
-            
-            $('#btnClearCanvas').click(() => {
-                if (confirm('Clear all traits and connections from canvas?')) {
-                    AppState.currentTraits = [];
-                    AppState.currentConnections = [];
-                    AppState.nodePositions.clear();
-                    renderNetwork();
-                    showToast('Canvas Cleared', 'All traits removed', 'warning');
-                }
-            });
-            
-            $('#btnSaveNetwork').click(() => {
-                if (!AppState.currentDisease) {
-                    showToast('Error', 'Please select a disease first', 'error');
-                    return;
-                }
-                $('#saveNetworkModal').addClass('active');
-            });
-        }
-        
-        function applyForceLayout() {
-            const nodes = $('.trait-node');
-            if (nodes.length === 0) return;
-            
-            const workspace = $('#networkCanvas');
-            const centerX = workspace.width() / 2;
-            const centerY = workspace.height() / 2;
-            const radius = Math.min(workspace.width(), workspace.height()) * 0.3;
-            
-            nodes.each(function(index) {
-                const node = $(this);
-                const angle = (index / nodes.length) * Math.PI * 2;
-                const x = centerX + Math.cos(angle) * radius - node.width() / 2;
-                const y = centerY + Math.sin(angle) * radius - node.height() / 2;
-                
-                const traitId = parseInt(node.data('id'));
-                AppState.nodePositions.set(traitId, { x, y });
-                node.css({ left: x + 'px', top: y + 'px' });
-            });
-            
-            drawConnections();
-            showToast('Layout Applied', 'Force-directed layout generated', 'success');
-        }
-        
-        // ====== PATIENT MANAGEMENT ======
-        function createSamplePatients() {
-            AppState.patients = [
-                { id: 1, name: 'John Smith', age: 65, disease: 'Asthma' },
-                { id: 2, name: 'Maria Garcia', age: 72, disease: 'COPD' },
-                { id: 3, name: 'Robert Chen', age: 58, disease: 'Asthma' },
-                { id: 4, name: 'Sarah Johnson', age: 45, disease: 'Bronchiectasis' }
-            ];
-            
-            updatePatientSelect();
-        }
-        
-        function updatePatientSelect() {
-            const select = $('#patientSelect');
-            select.empty();
-            select.append('<option value="">Select a patient...</option>');
-            
-            AppState.patients.forEach(patient => {
-                select.append(`<option value="${patient.id}">${patient.name} (${patient.age}, ${patient.disease})</option>`);
-            });
-            
-            select.append('<option value="new">+ Create New Patient</option>');
-            
-            select.change(function() {
-                const patientId = $(this).val();
-                if (patientId === 'new') {
-                    createNewPatient();
-                } else if (patientId) {
-                    showPatientProfile(parseInt(patientId));
-                } else {
-                    $('#patientProfile').addClass('hidden');
-                }
-            });
-        }
-        
-        function showPatientProfile(patientId) {
-            const patient = AppState.patients.find(p => p.id === patientId);
-            if (!patient) return;
-            
-            AppState.currentPatient = patient;
-            
-            $('#patientInfo').html(`
-                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
-                    <div>
-                        <h4 style="margin-bottom: 4px;">${patient.name}</h4>
-                        <div style="font-size: 12px; color: var(--text-tertiary);">
-                            ${patient.age} years • ${patient.disease}
-                        </div>
-                    </div>
-                    <button class="btn btn-primary btn-sm" onclick="savePatientData()">
-                        <i class="fas fa-save"></i> Save
-                    </button>
-                </div>
-            `);
-            
-            const traitsHtml = AppState.currentTraits.map(trait => `
-                <div class="trait-slider">
-                    <div class="trait-name" style="flex: 1; font-weight: 600; font-size: 13px;">
-                        ${trait.trait_name}
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 12px; flex: 2;">
-                        <input type="range" min="0" max="10" value="${Math.floor(Math.random() * 11)}" 
-                               class="slider" data-trait-id="${trait.id}" 
-                               oninput="updateTraitValue(this, ${trait.id})">
-                        <span style="width: 30px; text-align: center; font-weight: 700; color: var(--primary);">5</span>
-                    </div>
-                </div>
-            `).join('');
-            
-            $('#patientTraits').html(traitsHtml || '<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">No traits available for this disease</div>');
-            $('#patientProfile').removeClass('hidden');
-        }
-        
-        function createNewPatient() {
-            const name = prompt('Enter patient name:');
-            if (!name) return;
-            
-            const age = parseInt(prompt('Enter patient age:'));
-            
-            const newPatient = {
-                id: AppState.patients.length + 1,
-                name: name,
-                age: age || 0,
-                disease: AppState.currentDisease?.disease_name || 'Asthma'
-            };
-            
-            AppState.patients.push(newPatient);
-            updatePatientSelect();
-            
-            $('#patientSelect').val(newPatient.id);
-            showPatientProfile(newPatient.id);
-            
-            showToast('Patient Created', `${name} added to patient list`, 'success');
-        }
-        
-        function savePatientData() {
-            showToast('Patient Saved', 'Patient profile updated successfully', 'success');
-        }
-        
-        function updateTraitValue(slider, traitId) {
-            const value = slider.value;
-            const valueSpan = $(slider).next('span');
-            valueSpan.text(value);
-        }
-        
-        // ====== ANALYTICS ======
-        function updateAnalytics() {
-            const traits = AppState.currentTraits.length;
-            const connections = AppState.currentConnections.length;
-            
-            const maxConnections = traits * (traits - 1) / 2;
-            const density = maxConnections > 0 ? Math.round((connections / maxConnections) * 100) : 0;
-            
-            const complexity = Math.min(100, Math.round((traits * 10) + (connections * 5)));
-            
-            $('#analyticsTraits').text(traits);
-            $('#analyticsConnections').text(connections);
-            $('#analyticsDensity').text(density + '%');
-            $('#analyticsComplexity').text(complexity);
-        }
-        
-        // ====== DATABASE OPERATIONS ======
-        async function saveCurrentNetwork() {
-            try {
-                const name = $('#saveNetworkName').val().trim();
-                
-                if (!name) {
-                    showToast('Validation Error', 'Please enter a network name', 'error');
-                    return;
-                }
-                
-                if (!AppState.currentDisease) {
-                    showToast('Validation Error', 'Please select a disease first', 'error');
-                    return;
-                }
-                
-                const layoutData = {
-                    nodes: Array.from(AppState.nodePositions.entries()),
-                    connections: AppState.currentConnections,
-                    metadata: {
-                        disease: AppState.currentDisease.disease_name,
-                        trait_count: AppState.currentTraits.length,
-                        created: new Date().toISOString()
-                    }
-                };
-                
-                // Save to localStorage (for demo)
-                const savedNetworks = JSON.parse(localStorage.getItem('airwayscope_networks') || '[]');
-                savedNetworks.push({
-                    id: Date.now(),
-                    network_name: name,
-                    disease_id: AppState.currentDisease.id,
-                    layout_data: layoutData,
-                    created_at: new Date().toISOString(),
-                    created_by: AppState.userId
-                });
-                
-                localStorage.setItem('airwayscope_networks', JSON.stringify(savedNetworks));
-                
-                showToast('Network Saved', `${name} saved successfully`, 'success');
-                closeModal('saveNetworkModal');
-                $('#saveNetworkName').val('');
-                
-                loadSavedNetworks();
-                
-            } catch (error) {
-                console.error('Error saving network:', error);
-                showToast('Save Failed', 'Error saving network configuration', 'error');
-            }
-        }
-        
-        function loadSavedNetworks() {
-            const savedNetworks = JSON.parse(localStorage.getItem('airwayscope_networks') || '[]');
-            const container = $('#savedNetworks');
-            
-            if (savedNetworks.length === 0) {
-                container.html(`
-                    <div style="text-align: center; padding: 30px; color: var(--text-tertiary);">
-                        <i class="fas fa-project-diagram" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px;"></i>
-                        <div>No saved networks yet</div>
-                    </div>
-                `);
-                return;
-            }
-            
-            const networksHtml = savedNetworks.map(network => `
-                <div class="disease-card" onclick="loadSavedNetwork(${network.id})">
-                    <div class="disease-name">${network.network_name}</div>
-                    <div class="disease-code">${network.layout_data.metadata.disease}</div>
-                    <div style="font-size: 11px; color: var(--text-tertiary; margin-top: 8px;">
-                        ${new Date(network.created_at).toLocaleDateString()} • 
-                        ${network.layout_data.metadata.trait_count} traits
-                    </div>
-                </div>
-            `).join('');
-            
-            container.html(networksHtml);
-        }
-        
-        function loadSavedNetwork(networkId) {
-            const savedNetworks = JSON.parse(localStorage.getItem('airwayscope_networks') || '[]');
-            const network = savedNetworks.find(n => n.id === networkId);
-            
-            if (!network) return;
-            
-            // Load the network data
-            AppState.nodePositions.clear();
-            network.layout_data.nodes.forEach(([id, pos]) => {
-                AppState.nodePositions.set(id, pos);
-            });
-            
-            AppState.currentConnections = network.layout_data.connections || [];
-            
-            // Find matching disease
-            const diseaseCard = $(`.disease-card[data-id="${network.disease_id}"]`);
-            if (diseaseCard.length) {
-                diseaseCard.click();
-            }
-            
-            showToast('Network Loaded', network.network_name, 'success');
-        }
-        
-        function saveNewTrait() {
-            const name = $('#newTraitName').val().trim();
-            const category = $('#newTraitCategory').val();
-            
-            if (!name) {
-                showToast('Validation Error', 'Please enter a trait name', 'error');
-                return;
-            }
-            
-            if (!AppState.currentDisease) {
-                showToast('Validation Error', 'Please select a disease first', 'error');
-                return;
-            }
-            
-            const newTrait = {
-                id: Date.now(),
-                trait_name: name,
-                category: category,
-                description: 'New treatable trait'
-            };
-            
-            AppState.currentTraits.push(newTrait);
-            
-            const workspace = $('#networkCanvas');
-            const x = workspace.width() / 2 - 120;
-            const y = workspace.height() / 2 - 85;
-            AppState.nodePositions.set(newTrait.id, { x, y });
-            
-            renderNetwork();
-            
-            closeModal('addTraitModal');
-            $('#newTraitName').val('');
-            
-            showToast('Trait Added', `${name} added to network`, 'success');
-        }
-        
-        function generateTreatmentPlan() {
-            if (!AppState.currentPatient) {
-                showToast('Error', 'Please select a patient first', 'error');
-                return;
-            }
-            
-            const patient = AppState.currentPatient;
-            const html = `
-                <h3 style="margin-bottom: 16px; color: var(--text-primary);">Treatment Plan for ${patient.name}</h3>
-                
-                <div style="background: var(--bg-tertiary); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 20px;">
-                    <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-                        <div style="flex: 1;">
-                            <div style="font-size: 11px; color: var(--text-tertiary);">Age</div>
-                            <div style="font-weight: 600;">${patient.age} years</div>
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="font-size: 11px; color: var(--text-tertiary);">Disease</div>
-                            <div style="font-weight: 600;">${patient.disease}</div>
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="font-size: 11px; color: var(--text-tertiary);">Date</div>
-                            <div style="font-weight: 600;">${new Date().toLocaleDateString()}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <h4 style="margin-bottom: 12px; color: var(--text-primary);">Recommended Interventions</h4>
-                
-                ${AppState.currentTraits.slice(0, 3).map(trait => `
-                    <div class="treatment-card">
-                        <div style="font-weight: 700; margin-bottom: 8px;">${trait.trait_name}</div>
-                        <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
-                            ${getTreatmentForTrait(trait)}
-                        </div>
-                        <div style="font-size: 11px; color: var(--text-tertiary);">
-                            <i class="fas fa-calendar"></i> Monitor monthly
-                        </div>
-                    </div>
-                `).join('')}
-                
-                <div style="margin-top: 24px; text-align: center;">
-                    <button class="btn btn-primary" onclick="exportTreatmentPlan()">
-                        <i class="fas fa-download"></i> Export as PDF
-                    </button>
-                </div>
-            `;
-            
-            $('#treatmentModalContent').html(html);
-            $('#treatmentModal').addClass('active');
-        }
-        
-        function getTreatmentForTrait(trait) {
-            const treatments = {
-                'Type 2 Inflammation': 'Inhaled corticosteroids, Biologic therapy',
-                'Airflow Limitation': 'Bronchodilators, Pulmonary rehabilitation',
-                'Smoking History': 'Smoking cessation program, Nicotine replacement',
-                'GERD': 'PPI therapy, Dietary modification',
-                'Allergen Sensitivity': 'Allergen avoidance, Immunotherapy',
-                'ICS/LABA Therapy': 'Regular inhaler use, Technique training'
-            };
-            
-            return treatments[trait.trait_name] || 'Personalized intervention plan';
-        }
-        
-        function exportTreatmentPlan() {
-            showToast('Export Started', 'Generating PDF treatment plan...', 'info');
-            
-            setTimeout(() => {
-                showToast('Export Complete', 'Treatment plan downloaded as PDF', 'success');
-            }, 1500);
-        }
-        
-        // ====== UTILITY FUNCTIONS ======
-        function showToast(title, message, type = 'info') {
-            const container = $('#toastContainer');
-            const icons = {
-                success: 'fa-check-circle',
-                error: 'fa-exclamation-circle',
-                warning: 'fa-exclamation-triangle',
-                info: 'fa-info-circle'
-            };
-            
-            const colors = {
-                success: '#4ade80',
-                error: '#ef476f',
-                warning: '#f59e0b',
-                info: '#4361ee'
-            };
-            
-            const toast = $(`
-                <div class="toast">
-                    <div class="toast-icon" style="color: ${colors[type]}; font-size: 18px;">
-                        <i class="fas ${icons[type]}"></i>
-                    </div>
-                    <div class="toast-content">
-                        <div class="toast-title">${title}</div>
-                        <div class="toast-message">${message}</div>
-                    </div>
-                </div>
-            `);
-            
-            container.append(toast);
-            
-            setTimeout(() => {
-                toast.fadeOut(300, () => toast.remove());
-            }, 5000);
-        }
-        
-        function closeModal(modalId) {
-            $('#' + modalId).removeClass('active');
-        }
-        
-        // ====== EXPOSE FUNCTIONS ======
-        window.closeModal = closeModal;
-        window.saveCurrentNetwork = saveCurrentNetwork;
-        window.saveNewTrait = saveNewTrait;
-        window.generateTreatmentPlan = generateTreatmentPlan;
-        window.exportTreatmentPlan = exportTreatmentPlan;
-        window.updateTraitValue = updateTraitValue;
-        window.savePatientData = savePatientData;
-        window.loadSavedNetwork = loadSavedNetwork;
-        
-        // Initial load
-        setTimeout(() => {
-            loadSavedNetworks();
-        }, 1000);
-    </script>
+<!-- MAIN CONTENT -->
+<div class="main-layout">
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+<div class="sidebar-toggle" id="sidebarToggle">
+<i class="fas fa-chevron-left"></i>
+</div>
+
+<div class="sidebar-tabs">
+<button class="tab-btn active" data-tab="diseases">
+<i class="fas fa-disease"></i>
+<span>Diseases</span>
+</button>
+<button class="tab-btn" data-tab="networks">
+<i class="fas fa-save"></i>
+<span>Networks</span>
+</button>
+<button class="tab-btn" data-tab="patients">
+<i class="fas fa-user-injured"></i>
+<span>Patients</span>
+</button>
+<button class="tab-btn" data-tab="analytics">
+<i class="fas fa-chart-network"></i>
+<span>Analytics</span>
+</button>
+</div>
+
+<div class="tab-content scrollbar-enhanced">
+<!-- DISEASES TAB -->
+<div class="tab-pane active" id="diseases-tab">
+<h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
+<i class="fas fa-lungs"></i> Airway Diseases
+</h3>
+<div class="disease-list" id="diseaseList">
+<div class="loading">
+<div class="loading-spinner"></div>
+Loading diseases...
+</div>
+</div>
+</div>
+
+<!-- NETWORKS TAB -->
+<div class="tab-pane" id="networks-tab">
+<h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
+<i class="fas fa-project-diagram"></i> Saved Networks
+</h3>
+<div id="savedNetworks">
+<div class="loading">Loading saved networks...</div>
+</div>
+</div>
+
+<!-- PATIENTS TAB -->
+<div class="tab-pane" id="patients-tab">
+<h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
+<i class="fas fa-stethoscope"></i> Patient Management
+</h3>
+
+<div class="form-group">
+<select class="form-select" id="patientSelect">
+<option value="">Select a patient...</option>
+<option value="new">+ Create New Patient</option>
+</select>
+</div>
+
+<div id="patientProfile" style="display: none;">
+<div class="patient-profile">
+<div class="patient-header">
+<div>
+<h4 id="patientName" style="margin-bottom: 4px;">Patient Name</h4>
+<div style="font-size: 12px; color: var(--text-tertiary);">
+<span id="patientAge">Age</span> • 
+<span id="patientDisease">Disease</span>
+</div>
+</div>
+<button class="btn btn-primary btn-sm" id="btnSavePatient">
+<i class="fas fa-save"></i> Save
+</button>
+</div>
+
+<div id="patientTraits">
+<!-- Dynamic trait sliders will go here -->
+</div>
+
+<div style="margin-top: 16px;">
+<button class="btn btn-outline btn-sm" onclick="generateTreatmentPlan()" style="width: 100%;">
+<i class="fas fa-file-medical"></i> Generate Treatment Plan
+</button>
+</div>
+</div>
+
+<div style="margin-top: 20px;">
+<h4 style="margin-bottom: 12px; font-size: 15px;">
+<i class="fas fa-pills"></i> Treatment Recommendations
+</h4>
+<div id="patientTreatments">
+<!-- Treatment recommendations will go here -->
+</div>
+</div>
+</div>
+</div>
+
+<!-- ANALYTICS TAB -->
+<div class="tab-pane" id="analytics-tab">
+<h3 style="margin-bottom: 16px; color: var(--primary-dark); font-size: 16px;">
+<i class="fas fa-chart-bar"></i> Network Analytics
+</h3>
+
+<div class="stats-grid" style="margin-top: 20px;">
+<div class="stat-card">
+<div class="stat-value" id="analyticsTraits">0</div>
+<div class="stat-label">Active Traits</div>
+</div>
+<div class="stat-card">
+<div class="stat-value" id="analyticsConnections">0</div>
+<div class="stat-label">Connections</div>
+</div>
+<div class="stat-card">
+<div class="stat-value" id="analyticsDensity">0%</div>
+<div class="stat-label">Network Density</div>
+</div>
+<div class="stat-card">
+<div class="stat-value" id="analyticsComplexity">0</div>
+<div class="stat-label">Complexity</div>
+</div>
+</div>
+
+<div style="margin-top: 20px;">
+<button class="btn btn-outline btn-sm" onclick="showPatternAnalysis()" style="width: 100%;">
+<i class="fas fa-shapes"></i> Detect Patterns
+</button>
+</div>
+
+<div style="margin-top: 16px; padding: 16px; background: var(--bg-tertiary); border-radius: var(--radius-lg);">
+<div style="font-weight: 600; margin-bottom: 8px; color: var(--primary);">
+<i class="fas fa-lightbulb"></i> Key Insight
+</div>
+<div style="font-size: 12px; color: var(--text-secondary);" id="analyticsInsight">
+Add traits to canvas for analysis
+</div>
+</div>
+</div>
+</div>
+
+<div style="padding: 16px; border-top: 1px solid var(--border-light); background: white;">
+<button class="btn btn-primary" id="btnSaveNetwork" style="width: 100%;">
+<i class="fas fa-database"></i> Save Current Network
+</button>
+</div>
+</aside>
+
+<!-- MAIN CANVAS AREA -->
+<main class="canvas-area">
+<div class="canvas-toolbar">
+<div class="canvas-title" id="canvasTitle">
+<i class="fas fa-wind"></i>
+<span id="currentDiseaseName">No disease selected</span>
+<small id="traitCount" style="font-size: 13px; color: var(--text-tertiary);"></small>
+</div>
+
+<div class="toolbar-buttons">
+<button class="btn btn-outline btn-sm" id="btnForceLayout">
+<i class="fas fa-magnet"></i> Force Layout
+</button>
+<button class="btn btn-success" id="btnLaunchAvatar">
+<i class="fas fa-user-md"></i> Launch Airway Avatar
+</button>
+<button class="btn btn-outline btn-sm" id="btnCircleLayout">
+<i class="fas fa-circle"></i> Circle Layout
+</button>
+<button class="btn btn-outline btn-sm" id="btnAutoLayout">
+<i class="fas fa-project-diagram"></i> Auto Layout
+</button>
+<button class="btn btn-primary btn-sm" id="btnAddConnection">
+<i class="fas fa-link"></i> Add Connection
+</button>
+<button class="btn btn-success btn-sm" id="btnAddTrait">
+<i class="fas fa-plus"></i> Add Trait
+</button>
+<button class="btn btn-danger btn-sm" id="btnClearCanvas">
+<i class="fas fa-trash"></i> Clear
+</button>
+</div>
+</div>
+
+<!-- NETWORK CANVAS -->
+<div id="networkCanvas">
+<svg class="connections-svg" id="connectionsSvg"></svg>
+<div id="traitNodesContainer"></div>
+
+<!-- Connection Creator -->
+<div class="connection-creator" id="connectionCreator">
+<h4 style="margin-bottom: 16px; color: var(--text-primary);">Create Connection</h4>
+<div class="form-group">
+<select class="form-select" id="connectionSource">
+<option value="">Select source trait...</option>
+</select>
+</div>
+<div class="form-group">
+<select class="form-select" id="connectionTarget">
+<option value="">Select target trait...</option>
+</select>
+</div>
+<div class="form-group">
+<select class="form-select" id="connectionType">
+<option value="causes">Causes</option>
+<option value="exacerbates">Exacerbates</option>
+<option value="mitigates">Mitigates</option>
+<option value="correlates_with">Correlates With</option>
+<option value="treats">Treats</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Strength (1-5): <span id="strengthValue">3</span></label>
+<input type="range" min="1" max="5" value="3" class="slider" id="connectionStrength">
+</div>
+<div class="form-group">
+<textarea class="form-control" id="connectionEvidence" placeholder="Evidence description..." rows="3"></textarea>
+</div>
+<button class="btn btn-primary" id="btnSaveConnection" style="width: 100%;">
+<i class="fas fa-check"></i> Save Connection
+</button>
+</div>
+
+<!-- Welcome Message -->
+<div id="welcomeMessage" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-tertiary); padding: 40px;">
+<div style="font-size: 72px; opacity: 0.2; margin-bottom: 20px;">
+<i class="fas fa-wind"></i>
+</div>
+<h2 style="margin-bottom: 12px; color: var(--text-primary); font-weight: 700; font-size: 24px;">
+Welcome to AIRWAYSCOPE PRO
+</h2>
+<p style="max-width: 400px; line-height: 1.5; margin: 0 auto 24px;">
+Select a disease from the sidebar to begin mapping clinical pathways and treatable traits
+</p>
+<div style="display: flex; gap: 12px; justify-content: center;">
+<div style="text-align: center;">
+<div style="width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+<i class="fas fa-disease"></i>
+</div>
+<div style="font-size: 12px;">Select Disease</div>
+</div>
+<div style="text-align: center;">
+<div style="width: 40px; height: 40px; background: var(--success); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+<i class="fas fa-plus"></i>
+</div>
+<div style="font-size: 12px;">Add Traits</div>
+</div>
+<div style="text-align: center;">
+<div style="width: 40px; height: 40px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 8px;">
+<i class="fas fa-link"></i>
+</div>
+<div style="font-size: 12px;">Create Connections</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Zoom Controls -->
+<div class="zoom-controls">
+<button class="zoom-btn" id="zoomIn" title="Zoom In">
+<i class="fas fa-plus"></i>
+</button>
+<div class="zoom-display" id="zoomLevel">100%</div>
+<button class="zoom-btn" id="zoomOut" title="Zoom Out">
+<i class="fas fa-minus"></i>
+</button>
+<div style="width: 100%; height: 1px; background: var(--border-light); margin: 4px 0;"></div>
+<button class="zoom-btn" id="zoomReset" title="Reset View">
+<i class="fas fa-expand-alt"></i>
+</button>
+</div>
+
+<!-- Patterns Panel -->
+<div class="patterns-panel" id="patternsPanel">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+<div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">
+<i class="fas fa-shapes"></i> Detected Patterns
+</div>
+<button class="btn btn-icon btn-sm" id="btnRefreshPatterns" title="Refresh Patterns">
+<i class="fas fa-sync-alt"></i>
+</button>
+</div>
+<div id="patternsList">
+<div style="text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 13px;">
+<i class="fas fa-search" style="opacity: 0.5; font-size: 24px; margin-bottom: 8px; display: block;"></i>
+No patterns detected yet
+</div>
+</div>
+</div>
+
+<!-- Insights Panel -->
+<div class="insights-panel" id="insightsPanel">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+<div style="font-weight: 700; font-size: 15px; color: var(--text-primary);">
+<i class="fas fa-chart-line"></i> Network Insights
+</div>
+<button class="btn btn-icon btn-sm" id="btnCloseInsights">
+<i class="fas fa-times"></i>
+</button>
+</div>
+
+<div class="metrics-grid">
+<div class="metric-card">
+<div class="metric-value" id="metricTraits">0</div>
+<div style="font-size: 11px; color: var(--text-tertiary);">Traits</div>
+</div>
+<div class="metric-card">
+<div class="metric-value" id="metricConnections">0</div>
+<div style="font-size: 11px; color: var(--text-tertiary);">Connections</div>
+</div>
+<div class="metric-card">
+<div class="metric-value" id="metricSeverity">0%</div>
+<div style="font-size: 11px; color: var(--text-tertiary);">Avg Severity</div>
+</div>
+<div class="metric-card">
+<div class="metric-value" id="metricComplexity">0</div>
+<div style="font-size: 11px; color: var(--text-tertiary);">Complexity</div>
+</div>
+</div>
+
+<div style="margin-top: 16px;">
+<div style="font-weight: 600; margin-bottom: 8px; color: var(--primary); font-size: 13px;">
+<i class="fas fa-bolt"></i> Quick Actions
+</div>
+<div style="display: flex; gap: 8px;">
+<button class="btn btn-outline btn-sm" id="btnSuggestConnections" style="flex: 1;">
+Suggest Links
+</button>
+<button class="btn btn-primary btn-sm" id="btnGenerateReport" style="flex: 1;">
+Generate Report
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- MODALS -->
+
+<!-- Save Network Modal -->
+<div class="modal" id="saveNetworkModal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 class="modal-title">Save Network Configuration</h2>
+<button class="modal-close" onclick="closeModal('saveNetworkModal')">×</button>
+</div>
+<div class="modal-body">
+<div class="form-group">
+<label class="form-label">Network Name *</label>
+<input type="text" class="form-control" id="saveNetworkName" placeholder="e.g., Asthma Inflammatory Network" required>
+</div>
+<div class="form-group">
+<label class="form-label">Description</label>
+<textarea class="form-control" id="saveNetworkDescription" placeholder="Describe this network configuration..." rows="3"></textarea>
+</div>
+<div class="form-group">
+<label class="form-label">
+<input type="checkbox" id="saveNetworkPublic" checked> Make network publicly accessible
+</label>
+</div>
+<div class="form-group">
+<button class="btn btn-primary" onclick="saveCurrentNetwork()" style="width: 100%;">
+<i class="fas fa-database"></i> Save to Database
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Add Trait Modal -->
+<div class="modal" id="addTraitModal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 class="modal-title">Add New Treatable Trait</h2>
+<button class="modal-close" onclick="closeModal('addTraitModal')">×</button>
+</div>
+<div class="modal-body">
+<div class="form-group">
+<label class="form-label">Trait Name *</label>
+<input type="text" class="form-control" id="newTraitName" placeholder="e.g., Systemic Inflammation" required>
+</div>
+<div class="form-group">
+<label class="form-label">Category *</label>
+<select class="form-select" id="newTraitCategory">
+<option value="Inflammatory">Inflammatory</option>
+<option value="Physiological">Physiological</option>
+<option value="Behavioral">Behavioral</option>
+<option value="Comorbid">Comorbid</option>
+<option value="Environmental">Environmental</option>
+<option value="Treatment">Treatment</option>
+</select>
+</div>
+<div class="form-group">
+<label class="form-label">Description</label>
+<textarea class="form-control" id="newTraitDescription" placeholder="Detailed description of the trait..." rows="4"></textarea>
+</div>
+<div class="form-group">
+<label class="form-label">Measurement Method</label>
+<input type="text" class="form-control" id="newTraitMeasurement" placeholder="e.g., Blood test, Questionnaire, Imaging">
+</div>
+<div class="form-group">
+<label class="form-label">Clinical Severity (0-100)</label>
+<input type="range" min="0" max="100" value="50" class="slider" id="newTraitSeverity">
+<div style="text-align: center; font-size: 13px; color: var(--primary); margin-top: 4px;">
+<span id="severityValueDisplay">50%</span>
+</div>
+</div>
+<div class="form-group">
+<button class="btn btn-success" onclick="saveNewTrait()" style="width: 100%;">
+<i class="fas fa-check"></i> Add Trait to Database
+</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Treatment Modal -->
+<div class="modal" id="treatmentModal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 class="modal-title">Treatment Recommendations</h2>
+<button class="modal-close" onclick="closeModal('treatmentModal')">×</button>
+</div>
+<div class="modal-body scrollbar-enhanced" id="treatmentModalContent">
+<!-- Dynamic content -->
+</div>
+</div>
+</div>
+
+<!-- Statistics Modal -->
+<div class="modal" id="statsModal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 class="modal-title">Comprehensive Network Statistics</h2>
+<button class="modal-close" onclick="closeModal('statsModal')">×</button>
+</div>
+<div class="modal-body">
+<div class="stats-grid" id="networkStats">
+<!-- Dynamic stats -->
+</div>
+</div>
+</div>
+</div>
+
+<!-- Pattern Analysis Modal -->
+<div class="modal" id="patternModal">
+<div class="modal-content">
+<div class="modal-header">
+<h2 class="modal-title">Pattern Analysis Results</h2>
+<button class="modal-close" onclick="closeModal('patternModal')">×</button>
+</div>
+<div class="modal-body scrollbar-enhanced" id="patternModalContent">
+<!-- Dynamic content -->
+</div>
+</div>
+</div>
+
+<!-- ========== COMPLETE JAVASCRIPT ========== -->
+<script>
+// ====== CONFIGURATION ======
+const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co'; // YOUR project
+const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_'; // Your key
+
+// ====== GLOBAL STATE ======
+const AppState = {
+supabase: null,
+currentDisease: null,
+currentTraits: [],
+currentConnections: [],
+savedNetworks: [],
+patients: [],
+treatments: [],
+nodePositions: new Map(),
+selectedNode: null,
+isInitialized: false,
+userId: 'clinician_' + Math.random().toString(36).substr(2, 9),
+currentPatient: null,
+zoom: 1,
+pan: { x: 0, y: 0 },
+isDragging: false,
+dragStart: { x: 0, y: 0 },
+history: [],
+historyIndex: -1,
+patterns: [],
+uiState: {
+sidebarCollapsed: false,
+insightsVisible: true,
+patternsVisible: true
+}
+};
+
+// ====== INITIALIZATION ======
+$(document).ready(function() {
+console.log('🚀 Initializing AIRWAYSCOPE PRO system...');
+initializeCompleteSystem();
+});
+
+async function initializeCompleteSystem() {
+try {
+// Initialize Supabase
+AppState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+console.log('✅ Supabase client initialized');
+
+// Update connection status
+showToast('System Initialized', 'AIRWAYSCOPE PRO is ready', 'success');
+$('#connectionStatus').html('<i class="fas fa-circle" style="color: #4ade80;"></i> <span>Connected to Database</span>');
+
+// Load all initial data
+await Promise.all([
+loadDiseases(),
+loadSavedNetworks(),
+loadTreatments(),
+createSamplePatients(),
+loadSampleTraits()
+]);
+
+// Setup all event listeners
+setupAllEventListeners();
+
+// Initialize UI components
+initializeTabs();
+initializeZoomControls();
+initializeSidebarToggle();
+
+AppState.isInitialized = true;
+console.log('✅ Application fully initialized');
+
+// Show welcome toast
+setTimeout(() => {
+showToast('Welcome to AIRWAYSCOPE PRO', 'Select a disease to begin mapping clinical pathways', 'info');
+}, 1000);
+
+} catch (error) {
+console.error('❌ Initialization error:', error);
+showToast('Initialization Error', error.message, 'error');
+$('#connectionStatus').html(`<i class="fas fa-circle" style="color: #ef476f;"></i> <span>Error: ${error.message}</span>`);
+}
+}
+
+// ====== TAB SYSTEM ======
+function initializeTabs() {
+$('.tab-btn').click(function() {
+const tabId = $(this).data('tab');
+
+// Update active tab button
+$('.tab-btn').removeClass('active');
+$(this).addClass('active');
+
+// Show active tab content
+$('.tab-pane').removeClass('active');
+$(`#${tabId}-tab`).addClass('active');
+
+// Load data for tab if needed
+if (tabId === 'patients' && AppState.patients.length === 0) {
+loadPatientSelect();
+} else if (tabId === 'analytics') {
+updateAnalytics();
+}
+});
+}
+
+// ====== SIDEBAR TOGGLE ======
+function initializeSidebarToggle() {
+$('#sidebarToggle').click(function() {
+const sidebar = $('#sidebar');
+const icon = $(this).find('i');
+
+if (AppState.uiState.sidebarCollapsed) {
+sidebar.removeClass('sidebar-collapsed');
+icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
+sidebar.find('.tab-btn span, .disease-list, .form-group').show();
+AppState.uiState.sidebarCollapsed = false;
+} else {
+sidebar.addClass('sidebar-collapsed');
+icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
+sidebar.find('.tab-btn span, .disease-list, .form-group').hide();
+AppState.uiState.sidebarCollapsed = true;
+}
+});
+}
+
+// ====== ZOOM CONTROLS ======
+function initializeZoomControls() {
+$('#zoomIn').click(zoomIn);
+$('#zoomOut').click(zoomOut);
+$('#zoomReset').click(resetZoom);
+
+// Mouse wheel zoom
+$('#networkCanvas').on('wheel', function(e) {
+e.preventDefault();
+
+const rect = $(this)[0].getBoundingClientRect();
+const mouseX = e.clientX - rect.left;
+const mouseY = e.clientY - rect.top;
+
+const zoomFactor = 0.1;
+const oldZoom = AppState.zoom;
+
+if (e.originalEvent.deltaY < 0) {
+// Zoom in
+AppState.zoom = Math.min(AppState.zoom * (1 + zoomFactor), 3);
+} else {
+// Zoom out
+AppState.zoom = Math.max(AppState.zoom * (1 - zoomFactor), 0.1);
+}
+
+// Adjust pan to zoom around mouse position
+const zoomRatio = AppState.zoom / oldZoom;
+AppState.pan.x = mouseX - (mouseX - AppState.pan.x) * zoomRatio;
+AppState.pan.y = mouseY - (mouseY - AppState.pan.y) * zoomRatio;
+
+updateZoomDisplay();
+applyCanvasTransform();
+});
+
+// Pan with middle mouse drag
+$('#networkCanvas').on('mousedown', function(e) {
+if (e.button === 1) { // Middle mouse button
+e.preventDefault();
+AppState.isDragging = true;
+AppState.dragStart = { x: e.clientX, y: e.clientY };
+$(this).css('cursor', 'grabbing');
+}
+});
+
+$(document).on('mousemove', function(e) {
+if (AppState.isDragging) {
+const dx = e.clientX - AppState.dragStart.x;
+const dy = e.clientY - AppState.dragStart.y;
+
+AppState.pan.x += dx;
+AppState.pan.y += dy;
+
+AppState.dragStart = { x: e.clientX, y: e.clientY };
+applyCanvasTransform();
+}
+});
+
+$(document).on('mouseup', function() {
+if (AppState.isDragging) {
+AppState.isDragging = false;
+$('#networkCanvas').css('cursor', 'default');
+}
+});
+}
+
+function zoomIn() {
+AppState.zoom = Math.min(AppState.zoom * 1.2, 3);
+updateZoomDisplay();
+applyCanvasTransform();
+}
+
+function zoomOut() {
+AppState.zoom = Math.max(AppState.zoom / 1.2, 0.1);
+updateZoomDisplay();
+applyCanvasTransform();
+}
+
+function resetZoom() {
+AppState.zoom = 1;
+AppState.pan = { x: 0, y: 0 };
+updateZoomDisplay();
+applyCanvasTransform();
+}
+
+function updateZoomDisplay() {
+$('#zoomLevel').text(`${Math.round(AppState.zoom * 100)}%`);
+}
+
+function applyCanvasTransform() {
+const container = $('#traitNodesContainer');
+container.css({
+transform: `translate(${AppState.pan.x}px, ${AppState.pan.y}px) scale(${AppState.zoom})`,
+transformOrigin: '0 0'
+});
+}
+
+// ====== DATA LOADING ======
+async function loadDiseases() {
+try {
+// First try to load from database
+const { data, error } = await AppState.supabase
+.from('diseases')
+.select('*')
+.order('disease_name');
+
+if (error) throw error;
+
+if (data && data.length > 0) {
+renderDiseaseList(data);
+} else {
+// Load sample diseases if database is empty
+loadSampleDiseases();
+}
+
+} catch (error) {
+console.error('Error loading diseases:', error);
+// Load sample diseases as fallback
+loadSampleDiseases();
+}
+}
+
+function loadSampleDiseases() {
+const sampleDiseases = [
+{
+id: 1,
+disease_name: 'Asthma',
+icd10_code: 'J45',
+description: 'Chronic inflammatory airway disease with reversible airflow obstruction.',
+prevalence: 'Common (7-10% of population)',
+traits_count: 12
+},
+{
+id: 2,
+disease_name: 'COPD',
+icd10_code: 'J44',
+description: 'Chronic obstructive pulmonary disease with progressive airflow limitation.',
+prevalence: 'Common (8-12% of adults)',
+traits_count: 15
+},
+{
+id: 3,
+disease_name: 'Bronchiectasis',
+icd10_code: 'J47',
+description: 'Abnormal widening of the bronchi with chronic inflammation.',
+prevalence: 'Uncommon (1-2% of population)',
+traits_count: 10
+},
+{
+id: 4,
+disease_name: 'Pulmonary Fibrosis',
+icd10_code: 'J84',
+description: 'Progressive scarring of lung tissue with impaired gas exchange.',
+prevalence: 'Rare (0.01-0.02% of population)',
+traits_count: 8
+}
+];
+
+renderDiseaseList(sampleDiseases);
+}
+
+async function loadTraitsForDisease(diseaseId) {
+try {
+// Show loading
+$('#welcomeMessage').hide();
+$('#traitNodesContainer').html('<div class="loading"><div class="loading-spinner"></div>Loading clinical traits...</div>');
+
+// Try to load from database
+let traits = [];
+let connections = [];
+
+// First check if we have saved network positions
+const { data: savedPositions, error: posError } = await AppState.supabase
+.from('saved_positions')
+.select('*')
+.eq('disease_id', diseaseId);
+
+if (!posError && savedPositions) {
+savedPositions.forEach(pos => {
+AppState.nodePositions.set(pos.trait_id, { x: pos.x, y: pos.y });
+});
+}
+
+// Load sample traits for the selected disease
+traits = getSampleTraitsForDisease(diseaseId);
+connections = getSampleConnectionsForDisease(diseaseId);
+
+AppState.currentTraits = traits;
+AppState.currentConnections = connections;
+
+// Update UI
+$('#currentDiseaseName').text(AppState.currentDisease.disease_name);
+$('#traitCount').text(`(${AppState.currentTraits.length} treatable traits)`);
+
+// Render the network
+renderCompleteNetwork();
+
+// Update connection creator dropdowns
+updateConnectionDropdowns();
+
+// Update analytics
+updateAnalytics();
+updateNetworkMetrics();
+
+// Show success toast
+showToast('Disease Loaded', `${AppState.currentDisease.disease_name} traits loaded successfully`, 'success');
+
+} catch (error) {
+console.error('Error loading traits:', error);
+showToast('Error', 'Failed to load traits: ' + error.message, 'error');
+$('#traitNodesContainer').html(`
+<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+<div style="color: #ef476f; margin-bottom: 20px;">
+<i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+</div>
+<h3 style="color: #2d3748; margin-bottom: 10px;">Error Loading Data</h3>
+<p style="color: #718096;">${error.message}</p>
+<button class="btn btn-primary" onclick="loadTraitsForDisease(${diseaseId})" style="margin-top: 20px;">
+<i class="fas fa-redo"></i> Retry
+</button>
+</div>
+`);
+}
+}
+
+function getSampleTraitsForDisease(diseaseId) {
+const baseTraits = [
+// Inflammatory Traits
+{ id: 1, trait_name: 'Type 2 Inflammation', category: 'Inflammatory', 
+description: 'Elevated eosinophils and IgE-mediated inflammation', 
+measurement_method: 'Blood eosinophil count, FeNO', severity: 75 },
+
+{ id: 2, trait_name: 'Neutrophilic Inflammation', category: 'Inflammatory',
+description: 'Neutrophil-dominated airway inflammation', 
+measurement_method: 'Sputum neutrophil count', severity: 65 },
+
+// Physiological Traits
+{ id: 3, trait_name: 'Airflow Limitation', category: 'Physiological',
+description: 'Reduced FEV1/FVC ratio with bronchodilator reversibility',
+measurement_method: 'Spirometry', severity: 80 },
+
+{ id: 4, trait_name: 'Hyperinflation', category: 'Physiological',
+description: 'Increased lung volumes and air trapping',
+measurement_method: 'Body plethysmography', severity: 60 },
+
+{ id: 5, trait_name: 'Gas Exchange Impairment', category: 'Physiological',
+description: 'Reduced DLCO and hypoxemia',
+measurement_method: 'DLCO test, ABG', severity: 70 },
+
+// Behavioral Traits
+{ id: 6, trait_name: 'Smoking History', category: 'Behavioral',
+description: 'Current or former tobacco use',
+measurement_method: 'Patient history, pack-years', severity: 85 },
+
+{ id: 7, trait_name: 'Inhaler Non-Adherence', category: 'Behavioral',
+description: 'Poor adherence to prescribed inhaler therapy',
+measurement_method: 'Medication possession ratio', severity: 55 },
+
+// Comorbid Traits
+{ id: 8, trait_name: 'GERD', category: 'Comorbid',
+description: 'Gastroesophageal reflux disease',
+measurement_method: 'pH monitoring, symptom scores', severity: 50 },
+
+{ id: 9, trait_name: 'Obesity', category: 'Comorbid',
+description: 'BMI > 30 with metabolic complications',
+measurement_method: 'BMI, waist circumference', severity: 65 },
+
+{ id: 10, trait_name: 'Anxiety/Depression', category: 'Comorbid',
+description: 'Psychiatric comorbidities affecting disease management',
+measurement_method: 'Questionnaires (GAD-7, PHQ-9)', severity: 45 },
+
+// Environmental Traits
+{ id: 11, trait_name: 'Occupational Exposure', category: 'Environmental',
+description: 'Workplace exposure to irritants or allergens',
+measurement_method: 'Occupational history', severity: 40 },
+
+{ id: 12, trait_name: 'Allergen Sensitivity', category: 'Environmental',
+description: 'Sensitization to common aeroallergens',
+measurement_method: 'Skin prick test, specific IgE', severity: 60 },
+
+// Treatment Traits
+{ id: 13, trait_name: 'ICS/LABA Therapy', category: 'Treatment',
+description: 'Inhaled corticosteroid and long-acting beta agonist combination',
+measurement_method: 'Prescription records, adherence monitoring', severity: 70 },
+
+{ id: 14, trait_name: 'Pulmonary Rehabilitation', category: 'Treatment',
+description: 'Structured exercise and education program',
+measurement_method: 'Program completion, 6MWD improvement', severity: 75 },
+
+{ id: 15, trait_name: 'Biologic Therapy', category: 'Treatment',
+description: 'Targeted biologic agents for severe disease',
+measurement_method: 'Prescription, clinical response', severity: 85 }
+];
+
+// Return different subsets based on disease
+switch(diseaseId) {
+case 1: // Asthma
+return baseTraits.filter(t => [1, 3, 6, 8, 10, 12, 13, 15].includes(t.id));
+case 2: // COPD
+return baseTraits.filter(t => [2, 3, 4, 5, 6, 7, 9, 11, 13, 14].includes(t.id));
+case 3: // Bronchiectasis
+return baseTraits.filter(t => [2, 5, 7, 8, 10, 14].includes(t.id));
+case 4: // Pulmonary Fibrosis
+return baseTraits.filter(t => [5, 9, 10, 11, 14].includes(t.id));
+default:
+return baseTraits.slice(0, 8);
+}
+}
+
+function getSampleConnectionsForDisease(diseaseId) {
+const connections = [];
+
+// Common connections for airway diseases
+const commonConnections = [
+{ source_trait_id: 1, target_trait_id: 3, relationship_type: 'exacerbates', strength: 4 },
+{ source_trait_id: 2, target_trait_id: 4, relationship_type: 'causes', strength: 3 },
+{ source_trait_id: 6, target_trait_id: 2, relationship_type: 'exacerbates', strength: 5 },
+{ source_trait_id: 8, target_trait_id: 7, relationship_type: 'correlates_with', strength: 3 },
+{ source_trait_id: 9, target_trait_id: 5, relationship_type: 'exacerbates', strength: 4 },
+{ source_trait_id: 12, target_trait_id: 1, relationship_type: 'triggers', strength: 4 },
+{ source_trait_id: 13, target_trait_id: 1, relationship_type: 'treats', strength: 5 },
+{ source_trait_id: 13, target_trait_id: 3, relationship_type: 'mitigates', strength: 4 },
+{ source_trait_id: 14, target_trait_id: 5, relationship_type: 'improves', strength: 4 },
+{ source_trait_id: 15, target_trait_id: 1, relationship_type: 'targets', strength: 5 }
+];
+
+// Add some random connections based on disease
+commonConnections.forEach(conn => {
+connections.push({
+...conn,
+id: `${conn.source_trait_id}-${conn.target_trait_id}-${Date.now()}`,
+evidence_description: 'Clinical trial evidence and guideline recommendations'
+});
+});
+
+return connections;
+}
+
+async function loadSavedNetworks() {
+try {
+const { data, error } = await AppState.supabase
+.from('saved_networks')
+.select(`
+*,
+diseases(disease_name)
+`)
+.order('created_at', { ascending: false })
+.limit(20);
+
+if (error) throw error;
+
+AppState.savedNetworks = data || [];
+renderSavedNetworks(AppState.savedNetworks);
+
+} catch (error) {
+console.error('Error loading saved networks:', error);
+// Show sample saved networks
+renderSavedNetworks(getSampleSavedNetworks());
+}
+}
+
+function getSampleSavedNetworks() {
+return [
+{
+id: 1,
+network_name: 'Asthma Inflammatory Network',
+disease_id: 1,
+description: 'Complete inflammatory pathway mapping for severe asthma',
+created_at: '2024-01-15T10:30:00Z',
+created_by: 'Dr. Smith',
+diseases: { disease_name: 'Asthma' }
+},
+{
+id: 2,
+network_name: 'COPD Comorbidity Map',
+disease_id: 2,
+description: 'Interconnections between COPD traits and common comorbidities',
+created_at: '2024-01-10T14:45:00Z',
+created_by: 'Dr. Johnson',
+diseases: { disease_name: 'COPD' }
+},
+{
+id: 3,
+network_name: 'Treatment-Resistant Asthma',
+disease_id: 1,
+description: 'Network analysis of traits in difficult-to-treat asthma',
+created_at: '2024-01-05T09:15:00Z',
+created_by: 'Dr. Williams',
+diseases: { disease_name: 'Asthma' }
+}
+];
+}
+
+async function loadTreatments() {
+try {
+const { data, error } = await AppState.supabase
+.from('treatments')
+.select('*')
+.order('evidence_level', { ascending: false });
+
+if (!error && data) {
+AppState.treatments = data;
+} else {
+// Load sample treatments
+AppState.treatments = getSampleTreatments();
+}
+
+} catch (error) {
+console.error('Error loading treatments:', error);
+AppState.treatments = getSampleTreatments();
+}
+}
+
+function getSampleTreatments() {
+return [
+{
+id: 1,
+treatment_name: 'Inhaled Corticosteroids',
+trait_id: 1,
+treatment_type: 'Pharmacological',
+mechanism: 'Reduces airway inflammation',
+evidence_level: 'A',
+dosage: 'Variable based on severity'
+},
+{
+id: 2,
+treatment_name: 'Long-acting Beta Agonists',
+trait_id: 3,
+treatment_type: 'Pharmacological',
+mechanism: 'Bronchodilation',
+evidence_level: 'A',
+dosage: 'Combination with ICS'
+},
+{
+id: 3,
+treatment_name: 'Biologic Therapy',
+trait_id: 1,
+treatment_type: 'Advanced',
+mechanism: 'Targets specific inflammatory pathways',
+evidence_level: 'A',
+dosage: 'Subcutaneous injection'
+},
+{
+id: 4,
+treatment_name: 'Pulmonary Rehabilitation',
+trait_id: 5,
+treatment_type: 'Non-pharmacological',
+mechanism: 'Improves exercise capacity and symptoms',
+evidence_level: 'A',
+dosage: '6-12 week program'
+},
+{
+id: 5,
+treatment_name: 'Smoking Cessation',
+trait_id: 6,
+treatment_type: 'Behavioral',
+mechanism: 'Reduces disease progression',
+evidence_level: 'A',
+dosage: 'Counseling + pharmacotherapy'
+}
+];
+}
+
+function loadSampleTraits() {
+// Preload some trait positions
+AppState.nodePositions.set(1, { x: 200, y: 150 });
+AppState.nodePositions.set(2, { x: 450, y: 200 });
+AppState.nodePositions.set(3, { x: 300, y: 350 });
+AppState.nodePositions.set(4, { x: 600, y: 300 });
+AppState.nodePositions.set(5, { x: 500, y: 450 });
+}
+
+function createSamplePatients() {
+// Create sample patients
+AppState.patients = [
+{ id: 1, name: 'John Smith', age: 65, disease_id: 1, disease: 'Asthma', created: new Date() },
+{ id: 2, name: 'Maria Garcia', age: 72, disease_id: 2, disease: 'COPD', created: new Date() },
+{ id: 3, name: 'Robert Chen', age: 58, disease_id: 1, disease: 'Asthma', created: new Date() },
+{ id: 4, name: 'Sarah Johnson', age: 45, disease_id: 3, disease: 'Bronchiectasis', created: new Date() }
+];
+
+loadPatientSelect();
+}
+
+function loadPatientSelect() {
+const select = $('#patientSelect');
+select.empty();
+select.append('<option value="">Select a patient...</option>');
+
+AppState.patients.forEach(patient => {
+select.append(`<option value="${patient.id}">${patient.name} (${patient.age}, ${patient.disease})</option>`);
+});
+
+select.append('<option value="new">+ Create New Patient</option>');
+}
+
+// ====== RENDERING ======
+function renderDiseaseList(diseases) {
+const container = $('#diseaseList');
+container.empty();
+
+diseases.forEach(disease => {
+const card = $(`
+<div class="disease-card" data-id="${disease.id}">
+<div class="disease-name">
+${disease.disease_name}
+<span class="disease-badge">${disease.traits_count || '8'}+ traits</span>
+</div>
+<div class="disease-code">${disease.icd10_code || 'J00'}</div>
+<div class="disease-description">
+${disease.description || 'No description available'}
+</div>
+<div class="disease-stats">
+<span><i class="fas fa-users"></i> ${disease.prevalence || 'Common'}</span>
+<span><i class="fas fa-dna"></i> Treatable traits</span>
+</div>
+</div>
+`);
+
+card.click(async () => {
+// Update active state
+$('.disease-card').removeClass('active');
+card.addClass('active');
+
+// Set current disease
+AppState.currentDisease = disease;
+
+// Switch to canvas view
+$('.tab-btn[data-tab="diseases"]').click();
+
+// Load traits
+await loadTraitsForDisease(disease.id);
+});
+
+container.append(card);
+});
+}
+
+function renderCompleteNetwork() {
+const container = $('#traitNodesContainer');
+container.empty();
+
+// Clear SVG
+$('#connectionsSvg').empty();
+
+// Create trait nodes
+AppState.currentTraits.forEach((trait, index) => {
+createTraitNodeElement(trait, index);
+});
+
+// Draw connections
+drawAllConnections();
+
+// Make nodes draggable
+setupDraggableNodes();
+
+// Apply saved positions
+applySavedNodePositions();
+
+// Apply zoom/pan transform
+applyCanvasTransform();
+
+// Update insights
+updateNetworkMetrics();
+detectPatterns();
+}
+
+function createTraitNodeElement(trait, index) {
+const container = $('#traitNodesContainer');
+
+// Get or calculate position
+let pos = AppState.nodePositions.get(trait.id);
+if (!pos) {
+pos = {
+x: trait.default_x || 100 + (index % 4) * 250,
+y: trait.default_y || 100 + Math.floor(index / 4) * 180
+};
+AppState.nodePositions.set(trait.id, pos);
+}
+
+// Determine category color
+const categoryColors = {
+'inflammatory': '#ef476f',
+'physiological': '#06d6a0',
+'behavioral': '#ffd166',
+'comorbid': '#118ab2',
+'environmental': '#9d4edd',
+'treatment': '#7209b7'
+};
+
+const categoryColor = categoryColors[trait.category.toLowerCase()] || '#4361ee';
+
+const node = $(`
+<div class="trait-node ${trait.category.toLowerCase()}" data-id="${trait.id}" data-trait-id="${trait.id}"
+style="left: ${pos.x}px; top: ${pos.y}px; border-left-color: ${categoryColor}">
+<div class="node-header">
+<div class="node-title">${trait.trait_name}</div>
+<span class="node-category node-${trait.category.toLowerCase()}" 
+style="background: ${categoryColor}">
+${trait.category}
+</span>
+</div>
+<div class="node-content">
+${trait.description || 'No description available'}
+<div class="node-metrics">
+<div class="metric">
+<i class="fas fa-chart-line"></i>
+<span class="metric-value">${trait.severity || 50}%</span>
+</div>
+<div class="metric">
+<i class="fas fa-stethoscope"></i>
+<span>${trait.measurement_method || 'Various'}</span>
+</div>
+</div>
+</div>
+<div class="node-footer">
+<div>
+<i class="fas fa-fingerprint"></i> ID: ${trait.id}
+</div>
+<div class="node-actions">
+<button class="node-btn" onclick="showTraitDetails(${trait.id})" title="Details">
+<i class="fas fa-info"></i>
+</button>
+<button class="node-btn" onclick="showTreatmentsForTrait(${trait.id})" title="Treatments">
+<i class="fas fa-pills"></i>
+</button>
+<button class="node-btn" onclick="editTrait(${trait.id})" title="Edit">
+<i class="fas fa-edit"></i>
+</button>
+</div>
+</div>
+</div>
+`);
+
+// Click handler for selection
+node.click(function(e) {
+e.stopPropagation();
+selectNode($(this), trait);
+});
+
+// Double-click for quick edit
+node.dblclick(() => {
+editTrait(trait);
+});
+
+container.append(node);
+return node;
+}
+
+function drawAllConnections() {
+const svg = $('#connectionsSvg')[0];
+svg.innerHTML = ''; // Clear existing connections
+
+AppState.currentConnections.forEach(connection => {
+drawConnection(connection);
+});
+}
+
+function drawConnection(connection) {
+const sourceNode = $(`.trait-node[data-id="${connection.source_trait_id}"]`);
+const targetNode = $(`.trait-node[data-id="${connection.target_trait_id}"]`);
+
+if (!sourceNode.length || !targetNode.length) return;
+
+const sourceRect = sourceNode[0].getBoundingClientRect();
+const targetRect = targetNode[0].getBoundingClientRect();
+const workspaceRect = $('#networkCanvas')[0].getBoundingClientRect();
+
+const x1 = sourceRect.left - workspaceRect.left + sourceRect.width / 2;
+const y1 = sourceRect.top - workspaceRect.top + sourceRect.height / 2;
+const x2 = targetRect.left - workspaceRect.left + targetRect.width / 2;
+const y2 = targetRect.top - workspaceRect.top + targetRect.height / 2;
+
+// Apply zoom and pan transformations
+const transformedX1 = (x1 - AppState.pan.x) / AppState.zoom;
+const transformedY1 = (y1 - AppState.pan.y) / AppState.zoom;
+const transformedX2 = (x2 - AppState.pan.x) / AppState.zoom;
+const transformedY2 = (y2 - AppState.pan.y) / AppState.zoom;
+
+// Create SVG path
+const svg = $('#connectionsSvg')[0];
+const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+const dx = transformedX2 - transformedX1;
+const dy = transformedY2 - transformedY1;
+const controlX = transformedX1 + dx * 0.5;
+const controlY = transformedY1 + dy * 0.5 - 40;
+
+path.setAttribute('d', `M ${transformedX1} ${transformedY1} Q ${controlX} ${controlY} ${transformedX2} ${transformedY2}`);
+path.setAttribute('stroke', getConnectionColor(connection.relationship_type));
+path.setAttribute('stroke-width', connection.strength || 2);
+path.setAttribute('fill', 'none');
+path.setAttribute('class', 'connection-line');
+path.setAttribute('opacity', '0.8');
+path.setAttribute('stroke-dasharray', connection.strength < 3 ? '5,3' : 'none');
+
+// Add arrowhead for directional connections
+if (connection.relationship_type !== 'correlates_with') {
+const markerId = `arrow-${connection.id}`;
+let marker = document.getElementById(markerId);
+if (!marker) {
+marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+marker.setAttribute('id', markerId);
+marker.setAttribute('viewBox', '0 0 10 10');
+marker.setAttribute('refX', '9');
+marker.setAttribute('refY', '5');
+marker.setAttribute('markerWidth', '6');
+marker.setAttribute('markerHeight', '6');
+marker.setAttribute('orient', 'auto');
+
+const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+arrow.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+arrow.setAttribute('fill', getConnectionColor(connection.relationship_type));
+marker.appendChild(arrow);
+svg.appendChild(marker);
+}
+
+path.setAttribute('marker-end', `url(#${markerId})`);
+}
+
+svg.appendChild(path);
+
+// Add connection label
+const labelX = (transformedX1 + transformedX2) / 2;
+const labelY = (transformedY1 + transformedY2) / 2 - 30;
+
+const label = $(`
+<div class="connection-label" style="left: ${labelX}px; top: ${labelY}px; transform: translate(-50%, -50%);">
+${connection.relationship_type.replace('_', ' ').toUpperCase()}
+</div>
+`);
+
+$('#networkCanvas').append(label);
+}
+
+function getConnectionColor(relationshipType) {
+const colors = {
+'causes': '#ef476f',
+'exacerbates': '#ff9e00',
+'mitigates': '#06d6a0',
+'correlates_with': '#118ab2',
+'treats': '#7209b7',
+'triggers': '#9d4edd',
+'targets': '#4361ee',
+'improves': '#4cc9f0'
+};
+return colors[relationshipType] || '#4361ee';
+}
+
+function renderSavedNetworks(networks) {
+const container = $('#savedNetworks');
+container.empty();
+
+if (!networks || networks.length === 0) {
+container.html(`
+<div style="text-align: center; padding: 30px; color: var(--text-tertiary);">
+<i class="fas fa-project-diagram" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px;"></i>
+<div>No saved networks yet</div>
+<div style="font-size: 12px; margin-top: 8px;">Save your first network to see it here</div>
+</div>
+`);
+return;
+}
+
+networks.forEach(network => {
+const networkDiv = $(`
+<div class="saved-network" data-id="${network.id}">
+<div class="network-name">${network.network_name}</div>
+<div class="network-meta">
+<span>${network.diseases?.disease_name || 'Unknown'} • ${new Date(network.created_at).toLocaleDateString()}</span>
+<span class="network-author">${network.created_by || 'System'}</span>
+</div>
+<div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+${network.description || 'No description'}
+</div>
+</div>
+`);
+
+networkDiv.click(async () => {
+await loadSavedNetwork(network);
+});
+
+container.append(networkDiv);
+});
+}
+
+// ====== INTERACTIVITY ======
+function setupDraggableNodes() {
+$('.trait-node').each(function() {
+const node = $(this);
+let isDragging = false;
+let startX, startY, initialLeft, initialTop;
+
+node.on('mousedown', function(e) {
+if (e.button !== 0) return; // Only left mouse button
+
+isDragging = true;
+startX = e.clientX;
+startY = e.clientY;
+
+initialLeft = parseInt(node.css('left'));
+initialTop = parseInt(node.css('top'));
+
+node.css('cursor', 'grabbing');
+node.css('z-index', '1000');
+
+// Select the node
+const traitId = parseInt(node.data('id'));
+const trait = AppState.currentTraits.find(t => t.id === traitId);
+if (trait) {
+selectNode(node, trait);
+}
+
+$(document).on('mousemove', drag);
+$(document).on('mouseup', stopDrag);
+
+e.preventDefault();
+e.stopPropagation();
+});
+
+function drag(e) {
+if (!isDragging) return;
+
+const dx = (e.clientX - startX) / AppState.zoom;
+const dy = (e.clientY - startY) / AppState.zoom;
+
+const newLeft = initialLeft + dx;
+const newTop = initialTop + dy;
+
+const workspace = $('#networkCanvas');
+const workspaceWidth = workspace.width();
+const workspaceHeight = workspace.height();
+
+// Constrain to workspace (adjusted for zoom)
+const nodeWidth = node.width();
+const nodeHeight = node.height();
+const maxX = (workspaceWidth / AppState.zoom) - nodeWidth;
+const maxY = (workspaceHeight / AppState.zoom) - nodeHeight;
+
+const constrainedLeft = Math.max(0, Math.min(newLeft, maxX));
+const constrainedTop = Math.max(0, Math.min(newTop, maxY));
+
+node.css('left', constrainedLeft + 'px');
+node.css('top', constrainedTop + 'px');
+
+// Update connections in real-time
+drawAllConnections();
+}
+
+function stopDrag() {
+if (!isDragging) return;
+
+isDragging = false;
+node.css('cursor', 'move');
+node.css('z-index', '10');
+
+// Save position
+const traitId = parseInt(node.data('id'));
+const x = parseInt(node.css('left'));
+const y = parseInt(node.css('top'));
+
+AppState.nodePositions.set(traitId, { x, y });
+savePositionToHistory();
+
+$(document).off('mousemove', drag);
+$(document).off('mouseup', stopDrag);
+}
+});
+}
+
+function selectNode(node, trait) {
+// Deselect all nodes
+$('.trait-node').removeClass('selected');
+
+// Select this node
+node.addClass('selected');
+AppState.selectedNode = trait;
+
+// Show connection creator near selected node
+const rect = node[0].getBoundingClientRect();
+const creator = $('#connectionCreator');
+const workspaceRect = $('#networkCanvas')[0].getBoundingClientRect();
+
+creator.css({
+display: 'block',
+left: (rect.right - workspaceRect.left + 10) + 'px',
+top: (rect.top - workspaceRect.top) + 'px'
+});
+
+// Set this node as source in connection creator
+$('#connectionSource').val(trait.id);
+}
+
+function updateConnectionDropdowns() {
+const sourceSelect = $('#connectionSource');
+const targetSelect = $('#connectionTarget');
+
+sourceSelect.empty().append('<option value="">Select source trait...</option>');
+targetSelect.empty().append('<option value="">Select target trait...</option>');
+
+AppState.currentTraits.forEach(trait => {
+sourceSelect.append(`<option value="${trait.id}">${trait.trait_name}</option>`);
+targetSelect.append(`<option value="${trait.id}">${trait.trait_name}</option>`);
+});
+}
+
+// ====== LAYOUT FUNCTIONS ======
+function applyForceLayout() {
+const nodes = $('.trait-node');
+if (nodes.length === 0) return;
+
+const workspace = $('#networkCanvas');
+const centerX = workspace.width() / 2;
+const centerY = workspace.height() / 2;
+const radius = Math.min(workspace.width(), workspace.height()) * 0.35;
+
+nodes.each(function(index) {
+const node = $(this);
+const angle = (index / nodes.length) * Math.PI * 2;
+const x = centerX + Math.cos(angle) * radius - node.width() / 2;
+const y = centerY + Math.sin(angle) * radius - node.height() / 2;
+
+const traitId = parseInt(node.data('id'));
+AppState.nodePositions.set(traitId, { x, y });
+});
+
+savePositionToHistory();
+renderCompleteNetwork();
+showToast('Layout Applied', 'Force-directed layout generated', 'success');
+}
+
+function applyCircleLayout() {
+const nodes = $('.trait-node');
+if (nodes.length === 0) return;
+
+const workspace = $('#networkCanvas');
+const centerX = workspace.width() / 2;
+const centerY = workspace.height() / 2;
+const radius = Math.min(workspace.width(), workspace.height()) * 0.3;
+
+nodes.each(function(index) {
+const node = $(this);
+const angle = (index / nodes.length) * Math.PI * 2;
+const x = centerX + Math.cos(angle) * radius - node.width() / 2;
+const y = centerY + Math.sin(angle) * radius - node.height() / 2;
+
+const traitId = parseInt(node.data('id'));
+AppState.nodePositions.set(traitId, { x, y });
+});
+
+savePositionToHistory();
+renderCompleteNetwork();
+showToast('Layout Applied', 'Circular layout generated', 'success');
+}
+
+function applyAutoLayout() {
+// Smart layout based on connection density
+const nodes = $('.trait-node');
+if (nodes.length === 0) return;
+
+// Simple grid layout for now
+const workspace = $('#networkCanvas');
+const cols = Math.ceil(Math.sqrt(nodes.length));
+const spacingX = workspace.width() / (cols + 1);
+const spacingY = workspace.height() / (cols + 1);
+
+nodes.each(function(index) {
+const node = $(this);
+const col = index % cols;
+const row = Math.floor(index / cols);
+const x = spacingX * (col + 1) - node.width() / 2;
+const y = spacingY * (row + 1) - node.height() / 2;
+
+const traitId = parseInt(node.data('id'));
+AppState.nodePositions.set(traitId, { x, y });
+});
+
+savePositionToHistory();
+renderCompleteNetwork();
+showToast('Layout Applied', 'Automatic layout generated', 'success');
+}
+
+function applySavedNodePositions() {
+// Update DOM elements with saved positions
+AppState.nodePositions.forEach((pos, traitId) => {
+const node = $(`.trait-node[data-id="${traitId}"]`);
+if (node.length) {
+node.css({ left: pos.x + 'px', top: pos.y + 'px' });
+}
+});
+
+// Redraw connections
+drawAllConnections();
+}
+
+// ====== HISTORY MANAGEMENT ======
+function savePositionToHistory() {
+// Save current state to history
+const state = {
+positions: Array.from(AppState.nodePositions.entries()),
+zoom: AppState.zoom,
+pan: { ...AppState.pan }
+};
+
+AppState.history.push(JSON.stringify(state));
+AppState.historyIndex = AppState.history.length - 1;
+
+// Limit history size
+if (AppState.history.length > 50) {
+AppState.history.shift();
+AppState.historyIndex--;
+}
+}
+
+function undo() {
+if (AppState.historyIndex > 0) {
+AppState.historyIndex--;
+loadStateFromHistory();
+showToast('Undo', 'Previous action undone', 'info');
+}
+}
+
+function redo() {
+if (AppState.historyIndex < AppState.history.length - 1) {
+AppState.historyIndex++;
+loadStateFromHistory();
+showToast('Redo', 'Action redone', 'info');
+}
+}
+
+function loadStateFromHistory() {
+if (AppState.historyIndex < 0) return;
+
+const state = JSON.parse(AppState.history[AppState.historyIndex]);
+
+// Restore positions
+AppState.nodePositions.clear();
+state.positions.forEach(([traitId, pos]) => {
+AppState.nodePositions.set(traitId, pos);
+});
+
+// Restore zoom and pan
+AppState.zoom = state.zoom;
+AppState.pan = state.pan;
+
+// Update UI
+updateZoomDisplay();
+applyCanvasTransform();
+applySavedNodePositions();
+}
+
+// ====== DATABASE OPERATIONS ======
+async function saveCurrentNetwork() {
+try {
+const name = $('#saveNetworkName').val().trim();
+const description = $('#saveNetworkDescription').val().trim();
+
+if (!name) {
+showToast('Validation Error', 'Please enter a network name', 'error');
+return;
+}
+
+if (!AppState.currentDisease) {
+showToast('Validation Error', 'Please select a disease first', 'error');
+return;
+}
+
+// Collect node positions
+const nodes = [];
+$('.trait-node').each(function() {
+const traitId = parseInt($(this).data('id'));
+const x = parseInt($(this).css('left'));
+const y = parseInt($(this).css('top'));
+nodes.push({ id: traitId, x, y });
+});
+
+// Prepare layout data
+const layoutData = {
+nodes: nodes,
+connections: AppState.currentConnections,
+metadata: {
+created: new Date().toISOString(),
+disease: AppState.currentDisease.disease_name,
+trait_count: AppState.currentTraits.length,
+connection_count: AppState.currentConnections.length,
+zoom: AppState.zoom,
+pan: AppState.pan
+}
+};
+
+// Save to database
+const { data, error } = await AppState.supabase
+.from('saved_networks')
+.insert([{
+network_name: name,
+disease_id: AppState.currentDisease.id,
+description: description,
+layout_data: layoutData,
+is_public: $('#saveNetworkPublic').is(':checked'),
+created_by: AppState.userId
+}])
+.select();
+
+if (error) throw error;
+
+showToast('Network Saved', 'Network configuration saved successfully!', 'success');
+closeModal('saveNetworkModal');
+
+// Clear form
+$('#saveNetworkName').val('');
+$('#saveNetworkDescription').val('');
+
+// Reload saved networks
+await loadSavedNetworks();
+
+} catch (error) {
+console.error('Error saving network:', error);
+showToast('Save Failed', `Error: ${error.message}`, 'error');
+}
+}
+
+async function loadSavedNetwork(network) {
+try {
+// Load the corresponding disease
+const diseaseCard = $(`.disease-card[data-id="${network.disease_id}"]`);
+if (diseaseCard.length) {
+diseaseCard.click();
+
+// Wait for traits to load, then apply saved layout
+setTimeout(() => {
+if (network.layout_data) {
+// Clear existing positions
+AppState.nodePositions.clear();
+
+// Apply saved positions
+if (network.layout_data.nodes) {
+network.layout_data.nodes.forEach(node => {
+AppState.nodePositions.set(node.id, { x: node.x, y: node.y });
+});
+}
+
+// Apply saved connections if any
+if (network.layout_data.connections) {
+AppState.currentConnections = network.layout_data.connections;
+}
+
+// Apply saved zoom and pan
+if (network.layout_data.metadata) {
+AppState.zoom = network.layout_data.metadata.zoom || 1;
+AppState.pan = network.layout_data.metadata.pan || { x: 0, y: 0 };
+updateZoomDisplay();
+}
+
+// Re-render
+renderCompleteNetwork();
+
+// Update UI
+$('#canvasTitle').html(`
+<i class="fas fa-project-diagram"></i>
+<span>${network.network_name}</span>
+<small style="font-size: 13px; color: var(--text-tertiary);">
+(Loaded from saved network)
+</small>
+`);
+
+showToast('Network Loaded', `${network.network_name} loaded successfully`, 'success');
+}
+}, 500);
+}
+
+} catch (error) {
+console.error('Error loading network:', error);
+showToast('Load Failed', `Error: ${error.message}`, 'error');
+}
+}
+
+async function saveNewTrait() {
+try {
+const name = $('#newTraitName').val().trim();
+const category = $('#newTraitCategory').val();
+const description = $('#newTraitDescription').val().trim();
+const measurement = $('#newTraitMeasurement').val().trim();
+const severity = $('#newTraitSeverity').val();
+
+if (!name) {
+showToast('Validation Error', 'Please enter a trait name', 'error');
+return;
+}
+
+if (!AppState.currentDisease) {
+showToast('Validation Error', 'Please select a disease first', 'error');
+return;
+}
+
+// Create new trait object
+const newTrait = {
+id: Date.now(), // Temporary ID
+trait_name: name,
+category: category,
+description: description,
+measurement_method: measurement,
+severity: parseInt(severity)
+};
+
+// Add to current traits
+AppState.currentTraits.push(newTrait);
+
+// Position the new trait
+const workspace = $('#networkCanvas');
+const x = workspace.width() / 2 - 120;
+const y = workspace.height() / 2 - 85;
+AppState.nodePositions.set(newTrait.id, { x, y });
+
+// Re-render network
+renderCompleteNetwork();
+
+showToast('Trait Added', `${name} added to current network`, 'success');
+closeModal('addTraitModal');
+
+// Clear form
+$('#newTraitName').val('');
+$('#newTraitDescription').val('');
+$('#newTraitMeasurement').val('');
+$('#newTraitSeverity').val(50);
+$('#severityValueDisplay').text('50%');
+
+// In production, this would save to database:
+/*
+const { data: traitData, error: traitError } = await AppState.supabase
+.from('treatable_traits')
+.insert([{
+trait_name: name,
+category: category,
+description: description,
+measurement_method: measurement
+}])
+.select();
+
+if (traitError) throw traitError;
+
+// Link trait to current disease
+const { error: linkError } = await AppState.supabase
+.from('disease_traits')
+.insert([{
+disease_id: AppState.currentDisease.id,
+trait_id: traitData[0].id,
+prevalence_in_disease: 'Variable',
+clinical_importance: 'Medium'
+}]);
+
+if (linkError) throw linkError;
+*/
+
+} catch (error) {
+console.error('Error saving trait:', error);
+showToast('Save Failed', `Error: ${error.message}`, 'error');
+}
+}
+
+async function saveNewConnection() {
+try {
+const sourceId = parseInt($('#connectionSource').val());
+const targetId = parseInt($('#connectionTarget').val());
+const type = $('#connectionType').val();
+const strength = parseInt($('#connectionStrength').val());
+const evidence = $('#connectionEvidence').val().trim();
+
+if (!sourceId || !targetId) {
+showToast('Validation Error', 'Please select both source and target traits', 'error');
+return;
+}
+
+if (sourceId === targetId) {
+showToast('Validation Error', 'Source and target cannot be the same trait', 'error');
+return;
+}
+
+// Check if connection already exists
+const existingConnection = AppState.currentConnections.find(conn => 
+(conn.source_trait_id === sourceId && conn.target_trait_id === targetId) ||
+(conn.source_trait_id === targetId && conn.target_trait_id === sourceId)
+);
+
+if (existingConnection) {
+showToast('Connection Exists', 'These traits are already connected', 'warning');
+return;
+}
+
+// Create new connection
+const newConnection = {
+id: `${sourceId}-${targetId}-${Date.now()}`,
+source_trait_id: sourceId,
+target_trait_id: targetId,
+relationship_type: type,
+strength: strength,
+evidence_description: evidence,
+created_by: AppState.userId
+};
+
+// Add to current connections
+AppState.currentConnections.push(newConnection);
+
+// Hide connection creator
+$('#connectionCreator').hide();
+
+// Redraw connections
+drawAllConnections();
+
+// Update analytics
+updateNetworkMetrics();
+
+showToast('Connection Added', 'New clinical connection established', 'success');
+
+// Clear form
+$('#connectionSource').val('');
+$('#connectionTarget').val('');
+$('#connectionEvidence').val('');
+$('#connectionStrength').val(3);
+$('#strengthValue').text('3');
+
+// In production, save to database:
+/*
+const { data, error } = await AppState.supabase
+.from('trait_networks')
+.insert([{
+source_trait_id: sourceId,
+target_trait_id: targetId,
+relationship_type: type,
+strength: strength,
+evidence_description: evidence,
+created_by: AppState.userId
+}])
+.select();
+
+if (error) throw error;
+*/
+
+} catch (error) {
+console.error('Error saving connection:', error);
+showToast('Save Failed', `Error: ${error.message}`, 'error');
+}
+}
+
+// ====== PATIENT MANAGEMENT ======
+function showPatientProfile(patientId) {
+// FIXED: Use == instead of ===
+const patient = AppState.patients.find(p => p.id == patientId);
+
+if (!patient) {
+console.error('Patient not found:', patientId);
+$('#patientProfile').html('<div style="padding: 20px; color: #ef476f;">Patient not found</div>');
+return;
+}
+
+AppState.currentPatient = patient;
+
+$('#patientProfile').show();
+$('#patientName').text(patient.name);
+$('#patientAge').text(`${patient.age} years`);
+$('#patientDisease').text(patient.disease);
+
+// Create trait value sliders
+const traitsHtml = AppState.currentTraits.map(trait => `
+<div class="trait-slider">
+<div class="trait-name">${trait.trait_name}</div>
+<div class="slider-container">
+<input type="range" min="0" max="10" value="${Math.floor(Math.random() * 11)}" class="slider" 
+data-trait-id="${trait.id}" oninput="updateTraitValue(this, ${trait.id})">
+<span class="slider-value">5</span>
+</div>
+</div>
+`).join('');
+
+$('#patientTraits').html(traitsHtml || '<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">No traits available for this disease</div>');
+
+// Generate treatment recommendations
+generateTreatmentRecommendations();
+}
+
+function generateTreatmentRecommendations() {
+const treatmentsDiv = $('#patientTreatments');
+
+// Find treatments for current disease traits
+const relevantTreatments = AppState.treatments.filter(treatment => {
+return AppState.currentTraits.some(trait => trait.id === treatment.trait_id);
+});
+
+if (relevantTreatments.length === 0) {
+treatmentsDiv.html(`
+<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">
+<i class="fas fa-stethoscope" style="font-size: 24px; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
+No specific treatments found for current traits.
+</div>
+`);
+return;
+}
+
+const treatmentsHtml = relevantTreatments.slice(0, 5).map(treatment => {
+const trait = AppState.currentTraits.find(t => t.id === treatment.trait_id);
+return `
+<div class="treatment-card">
+<div class="treatment-header">
+<div class="treatment-name">${treatment.treatment_name}</div>
+<span class="evidence-badge evidence-${treatment.evidence_level.toLowerCase()}">
+Level ${treatment.evidence_level}
+</span>
+</div>
+<div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
+<strong>For:</strong> ${trait?.trait_name || 'Unknown trait'}
+</div>
+<div style="font-size: 12px; color: var(--text-tertiary);">
+<strong>Mechanism:</strong> ${treatment.mechanism || 'Not specified'}
+</div>
+<div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+<i class="fas fa-prescription-bottle"></i> ${treatment.dosage || 'Standard dosage'}
+</div>
+</div>
+`;
+}).join('');
+
+treatmentsDiv.html(treatmentsHtml);
+}
+
+function generateTreatmentPlan() {
+if (!AppState.currentPatient) {
+showToast('Error', 'Please select a patient first', 'error');
+return;
+}
+
+// Generate comprehensive treatment plan
+const modalContent = $('#treatmentModalContent');
+const patient = AppState.currentPatient;
+
+let html = `
+<h3 style="margin-bottom: 16px; color: var(--text-primary);">Treatment Plan for ${patient.name}</h3>
+<div style="background: var(--bg-tertiary); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 20px;">
+<div style="display: flex; gap: 12px; margin-bottom: 12px;">
+<div style="flex: 1;">
+<div style="font-size: 11px; color: var(--text-tertiary);">Age</div>
+<div style="font-weight: 600;">${patient.age} years</div>
+</div>
+<div style="flex: 1;">
+<div style="font-size: 11px; color: var(--text-tertiary);">Disease</div>
+<div style="font-weight: 600;">${patient.disease}</div>
+</div>
+<div style="flex: 1;">
+<div style="font-size: 11px; color: var(--text-tertiary);">Date</div>
+<div style="font-weight: 600;">${new Date().toLocaleDateString()}</div>
+</div>
+</div>
+</div>
+`;
+
+// Add treatment recommendations
+const relevantTreatments = AppState.treatments.filter(treatment => {
+return AppState.currentTraits.some(trait => trait.id === treatment.trait_id);
+});
+
+if (relevantTreatments.length > 0) {
+html += `
+<h4 style="margin-bottom: 12px; color: var(--text-primary);">Recommended Interventions</h4>
+`;
+
+relevantTreatments.forEach(treatment => {
+const trait = AppState.currentTraits.find(t => t.id === treatment.trait_id);
+html += `
+<div class="treatment-card" style="margin-bottom: 12px;">
+<div class="treatment-header">
+<div class="treatment-name">${treatment.treatment_name}</div>
+<span class="evidence-badge evidence-${treatment.evidence_level.toLowerCase()}">
+Level ${treatment.evidence_level}
+</span>
+</div>
+<div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
+<strong>Target:</strong> ${trait?.trait_name || 'Unknown'}
+</div>
+<div style="font-size: 12px; color: var(--text-tertiary);">
+${treatment.mechanism || 'Mechanism not specified'}
+</div>
+<div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">
+<i class="fas fa-calendar"></i> Schedule: Weekly monitoring
+</div>
+</div>
+`;
+});
+}
+
+// Add monitoring plan
+html += `
+<h4 style="margin-bottom: 12px; color: var(--text-primary); margin-top: 24px;">Monitoring Plan</h4>
+<div style="background: #f0f9ff; padding: 16px; border-radius: var(--radius-lg); border-left: 4px solid var(--primary);">
+<div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+<div style="font-weight: 600;">Parameter</div>
+<div style="font-weight: 600;">Frequency</div>
+</div>
+<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
+<div>Symptom Assessment</div>
+<div>Weekly</div>
+</div>
+<div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
+<div>Peak Flow Monitoring</div>
+<div>Daily</div>
+</div>
+<div style="display: flex; justify-content: space-between; padding: 8px 0;">
+<div>Clinical Review</div>
+<div>Monthly</div>
+</div>
+</div>
+
+<div style="margin-top: 24px; text-align: center;">
+<button class="btn btn-primary" onclick="exportTreatmentPlan()">
+<i class="fas fa-download"></i> Export as PDF
+</button>
+</div>
+`;
+
+modalContent.html(html);
+$('#treatmentModal').addClass('active');
+}
+
+function exportTreatmentPlan() {
+// Simple PDF export simulation
+showToast('Export Started', 'Generating PDF treatment plan...', 'info');
+
+setTimeout(() => {
+showToast('Export Complete', 'Treatment plan downloaded as PDF', 'success');
+}, 1500);
+}
+
+// ====== ANALYTICS & PATTERN DETECTION ======
+function updateAnalytics() {
+const traits = AppState.currentTraits.length;
+const connections = AppState.currentConnections.length;
+
+// Calculate network density
+const maxConnections = traits * (traits - 1) / 2;
+const density = maxConnections > 0 ? Math.round((connections / maxConnections) * 100) : 0;
+
+// Calculate complexity score
+const avgSeverity = traits > 0 ? 
+Math.round(AppState.currentTraits.reduce((sum, t) => sum + (t.severity || 50), 0) / traits) : 0;
+const complexity = Math.min(100, Math.round((connections * 2) + (avgSeverity * 0.5)));
+
+// Update analytics tab
+$('#analyticsTraits').text(traits);
+$('#analyticsConnections').text(connections);
+$('#analyticsDensity').text(density + '%');
+$('#analyticsComplexity').text(complexity);
+
+// Generate insight
+let insight = 'Add traits to canvas for analysis.';
+if (traits > 0) {
+if (density > 50) {
+insight = 'Highly interconnected network suggests complex disease mechanisms.';
+} else if (traits >= 5) {
+insight = 'Moderate network complexity with clear treatable trait pathways.';
+} else {
+insight = 'Initial assessment phase - consider adding more traits.';
+}
+}
+$('#analyticsInsight').text(insight);
+}
+
+function updateNetworkMetrics() {
+const traits = AppState.currentTraits.length;
+const connections = AppState.currentConnections.length;
+
+// Calculate average severity
+const avgSeverity = traits > 0 ? 
+Math.round(AppState.currentTraits.reduce((sum, t) => sum + (t.severity || 50), 0) / traits) : 0;
+
+// Calculate complexity
+const maxConnections = traits * (traits - 1) / 2;
+const density = maxConnections > 0 ? (connections / maxConnections) * 100 : 0;
+const complexity = Math.min(100, Math.round((connections * 2) + (avgSeverity * 0.5)));
+
+// Update insights panel
+$('#metricTraits').text(traits);
+$('#metricConnections').text(connections);
+$('#metricSeverity').text(avgSeverity + '%');
+$('#metricComplexity').text(complexity);
+
+updateAnalytics();
+}
+
+function detectPatterns() {
+const patternsList = $('#patternsList');
+
+if (AppState.currentTraits.length < 3) {
+patternsList.html(`
+<div style="text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 13px;">
+<i class="fas fa-search" style="opacity: 0.5; font-size: 24px; margin-bottom: 8px; display: block;"></i>
+Add at least 3 traits to detect patterns
+</div>
+`);
+return;
+}
+
+// Detect simple patterns
+const patterns = [];
+
+// Inflammatory pattern
+const inflammatoryTraits = AppState.currentTraits.filter(t => 
+t.category.toLowerCase().includes('inflammatory')
+);
+if (inflammatoryTraits.length >= 2) {
+patterns.push({
+name: 'Inflammatory Cluster',
+color: '#ef476f',
+traits: inflammatoryTraits,
+strength: Math.min(100, inflammatoryTraits.length * 20)
+});
+}
+
+// Physiological pattern
+const physiologicalTraits = AppState.currentTraits.filter(t => 
+t.category.toLowerCase().includes('physiological')
+);
+if (physiologicalTraits.length >= 2) {
+patterns.push({
+name: 'Physiological Dysfunction',
+color: '#06d6a0',
+traits: physiologicalTraits,
+strength: Math.min(100, physiologicalTraits.length * 25)
+});
+}
+
+// Comorbidity pattern
+const comorbidTraits = AppState.currentTraits.filter(t => 
+t.category.toLowerCase().includes('comorbid')
+);
+if (comorbidTraits.length >= 2) {
+patterns.push({
+name: 'Comorbidity Network',
+color: '#118ab2',
+traits: comorbidTraits,
+strength: Math.min(100, comorbidTraits.length * 30)
+});
+}
+
+AppState.patterns = patterns;
+
+if (patterns.length === 0) {
+patternsList.html(`
+<div style="text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 13px;">
+<i class="fas fa-shapes" style="opacity: 0.5; font-size: 24px; margin-bottom: 8px; display: block;"></i>
+No patterns detected yet
+</div>
+`);
+return;
+}
+
+// Render patterns
+let patternsHtml = '';
+patterns.forEach((pattern, index) => {
+patternsHtml += `
+<div class="pattern-item" onclick="highlightPattern(${index})" style="border-left-color: ${pattern.color};">
+<div style="display: flex; align-items: center; margin-bottom: 4px;">
+<span class="pattern-color" style="background: ${pattern.color};"></span>
+<div style="font-weight: 600; font-size: 13px;">${pattern.name}</div>
+</div>
+<div style="font-size: 11px; color: var(--text-tertiary);">
+${pattern.traits.length} traits, ${pattern.strength}% correlation
+</div>
+</div>
+`;
+});
+
+patternsList.html(patternsHtml);
+}
+
+function highlightPattern(patternIndex) {
+const pattern = AppState.patterns[patternIndex];
+if (!pattern) return;
+
+// Highlight nodes in the pattern
+$('.trait-node').css({
+'box-shadow': 'var(--shadow-lg)',
+'opacity': '0.5'
+});
+
+pattern.traits.forEach(trait => {
+$(`.trait-node[data-id="${trait.id}"]`).css({
+'box-shadow': `0 0 0 3px ${pattern.color}, var(--shadow-lg)`,
+'opacity': '1',
+'z-index': '100'
+});
+});
+
+showToast('Pattern Highlighted', `${pattern.name} pattern shown`, 'info');
+}
+
+function showPatternAnalysis() {
+if (AppState.patterns.length === 0) {
+detectPatterns();
+}
+
+const modalContent = $('#patternModalContent');
+let html = '<h3 style="margin-bottom: 20px; color: var(--text-primary);">Pattern Analysis</h3>';
+
+if (AppState.patterns.length === 0) {
+html += '<p>No significant patterns detected in the current network.</p>';
+} else {
+html += `
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+`;
+
+AppState.patterns.forEach((pattern, index) => {
+html += `
+<div style="background: white; border-radius: var(--radius-lg); padding: 16px; border-left: 4px solid ${pattern.color};">
+<div style="font-weight: 700; color: ${pattern.color}; margin-bottom: 8px;">${pattern.name}</div>
+<div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
+${pattern.traits.length} interconnected traits
+</div>
+<div style="font-size: 11px; color: var(--text-tertiary);">
+Strength: ${pattern.strength}%
+</div>
+</div>
+`;
+});
+
+html += '</div>';
+
+// Add interpretation
+html += `
+<div style="background: var(--bg-tertiary); padding: 16px; border-radius: var(--radius-lg);">
+<div style="font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">
+<i class="fas fa-lightbulb"></i> Clinical Interpretation
+</div>
+<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+${generatePatternInterpretation()}
+</div>
+</div>
+`;
+}
+
+modalContent.html(html);
+$('#patternModal').addClass('active');
+}
+
+function generatePatternInterpretation() {
+if (AppState.patterns.length === 0) return 'No significant patterns detected.';
+
+const interpretations = [];
+
+AppState.patterns.forEach(pattern => {
+if (pattern.name.includes('Inflammatory')) {
+interpretations.push('Inflammatory clustering suggests targeted biologic therapy may be beneficial.');
+}
+if (pattern.name.includes('Physiological')) {
+interpretations.push('Physiological dysfunction indicates need for comprehensive pulmonary rehabilitation.');
+}
+if (pattern.name.includes('Comorbidity')) {
+interpretations.push('Comorbidity network highlights importance of integrated care approach.');
+}
+});
+
+return interpretations.join(' ') || 'Pattern analysis completed. Consider expanding the network for deeper insights.';
+}
+
+function suggestConnections() {
+if (AppState.currentTraits.length < 2) {
+showToast('Not Enough Traits', 'Add at least 2 traits for connection suggestions', 'warning');
+return;
+}
+
+// Simple suggestion algorithm
+const suggestions = [];
+const existingConnections = new Set();
+
+AppState.currentConnections.forEach(conn => {
+existingConnections.add(`${conn.source_trait_id}-${conn.target_trait_id}`);
+existingConnections.add(`${conn.target_trait_id}-${conn.source_trait_id}`);
+});
+
+// Find unconnected trait pairs
+for (let i = 0; i < AppState.currentTraits.length; i++) {
+for (let j = i + 1; j < AppState.currentTraits.length; j++) {
+const traitA = AppState.currentTraits[i];
+const traitB = AppState.currentTraits[j];
+
+const connectionKey = `${traitA.id}-${traitB.id}`;
+if (!existingConnections.has(connectionKey)) {
+// Suggest connection if traits share category
+if (traitA.category === traitB.category) {
+suggestions.push({
+source: traitA,
+target: traitB,
+reason: `Both are ${traitA.category.toLowerCase()} traits`,
+strength: 4
+});
+}
+}
+}
+}
+
+if (suggestions.length === 0) {
+showToast('No Suggestions', 'All possible connections already established', 'info');
+return;
+}
+
+// Show suggestions
+let message = `Found ${suggestions.length} potential connections:\n\n`;
+suggestions.slice(0, 3).forEach(suggestion => {
+message += `• ${suggestion.source.trait_name} ↔ ${suggestion.target.trait_name}\n`;
+});
+
+if (suggestions.length > 3) {
+message += `\n...and ${suggestions.length - 3} more`;
+}
+
+showToast('Connection Suggestions', message, 'info');
+}
+
+// ====== UTILITY FUNCTIONS ======
+function setupAllEventListeners() {
+// Save network button
+$('#btnSaveNetwork').click(() => {
+if (!AppState.currentDisease) {
+showToast('Error', 'Please select a disease first', 'error');
+return;
+}
+$('#saveNetworkModal').addClass('active');
+});
+
+// Layout buttons
+$('#btnForceLayout').click(applyForceLayout);
+$('#btnCircleLayout').click(applyCircleLayout);
+$('#btnAutoLayout').click(applyAutoLayout);
+
+// Add connection button
+$('#btnAddConnection').click(() => {
+if (AppState.currentTraits.length < 2) {
+showToast('Error', 'Add at least 2 traits to create connections', 'error');
+return;
+}
+$('#connectionCreator').show();
+});
+
+// Add trait button
+$('#btnAddTrait').click(() => {
+$('#addTraitModal').addClass('active');
+});
+
+// Clear canvas button
+$('#btnClearCanvas').click(() => {
+if (confirm('Clear all traits and connections from canvas?')) {
+AppState.currentTraits = [];
+AppState.currentConnections = [];
+AppState.nodePositions.clear();
+renderCompleteNetwork();
+showToast('Canvas Cleared', 'All traits removed', 'warning');
+}
+});
+
+// Save connection button
+$('#btnSaveConnection').click(saveNewConnection);
+
+// Connection strength slider
+$('#connectionStrength').on('input', function() {
+$('#strengthValue').text(this.value);
+});
+
+// New trait severity slider
+$('#newTraitSeverity').on('input', function() {
+$('#severityValueDisplay').text(this.value + '%');
+});
+
+// Patient selection
+$('#patientSelect').change(function() {
+const value = $(this).val();
+if (value === 'new') {
+createNewPatient();
+} else if (value) {
+showPatientProfile(parseInt(value));
+} else {
+$('#patientProfile').hide();
+}
+});
+
+// Save patient button
+$('#btnSavePatient').click(() => {
+showToast('Patient Saved', 'Patient profile updated successfully', 'success');
+});
+
+// Close insights button
+$('#btnCloseInsights').click(() => {
+$('#insightsPanel').hide();
+AppState.uiState.insightsVisible = false;
+});
+
+// Refresh patterns button
+$('#btnRefreshPatterns').click(() => {
+detectPatterns();
+showToast('Patterns Refreshed', 'Updated pattern detection analysis', 'info');
+});
+
+// Suggest connections button
+$('#btnSuggestConnections').click(suggestConnections);
+
+// Generate report button
+$('#btnGenerateReport').click(generateComprehensiveReport);
+
+// Click outside to hide connection creator
+$('#networkCanvas').click(function(e) {
+if (e.target.id === 'networkCanvas') {
+$('#connectionCreator').hide();
+$('.trait-node').removeClass('selected');
+AppState.selectedNode = null;
+}
+});
+// Add this AFTER other button handlers:
+$('#btnLaunchAvatar').click(function() {
+if (!AppState.currentPatient) {
+alert('Please select or create a patient first');
+return;
+}
+if (!AppState.currentDisease) {
+alert('Please select a disease first');
+return;
+}
+
+// PASS REAL DATA
+const encodedData = encodeURIComponent(JSON.stringify({
+patient: AppState.currentPatient,
+traits: AppState.currentTraits,
+connections: AppState.currentConnections,
+disease: AppState.currentDisease,
+timestamp: new Date().toISOString()
+}));
+
+window.open(`avatar.html?data=${encodedData}`, '_blank');
+});
+// Keyboard shortcuts
+$(document).keydown(function(e) {
+// Ctrl+Z for undo
+if (e.ctrlKey && e.key === 'z') {
+e.preventDefault();
+undo();
+}
+// Ctrl+Y for redo
+if (e.ctrlKey && e.key === 'y') {
+e.preventDefault();
+redo();
+}
+// Escape to close modals
+if (e.key === 'Escape') {
+$('.modal.active').removeClass('active');
+$('#connectionCreator').hide();
+}
+// Delete to remove selected node
+if (e.key === 'Delete' && AppState.selectedNode) {
+deleteSelectedNode();
+}
+});
+}
+
+function deleteSelectedNode() {
+if (!AppState.selectedNode) return;
+
+if (confirm(`Delete "${AppState.selectedNode.trait_name}" and all its connections?`)) {
+const traitId = AppState.selectedNode.id;
+
+// Remove from current traits
+AppState.currentTraits = AppState.currentTraits.filter(t => t.id !== traitId);
+
+// Remove from positions
+AppState.nodePositions.delete(traitId);
+
+// Remove connections involving this trait
+AppState.currentConnections = AppState.currentConnections.filter(conn => 
+conn.source_trait_id !== traitId && conn.target_trait_id !== traitId
+);
+
+// Re-render
+renderCompleteNetwork();
+
+showToast('Trait Deleted', `${AppState.selectedNode.trait_name} removed from network`, 'warning');
+AppState.selectedNode = null;
+}
+}
+
+function closeModal(modalId) {
+$('#' + modalId).removeClass('active');
+}
+
+function showTraitDetails(traitId) {
+const trait = AppState.currentTraits.find(t => t.id === traitId);
+if (!trait) return;
+
+showToast('Trait Details', 
+`<strong>${trait.trait_name}</strong><br>
+<small>Category: ${trait.category}</small><br>
+<small>Severity: ${trait.severity || 50}%</small><br>
+<small>${trait.description || 'No description'}</small>`, 
+'info');
+}
+
+async function showTreatmentsForTrait(traitId) {
+try {
+const relevantTreatments = AppState.treatments.filter(t => t.trait_id === traitId);
+const trait = AppState.currentTraits.find(t => t.id === traitId);
+
+const modalContent = $('#treatmentModalContent');
+
+let html = `<h3 style="margin-bottom: 20px; color: var(--text-primary);">Treatment Options for ${trait?.trait_name || 'Trait'}</h3>`;
+
+if (relevantTreatments.length === 0) {
+html += `
+<div style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+<i class="fas fa-pills" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+<p>No specific treatments found for this trait.</p>
+</div>
+`;
+} else {
+html += relevantTreatments.map(treatment => `
+<div class="treatment-card" style="margin-bottom: 16px;">
+<div class="treatment-header">
+<div class="treatment-name">${treatment.treatment_name}</div>
+<span class="evidence-badge evidence-${treatment.evidence_level.toLowerCase()}">
+Level ${treatment.evidence_level}
+</span>
+</div>
+<div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
+<strong>Type:</strong> ${treatment.treatment_type}
+</div>
+<div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">
+<strong>Mechanism:</strong> ${treatment.mechanism || 'Not specified'}
+</div>
+<div style="font-size: 11px; color: var(--text-muted);">
+<i class="fas fa-prescription-bottle"></i> ${treatment.dosage || 'Standard protocol'}
+</div>
+</div>
+`).join('');
+}
+
+modalContent.html(html);
+$('#treatmentModal').addClass('active');
+
+} catch (error) {
+console.error('Error loading treatments:', error);
+showToast('Error', 'Failed to load treatments', 'error');
+}
+}
+
+function editTrait(trait) {
+// Open edit modal with trait details
+showToast('Edit Feature', `Editing "${trait.trait_name}" - In production, this would open an edit form.`, 'info');
+}
+
+function createNewPatient() {
+const name = prompt('Enter patient name:');
+if (!name) return;
+
+const age = parseInt(prompt('Enter patient age:'));
+const disease = AppState.currentDisease?.disease_name || 'Asthma';
+
+const newPatient = {
+id: AppState.patients.length + 1,
+name: name,
+age: age || 0,
+disease: disease,
+disease_id: AppState.currentDisease?.id || 1,
+created: new Date()
+};
+
+AppState.patients.push(newPatient);
+loadPatientSelect();
+
+// Select the new patient
+$('#patientSelect').val(newPatient.id);
+showPatientProfile(newPatient.id);
+
+showToast('Patient Created', `${name} added to patient list`, 'success');
+}
+
+function updateTraitValue(slider, traitId) {
+const valueSpan = $(slider).next('.slider-value');
+valueSpan.text(slider.value);
+
+// Update patient data
+if (AppState.currentPatient) {
+console.log(`Updated trait ${traitId} to value ${slider.value} for patient ${AppState.currentPatient.id}`);
+}
+}
+
+// ADD THIS FUNCTION TO LAUNCH AVATAR FROM PATIENT PROFILE
+function launchAvatarForPatient(patientId) {
+const patient = AppState.patients.find(p => p.id == patientId);
+const diseaseId = patient?.disease_id || AppState.currentDisease?.id;
+
+if (!diseaseId) {
+alert('Please select a disease first');
+return;
+}
+
+window.open(`avatar.html?patient=${patientId}&disease=${diseaseId}`, '_blank');
+}
+
+// Expose functions to global scope for HTML event handlers
+window.closeModal = closeModal;
+window.saveCurrentNetwork = saveCurrentNetwork;
+window.saveNewTrait = saveNewTrait;
+window.saveNewConnection = saveNewConnection;
+window.updateTraitValue = updateTraitValue;
+window.showTraitDetails = showTraitDetails;
+window.showTreatmentsForTrait = showTreatmentsForTrait;
+window.applyForceLayout = applyForceLayout;
+window.applyCircleLayout = applyCircleLayout;
+window.launchAvatarForPatient = launchAvatarForPatient;
+
+function generateComprehensiveReport() {
+if (!AppState.currentDisease) {
+showToast('Error', 'Please select a disease first', 'error');
+return;
+}
+
+showToast('Report Generation', 'Generating comprehensive clinical report...', 'info');
+
+setTimeout(() => {
+// Simulate report generation
+const reportData = {
+disease: AppState.currentDisease.disease_name,
+traits: AppState.currentTraits.length,
+connections: AppState.currentConnections.length,
+date: new Date().toLocaleDateString(),
+patterns: AppState.patterns.length
+};
+
+// Show report summary
+const message = `
+<strong>Clinical Report Generated</strong><br>
+<small>Disease: ${reportData.disease}</small><br>
+<small>Traits: ${reportData.traits}</small><br>
+<small>Connections: ${reportData.connections}</small><br>
+<small>Patterns: ${reportData.patterns}</small><br>
+<small>Date: ${reportData.date}</small>
+`;
+
+showToast('Report Ready', message, 'success');
+
+// In production, generate PDF:
+/*
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+// Add report content...
+doc.save('airwayscope-report.pdf');
+*/
+
+}, 2000);
+}
+
+function showToast(title, message, type = 'info') {
+const container = $('#toastContainer');
+
+const toast = $(`
+<div class="toast toast-${type}">
+<div class="toast-icon">
+<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+</div>
+<div class="toast-content">
+<div class="toast-title">${title}</div>
+<div class="toast-message">${message}</div>
+</div>
+<button class="toast-close">
+<i class="fas fa-times"></i>
+</button>
+</div>
+`);
+
+container.append(toast);
+
+// Add close event
+toast.find('.toast-close').click(function() {
+removeToast(toast);
+});
+
+// Auto-remove after 5 seconds
+setTimeout(() => {
+if (toast.parent().length) {
+removeToast(toast);
+}
+}, 5000);
+}
+
+function removeToast(toast) {
+toast.addClass('toast-exit');
+setTimeout(() => {
+toast.remove();
+}, 300);
+}
+
+// ====== EXPOSE FUNCTIONS ======
+window.closeModal = closeModal;
+window.saveCurrentNetwork = saveCurrentNetwork;
+window.saveNewTrait = saveNewTrait;
+window.saveNewConnection = saveNewConnection;
+window.updateTraitValue = updateTraitValue;
+window.showTraitDetails = showTraitDetails;
+window.showTreatmentsForTrait = showTreatmentsForTrait;
+window.applyForceLayout = applyForceLayout;
+window.applyCircleLayout = applyCircleLayout;
+window.applyAutoLayout = applyAutoLayout;
+window.generateTreatmentPlan = generateTreatmentPlan;
+window.exportTreatmentPlan = exportTreatmentPlan;
+window.highlightPattern = highlightPattern;
+window.showPatternAnalysis = showPatternAnalysis;
+window.undo = undo;
+window.redo = redo;
+window.zoomIn = zoomIn;
+window.zoomOut = zoomOut;
+window.resetZoom = resetZoom;
+
+console.log('🚀 AIRWAYSCOPE PRO System Ready!');
+</script>
 </body>
 </html>
