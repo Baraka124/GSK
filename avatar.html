@@ -1,555 +1,1259 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Airway Avatar | Digital Twin</title>
+    <title>Airway Digital Twin | Predictive Physiology Platform</title>
+    
+    <!-- Core Libraries -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.20.0/dist/tf.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.20.0.min.js"></script>
+    <!-- Physics Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"></script>
+    <!-- Medical Imaging -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
     <style>
+        /* ====== RESET & BASE ====== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
+        :root {
+            --color-dark: #0a0e17;
+            --color-darker: #050811;
+            --color-primary: #3b82f6;
+            --color-primary-dark: #1d4ed8;
+            --color-secondary: #8b5cf6;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef476f;
+            --color-text: #f8fafc;
+            --color-text-muted: #94a3b8;
+            --color-surface: #1e293b;
+            --color-surface-light: #334155;
+            --color-border: #475569;
+        }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--color-dark);
+            color: var(--color-text);
             height: 100vh;
             overflow: hidden;
+            font-size: 14px;
+            line-height: 1.5;
         }
         
-        .avatar-header {
-            padding: 20px;
-            background: rgba(30, 41, 59, 0.9);
-            border-bottom: 1px solid #475569;
+        /* ====== LOADING SCREEN ====== */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--color-darker);
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            backdrop-filter: blur(10px);
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
         }
         
-        .avatar-title {
-            font-size: 24px;
+        .loading-content {
+            text-align: center;
+            max-width: 500px;
+            padding: 2rem;
+        }
+        
+        .loading-lungs {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
+        }
+        
+        .loading-title {
+            font-size: 1.8rem;
             font-weight: 700;
-            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         
-        .patient-info-card {
-            background: rgba(51, 65, 85, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 4px solid #60a5fa;
-            min-width: 300px;
+        .loading-subtitle {
+            color: var(--color-text-muted);
+            margin-bottom: 2rem;
         }
         
-        .patient-name {
-            font-weight: 700;
-            font-size: 16px;
-            color: #e2e8f0;
-            margin-bottom: 4px;
+        .loading-progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .loading-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+        
+        .loading-step {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .loading-step.active {
+            color: var(--color-primary);
+        }
+        
+        .loading-step.completed {
+            color: var(--color-success);
+        }
+        
+        /* ====== MAIN LAYOUT ====== */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Left Panel - Visualization */
+        .visualization-panel {
+            flex: 3;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+        
+        #visualization-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .visualization-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+        }
+        
+        .visualization-header {
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            max-width: 500px;
+            pointer-events: auto;
+        }
+        
+        .visualization-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .visualization-subtitle {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+        
+        .visualization-controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            pointer-events: auto;
+        }
+        
+        .viz-control-btn {
+            background: rgba(10, 14, 23, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--color-text);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .viz-control-btn:hover {
+            border-color: var(--color-primary);
+            transform: translateY(-1px);
+        }
+        
+        .viz-control-btn.active {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+        
+        /* Right Panel - Controls */
+        .control-panel {
+            flex: 1;
+            min-width: 450px;
+            max-width: 500px;
+            background: var(--color-dark);
+            border-left: 1px solid var(--color-border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Patient Header */
+        .patient-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--color-border);
+            background: rgba(30, 41, 59, 0.5);
+        }
+        
+        .patient-profile {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .patient-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .patient-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
         }
         
         .patient-meta {
-            font-size: 12px;
-            color: #cbd5e1;
             display: flex;
-            gap: 10px;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
         }
         
-        .main-container {
-            display: flex;
-            height: calc(100vh - 80px);
-        }
-        
-        .anatomy-view {
-            flex: 3;
-            position: relative;
-            background: #0f172a;
-        }
-        
-        #avatarCanvas {
-            width: 100%;
-            height: 100%;
-        }
-        
-        .control-panel {
-            flex: 1;
-            background: rgba(30, 41, 59, 0.95);
-            border-left: 1px solid #475569;
-            padding: 20px;
-            overflow-y: auto;
-            min-width: 400px;
-        }
-        
-        .panel-section {
-            background: rgba(51, 65, 85, 0.4);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .section-title {
-            color: #e2e8f0;
-            margin-bottom: 15px;
-            font-size: 16px;
-            font-weight: 600;
+        .patient-status {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
         }
         
-        .trait-badge {
-            background: rgba(96, 165, 250, 0.15);
-            border: 1px solid rgba(96, 165, 250, 0.3);
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 8px;
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-success);
+        }
+        
+        .status-indicator.warning {
+            background: var(--color-warning);
+        }
+        
+        .status-indicator.danger {
+            background: var(--color-danger);
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            border-bottom: 1px solid var(--color-border);
+            background: rgba(30, 41, 59, 0.3);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            color: var(--color-text-muted);
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
+            position: relative;
+            font-size: 0.9rem;
+            text-align: center;
         }
         
-        .trait-badge:hover {
-            background: rgba(96, 165, 250, 0.25);
-            transform: translateX(5px);
+        .tab:hover {
+            color: var(--color-text);
+            background: rgba(255, 255, 255, 0.05);
         }
         
-        .trait-header {
+        .tab.active {
+            color: var(--color-primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--color-primary);
+        }
+        
+        /* Tab Content */
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .card:hover {
+            border-color: var(--color-primary);
+        }
+        
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 1rem;
         }
         
-        .trait-name {
+        .card-title {
+            font-size: 1rem;
             font-weight: 600;
-            font-size: 14px;
+            color: var(--color-text);
         }
         
-        .trait-category {
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.1);
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
         }
         
-        .trait-value {
-            font-size: 11px;
-            color: #94a3b8;
+        /* Parameter Controls */
+        .parameter-group {
+            margin-bottom: 1.5rem;
         }
         
-        .trait-slider {
-            margin-top: 8px;
+        .parameter-label {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .parameter-name {
+            color: var(--color-text);
+        }
+        
+        .parameter-value {
+            color: var(--color-primary);
+            font-weight: 600;
         }
         
         .slider {
-            flex: 1;
-            height: 4px;
-            background: #475569;
-            border-radius: 2px;
+            width: 100%;
+            height: 6px;
+            background: var(--color-surface);
+            border-radius: 3px;
             outline: none;
             -webkit-appearance: none;
         }
         
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
-            background: #60a5fa;
+            background: var(--color-primary);
             cursor: pointer;
-            border: 2px solid #0f172a;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         
+        .parameter-unit {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            text-align: right;
+            margin-top: 0.25rem;
+        }
+        
+        /* Buttons */
         .btn {
-            padding: 12px 20px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
             border: none;
             border-radius: 8px;
             color: white;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            width: 100%;
             justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            font-size: 0.95rem;
         }
         
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
         }
         
         .btn-secondary {
-            background: rgba(71, 85, 105, 0.7);
-            border: 1px solid #475569;
+            background: var(--color-surface);
+            color: var(--color-text);
         }
         
-        .stats-grid {
+        .btn-secondary:hover {
+            background: var(--color-surface-light);
+            box-shadow: none;
+        }
+        
+        /* Metrics Grid */
+        .metrics-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
         }
         
-        .stat-card {
+        .metric-card {
             background: rgba(30, 41, 59, 0.8);
-            padding: 10px;
-            border-radius: 6px;
+            padding: 1rem;
+            border-radius: 8px;
             text-align: center;
-            border: 1px solid #475569;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
-        .stat-value {
-            font-size: 20px;
+        .metric-value {
+            font-size: 1.5rem;
             font-weight: 700;
-            color: #60a5fa;
-            margin-bottom: 4px;
+            margin-bottom: 0.25rem;
+            color: var(--color-primary);
         }
         
-        .stat-label {
-            font-size: 10px;
-            color: #94a3b8;
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
-        .connection-badge {
-            display: inline-block;
-            padding: 4px 10px;
-            margin: 2px;
-            border-radius: 12px;
-            font-size: 10px;
-            background: rgba(96, 165, 250, 0.2);
-            color: #cbd5e1;
-        }
-        
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0f172a;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #475569;
-            border-top: 4px solid #60a5fa;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .notification {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 12px 20px;
+        /* Alert System */
+        .alert {
+            background: rgba(239, 71, 111, 0.1);
+            border: 1px solid rgba(239, 71, 111, 0.3);
+            border-left: 4px solid var(--color-danger);
+            padding: 1rem;
             border-radius: 8px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
         }
         
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.9; }
         }
         
-        .notification-success { background: #10b981; color: white; }
-        .notification-info { background: #3b82f6; color: white; }
-        .notification-warning { background: #f59e0b; color: white; }
-        .notification-error { background: #ef476f; color: white; }
-        
-        .tab-bar {
+        .alert-header {
             display: flex;
-            border-bottom: 1px solid #475569;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
         }
         
-        .tab {
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
+        .alert-title {
             font-weight: 600;
-            border-bottom: 2px solid transparent;
+            color: var(--color-danger);
         }
         
-        .tab.active {
-            color: #60a5fa;
-            border-bottom-color: #60a5fa;
+        .alert-content {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
         }
         
-        .tab-content {
-            display: none;
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(10, 14, 23, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
         }
         
-        .tab-content.active {
-            display: block;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
         }
+        
+        .status-dot.connected {
+            background: var(--color-success);
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.disconnected {
+            background: var(--color-danger);
+        }
+        
+        /* Tooltip */
+        .has-tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(10, 14, 23, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            width: 250px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .has-tooltip:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Chart Containers */
+        .chart-container {
+            height: 200px;
+            margin-top: 1rem;
+        }
+        
+        /* Utility Classes */
+        .text-muted { color: var(--color-text-muted); }
+        .text-primary { color: var(--color-primary); }
+        .text-success { color: var(--color-success); }
+        .text-warning { color: var(--color-warning); }
+        .text-danger { color: var(--color-danger); }
+        
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
+        
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-        <div style="font-size: 18px; color: #cbd5e1;">Connecting to Patient Database...</div>
-        <div style="font-size: 14px; color: #94a3b8; margin-top: 10px;" id="loadingStatus">Initializing database connection</div>
-    </div>
-    
-    <!-- Main Interface (initially hidden) -->
-    <div id="mainInterface" style="display: none;">
-        <!-- Header -->
-        <div class="avatar-header">
-            <div>
-                <h1 class="avatar-title">🫁 Airway Avatar</h1>
-                <div style="font-size: 14px; color: #cbd5e1;">
-                    <span id="dbStatus" style="font-size: 12px; background: #059669; padding: 2px 8px; border-radius: 4px;">Connected to Database</span>
-                </div>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-lungs">🫁</div>
+            <h1 class="loading-title">Airway Digital Twin v2.0</h1>
+            <p class="loading-subtitle">Initializing predictive physiology engine...</p>
+            
+            <div class="loading-progress-container">
+                <div class="loading-progress-bar" id="loadingProgress"></div>
             </div>
-            <div class="patient-info-card">
-                <div class="patient-name" id="patientName">Loading patient...</div>
-                <div class="patient-meta">
-                    <span id="patientAge">--</span>
-                    <span id="patientDisease">--</span>
-                    <span id="patientLastUpdate">--</span>
+            
+            <div class="loading-steps">
+                <div class="loading-step" id="step1">
+                    <span>Connecting to database...</span>
+                    <span class="step-status">⏳</span>
                 </div>
-                <div style="font-size: 11px; color: #94a3b8; margin-top: 8px;">
-                    Avatar ID: <span id="patientId">--</span> | 
-                    Synced: <span id="syncStatus">⏳</span>
+                <div class="loading-step" id="step2">
+                    <span>Loading patient data...</span>
+                    <span class="step-status">⏳</span>
+                </div>
+                <div class="loading-step" id="step3">
+                    <span>Initializing physics engine...</span>
+                    <span class="step-status">⏳</span>
+                </div>
+                <div class="loading-step" id="step4">
+                    <span>Loading AI models...</span>
+                    <span class="step-status">⏳</span>
+                </div>
+                <div class="loading-step" id="step5">
+                    <span>Starting simulations...</span>
+                    <span class="step-status">⏳</span>
                 </div>
             </div>
         </div>
-        
-        <!-- Main Content -->
-        <div class="main-container">
-            <!-- 3D Visualization Area -->
-            <div class="anatomy-view">
-                <canvas id="avatarCanvas"></canvas>
-                <div id="visualizationControls" style="position: absolute; bottom: 20px; left: 20px; background: rgba(30, 41, 59, 0.8); padding: 10px; border-radius: 8px;">
-                    <button onclick="toggleView('network')" class="btn-secondary" style="padding: 8px 12px; margin: 2px;">🌐 Network View</button>
-                    <button onclick="toggleView('anatomy')" class="btn-secondary" style="padding: 8px 12px; margin: 2px;">🫁 Anatomy View</button>
-                    <button onclick="toggleView('timeline')" class="btn-secondary" style="padding: 8px 12px; margin: 2px;">📅 Timeline View</button>
+    </div>
+    
+    <!-- Connection Status -->
+    <div class="connection-status" id="connectionStatus">
+        <div class="status-dot disconnected"></div>
+        <span>Connecting to database...</span>
+    </div>
+    
+    <!-- Main Application -->
+    <div class="app-container" id="appContainer">
+        <!-- Left: Visualization Panel -->
+        <div class="visualization-panel">
+            <canvas id="visualization-canvas"></canvas>
+            
+            <div class="visualization-overlay">
+                <div class="visualization-header">
+                    <div class="visualization-title" id="vizTitle">Airway Physiology Simulation</div>
+                    <div class="visualization-subtitle" id="vizSubtitle">Real-time airflow and pressure dynamics</div>
+                    <div class="metrics-grid mt-2">
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricFlow">0.0</div>
+                            <div class="metric-label">Flow Rate (L/s)</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricPressure">0.0</div>
+                            <div class="metric-label">Pressure (cmH₂O)</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <!-- Control Panel -->
-            <div class="control-panel">
-                <!-- Tab Bar -->
-                <div class="tab-bar">
-                    <button class="tab active" onclick="switchTab('traits')">🧬 Traits</button>
-                    <button class="tab" onclick="switchTab('treatments')">💊 Treatments</button>
-                    <button class="tab" onclick="switchTab('simulation')">🎯 Simulation</button>
-                    <button class="tab" onclick="switchTab('analytics')">📊 Analytics</button>
-                </div>
-                
-                <!-- Traits Tab -->
-                <div class="tab-content active" id="traitsTab">
-                    <div class="panel-section">
-                        <div class="section-title">Active Patient Traits</div>
-                        <div id="traitContainer">
-                            <!-- Dynamic trait cards will go here -->
+            <div class="visualization-controls">
+                <button class="viz-control-btn active" onclick="setViewMode('airflow')">Airflow</button>
+                <button class="viz-control-btn" onclick="setViewMode('pressure')">Pressure</button>
+                <button class="viz-control-btn" onclick="setViewMode('inflammation')">Inflammation</button>
+                <button class="viz-control-btn" onclick="setViewMode('anatomy')">Anatomy</button>
+                <button class="viz-control-btn" onclick="toggleSimulation()" id="simToggleBtn">Pause</button>
+            </div>
+        </div>
+        
+        <!-- Right: Control Panel -->
+        <div class="control-panel">
+            <!-- Patient Header -->
+            <div class="patient-header">
+                <div class="patient-profile">
+                    <div class="patient-avatar" id="patientAvatar">JS</div>
+                    <div class="patient-info">
+                        <h3 id="patientName">Loading...</h3>
+                        <div class="patient-meta">
+                            <span id="patientAge">--</span>
+                            <span id="patientCondition">--</span>
+                            <span id="patientId">ID: --</span>
                         </div>
-                    </div>
-                    
-                    <div class="panel-section">
-                        <div class="section-title">Trait Connections</div>
-                        <div id="connectionContainer">
-                            <!-- Dynamic connections will go here -->
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Treatments Tab -->
-                <div class="tab-content" id="treatmentsTab">
-                    <div class="panel-section">
-                        <div class="section-title">Current Treatments</div>
-                        <div id="currentTreatments">
-                            <!-- Current treatments will go here -->
-                        </div>
-                    </div>
-                    
-                    <div class="panel-section">
-                        <div class="section-title">Treatment Recommendations</div>
-                        <div id="treatmentRecommendations">
-                            <!-- Recommendations will go here -->
-                        </div>
-                    </div>
-                    
-                    <button class="btn" onclick="simulateTreatmentEffect()">
-                        <i class="fas fa-vial"></i> Simulate Treatment Response
-                    </button>
-                </div>
-                
-                <!-- Simulation Tab -->
-                <div class="tab-content" id="simulationTab">
-                    <div class="panel-section">
-                        <div class="section-title">Scenario Testing</div>
-                        <button class="btn" onclick="runSimulation('exacerbation')">
-                            ⚠️ Simulate Exacerbation
-                        </button>
-                        <button class="btn" onclick="runSimulation('treatment_optimization')">
-                            💊 Optimize Treatment Regimen
-                        </button>
-                        <button class="btn" onclick="runSimulation('lifestyle_change')">
-                            🏃‍♂️ Simulate Lifestyle Change
-                        </button>
-                        <button class="btn" onclick="runSimulation('environmental_trigger')">
-                            🌫️ Simulate Environmental Trigger
-                        </button>
-                    </div>
-                    
-                    <div class="panel-section">
-                        <div class="section-title">Simulation Results</div>
-                        <div id="simulationResults">
-                            <canvas id="simulationChart" height="150"></canvas>
+                        <div class="patient-status">
+                            <div class="status-indicator" id="patientStatus"></div>
+                            <span id="patientStatusText">Loading patient data</span>
                         </div>
                     </div>
                 </div>
-                
-                <!-- Analytics Tab -->
-                <div class="tab-content" id="analyticsTab">
-                    <div class="panel-section">
-                        <div class="section-title">Patient Statistics</div>
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <div class="stat-value" id="statTraitCount">0</div>
-                                <div class="stat-label">Active Traits</div>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab active" data-tab="physiology">Physiology</button>
+                <button class="tab" data-tab="clinical">Clinical</button>
+                <button class="tab" data-tab="predictive">Predictive</button>
+                <button class="tab" data-tab="treatment">Treatment</button>
+                <button class="tab" data-tab="data">Data</button>
+            </div>
+            
+            <!-- Tab Content Area -->
+            <div class="tab-content">
+                <!-- Physiology Tab -->
+                <div class="tab-pane active" id="physiologyTab">
+                    <!-- Airflow Dynamics -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Airflow Dynamics</div>
+                            <div class="text-muted">Real-time simulation</div>
+                        </div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Bronchial Resistance</span>
+                                <span class="parameter-value" id="resistanceValue">5.2</span>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="statRiskScore">0%</div>
-                                <div class="stat-label">Flare Risk</div>
+                            <input type="range" min="1" max="20" value="5.2" step="0.1" 
+                                   class="slider" id="resistanceSlider" 
+                                   oninput="updatePhysiology('resistance', this.value)">
+                            <div class="parameter-unit">cmH₂O/L/s</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Lung Compliance</span>
+                                <span class="parameter-value" id="complianceValue">0.15</span>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="statTreatmentCount">0</div>
-                                <div class="stat-label">Active Treatments</div>
+                            <input type="range" min="0.05" max="0.5" value="0.15" step="0.01" 
+                                   class="slider" id="complianceSlider"
+                                   oninput="updatePhysiology('compliance', this.value)">
+                            <div class="parameter-unit">L/cmH₂O</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Respiratory Rate</span>
+                                <span class="parameter-value" id="rateValue">15</span>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-value" id="statDaysSinceExac">--</div>
-                                <div class="stat-label">Days Since Exacerbation</div>
-                            </div>
+                            <input type="range" min="6" max="40" value="15" step="1" 
+                                   class="slider" id="rateSlider"
+                                   oninput="updatePhysiology('rate', this.value)">
+                            <div class="parameter-unit">breaths/min</div>
                         </div>
                     </div>
                     
-                    <div class="panel-section">
-                        <div class="section-title">Population Comparison</div>
-                        <div id="populationComparison">
-                            <!-- Population comparison will go here -->
+                    <!-- Inflammation Parameters -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Inflammatory State</div>
+                            <div class="text-muted">Cellular-level simulation</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name has-tooltip">
+                                    Eosinophil Activity
+                                    <div class="tooltip">Level of eosinophilic inflammation driving airway hyperresponsiveness</div>
+                                </span>
+                                <span class="parameter-value" id="eosValue">42</span>
+                            </div>
+                            <input type="range" min="0" max="100" value="42" step="1" 
+                                   class="slider" id="eosSlider"
+                                   oninput="updateInflammation('eosinophils', this.value)">
+                            <div class="parameter-unit">cells/μL equivalent</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Neutrophil Infiltration</span>
+                                <span class="parameter-value" id="neutValue">28</span>
+                            </div>
+                            <input type="range" min="0" max="100" value="28" step="1" 
+                                   class="slider" id="neutSlider"
+                                   oninput="updateInflammation('neutrophils', this.value)">
+                            <div class="parameter-unit">arbitrary units</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Cytokine Level (IL-5)</span>
+                                <span class="parameter-value" id="cytokineValue">18</span>
+                            </div>
+                            <input type="range" min="0" max="50" value="18" step="1" 
+                                   class="slider" id="cytokineSlider"
+                                   oninput="updateInflammation('cytokines', this.value)">
+                            <div class="parameter-unit">pg/mL equivalent</div>
                         </div>
                     </div>
                     
-                    <button class="btn" onclick="generateAvatarReport()">
-                        📄 Generate Avatar Report
-                    </button>
+                    <!-- Simulation Controls -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Simulation Controls</div>
+                        </div>
+                        <button class="btn mb-1" onclick="runExacerbationScenario()">
+                            Simulate Exacerbation
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="runTreatmentScenario()">
+                            Simulate Treatment Effect
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetToBaseline()">
+                            Reset to Baseline
+                        </button>
+                    </div>
                 </div>
                 
-                <!-- Database Actions -->
-                <div class="panel-section">
-                    <div class="section-title">Database Actions</div>
-                    <button class="btn btn-secondary" onclick="saveAvatarState()">
-                        💾 Save Avatar State to Database
-                    </button>
-                    <button class="btn btn-secondary" onclick="loadFromDatabase()">
-                        🔄 Reload from Database
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportAvatarData()">
-                        📤 Export Avatar Data
-                    </button>
+                <!-- Clinical Tab -->
+                <div class="tab-pane" id="clinicalTab">
+                    <!-- Current Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Current Clinical Status</div>
+                            <div class="text-muted">Updated 2 minutes ago</div>
+                        </div>
+                        
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalFEV1">--</div>
+                                <div class="metric-label">FEV₁ (%)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalPEF">--</div>
+                                <div class="metric-label">PEF (L/min)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalFVC">--</div>
+                                <div class="metric-label">FVC (%)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalACQ">--</div>
+                                <div class="metric-label">ACQ Score</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alerts -->
+                    <div class="alert" id="alertContainer" style="display: none;">
+                        <div class="alert-header">
+                            <div class="alert-title" id="alertTitle">High Risk Detected</div>
+                            <div class="text-muted">Just now</div>
+                        </div>
+                        <div class="alert-content" id="alertContent">
+                            Elevated exacerbation risk predicted within 48 hours
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Events -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Recent Clinical Events</div>
+                        </div>
+                        <div id="eventsList">
+                            <div class="text-muted">Loading events...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Clinical Actions</div>
+                        </div>
+                        <button class="btn mb-1" onclick="generateReport()">
+                            Generate Clinical Report
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="compareToPopulation()">
+                            Compare to Population
+                        </button>
+                        <button class="btn btn-secondary" onclick="scheduleFollowup()">
+                            Schedule Follow-up
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Predictive Tab -->
+                <div class="tab-pane" id="predictiveTab">
+                    <!-- Risk Predictions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Exacerbation Risk Prediction</div>
+                            <div class="text-muted">AI-powered forecasting</div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                        
+                        <div class="metrics-grid mt-2">
+                            <div class="metric-card">
+                                <div class="metric-value text-warning" id="risk24h">--</div>
+                                <div class="metric-label">24h Risk</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value text-warning" id="risk7d">--</div>
+                                <div class="metric-label">7-day Risk</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value text-primary" id="risk30d">--</div>
+                                <div class="metric-label">30-day Risk</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value text-muted" id="risk90d">--</div>
+                                <div class="metric-label">90-day Risk</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Treatment Response Prediction -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Treatment Response Prediction</div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="treatmentChart"></canvas>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <div class="parameter-label mb-1">
+                                <span class="parameter-name">Predicted FEV₁ Improvement</span>
+                                <span class="parameter-value text-success" id="predictedImprovement">--%</span>
+                            </div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">Time to Benefit</span>
+                                <span class="parameter-value" id="timeToBenefit">-- weeks</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Simulation Scenarios -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Scenario Testing</div>
+                        </div>
+                        <button class="btn mb-1" onclick="runScenario('exacerbation')">
+                            Test Exacerbation Scenario
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="runScenario('treatment_change')">
+                            Test Treatment Change
+                        </button>
+                        <button class="btn btn-secondary" onclick="runScenario('environmental')">
+                            Test Environmental Trigger
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Treatment Tab -->
+                <div class="tab-pane" id="treatmentTab">
+                    <!-- Current Treatments -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Current Treatment Regimen</div>
+                            <div class="text-muted">Active prescriptions</div>
+                        </div>
+                        <div id="treatmentsList">
+                            <div class="text-muted">Loading treatments...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Treatment Optimization -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Treatment Optimization</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">ICS Dose</span>
+                                <span class="parameter-value" id="icsDose">250</span>
+                            </div>
+                            <input type="range" min="100" max="1000" value="250" step="50" 
+                                   class="slider" id="icsSlider"
+                                   oninput="optimizeTreatment('ics', this.value)">
+                            <div class="parameter-unit">μg/day</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">LABA Dose</span>
+                                <span class="parameter-value" id="labaDose">50</span>
+                            </div>
+                            <input type="range" min="0" max="100" value="50" step="5" 
+                                   class="slider" id="labaSlider"
+                                   oninput="optimizeTreatment('laba', this.value)">
+                            <div class="parameter-unit">μg/day</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Biologic Frequency</span>
+                                <span class="parameter-value" id="biologicFreq">4</span>
+                            </div>
+                            <input type="range" min="2" max="12" value="4" step="1" 
+                                   class="slider" id="biologicSlider"
+                                   oninput="optimizeTreatment('biologic', this.value)">
+                            <div class="parameter-unit">weeks</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Simulate New Treatment -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Simulate New Treatment</div>
+                        </div>
+                        <button class="btn mb-1" onclick="simulateTreatment('add_ics')">
+                            Add ICS/LABA
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="simulateTreatment('add_biologic')">
+                            Add Biologic
+                        </button>
+                        <button class="btn btn-secondary" onclick="simulateTreatment('adjust_dose')">
+                            Adjust Current Dose
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Data Tab -->
+                <div class="tab-pane" id="dataTab">
+                    <!-- Data Sources -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Data Sources & Integration</div>
+                            <div class="text-muted">Real-time data streams</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Database Connection</span>
+                                <span class="parameter-value text-success" id="dbStatus">Connected</span>
+                            </div>
+                            <div class="parameter-unit">Supabase: Real-time sync</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Wearable Devices</span>
+                                <span class="parameter-value" id="wearableStatus">2 connected</span>
+                            </div>
+                            <div class="parameter-unit">Smart inhaler, Spirometer</div>
+                        </div>
+                        
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">EMR Integration</span>
+                                <span class="parameter-value text-warning" id="emrStatus">Partial</span>
+                            </div>
+                            <div class="parameter-unit">Lab results synchronized</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Export Controls -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Data Export</div>
+                        </div>
+                        <button class="btn mb-1" onclick="exportClinicalData()">
+                            Export Clinical Report
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="exportSimulationData()">
+                            Export Simulation Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportForResearch()">
+                            Export for Research
+                        </button>
+                    </div>
+                    
+                    <!-- Data Analytics -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Data Analytics</div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dataChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Core JavaScript -->
     <script>
         // ============================================================================
-        // DATABASE-FIRST AIRWAY AVATAR SYSTEM
+        // AIRWAY DIGITAL TWIN v2.0 - Predictive Physiology Engine
         // ============================================================================
         
-        // ====== CONFIGURATION (SAME AS MAIN PLATFORM) ======
-        const SUPABASE_URL = 'https://xwcpdmmnetbkybvwzqhi.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_0l8CRvQcizRJF13mdaFF9Q_cZpeuWL_';
+        // ====== CONFIGURATION ======
+        const CONFIG = {
+            SUPABASE_URL: 'https://xwcpdmmnetbkybvwzqhi.supabase.co',
+            SUPABASE_KEY: 'sb_publishable_0l8CRvQcizRJF13mdaFF9Q_cZpeuWL_',
+            
+            // Physics parameters
+            PHYSICS: {
+                TIME_STEP: 1/60,
+                GRAVITY: -9.81,
+                AIR_DENSITY: 1.225,
+                VISCOSITY: 1.81e-5
+            },
+            
+            // Physiology constants
+            PHYSIOLOGY: {
+                NORMAL_RESISTANCE: 2.0,  // cmH₂O/L/s
+                NORMAL_COMPLIANCE: 0.15, // L/cmH₂O
+                NORMAL_FEV1: 85,         // % predicted
+                NORMAL_RATE: 15          // breaths/min
+            }
+        };
         
         // ====== GLOBAL STATE ======
-        const AvatarState = {
+        const STATE = {
+            // Core
             supabase: null,
+            isInitialized: false,
+            isLoading: true,
+            
+            // Patient
             patient: null,
-            disease: null,
-            traits: [],
-            connections: [],
-            treatments: [],
-            traitValues: new Map(), // trait_id -> current value
-            visualizations: {},
-            subscriptions: {},
-            lastSync: null,
-            viewMode: 'network'
+            patientId: null,
+            
+            // Physiology State
+            physiology: {
+                resistance: 5.2,
+                compliance: 0.15,
+                respiratoryRate: 15,
+                tidalVolume: 0.5,
+                inspiratoryTime: 1.5,
+                expiratoryTime: 3.5
+            },
+            
+            // Inflammation State
+            inflammation: {
+                eosinophils: 42,
+                neutrophils: 28,
+                cytokines: 18,
+                mastCells: 15,
+                remodeling: 22
+            },
+            
+            // Visualization
+            threejs: {
+                scene: null,
+                camera: null,
+                renderer: null,
+                controls: null,
+                particles: null,
+                isAnimating: true
+            },
+            
+            // Physics Simulation
+            physics: {
+                world: null,
+                bronchialTree: [],
+                airflow: null,
+                time: 0
+            },
+            
+            // Predictions
+            predictions: {
+                exacerbationRisk24h: 15,
+                exacerbationRisk7d: 32,
+                exacerbationRisk30d: 45,
+                treatmentResponse: 25,
+                timeToBenefit: 4
+            },
+            
+            // Data
+            clinicalData: {
+                fev1: 65,
+                pef: 320,
+                fvc: 78,
+                acq: 2.8,
+                lastUpdated: null
+            }
         };
         
         // ====== INITIALIZATION ======
         $(document).ready(async function() {
-            console.log('🚀 Initializing Database-First Airway Avatar...');
+            console.log('🚀 Initializing Airway Digital Twin v2.0...');
             
             try {
-                // 1. Initialize Supabase (SAME AS MAIN PLATFORM)
-                AvatarState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                console.log('✅ Supabase client initialized');
+                // Step 1: Initialize Database
+                await initializeDatabase();
+                updateLoading('step1', '✅', 'Database connected');
                 
-                // 2. Get patient ID from URL or default to demo
-                const urlParams = new URLSearchParams(window.location.search);
-                const patientId = urlParams.get('patient_id') || 'demo';
+                // Step 2: Load Patient Data
+                await loadPatientData();
+                updateLoading('step2', '✅', 'Patient data loaded');
                 
-                // 3. Load complete patient data from database
-                await loadCompletePatientData(patientId);
+                // Step 3: Initialize Physics Engine
+                initializePhysics();
+                updateLoading('step3', '✅', 'Physics engine ready');
                 
-                // 4. Setup real-time subscriptions
-                setupRealtimeSubscriptions(patientId);
+                // Step 4: Initialize 3D Visualization
+                initializeVisualization();
+                updateLoading('step4', '✅', 'Visualization loaded');
                 
-                // 5. Initialize 3D visualization
-                init3DVisualization();
+                // Step 5: Initialize AI Models
+                initializeAIModels();
+                updateLoading('step5', '✅', 'AI models loaded');
                 
-                // 6. Update UI
-                updatePatientUI();
-                renderTraits();
-                renderTreatments();
-                updateStatistics();
+                // Step 6: Start Systems
+                await startSystems();
+                updateLoading('complete', '✅', 'All systems ready');
                 
-                // 7. Hide loading, show interface
-                $('#loadingOverlay').hide();
-                $('#mainInterface').show();
-                
-                console.log('✅ Avatar fully initialized with database data');
+                // Final: Show Application
+                setTimeout(() => {
+                    $('#loadingScreen').fadeOut(500);
+                    $('#appContainer').css('opacity', 1);
+                    STATE.isLoading = false;
+                    startAnimationLoop();
+                    
+                    console.log('🎉 Digital Twin fully initialized');
+                    showNotification('Digital Twin ready', 'success');
+                }, 500);
                 
             } catch (error) {
-                console.error('❌ Initialization error:', error);
-                showNotification('Failed to initialize avatar: ' + error.message, 'error');
-                $('#loadingStatus').text('Error: ' + error.message);
+                console.error('❌ Initialization failed:', error);
+                updateLoading('error', '❌', `Error: ${error.message}`);
+                showNotification(`Initialization failed: ${error.message}`, 'error');
             }
         });
         
-        // ====== DATABASE OPERATIONS ======
-        async function loadCompletePatientData(patientId) {
-            console.log(`📥 Loading patient ${patientId} from database...`);
+        // ====== DATABASE INTEGRATION ======
+        async function initializeDatabase() {
+            try {
+                STATE.supabase = window.supabase.createClient(
+                    CONFIG.SUPABASE_URL,
+                    CONFIG.SUPABASE_KEY
+                );
+                
+                // Test connection
+                const { data, error } = await STATE.supabase
+                    .from('patients')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) throw error;
+                
+                updateConnectionStatus(true);
+                return true;
+                
+            } catch (error) {
+                console.error('Database connection failed:', error);
+                updateConnectionStatus(false);
+                throw new Error(`Database: ${error.message}`);
+            }
+        }
+        
+        async function loadPatientData() {
+            // Get patient ID from URL or use demo
+            const urlParams = new URLSearchParams(window.location.search);
+            const patientId = urlParams.get('patient_id') || 'demo';
+            STATE.patientId = patientId;
             
             if (patientId === 'demo') {
                 loadDemoPatient();
@@ -557,639 +1261,813 @@
             }
             
             try {
-                // Load patient basic info
-                const { data: patient, error: patientError } = await AvatarState.supabase
+                // Load patient from database
+                const { data: patient, error } = await STATE.supabase
                     .from('patients')
-                    .select('*')
+                    .select(`
+                        *,
+                        disease_traits(
+                            treatable_traits(*),
+                            patient_trait_values(*)
+                        ),
+                        patient_treatments(
+                            treatments(*)
+                        ),
+                        clinical_events(*)
+                    `)
                     .eq('id', patientId)
                     .single();
                 
-                if (patientError) throw new Error(`Patient load failed: ${patientError.message}`);
-                AvatarState.patient = patient;
-                
-                // Load patient's disease
-                if (patient.disease_id) {
-                    const { data: disease } = await AvatarState.supabase
-                        .from('diseases')
-                        .select('*')
-                        .eq('id', patient.disease_id)
-                        .single();
-                    AvatarState.disease = disease;
-                }
-                
-                // Load patient's traits with current values
-                const { data: patientTraits, error: traitsError } = await AvatarState.supabase
-                    .from('patient_trait_values')
-                    .select(`
-                        id,
-                        trait_id,
-                        current_value,
-                        measured_at,
-                        treatable_traits(
-                            id,
-                            trait_name,
-                            category,
-                            description,
-                            measurement_method
-                        )
-                    `)
-                    .eq('patient_id', patientId)
-                    .eq('is_active', true)
-                    .order('measured_at', { ascending: false });
-                
-                if (!traitsError) {
-                    AvatarState.traits = patientTraits.map(pt => ({
-                        ...pt.treatable_traits,
-                        current_value: pt.current_value,
-                        last_measured: pt.measured_at
-                    }));
-                    
-                    // Store values in map for quick access
-                    patientTraits.forEach(pt => {
-                        AvatarState.traitValues.set(pt.trait_id, pt.current_value);
-                    });
-                }
-                
-                // Load trait connections for this disease
-                if (AvatarState.disease?.id) {
-                    const traitIds = AvatarState.traits.map(t => t.id);
-                    if (traitIds.length > 0) {
-                        const { data: connections } = await AvatarState.supabase
-                            .from('trait_networks')
-                            .select('*')
-                            .in('source_trait_id', traitIds)
-                            .in('target_trait_id', traitIds);
-                        
-                        AvatarState.connections = connections || [];
-                    }
-                }
-                
-                // Load current treatments
-                const { data: treatments } = await AvatarState.supabase
-                    .from('patient_treatments')
-                    .select(`
-                        *,
-                        treatments(
-                            treatment_name,
-                            treatment_type,
-                            mechanism,
-                            evidence_level
-                        )
-                    `)
-                    .eq('patient_id', patientId)
-                    .eq('is_active', true);
-                
-                if (treatments) {
-                    AvatarState.treatments = treatments.map(pt => ({
-                        ...pt.treatments,
-                        patient_treatment_id: pt.id,
-                        dosage: pt.dosage,
-                        frequency: pt.frequency,
-                        start_date: pt.start_date
-                    }));
-                }
-                
-                // Load avatar history if exists
-                await loadAvatarHistory(patientId);
-                
-                AvatarState.lastSync = new Date();
-                updateSyncStatus();
-                
-            } catch (error) {
-                console.error('Error loading patient data:', error);
-                throw error;
-            }
-        }
-        
-        async function loadAvatarHistory(patientId) {
-            try {
-                const { data: avatarHistory } = await AvatarState.supabase
-                    .from('avatar_states')
-                    .select('*')
-                    .eq('patient_id', patientId)
-                    .order('created_at', { ascending: false })
-                    .limit(1);
-                
-                if (avatarHistory && avatarHistory.length > 0) {
-                    console.log('📖 Loaded previous avatar state');
-                    // Could restore visualization state from saved data
-                }
-            } catch (error) {
-                console.warn('No previous avatar state found');
-            }
-        }
-        
-        async function saveAvatarState() {
-            try {
-                if (!AvatarState.patient) throw new Error('No patient loaded');
-                
-                const stateData = {
-                    patient_id: AvatarState.patient.id,
-                    trait_values: Object.fromEntries(AvatarState.traitValues),
-                    visualization_state: AvatarState.viewMode,
-                    metadata: {
-                        trait_count: AvatarState.traits.length,
-                        connection_count: AvatarState.connections.length,
-                        risk_score: calculateFlareRisk(),
-                        created_at: new Date().toISOString()
-                    }
-                };
-                
-                const { error } = await AvatarState.supabase
-                    .from('avatar_states')
-                    .insert([{
-                        patient_id: AvatarState.patient.id,
-                        state_data: stateData,
-                        created_by: 'avatar_system'
-                    }]);
-                
                 if (error) throw error;
                 
-                showNotification('Avatar state saved to database', 'success');
-                AvatarState.lastSync = new Date();
-                updateSyncStatus();
+                STATE.patient = patient;
+                updatePatientUI();
+                
+                // Setup real-time subscriptions
+                setupRealtimeSubscriptions();
                 
             } catch (error) {
-                console.error('Error saving avatar state:', error);
-                showNotification('Failed to save: ' + error.message, 'error');
+                console.warn('Using demo patient due to error:', error);
+                loadDemoPatient();
             }
         }
         
-        async function updateTraitValue(traitId, newValue) {
-            try {
-                if (!AvatarState.patient) return;
-                
-                // Update local state
-                AvatarState.traitValues.set(traitId, newValue);
-                
-                // Update in database
-                const { error } = await AvatarState.supabase
-                    .from('patient_trait_values')
-                    .update({
-                        current_value: newValue,
-                        measured_at: new Date().toISOString(),
-                        updated_by: 'avatar_system'
-                    })
-                    .eq('patient_id', AvatarState.patient.id)
-                    .eq('trait_id', traitId);
-                
-                if (error) throw error;
-                
-                // Update visualization
-                updateTraitVisualization(traitId, newValue);
-                updateStatistics();
-                
-                showNotification(`Trait value updated to ${newValue}`, 'info');
-                
-            } catch (error) {
-                console.error('Error updating trait value:', error);
-                showNotification('Failed to update trait', 'error');
-            }
-        }
-        
-        // ====== REAL-TIME SUBSCRIPTIONS ======
-        function setupRealtimeSubscriptions(patientId) {
-            if (patientId === 'demo') return;
+        function loadDemoPatient() {
+            STATE.patient = {
+                id: 'demo',
+                name: 'John Smith',
+                age: 58,
+                condition: 'Severe Asthma',
+                disease_id: 1,
+                created_at: new Date().toISOString()
+            };
             
-            console.log('🔗 Setting up real-time subscriptions...');
+            updatePatientUI();
+        }
+        
+        function setupRealtimeSubscriptions() {
+            if (!STATE.patient || STATE.patient.id === 'demo') return;
             
             // Subscribe to trait value changes
-            AvatarState.subscriptions.traitValues = AvatarState.supabase
-                .channel('trait-value-changes')
+            STATE.supabase
+                .channel('trait-changes')
                 .on(
                     'postgres_changes',
                     {
-                        event: 'UPDATE',
+                        event: '*',
                         schema: 'public',
                         table: 'patient_trait_values',
-                        filter: `patient_id=eq.${patientId}`
+                        filter: `patient_id=eq.${STATE.patient.id}`
                     },
                     (payload) => {
-                        console.log('🔄 Trait value updated:', payload.new);
-                        const traitId = payload.new.trait_id;
-                        const newValue = payload.new.current_value;
-                        
-                        AvatarState.traitValues.set(traitId, newValue);
-                        updateTraitInUI(traitId, newValue);
-                        updateTraitVisualization(traitId, newValue);
-                        updateSyncStatus();
+                        console.log('Trait update:', payload);
+                        updateFromDatabase(payload.new);
                     }
                 )
                 .subscribe();
-            
-            // Subscribe to new treatments
-            AvatarState.subscriptions.treatments = AvatarState.supabase
-                .channel('treatment-changes')
-                .on(
-                    'postgres_changes',
-                    {
-                        event: 'INSERT',
-                        schema: 'public',
-                        table: 'patient_treatments',
-                        filter: `patient_id=eq.${patientId}`
-                    },
-                    async (payload) => {
-                        console.log('🔄 New treatment added:', payload.new);
-                        await loadCompletePatientData(patientId);
-                        renderTreatments();
-                        showNotification('New treatment detected', 'info');
-                    }
-                )
-                .subscribe();
-            
-            console.log('✅ Real-time subscriptions active');
         }
         
-        // ====== VISUALIZATION ======
-        function init3DVisualization() {
-            const canvas = document.getElementById('avatarCanvas');
+        // ====== PHYSICS ENGINE ======
+        function initializePhysics() {
+            // Create physics world
+            STATE.physics.world = new CANNON.World();
+            STATE.physics.world.gravity.set(0, CONFIG.PHYSICS.GRAVITY, 0);
+            STATE.physics.world.broadphase = new CANNON.NaiveBroadphase();
+            STATE.physics.world.solver.iterations = 10;
+            
+            // Create bronchial tree geometry
+            createBronchialTree();
+            
+            // Initialize airflow simulation
+            initializeAirflow();
+        }
+        
+        function createBronchialTree() {
+            // Simplified bronchial tree model
+            const levels = 6;
+            const branchingFactor = 2;
+            
+            for (let level = 0; level < levels; level++) {
+                const radius = 0.1 * Math.pow(0.7, level);
+                const length = 0.3 * Math.pow(0.8, level);
+                
+                for (let branch = 0; branch < Math.pow(branchingFactor, level); branch++) {
+                    const bronchus = {
+                        radius: radius,
+                        length: length,
+                        resistance: calculateResistance(radius, length),
+                        compliance: 0.01 * Math.pow(0.9, level),
+                        position: calculatePosition(level, branch),
+                        particles: []
+                    };
+                    
+                    STATE.physics.bronchialTree.push(bronchus);
+                }
+            }
+        }
+        
+        function initializeAirflow() {
+            STATE.physics.airflow = {
+                volume: 0,
+                flowRate: 0,
+                pressure: 0,
+                velocity: 0,
+                isInhaling: true,
+                cycleTime: 0
+            };
+        }
+        
+        function calculateResistance(radius, length) {
+            // Poiseuille's Law: R = 8ηL/πr⁴
+            const viscosity = CONFIG.PHYSICS.VISCOSITY;
+            return (8 * viscosity * length) / (Math.PI * Math.pow(radius, 4));
+        }
+        
+        function calculatePosition(level, branch) {
+            const angle = (branch / Math.pow(2, level)) * Math.PI * 2;
+            const distance = 0.5 * level;
+            return {
+                x: Math.cos(angle) * distance,
+                y: -level * 0.3,
+                z: Math.sin(angle) * distance
+            };
+        }
+        
+        function updatePhysics(deltaTime) {
+            if (!STATE.physics.world || !STATE.threejs.isAnimating) return;
+            
+            STATE.physics.time += deltaTime;
+            
+            // Update respiratory cycle
+            updateRespiratoryCycle(deltaTime);
+            
+            // Update airflow through bronchial tree
+            updateAirflow(deltaTime);
+            
+            // Update particle positions
+            updateParticles(deltaTime);
+            
+            // Step physics world
+            STATE.physics.world.step(CONFIG.PHYSICS.TIME_STEP);
+        }
+        
+        function updateRespiratoryCycle(deltaTime) {
+            const cycleDuration = 60 / STATE.physiology.respiratoryRate;
+            STATE.physics.airflow.cycleTime += deltaTime;
+            
+            if (STATE.physics.airflow.cycleTime > cycleDuration) {
+                STATE.physics.airflow.cycleTime = 0;
+                STATE.physics.airflow.isInhaling = !STATE.physics.airflow.isInhaling;
+            }
+            
+            // Calculate flow based on respiratory cycle
+            const timeInCycle = STATE.physics.airflow.cycleTime / cycleDuration;
+            const phase = STATE.physics.airflow.isInhaling ? 
+                Math.sin(timeInCycle * Math.PI) : 
+                Math.sin(timeInCycle * Math.PI + Math.PI);
+            
+            STATE.physics.airflow.flowRate = phase * 0.8 * (1 / STATE.physiology.resistance);
+            STATE.physics.airflow.pressure = STATE.physics.airflow.flowRate * STATE.physiology.resistance;
+            STATE.physics.airflow.velocity = STATE.physics.airflow.flowRate / (Math.PI * 0.01 * 0.01);
+            
+            // Update UI metrics
+            $('#metricFlow').text(STATE.physics.airflow.flowRate.toFixed(2));
+            $('#metricPressure').text(STATE.physics.airflow.pressure.toFixed(1));
+        }
+        
+        function updateAirflow(deltaTime) {
+            // Simulate airflow through bronchial tree
+            let totalResistance = 0;
+            let totalFlow = 0;
+            
+            STATE.physics.bronchialTree.forEach((bronchus, index) => {
+                // Update resistance based on inflammation
+                const inflammationFactor = 1 + (STATE.inflammation.eosinophils / 100);
+                bronchus.resistance = calculateResistance(bronchus.radius, bronchus.length) * inflammationFactor;
+                
+                // Calculate flow through this bronchus
+                const flow = STATE.physics.airflow.pressure / bronchus.resistance;
+                totalResistance += bronchus.resistance;
+                totalFlow += flow;
+                
+                // Update particle positions
+                updateBronchusParticles(bronchus, flow, deltaTime);
+            });
+            
+            // Update global resistance
+            STATE.physiology.resistance = totalResistance / STATE.physics.bronchialTree.length;
+        }
+        
+        function updateBronchusParticles(bronchus, flow, deltaTime) {
+            // Add new particles
+            if (Math.random() < 0.1 * Math.abs(flow)) {
+                bronchus.particles.push({
+                    position: { x: 0, y: 0, z: 0 },
+                    velocity: flow * 2,
+                    life: 1.0,
+                    size: 0.02 + Math.random() * 0.03
+                });
+            }
+            
+            // Update existing particles
+            for (let i = bronchus.particles.length - 1; i >= 0; i--) {
+                const particle = bronchus.particles[i];
+                particle.position.y += particle.velocity * deltaTime;
+                particle.life -= deltaTime * 2;
+                
+                if (particle.life <= 0 || particle.position.y > bronchus.length) {
+                    bronchus.particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function updateParticles(deltaTime) {
+            if (!STATE.threejs.particles) return;
+            
+            const positions = STATE.threejs.particles.geometry.attributes.position.array;
+            let particleIndex = 0;
+            
+            STATE.physics.bronchialTree.forEach(bronchus => {
+                bronchus.particles.forEach(particle => {
+                    const posIndex = particleIndex * 3;
+                    positions[posIndex] = bronchus.position.x;
+                    positions[posIndex + 1] = bronchus.position.y + particle.position.y;
+                    positions[posIndex + 2] = bronchus.position.z;
+                    particleIndex++;
+                });
+            });
+            
+            // Fill remaining positions
+            for (let i = particleIndex; i < 1000; i++) {
+                const posIndex = i * 3;
+                positions[posIndex] = 0;
+                positions[posIndex + 1] = -10;
+                positions[posIndex + 2] = 0;
+            }
+            
+            STATE.threejs.particles.geometry.attributes.position.needsUpdate = true;
+        }
+        
+        // ====== 3D VISUALIZATION ======
+        function initializeVisualization() {
+            const canvas = document.getElementById('visualization-canvas');
             const container = canvas.parentElement;
             
-            // Initialize Three.js scene
-            AvatarState.scene = new THREE.Scene();
-            AvatarState.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-            AvatarState.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            // Scene
+            STATE.threejs.scene = new THREE.Scene();
+            STATE.threejs.scene.background = new THREE.Color(0x000000);
+            STATE.threejs.scene.fog = new THREE.Fog(0x000000, 1, 20);
             
-            AvatarState.renderer.setSize(container.clientWidth, container.clientHeight);
-            AvatarState.camera.position.z = 5;
+            // Camera
+            STATE.threejs.camera = new THREE.PerspectiveCamera(
+                60,
+                container.clientWidth / container.clientHeight,
+                0.1,
+                1000
+            );
+            STATE.threejs.camera.position.set(3, 2, 3);
+            STATE.threejs.camera.lookAt(0, 0, 0);
             
-            // Create network visualization
-            createNetworkVisualization();
-            
-            // Add lighting
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 5, 5);
-            AvatarState.scene.add(light);
-            
-            const ambient = new THREE.AmbientLight(0x404040, 0.5);
-            AvatarState.scene.add(ambient);
-            
-            // Start animation loop
-            function animate() {
-                requestAnimationFrame(animate);
-                
-                // Rotate scene slowly
-                if (AvatarState.scene && AvatarState.viewMode === 'network') {
-                    AvatarState.scene.rotation.y += 0.001;
-                }
-                
-                AvatarState.renderer.render(AvatarState.scene, AvatarState.camera);
-            }
-            animate();
-            
-            // Handle resize
-            window.addEventListener('resize', () => {
-                AvatarState.renderer.setSize(container.clientWidth, container.clientHeight);
-                AvatarState.camera.aspect = container.clientWidth / container.clientHeight;
-                AvatarState.camera.updateProjectionMatrix();
+            // Renderer
+            STATE.threejs.renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance"
             });
+            STATE.threejs.renderer.setSize(container.clientWidth, container.clientHeight);
+            STATE.threejs.renderer.setPixelRatio(window.devicePixelRatio);
+            STATE.threejs.renderer.shadowMap.enabled = true;
+            STATE.threejs.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Controls
+            STATE.threejs.controls = new THREE.OrbitControls(
+                STATE.threejs.camera,
+                STATE.threejs.renderer.domElement
+            );
+            STATE.threejs.controls.enableDamping = true;
+            STATE.threejs.controls.dampingFactor = 0.05;
+            STATE.threejs.controls.screenSpacePanning = false;
+            STATE.threejs.controls.minDistance = 1;
+            STATE.threejs.controls.maxDistance = 20;
+            STATE.threejs.controls.maxPolarAngle = Math.PI / 2;
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            STATE.threejs.scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            STATE.threejs.scene.add(directionalLight);
+            
+            // Create bronchial tree visualization
+            createBronchialVisualization();
+            
+            // Create particle system for airflow
+            createParticleSystem();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
         }
         
-        function createNetworkVisualization() {
-            // Clear existing visualization
-            while(AvatarState.scene.children.length > 0) { 
-                AvatarState.scene.remove(AvatarState.scene.children[0]); 
-            }
+        function createBronchialVisualization() {
+            const bronchialGroup = new THREE.Group();
             
-            // Create trait nodes
-            AvatarState.traitNodes = {};
-            AvatarState.traits.forEach((trait, index) => {
-                const value = AvatarState.traitValues.get(trait.id) || 5;
-                const size = 0.1 + (value / 10) * 0.2; // Size based on value
-                const color = getTraitColor(trait.category);
+            STATE.physics.bronchialTree.forEach(bronchus => {
+                // Branch geometry
+                const geometry = new THREE.CylinderGeometry(
+                    bronchus.radius * 0.8,
+                    bronchus.radius,
+                    bronchus.length,
+                    8,
+                    1,
+                    true
+                );
                 
-                const geometry = new THREE.SphereGeometry(size, 16, 16);
-                const material = new THREE.MeshPhongMaterial({ 
-                    color: color,
-                    emissive: color,
-                    emissiveIntensity: 0.2
+                // Material based on inflammation
+                const inflammationColor = new THREE.Color().setHSL(
+                    0.0,  // Red hue
+                    STATE.inflammation.eosinophils / 100,
+                    0.5 + (STATE.inflammation.eosinophils / 200)
+                );
+                
+                const material = new THREE.MeshPhongMaterial({
+                    color: inflammationColor,
+                    transparent: true,
+                    opacity: 0.7,
+                    side: THREE.DoubleSide
                 });
                 
-                const node = new THREE.Mesh(geometry, material);
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(
+                    bronchus.position.x,
+                    bronchus.position.y - bronchus.length / 2,
+                    bronchus.position.z
+                );
                 
-                // Position in a circle
-                const angle = (index / AvatarState.traits.length) * Math.PI * 2;
-                const radius = 2 + (AvatarState.traits.length * 0.1);
-                node.position.x = Math.cos(angle) * radius;
-                node.position.y = Math.sin(angle) * radius;
-                node.position.z = (Math.random() - 0.5) * 0.5;
+                // Rotate to align with direction
+                mesh.lookAt(
+                    bronchus.position.x,
+                    bronchus.position.y + 1,
+                    bronchus.position.z
+                );
+                mesh.rotateX(Math.PI / 2);
                 
-                AvatarState.scene.add(node);
-                AvatarState.traitNodes[trait.id] = node;
+                bronchialGroup.add(mesh);
             });
             
-            // Create connections
-            AvatarState.connections.forEach(conn => {
-                const source = AvatarState.traitNodes[conn.source_trait_id];
-                const target = AvatarState.traitNodes[conn.target_trait_id];
+            STATE.threejs.scene.add(bronchialGroup);
+            STATE.threejs.bronchialGroup = bronchialGroup;
+        }
+        
+        function createParticleSystem() {
+            // Particle system for airflow visualization
+            const particleCount = 1000;
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = 0;
+                positions[i3 + 1] = -10; // Start below view
+                positions[i3 + 2] = 0;
                 
-                if (source && target) {
-                    const material = new THREE.LineBasicMaterial({ 
-                        color: getConnectionColor(conn.relationship_type),
-                        opacity: 0.5,
-                        transparent: true
-                    });
-                    
-                    const points = [
-                        new THREE.Vector3(source.position.x, source.position.y, source.position.z),
-                        new THREE.Vector3(target.position.x, target.position.y, target.position.z)
-                    ];
-                    
-                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-                    const line = new THREE.Line(geometry, material);
-                    AvatarState.scene.add(line);
-                }
+                colors[i3] = 0.3 + Math.random() * 0.7;     // R
+                colors[i3 + 1] = 0.5 + Math.random() * 0.5; // G
+                colors[i3 + 2] = 0.8 + Math.random() * 0.2; // B
+            }
+            
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.05,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
             });
+            
+            STATE.threejs.particles = new THREE.Points(geometry, material);
+            STATE.threejs.scene.add(STATE.threejs.particles);
         }
         
-        function getTraitColor(category) {
-            const colors = {
-                'Inflammatory': 0xef476f,
-                'Physiological': 0x06d6a0,
-                'Behavioral': 0xffd166,
-                'Comorbid': 0x118ab2,
-                'Environmental': 0x9d4edd
-            };
-            return colors[category] || 0x60a5fa;
+        function onWindowResize() {
+            const canvas = document.getElementById('visualization-canvas');
+            const container = canvas.parentElement;
+            
+            STATE.threejs.camera.aspect = container.clientWidth / container.clientHeight;
+            STATE.threejs.camera.updateProjectionMatrix();
+            STATE.threejs.renderer.setSize(container.clientWidth, container.clientHeight);
         }
         
-        function getConnectionColor(relationship) {
-            const colors = {
-                'causes': 0xef476f,
-                'exacerbates': 0xff9e00,
-                'mitigates': 0x06d6a0,
-                'correlates_with': 0x3b82f6,
-                'treats': 0x8b5cf6
-            };
-            return colors[relationship] || 0x94a3b8;
+        // ====== AI MODELS ======
+        function initializeAIModels() {
+            // In a real implementation, this would load TensorFlow.js models
+            console.log('🤖 AI models placeholder initialized');
+            
+            // Initialize risk prediction charts
+            initializeCharts();
         }
         
-        function updateTraitVisualization(traitId, value) {
-            const node = AvatarState.traitNodes[traitId];
-            if (node) {
-                // Update size based on value
-                const size = 0.1 + (value / 10) * 0.2;
-                node.scale.set(size, size, size);
-                
-                // Update color intensity
-                node.material.emissiveIntensity = value / 20;
+        function predictExacerbationRisk() {
+            // Simplified risk calculation
+            const baseRisk = 10;
+            const inflammationRisk = STATE.inflammation.eosinophils * 0.3;
+            const physiologyRisk = (STATE.physiology.resistance - 2) * 10;
+            const clinicalRisk = (100 - STATE.clinicalData.fev1) * 0.2;
+            
+            STATE.predictions.exacerbationRisk24h = Math.min(95, 
+                baseRisk + inflammationRisk + physiologyRisk * 0.5 + clinicalRisk * 0.3);
+            STATE.predictions.exacerbationRisk7d = Math.min(95,
+                STATE.predictions.exacerbationRisk24h * 1.5);
+            STATE.predictions.exacerbationRisk30d = Math.min(95,
+                STATE.predictions.exacerbationRisk7d * 1.4);
+            
+            updatePredictionsUI();
+            
+            // Trigger alert if high risk
+            if (STATE.predictions.exacerbationRisk24h > 40) {
+                showAlert('High exacerbation risk', 
+                    `24-hour risk: ${Math.round(STATE.predictions.exacerbationRisk24h)}%. Consider preventive measures.`);
             }
         }
         
-        function toggleView(mode) {
-            AvatarState.viewMode = mode;
-            // In a full implementation, this would switch between different visualizations
-            showNotification(`Switched to ${mode} view`, 'info');
+        function predictTreatmentResponse() {
+            // Simplified response prediction
+            const inflammationLevel = STATE.inflammation.eosinophils / 100;
+            const baselineFEV1 = STATE.clinicalData.fev1;
+            
+            STATE.predictions.treatmentResponse = Math.min(90,
+                15 + (inflammationLevel * 30) + ((100 - baselineFEV1) * 0.3));
+            STATE.predictions.timeToBenefit = Math.max(2,
+                8 - (inflammationLevel * 4));
+            
+            updatePredictionsUI();
         }
         
-        // ====== UI FUNCTIONS ======
+        // ====== UI UPDATES ======
         function updatePatientUI() {
-            $('#patientName').text(AvatarState.patient?.name || 'Demo Patient');
-            $('#patientAge').text(`${AvatarState.patient?.age || '--'} yrs`);
-            $('#patientDisease').text(AvatarState.disease?.disease_name || 'Not specified');
-            $('#patientId').text(AvatarState.patient?.id || 'demo');
-            $('#patientLastUpdate').text(AvatarState.lastSync?.toLocaleTimeString() || '--');
-        }
-        
-        function updateSyncStatus() {
-            const now = new Date();
-            const diff = now - AvatarState.lastSync;
-            const seconds = Math.floor(diff / 1000);
+            if (!STATE.patient) return;
             
-            let status = '✅';
-            if (seconds > 60) status = '⚠️';
-            if (seconds > 300) status = '🔴';
+            $('#patientName').text(STATE.patient.name);
+            $('#patientAge').text(`${STATE.patient.age} years`);
+            $('#patientCondition').text(STATE.patient.condition || 'Asthma');
+            $('#patientId').text(`ID: ${STATE.patient.id}`);
             
-            $('#syncStatus').text(`${status} ${seconds}s ago`);
-        }
-        
-        function renderTraits() {
-            const container = $('#traitContainer');
-            container.empty();
+            // Avatar initials
+            const initials = STATE.patient.name.split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+            $('#patientAvatar').text(initials);
             
-            if (AvatarState.traits.length === 0) {
-                container.html('<div style="color: #94a3b8; text-align: center; padding: 20px;">No traits loaded</div>');
-                return;
-            }
+            // Update status
+            const fev1 = STATE.clinicalData.fev1;
+            let status = 'stable';
+            let statusClass = '';
             
-            AvatarState.traits.forEach(trait => {
-                const value = AvatarState.traitValues.get(trait.id) || 5;
-                
-                const traitCard = $(`
-                    <div class="trait-badge" data-trait-id="${trait.id}">
-                        <div class="trait-header">
-                            <div class="trait-name">${trait.trait_name}</div>
-                            <div class="trait-category">${trait.category}</div>
-                        </div>
-                        <div class="trait-value">
-                            Current value: <strong>${value}/10</strong>
-                            <span style="float: right; font-size: 10px;">${trait.last_measured ? new Date(trait.last_measured).toLocaleDateString() : ''}</span>
-                        </div>
-                        <div class="trait-slider">
-                            <input type="range" min="0" max="10" value="${value}" class="slider" 
-                                   onchange="updateTraitValue(${trait.id}, this.value)">
-                            <span style="font-size: 12px; min-width: 20px;">${value}</span>
-                        </div>
-                    </div>
-                `);
-                
-                container.append(traitCard);
-            });
-            
-            // Render connections
-            renderConnections();
-        }
-        
-        function renderConnections() {
-            const container = $('#connectionContainer');
-            container.empty();
-            
-            AvatarState.connections.slice(0, 5).forEach(conn => {
-                const sourceTrait = AvatarState.traits.find(t => t.id === conn.source_trait_id);
-                const targetTrait = AvatarState.traits.find(t => t.id === conn.target_trait_id);
-                
-                if (sourceTrait && targetTrait) {
-                    const badge = $(`
-                        <div class="connection-badge">
-                            ${sourceTrait.trait_name} → ${conn.relationship_type} → ${targetTrait.trait_name}
-                        </div>
-                    `);
-                    container.append(badge);
-                }
-            });
-            
-            if (AvatarState.connections.length > 5) {
-                container.append(`<div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">+${AvatarState.connections.length - 5} more connections</div>`);
-            }
-        }
-        
-        function renderTreatments() {
-            const container = $('#currentTreatments');
-            const recContainer = $('#treatmentRecommendations');
-            
-            container.empty();
-            recContainer.empty();
-            
-            // Current treatments
-            if (AvatarState.treatments.length === 0) {
-                container.html('<div style="color: #94a3b8; padding: 10px;">No active treatments</div>');
+            if (fev1 < 60) {
+                status = 'uncontrolled';
+                statusClass = 'danger';
+            } else if (fev1 < 80) {
+                status = 'moderate';
+                statusClass = 'warning';
             } else {
-                AvatarState.treatments.forEach(treatment => {
-                    container.append(`
-                        <div class="trait-badge">
-                            <div class="trait-header">
-                                <div class="trait-name">${treatment.treatment_name}</div>
-                                <div style="font-size: 10px; background: rgba(96, 165, 250, 0.3); padding: 2px 6px; border-radius: 4px;">
-                                    ${treatment.evidence_level || '--'}
-                                </div>
-                            </div>
-                            <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
-                                ${treatment.dosage || ''} • ${treatment.frequency || ''}
-                            </div>
-                        </div>
-                    `);
-                });
+                status = 'well controlled';
+                statusClass = '';
             }
             
-            // Simple recommendations (in full version, would query database)
-            recContainer.html(`
-                <div class="trait-badge">
-                    <div class="trait-header">
-                        <div class="trait-name">Inhaled Corticosteroids</div>
-                        <div style="font-size: 10px; background: rgba(16, 185, 129, 0.3); padding: 2px 6px; border-radius: 4px;">
-                            Level A
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: #94a3b8; margin-top: 5px;">
-                        For inflammatory traits, reduces exacerbation risk
-                    </div>
-                </div>
-            `);
+            $('#patientStatus').removeClass().addClass('status-indicator ' + statusClass);
+            $('#patientStatusText').text(status);
         }
         
-        function updateTraitInUI(traitId, value) {
-            $(`.trait-badge[data-trait-id="${traitId}"] .slider`).val(value);
-            $(`.trait-badge[data-trait-id="${traitId}"] .slider + span`).text(value);
-            $(`.trait-badge[data-trait-id="${traitId}"] .trait-value strong`).text(`${value}/10`);
+        function updatePhysiology(param, value) {
+            value = parseFloat(value);
+            
+            switch(param) {
+                case 'resistance':
+                    STATE.physiology.resistance = value;
+                    $('#resistanceValue').text(value.toFixed(1));
+                    break;
+                case 'compliance':
+                    STATE.physiology.compliance = value;
+                    $('#complianceValue').text(value.toFixed(2));
+                    break;
+                case 'rate':
+                    STATE.physiology.respiratoryRate = value;
+                    $('#rateValue').text(value);
+                    break;
+            }
+            
+            // Recalculate predictions
+            predictExacerbationRisk();
+            predictTreatmentResponse();
         }
         
-        function updateStatistics() {
-            $('#statTraitCount').text(AvatarState.traits.length);
-            $('#statRiskScore').text(`${calculateFlareRisk()}%`);
-            $('#statTreatmentCount').text(AvatarState.treatments.length);
+        function updateInflammation(param, value) {
+            value = parseInt(value);
             
-            // Calculate days since last exacerbation (simplified)
-            const days = Math.floor(Math.random() * 100) + 30; // Placeholder
-            $('#statDaysSinceExac').text(`${days}d`);
+            switch(param) {
+                case 'eosinophils':
+                    STATE.inflammation.eosinophils = value;
+                    $('#eosValue').text(value);
+                    break;
+                case 'neutrophils':
+                    STATE.inflammation.neutrophils = value;
+                    $('#neutValue').text(value);
+                    break;
+                case 'cytokines':
+                    STATE.inflammation.cytokines = value;
+                    $('#cytokineValue').text(value);
+                    break;
+            }
+            
+            // Update visualization color
+            updateInflammationVisualization();
+            
+            // Recalculate predictions
+            predictExacerbationRisk();
+            predictTreatmentResponse();
         }
         
-        function calculateFlareRisk() {
-            let risk = 0;
+        function updateInflammationVisualization() {
+            if (!STATE.threejs.bronchialGroup) return;
             
-            // Inflammatory traits increase risk
-            const inflammatoryTraits = AvatarState.traits.filter(t => 
-                t.category.toLowerCase().includes('inflammatory'));
-            risk += inflammatoryTraits.length * 10;
+            const inflammationLevel = STATE.inflammation.eosinophils / 100;
             
-            // High trait values increase risk
-            let highValueCount = 0;
-            AvatarState.traitValues.forEach(value => {
-                if (value > 7) highValueCount++;
+            STATE.threejs.bronchialGroup.children.forEach((mesh, index) => {
+                const inflammationColor = new THREE.Color().setHSL(
+                    0.0,  // Red hue for inflammation
+                    inflammationLevel,
+                    0.5 + (inflammationLevel * 0.3)
+                );
+                
+                mesh.material.color.copy(inflammationColor);
+                mesh.material.opacity = 0.5 + (inflammationLevel * 0.3);
             });
-            risk += highValueCount * 15;
-            
-            // Few treatments increase risk
-            risk += (3 - Math.min(3, AvatarState.treatments.length)) * 10;
-            
-            return Math.min(100, risk);
         }
         
-        // ====== SIMULATION FUNCTIONS ======
-        async function simulateTreatmentEffect() {
-            showNotification('Simulating treatment effects...', 'info');
+        function updatePredictionsUI() {
+            $('#risk24h').text(`${Math.round(STATE.predictions.exacerbationRisk24h)}%`);
+            $('#risk7d').text(`${Math.round(STATE.predictions.exacerbationRisk7d)}%`);
+            $('#risk30d').text(`${Math.round(STATE.predictions.exacerbationRisk30d)}%`);
+            $('#risk90d').text(`${Math.round(STATE.predictions.exacerbationRisk30d * 1.2)}%`);
             
-            // In full version, would query database for treatment efficacy data
-            // and run predictive models
+            $('#predictedImprovement').text(`${Math.round(STATE.predictions.treatmentResponse)}%`);
+            $('#timeToBenefit').text(`${STATE.predictions.timeToBenefit} weeks`);
             
-            setTimeout(() => {
-                showNotification('Treatment simulation complete. View results in analytics.', 'success');
-                
-                // Update simulation chart
-                updateSimulationChart();
-            }, 1500);
+            updateRiskChart();
         }
         
-        function runSimulation(scenario) {
-            const scenarios = {
-                'exacerbation': 'Simulating disease exacerbation...',
-                'treatment_optimization': 'Optimizing treatment regimen...',
-                'lifestyle_change': 'Simulating lifestyle intervention...',
-                'environmental_trigger': 'Simulating environmental exposure...'
-            };
-            
-            showNotification(scenarios[scenario] || 'Running simulation...', 'info');
-            
-            setTimeout(() => {
-                showNotification('Simulation complete. Results saved to database.', 'success');
-                
-                // In full version, would save simulation results to database
-                // and update visualizations
-            }, 2000);
+        function updateClinicalUI() {
+            $('#clinicalFEV1').text(`${STATE.clinicalData.fev1}%`);
+            $('#clinicalPEF').text(STATE.clinicalData.pef);
+            $('#clinicalFVC').text(`${STATE.clinicalData.fvc}%`);
+            $('#clinicalACQ').text(STATE.clinicalData.acq.toFixed(1));
         }
         
-        function updateSimulationChart() {
-            const ctx = document.getElementById('simulationChart').getContext('2d');
-            
-            if (AvatarState.simulationChart) {
-                AvatarState.simulationChart.destroy();
-            }
-            
-            AvatarState.simulationChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Baseline', '1 month', '3 months', '6 months', '1 year'],
-                    datasets: [{
-                        label: 'Predicted FEV1',
-                        data: [65, 72, 78, 82, 85],
-                        borderColor: '#60a5fa',
-                        backgroundColor: 'rgba(96, 165, 250, 0.1)',
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: { display: false }
+        // ====== CHARTS ======
+        function initializeCharts() {
+            // Risk Chart
+            const riskCtx = document.getElementById('riskChart').getContext('2d');
+            STATE.charts = {
+                risk: new Chart(riskCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Now', '6h', '12h', '18h', '24h'],
+                        datasets: [{
+                            label: 'Exacerbation Risk',
+                            data: [15, 18, 22, 28, 32],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
                     },
-                    scales: {
-                        y: {
-                            min: 50,
-                            max: 100,
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            ticks: { color: '#94a3b8' }
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { enabled: true }
                         },
-                        x: {
-                            grid: { color: 'rgba(255,255,255,0.1)' },
-                            ticks: { color: '#94a3b8' }
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { color: '#94a3b8' }
+                            },
+                            x: {
+                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                ticks: { color: '#94a3b8' }
+                            }
                         }
                     }
+                }),
+                
+                treatment: null,
+                data: null
+            };
+            
+            updateRiskChart();
+        }
+        
+        function updateRiskChart() {
+            if (!STATE.charts.risk) return;
+            
+            const riskData = [
+                STATE.predictions.exacerbationRisk24h * 0.3,
+                STATE.predictions.exacerbationRisk24h * 0.4,
+                STATE.predictions.exacerbationRisk24h * 0.6,
+                STATE.predictions.exacerbationRisk24h * 0.8,
+                STATE.predictions.exacerbationRisk24h
+            ];
+            
+            STATE.charts.risk.data.datasets[0].data = riskData;
+            STATE.charts.risk.update();
+        }
+        
+        // ====== SIMULATION CONTROLS ======
+        function setViewMode(mode) {
+            $('.viz-control-btn').removeClass('active');
+            $(`.viz-control-btn:contains(${mode.charAt(0).toUpperCase() + mode.slice(1)})`).addClass('active');
+            
+            $('#vizTitle').text(getViewTitle(mode));
+            $('#vizSubtitle').text(getViewSubtitle(mode));
+            
+            // Update visualization based on mode
+            updateViewMode(mode);
+        }
+        
+        function getViewTitle(mode) {
+            const titles = {
+                'airflow': 'Airflow Dynamics',
+                'pressure': 'Pressure Distribution',
+                'inflammation': 'Inflammatory State',
+                'anatomy': 'Bronchial Anatomy'
+            };
+            return titles[mode] || 'Airway Simulation';
+        }
+        
+        function getViewSubtitle(mode) {
+            const subtitles = {
+                'airflow': 'Real-time particle flow visualization',
+                'pressure': 'Regional pressure gradients',
+                'inflammation': 'Cellular-level inflammatory activity',
+                'anatomy': '3D bronchial tree structure'
+            };
+            return subtitles[mode] || 'Interactive simulation';
+        }
+        
+        function updateViewMode(mode) {
+            // In a full implementation, this would switch shaders/materials
+            console.log(`Switched to ${mode} view`);
+        }
+        
+        function toggleSimulation() {
+            STATE.threejs.isAnimating = !STATE.threejs.isAnimating;
+            $('#simToggleBtn').text(STATE.threejs.isAnimating ? 'Pause' : 'Play');
+        }
+        
+        function runExacerbationScenario() {
+            showNotification('Starting exacerbation simulation...', 'info');
+            
+            // Increase inflammation parameters
+            STATE.inflammation.eosinophils = 75;
+            STATE.inflammation.cytokines = 35;
+            STATE.physiology.resistance = 12.5;
+            
+            // Update UI
+            $('#eosSlider').val(75).trigger('input');
+            $('#cytokineSlider').val(35).trigger('input');
+            $('#resistanceSlider').val(12.5).trigger('input');
+            
+            setTimeout(() => {
+                showNotification('Exacerbation simulation complete. Risk increased.', 'warning');
+                predictExacerbationRisk();
+            }, 1000);
+        }
+        
+        function runTreatmentScenario() {
+            showNotification('Simulating treatment effect...', 'info');
+            
+            // Reduce inflammation parameters
+            STATE.inflammation.eosinophils = 25;
+            STATE.inflammation.cytokines = 10;
+            STATE.physiology.resistance = 4.8;
+            STATE.clinicalData.fev1 = 78;
+            
+            // Update UI
+            $('#eosSlider').val(25).trigger('input');
+            $('#cytokineSlider').val(10).trigger('input');
+            $('#resistanceSlider').val(4.8).trigger('input');
+            
+            updateClinicalUI();
+            
+            setTimeout(() => {
+                showNotification('Treatment simulation complete. Status improved.', 'success');
+                predictExacerbationRisk();
+                predictTreatmentResponse();
+            }, 1000);
+        }
+        
+        function resetToBaseline() {
+            showNotification('Resetting to baseline...', 'info');
+            
+            // Reset to normal values
+            STATE.inflammation.eosinophils = 15;
+            STATE.inflammation.cytokines = 8;
+            STATE.physiology.resistance = 2.5;
+            STATE.clinicalData.fev1 = 85;
+            
+            // Update UI
+            $('#eosSlider').val(15).trigger('input');
+            $('#cytokineSlider').val(8).trigger('input');
+            $('#resistanceSlider').val(2.5).trigger('input');
+            
+            updateClinicalUI();
+            
+            setTimeout(() => {
+                showNotification('Reset complete. Normal parameters restored.', 'success');
+                predictExacerbationRisk();
+                predictTreatmentResponse();
+            }, 1000);
+        }
+        
+        // ====== ANIMATION LOOP ======
+        function startAnimationLoop() {
+            let lastTime = 0;
+            
+            function animate(currentTime) {
+                requestAnimationFrame(animate);
+                
+                const deltaTime = currentTime - lastTime;
+                lastTime = currentTime;
+                
+                if (STATE.threejs.isAnimating) {
+                    // Update physics
+                    updatePhysics(deltaTime * 0.001);
+                    
+                    // Update controls
+                    STATE.threejs.controls.update();
+                    
+                    // Render scene
+                    STATE.threejs.renderer.render(STATE.threejs.scene, STATE.threejs.camera);
                 }
-            });
+            }
+            
+            animate(0);
         }
         
         // ====== UTILITY FUNCTIONS ======
-        function switchTab(tabName) {
-            $('.tab').removeClass('active');
-            $(`.tab[onclick*="${tabName}"]`).addClass('active');
+        function updateLoading(stepId, status, message) {
+            const step = $(`#${stepId}`);
+            if (step.length) {
+                step.find('.step-status').text(status);
+                step.addClass(status === '✅' ? 'completed' : 'active');
+            }
             
-            $('.tab-content').removeClass('active');
-            $(`#${tabName}Tab`).addClass('active');
+            if (stepId === 'complete') {
+                $('#loadingProgress').css('width', '100%');
+                $('#loadingText').text(message);
+            } else {
+                const progress = ['step1', 'step2', 'step3', 'step4', 'step5'].indexOf(stepId) + 1;
+                $('#loadingProgress').css('width', `${progress * 20}%`);
+                $('#loadingText').text(message);
+            }
         }
         
-        function showNotification(message, type) {
+        function updateConnectionStatus(connected) {
+            const status = $('#connectionStatus');
+            const dot = status.find('.status-dot');
+            
+            if (connected) {
+                dot.removeClass('disconnected').addClass('connected');
+                status.find('span').text('Connected to database');
+            } else {
+                dot.removeClass('connected').addClass('disconnected');
+                status.find('span').text('Disconnected');
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Create notification element
             const notification = $(`
-                <div class="notification notification-${type}">
-                    <i class="fas ${getNotificationIcon(type)}"></i> ${message}
+                <div style="position: fixed; top: 20px; right: 20px; 
+                           background: ${getNotificationColor(type)};
+                           color: white; padding: 12px 20px; 
+                           border-radius: 8px; font-weight: 600;
+                           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                           z-index: 9999; animation: slideIn 0.3s ease;">
+                    ${message}
                 </div>
             `);
             
@@ -1200,113 +2078,134 @@
             }, 3000);
         }
         
-        function getNotificationIcon(type) {
-            const icons = {
-                'success': 'fa-check-circle',
-                'info': 'fa-info-circle',
-                'warning': 'fa-exclamation-triangle',
-                'error': 'fa-exclamation-circle'
+        function getNotificationColor(type) {
+            const colors = {
+                'success': '#10b981',
+                'info': '#3b82f6', 
+                'warning': '#f59e0b',
+                'error': '#ef476f'
             };
-            return icons[type] || 'fa-info-circle';
+            return colors[type] || '#3b82f6';
         }
         
-        function loadDemoPatient() {
-            console.log('👤 Loading demo patient data');
-            
-            AvatarState.patient = {
-                id: 'demo',
-                name: 'John Smith',
-                age: 58,
-                disease_id: 1
-            };
-            
-            AvatarState.disease = {
-                id: 1,
-                disease_name: 'Asthma',
-                description: 'Chronic airway inflammation'
-            };
-            
-            AvatarState.traits = [
-                { id: 1, trait_name: 'Airway Inflammation', category: 'Inflammatory', description: 'Bronchial inflammation' },
-                { id: 2, trait_name: 'Bronchoconstriction', category: 'Physiological', description: 'Airway narrowing' },
-                { id: 3, trait_name: 'Smoking History', category: 'Behavioral', description: 'Current or former smoker' },
-                { id: 4, trait_name: 'Obesity', category: 'Comorbid', description: 'BMI > 30' },
-                { id: 5, trait_name: 'Indoor Allergens', category: 'Environmental', description: 'Dust mite exposure' }
-            ];
-            
-            AvatarState.connections = [
-                { id: 1, source_trait_id: 1, target_trait_id: 2, relationship_type: 'causes' },
-                { id: 2, source_trait_id: 3, target_trait_id: 1, relationship_type: 'exacerbates' },
-                { id: 3, source_trait_id: 5, target_trait_id: 1, relationship_type: 'triggers' }
-            ];
-            
-            AvatarState.treatments = [
-                { id: 1, treatment_name: 'ICS/LABA', treatment_type: 'Inhaler', evidence_level: 'A' }
-            ];
-            
-            // Set default values
-            AvatarState.traits.forEach(trait => {
-                AvatarState.traitValues.set(trait.id, Math.floor(Math.random() * 3) + 5);
-            });
-            
-            AvatarState.lastSync = new Date();
-        }
-        
-        async function loadFromDatabase() {
-            if (!AvatarState.patient) return;
-            
-            showNotification('Reloading from database...', 'info');
-            await loadCompletePatientData(AvatarState.patient.id);
-            showNotification('Data reloaded', 'success');
-        }
-        
-        function generateAvatarReport() {
-            showNotification('Generating comprehensive avatar report...', 'info');
+        function showAlert(title, content) {
+            $('#alertTitle').text(title);
+            $('#alertContent').text(content);
+            $('#alertContainer').show();
             
             setTimeout(() => {
-                // In full version, would generate PDF report with charts
-                showNotification('Report generated. Check database for download.', 'success');
-            }, 2000);
+                $('#alertContainer').fadeOut(500);
+            }, 5000);
         }
         
-        function exportAvatarData() {
+        function switchTab(tabName) {
+            $('.tab').removeClass('active');
+            $(`.tab[data-tab="${tabName}"]`).addClass('active');
+            
+            $('.tab-pane').removeClass('active');
+            $(`#${tabName}Tab`).addClass('active');
+        }
+        
+        async function startSystems() {
+            // Initialize clinical data
+            STATE.clinicalData.lastUpdated = new Date();
+            updateClinicalUI();
+            
+            // Calculate initial predictions
+            predictExacerbationRisk();
+            predictTreatmentResponse();
+            
+            // Setup tab switching
+            $('.tab').click(function() {
+                const tabName = $(this).data('tab');
+                switchTab(tabName);
+            });
+            
+            // Setup real-time updates
+            setInterval(() => {
+                if (!STATE.isLoading) {
+                    predictExacerbationRisk();
+                }
+            }, 30000); // Every 30 seconds
+        }
+        
+        // ====== EXPORT FUNCTIONS ======
+        function exportClinicalData() {
             const data = {
-                patient: AvatarState.patient,
-                traits: AvatarState.traits,
-                trait_values: Object.fromEntries(AvatarState.traitValues),
-                connections: AvatarState.connections,
-                treatments: AvatarState.treatments,
-                generated_at: new Date().toISOString()
+                patient: STATE.patient,
+                physiology: STATE.physiology,
+                inflammation: STATE.inflammation,
+                clinical: STATE.clinicalData,
+                predictions: STATE.predictions,
+                timestamp: new Date().toISOString()
             };
             
             const dataStr = JSON.stringify(data, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
-            const exportFileDefaultName = `avatar_${AvatarState.patient?.id || 'demo'}_${new Date().toISOString().slice(0,10)}.json`;
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', `digital_twin_${STATE.patient.id}_${new Date().toISOString().slice(0,10)}.json`);
+            link.click();
             
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            showNotification('Avatar data exported', 'success');
+            showNotification('Clinical data exported', 'success');
         }
         
-        // ====== EXPORT FUNCTIONS TO WINDOW ======
-        window.updateTraitValue = updateTraitValue;
-        window.simulateTreatmentEffect = simulateTreatmentEffect;
-        window.runSimulation = runSimulation;
-        window.toggleView = toggleView;
-        window.switchTab = switchTab;
-        window.saveAvatarState = saveAvatarState;
-        window.loadFromDatabase = loadFromDatabase;
-        window.generateAvatarReport = generateAvatarReport;
-        window.exportAvatarData = exportAvatarData;
+        function generateReport() {
+            showNotification('Generating clinical report...', 'info');
+            // In full implementation, generate PDF report
+        }
         
-        console.log('🚀 Database-First Airway Avatar System Ready');
+        // ====== EVENT HANDLERS ======
+        function updateFromDatabase(data) {
+            console.log('Update from database:', data);
+            // Handle real-time updates from database
+        }
+        
+        function optimizeTreatment(treatment, value) {
+            console.log(`Optimizing ${treatment}: ${value}`);
+            // In full implementation, run treatment optimization algorithm
+        }
+        
+        function simulateTreatment(action) {
+            showNotification(`Simulating ${action.replace('_', ' ')}...`, 'info');
+            // In full implementation, run treatment simulation
+        }
+        
+        function runScenario(scenario) {
+            showNotification(`Running ${scenario} scenario...`, 'info');
+            // In full implementation, run scenario simulation
+        }
+        
+        // ====== WINDOW EXPORTS ======
+        window.setViewMode = setViewMode;
+        window.toggleSimulation = toggleSimulation;
+        window.runExacerbationScenario = runExacerbationScenario;
+        window.runTreatmentScenario = runTreatmentScenario;
+        window.resetToBaseline = resetToBaseline;
+        window.updatePhysiology = updatePhysiology;
+        window.updateInflammation = updateInflammation;
+        window.optimizeTreatment = optimizeTreatment;
+        window.simulateTreatment = simulateTreatment;
+        window.runScenario = runScenario;
+        window.generateReport = generateReport;
+        window.exportClinicalData = exportClinicalData;
+        window.switchTab = switchTab;
+        
+        // Initialize when page loads
+        $(document).ready(function() {
+            // Add CSS animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+        
+        console.log('🚀 Airway Digital Twin v2.0 Loaded');
     </script>
-    
-    <!-- Font Awesome for icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
 </body>
 </html>
