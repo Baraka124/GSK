@@ -1087,28 +1087,27 @@
         // AIRWAY DIGITAL TWIN v2.0 - Predictive Physiology Engine
         // ============================================================================
         
-        // ====== CONFIGURATION ======
-        const CONFIG = {
-            const CONFIG = {
-    SUPABASE_URL: 'https://timmylvmumneqhpkvcgb.supabase.co',  // ✅ CORRECT!
-    SUPABASE_KEY: 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_',  // ✅ CORRECT!
+       // ====== CONFIGURATION ======
+const CONFIG = {
+    SUPABASE_URL: 'https://timmylvmumneqhpkvcgb.supabase.co',
+    SUPABASE_KEY: 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_',
             
-            // Physics parameters
-            PHYSICS: {
-                TIME_STEP: 1/60,
-                GRAVITY: -9.81,
-                AIR_DENSITY: 1.225,
-                VISCOSITY: 1.81e-5
-            },
+    // Physics parameters
+    PHYSICS: {
+        TIME_STEP: 1/60,
+        GRAVITY: -9.81,
+        AIR_DENSITY: 1.225,
+        VISCOSITY: 1.81e-5
+    },
             
-            // Physiology constants
-            PHYSIOLOGY: {
-                NORMAL_RESISTANCE: 2.0,  // cmH₂O/L/s
-                NORMAL_COMPLIANCE: 0.15, // L/cmH₂O
-                NORMAL_FEV1: 85,         // % predicted
-                NORMAL_RATE: 15          // breaths/min
-            }
-        };
+    // Physiology constants
+    PHYSIOLOGY: {
+        NORMAL_RESISTANCE: 2.0,  // cmH₂O/L/s
+        NORMAL_COMPLIANCE: 0.15, // L/cmH₂O
+        NORMAL_FEV1: 85,         // % predicted
+        NORMAL_RATE: 15          // breaths/min
+    }
+};
         
         // ====== GLOBAL STATE ======
         const STATE = {
