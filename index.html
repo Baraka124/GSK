@@ -1,75 +1,106 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Database Test</title>
+    <title>Database Test - Safe Version</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <h1>Testing Supabase Connection</h1>
-    <div id="result">Testing...</div>
+    <h1>Testing Database Connection</h1>
+    <div id="result">Loading...</div>
     
     <script>
-        // TRY BOTH URLs
-        const URL1 = 'https://xwcpdmmnetbkybvwzqhi.supabase.co';
-        const URL2 = 'https://timmylvmumneqhpkvcgb.supabase.co';
-        const KEY = 'sb_publishable_0l8CRvQcizRJF13mdaFF9Q_cZpeuWL_';
+        const SUPABASE_URL = 'https://timmylvmumneqhpkvcgb.supabase.co';
         
-        async function testConnection(url) {
+        // DO NOT USE SECRET KEY IN FRONTEND CODE!
+        // Get your ANON/PUBLIC key from: 
+        // https://app.supabase.com/project/timmylvmumneqhpkvcgb/settings/api
+        const SUPABASE_KEY = 'YOUR_ANON_PUBLIC_KEY_HERE'; // Replace this!
+        
+        async function testConnection() {
             try {
-                const supabase = window.supabase.createClient(url, KEY);
+                const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                 
-                // Test 1: Check if we can connect
-                const { data: test1, error: err1 } = await supabase
-                    .from('diseases')
-                    .select('count')
-                    .limit(1);
+                // Test 1: List tables you have
+                console.log('Testing connection to:', SUPABASE_URL);
                 
-                // Test 2: Try to get table list
-                const { data: test2, error: err2 } = await supabase
-                    .from('diseases')
-                    .select('*')
-                    .limit(5);
+                // Test each table that might exist
+                const testResults = [];
                 
-                return {
-                    success: !err1 && !err2,
-                    url: url,
-                    error1: err1?.message,
-                    error2: err2?.message,
-                    data: test2
-                };
+                // Test diseases table
+                try {
+                    const { data: diseases, error: dError } = await supabase
+                        .from('diseases')
+                        .select('*')
+                        .limit(2);
+                    
+                    testResults.push({
+                        table: 'diseases',
+                        exists: !dError,
+                        error: dError?.message,
+                        count: diseases?.length || 0
+                    });
+                } catch(e) {
+                    testResults.push({ table: 'diseases', exists: false, error: e.message });
+                }
+                
+                // Test treatable_traits table
+                try {
+                    const { data: traits, error: tError } = await supabase
+                        .from('treatable_traits')
+                        .select('*')
+                        .limit(2);
+                    
+                    testResults.push({
+                        table: 'treatable_traits',
+                        exists: !tError,
+                        error: tError?.message,
+                        count: traits?.length || 0
+                    });
+                } catch(e) {
+                    testResults.push({ table: 'treatable_traits', exists: false, error: e.message });
+                }
+                
+                // Display results
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `
+                    <h3>Connection Test Results</h3>
+                    <p>URL: ${SUPABASE_URL}</p>
+                    <div style="margin-top: 20px;">
+                        ${testResults.map(r => `
+                            <div style="margin: 10px; padding: 10px; background: ${r.exists ? '#d4edda' : '#f8d7da'}; color: #000;">
+                                <strong>${r.table}</strong>: ${r.exists ? '✅ Accessible' : '❌ Error'}
+                                ${r.count ? `<br>Records: ${r.count}` : ''}
+                                ${r.error ? `<br>Error: ${r.error}` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p style="margin-top: 20px; color: red;">
+                        <strong>IMPORTANT:</strong> Regenerate your secret key immediately! 
+                        Never use service_role keys in frontend code.
+                    </p>
+                `;
+                
+                return testResults;
                 
             } catch (error) {
-                return {
-                    success: false,
-                    url: url,
-                    error: error.message
-                };
+                document.getElementById('result').innerHTML = `
+                    <div style="color: red;">
+                        <h3>Connection Failed</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>Possible issues:</p>
+                        <ul>
+                            <li>Wrong API key type (use anon/public key, not secret)</li>
+                            <li>CORS not configured in Supabase</li>
+                            <li>Network issues</li>
+                        </ul>
+                    </div>
+                `;
+                return [];
             }
         }
         
-        async function runTests() {
-            const results = [];
-            
-            // Test first URL
-            results.push(await testConnection(URL1));
-            
-            // Test second URL
-            results.push(await testConnection(URL2));
-            
-            // Display results
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = results.map(r => `
-                <div style="margin: 20px; padding: 20px; border: 1px solid #ccc;">
-                    <h3>Testing URL: ${r.url}</h3>
-                    <p>Success: ${r.success ? '✅' : '❌'}</p>
-                    ${r.error1 ? `<p>Error 1: ${r.error1}</p>` : ''}
-                    ${r.error2 ? `<p>Error 2: ${r.error2}</p>` : ''}
-                    ${r.data ? `<p>Data sample: ${JSON.stringify(r.data)}</p>` : ''}
-                </div>
-            `).join('');
-        }
-        
-        runTests();
+        // Run test
+        testConnection();
     </script>
 </body>
 </html>
