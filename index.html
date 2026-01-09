@@ -15,6 +15,8 @@
     <!-- Medical Imaging -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <!-- Add this line after the other script tags in the head -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <style>
         /* ====== RESET & BASE ====== */
@@ -1872,9 +1874,20 @@
         }
 
         // ====== CHARTS ======
-        function initializeCharts() {
-            // Risk Chart
-            const riskCtx = document.getElementById('riskChart').getContext('2d');
+        // ====== CHARTS ======
+function initializeCharts() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js not loaded, skipping chart initialization');
+        STATE.charts = { risk: null, treatment: null, data: null };
+        return;
+    }
+    
+    try {
+        // Risk Chart
+        const riskCanvas = document.getElementById('riskChart');
+        if (riskCanvas) {
+            const riskCtx = riskCanvas.getContext('2d');
             STATE.charts = {
                 risk: new Chart(riskCtx, {
                     type: 'line',
@@ -1918,6 +1931,27 @@
             
             updateRiskChart();
         }
+    } catch (error) {
+        console.error('Failed to initialize charts:', error);
+        STATE.charts = { risk: null, treatment: null, data: null };
+    }
+}
+
+// Also update the updateRiskChart function to check if chart exists:
+function updateRiskChart() {
+    if (!STATE.charts || !STATE.charts.risk) return;
+    
+    const riskData = [
+        STATE.predictions.exacerbationRisk24h * 0.3,
+        STATE.predictions.exacerbationRisk24h * 0.4,
+        STATE.predictions.exacerbationRisk24h * 0.6,
+        STATE.predictions.exacerbationRisk24h * 0.8,
+        STATE.predictions.exacerbationRisk24h
+    ];
+    
+    STATE.charts.risk.data.datasets[0].data = riskData;
+    STATE.charts.risk.update();
+}
 
         function updateRiskChart() {
             if (!STATE.charts.risk) return;
