@@ -1834,62 +1834,88 @@ class ClinicalAvatarService {
         }
     }
 
-    async launchClinicalAvatar(patientId) {
-        try {
-            // Load patient data
-            const patient = await this.loadPatientClinicalProfile(patientId);
+async launchClinicalAvatar(patientId) {
+    try {
+        // 1. Load patient data
+        const patient = await this.loadPatientClinicalProfile(patientId);
+        
+        // 2. Create avatar session in database
+        const { data: session, error: sessionError } = await this.supabase
+            .from('avatar_sessions')
+            .insert({
+                patient_id: patientId,
+                session_type: 'comprehensive_assessment',
+                parameters: { 
+                    source: 'platform_launch',
+                    traits_count: patient.trait_values?.length || 0,
+                    platform_data: {
+                        current_traits: AppState.currentTraits,
+                        current_connections: AppState.currentConnections,
+                        node_positions: Array.from(AppState.nodePositions.entries())
+                    }
+                },
+                started_at: new Date().toISOString(),
+                session_status: 'active'
+            })
+            .select()
+            .single();
             
-            // Prepare comprehensive data for avatar
-            const avatarData = {
-                patient: patient,
-                clinical_insights: patient.clinical_insights || [],
-                clinical_events: patient.clinical_events || [],
-                avatar_sessions: patient.avatar_sessions || [],
-                treatment_simulations: patient.treatment_simulations || [],
-                timestamp: new Date().toISOString(),
-                source: 'airwayscope_platform'
-            };
-            
-            // Encode for URL
-            const encodedData = encodeURIComponent(JSON.stringify(avatarData));
-            
-            // Create new avatar session
+        if (sessionError) throw sessionError;
+        
+        // 3. Save clinical insights if any
+        if (patient.clinical_insights && patient.clinical_insights.length > 0) {
             await this.supabase
-                .from('avatar_sessions')
-                .insert({
-                    patient_id: patientId,
-                    session_type: 'comprehensive_assessment',
-                    parameters: { 
-                        source: 'platform_launch',
-                        traits_count: patient.trait_values?.length || 0
-                    },
-                    started_at: new Date().toISOString()
-                });
-            
-            // Update patient avatar status
-            await this.supabase
-                .from('patients')
-                .update({
-                    avatar_status: 'active',
-                    last_avatar_update: new Date().toISOString()
-                })
-                .eq('id', patientId);
-            
-            // Open avatar with all data
-            const avatarUrl = `avatar.html?patient_data=${encodedData}`;
-            window.open(avatarUrl, '_blank');
-            
-            showToast('Clinical Avatar Launched', 'Opening comprehensive patient visualization...', 'success');
-            
-            return avatarUrl;
-            
-        } catch (error) {
-            console.error('Error launching avatar:', error);
-            showToast('Avatar Launch Failed', error.message, 'error');
-            throw error;
+                .from('clinical_insights')
+                .upsert(
+                    patient.clinical_insights.map(insight => ({
+                        ...insight,
+                        avatar_session_id: session.id
+                    }))
+                );
         }
+        
+        // 4. Update patient avatar status
+        await this.supabase
+            .from('patients')
+            .update({
+                avatar_status: 'active',
+                last_avatar_update: new Date().toISOString(),
+                current_avatar_session: session.id
+            })
+            .eq('id', patientId);
+        
+        // 5. Open avatar with session ID only (not all data)
+        const avatarUrl = `avatar.html?session_id=${session.id}&patient_id=${patientId}`;
+        window.open(avatarUrl, '_blank');
+        
+        showToast('Clinical Avatar Launched', 'Opening personalized patient visualization...', 'success');
+        
+        return avatarUrl;
+        
+    } catch (error) {
+        console.error('Error launching avatar:', error);
+        showToast('Avatar Launch Failed', error.message, 'error');
+        throw error;
     }
-
+}
+async saveAvatarSessionData(sessionId, data) {
+    try {
+        const { error } = await this.supabase
+            .from('avatar_sessions')
+            .update({
+                session_data: data,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', sessionId);
+            
+        if (error) throw error;
+        return true;
+        
+    } catch (error) {
+        console.error('Error saving session data:', error);
+        throw error;
+    }
+}
     async generateClinicalInsights(patientId, traitValues) {
         try {
             // Call the database function
@@ -2964,18 +2990,35 @@ function setupAllEventListeners() {
     $('#btnAutoLayout').click(applyAutoLayout);
 
     // Launch Avatar button - USING AVATAR SERVICE
-    $('#btnLaunchAvatar').click(async function() {
-        if (!AppState.currentPatient) {
-            showToast('Select Patient', 'Please select a patient first', 'warning');
-            return;
-        }
+    // Update the launch avatar button handler
+$('#btnLaunchAvatar').click(async function() {
+    if (!AppState.currentPatient) {
+        showToast('Select Patient', 'Please select a patient first', 'warning');
+        return;
+    }
+    
+    // Show loading state
+    const originalText = $(this).html();
+    $(this).html('<i class="fas fa-spinner fa-spin"></i> Launching...');
+    $(this).prop('disabled', true);
+    
+    try {
+        await avatarService.launchClinicalAvatar(AppState.currentPatient.id);
+    } catch (error) {
+        console.error('Failed to launch avatar:', error);
+        showToast('Launch Failed', 'Could not launch avatar. Trying alternative method...', 'warning');
         
-        try {
-            await avatarService.launchClinicalAvatar(AppState.currentPatient.id);
-        } catch (error) {
-            console.error('Failed to launch avatar:', error);
-        }
-    });
+        // Fallback: Try with minimal data
+        const fallbackUrl = `avatar.html?patient_id=${AppState.currentPatient.id}`;
+        window.open(fallbackUrl, '_blank');
+    } finally {
+        // Restore button state
+        setTimeout(() => {
+            $(this).html(originalText);
+            $(this).prop('disabled', false);
+        }, 1000);
+    }
+});
 
     // Add connection button
     $('#btnAddConnection').click(() => {
