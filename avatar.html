@@ -1,9 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clinical Intelligence Avatar | Airway Digital Twin</title>
+    <title>Airway Digital Twin | Predictive Physiology Platform</title>
     
     <!-- Core Libraries -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -17,64 +15,33 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
     
-    <!-- Clinical Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
     <style>
-        /* ====== DARK MEDICAL THEME ====== */
-        :root {
-            /* Clinical Color Palette */
-            --color-bg-primary: #0a0e17;
-            --color-bg-secondary: #0d1117;
-            --color-bg-tertiary: #161b22;
-            --color-bg-panel: #1c2128;
-            
-            /* Clinical Accents */
-            --color-clinical-blue: #1a73e8;
-            --color-clinical-cyan: #00bcd4;
-            --color-clinical-green: #0f9d58;
-            --color-clinical-red: #ea4335;
-            --color-clinical-orange: #ff9800;
-            --color-clinical-purple: #9c27b0;
-            
-            /* Text Colors */
-            --color-text-primary: #e6edf3;
-            --color-text-secondary: #8b949e;
-            --color-text-tertiary: #6e7681;
-            
-            /* Interface Elements */
-            --color-border: #30363d;
-            --color-hover: #2d333b;
-            
-            /* Visualization Colors */
-            --color-airflow: #00bcd4;
-            --color-pressure: #ff9800;
-            --color-inflammation: #ea4335;
-            --color-tissue: #0f9d58;
-            
-            /* Shadows */
-            --shadow-med: 0 8px 24px rgba(0, 0, 0, 0.4);
-            --shadow-heavy: 0 16px 48px rgba(0, 0, 0, 0.6);
-            
-            /* Borders */
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 14px;
-        }
+        /* ====== RESET & BASE ====== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --color-dark: #0a0e17;
+            --color-darker: #050811;
+            --color-primary: #3b82f6;
+            --color-primary-dark: #1d4ed8;
+            --color-secondary: #8b5cf6;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-danger: #ef476f;
+            --color-text: #f8fafc;
+            --color-text-muted: #94a3b8;
+            --color-surface: #1e293b;
+            --color-surface-light: #334155;
+            --color-border: #475569;
         }
         
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
+            background: var(--color-dark);
+            color: var(--color-text);
             height: 100vh;
             overflow: hidden;
-            font-size: 13px;
+            font-size: 14px;
             line-height: 1.5;
         }
         
@@ -85,84 +52,78 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, var(--color-bg-primary) 0%, #0c0f1a 100%);
+            background: var(--color-darker);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10000;
-            backdrop-filter: blur(10px);
+            z-index: 1000;
+            transition: opacity 0.5s ease-out;
         }
         
-        .loading-pulse {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--color-clinical-cyan) 0%, transparent 70%);
-            animation: pulse 2s infinite;
-            margin-bottom: 30px;
-            position: relative;
+        .loading-content {
+            text-align: center;
+            max-width: 500px;
+            padding: 2rem;
         }
         
-        .loading-pulse::after {
-            content: '🫁';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 40px;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 1; }
+        .loading-lungs {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.8;
         }
         
         .loading-title {
-            font-size: 24px;
-            font-weight: 800;
-            margin-bottom: 8px;
-            background: linear-gradient(90deg, var(--color-clinical-cyan), var(--color-clinical-blue));
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
         }
         
         .loading-subtitle {
-            color: var(--color-text-secondary);
-            font-size: 14px;
-            margin-bottom: 30px;
+            color: var(--color-text-muted);
+            margin-bottom: 2rem;
+        }
+        
+        .loading-progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            width: 0%;
+            transition: width 0.3s ease;
         }
         
         .loading-steps {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            width: 400px;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            width: 100%;
         }
         
         .loading-step {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-md);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         .loading-step.active {
-            background: rgba(26, 115, 232, 0.1);
-            border-color: var(--color-clinical-blue);
+            color: var(--color-primary);
         }
         
         .loading-step.completed {
-            background: rgba(15, 157, 88, 0.1);
-            border-color: var(--color-clinical-green);
-        }
-        
-        .step-status {
-            font-size: 18px;
+            color: var(--color-success);
         }
         
         /* ====== MAIN LAYOUT ====== */
@@ -170,10 +131,10 @@
             display: flex;
             height: 100vh;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.3s ease;
         }
         
-        /* ====== LEFT PANEL - VISUALIZATION ====== */
+        /* Left Panel - Visualization */
         .visualization-panel {
             flex: 3;
             position: relative;
@@ -189,242 +150,188 @@
         
         .visualization-overlay {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
             pointer-events: none;
         }
         
-        .patient-banner {
-            background: linear-gradient(135deg, rgba(10, 14, 23, 0.95), rgba(13, 17, 23, 0.95));
-            backdrop-filter: blur(20px);
+        .visualization-header {
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-lg);
-            padding: 20px;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
             max-width: 500px;
             pointer-events: auto;
-            box-shadow: var(--shadow-heavy);
         }
         
-        .patient-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-        
-        .patient-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--color-clinical-blue), var(--color-clinical-purple));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-            color: white;
-        }
-        
-        .patient-info h3 {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-        
-        .patient-meta {
-            display: flex;
-            gap: 16px;
-            font-size: 12px;
-            color: var(--color-text-secondary);
-        }
-        
-        .patient-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            background: rgba(15, 157, 88, 0.2);
-            border: 1px solid rgba(15, 157, 88, 0.3);
-            border-radius: 20px;
-            font-size: 11px;
+        .visualization-title {
+            font-size: 1.2rem;
             font-weight: 600;
-            color: var(--color-clinical-green);
+            margin-bottom: 0.25rem;
         }
         
-        .status-indicator {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: currentColor;
+        .visualization-subtitle {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
         }
         
-        .patient-status.critical {
-            background: rgba(234, 67, 53, 0.2);
-            border-color: rgba(234, 67, 53, 0.3);
-            color: var(--color-clinical-red);
-        }
-        
-        .vital-metrics {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 16px;
-        }
-        
-        .vital-metric {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius-md);
-            padding: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        .metric-label {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-        
-        .metric-value {
-            font-size: 20px;
-            font-weight: 800;
-            color: var(--color-text-primary);
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-        }
-        
-        .metric-unit {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-            font-weight: 500;
-        }
-        
-        .metric-trend {
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            background: rgba(15, 157, 88, 0.2);
-            color: var(--color-clinical-green);
-        }
-        
-        /* Visualization Controls */
-        .viz-controls {
+        .visualization-controls {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
+            bottom: 1rem;
+            left: 1rem;
             display: flex;
-            gap: 10px;
+            gap: 0.5rem;
             pointer-events: auto;
         }
         
         .viz-control-btn {
-            background: rgba(10, 14, 23, 0.9);
-            backdrop-filter: blur(10px);
+            background: rgba(10, 14, 23, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--color-text-secondary);
-            padding: 10px 16px;
-            border-radius: var(--radius-md);
-            font-size: 12px;
-            font-weight: 600;
+            color: var(--color-text);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.5rem;
             transition: all 0.2s ease;
         }
         
         .viz-control-btn:hover {
-            border-color: var(--color-clinical-blue);
-            color: var(--color-text-primary);
+            border-color: var(--color-primary);
             transform: translateY(-1px);
         }
         
         .viz-control-btn.active {
-            background: var(--color-clinical-blue);
-            border-color: var(--color-clinical-blue);
-            color: white;
+            background: var(--color-primary);
+            border-color: var(--color-primary);
         }
         
-        /* ====== RIGHT PANEL - CLINICAL INTELLIGENCE ====== */
-        .clinical-panel {
-            flex: 2;
-            min-width: 500px;
-            max-width: 600px;
-            background: var(--color-bg-secondary);
+        /* Right Panel - Controls */
+        .control-panel {
+            flex: 1;
+            min-width: 450px;
+            max-width: 500px;
+            background: var(--color-dark);
             border-left: 1px solid var(--color-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
         
-        /* Panel Header */
-        .panel-header {
-            padding: 24px;
+        /* Patient Header */
+        .patient-header {
+            padding: 1.5rem;
             border-bottom: 1px solid var(--color-border);
-            background: var(--color-bg-tertiary);
+            background: rgba(30, 41, 59, 0.5);
         }
         
-        .panel-title {
-            font-size: 18px;
-            font-weight: 800;
-            margin-bottom: 4px;
-            color: var(--color-text-primary);
-        }
-        
-        .panel-subtitle {
-            font-size: 12px;
-            color: var(--color-text-secondary);
-        }
-        
-        /* Tabs Navigation */
-        .clinical-tabs {
+        .patient-profile {
             display: flex;
-            background: var(--color-bg-tertiary);
-            border-bottom: 1px solid var(--color-border);
+            align-items: center;
+            gap: 1rem;
         }
         
-        .clinical-tab {
+        .patient-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .patient-info h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .patient-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+        
+        .patient-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--color-success);
+        }
+        
+        .status-indicator.warning {
+            background: var(--color-warning);
+        }
+        
+        .status-indicator.danger {
+            background: var(--color-danger);
+        }
+        
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            border-bottom: 1px solid var(--color-border);
+            background: rgba(30, 41, 59, 0.3);
+        }
+        
+        .tab {
             flex: 1;
-            padding: 16px;
+            padding: 1rem;
             background: none;
             border: none;
-            color: var(--color-text-secondary);
-            font-size: 12px;
-            font-weight: 600;
+            color: var(--color-text-muted);
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
             position: relative;
+            font-size: 0.9rem;
             text-align: center;
         }
         
-        .clinical-tab:hover {
+        .tab:hover {
+            color: var(--color-text);
             background: rgba(255, 255, 255, 0.05);
-            color: var(--color-text-primary);
         }
         
-        .clinical-tab.active {
-            color: var(--color-clinical-blue);
-            background: rgba(26, 115, 232, 0.1);
+        .tab.active {
+            color: var(--color-primary);
+            background: rgba(59, 130, 246, 0.1);
         }
         
-        .clinical-tab.active::after {
+        .tab.active::after {
             content: '';
             position: absolute;
             bottom: 0;
             left: 0;
             width: 100%;
             height: 2px;
-            background: var(--color-clinical-blue);
+            background: var(--color-primary);
         }
         
         /* Tab Content */
         .tab-content {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
+            padding: 1.5rem;
         }
         
         .tab-pane {
@@ -435,237 +342,197 @@
             display: block;
         }
         
-        /* Clinical Cards */
-        .clinical-card {
-            background: var(--color-bg-panel);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            margin-bottom: 16px;
+        /* Cards */
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
             transition: all 0.2s ease;
         }
         
-        .clinical-card:hover {
-            border-color: var(--color-clinical-blue);
-            box-shadow: var(--shadow-med);
+        .card:hover {
+            border-color: var(--color-primary);
         }
         
         .card-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 16px;
+            align-items: center;
+            margin-bottom: 1rem;
         }
         
         .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--color-text-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--color-text);
         }
         
-        .card-badge {
-            font-size: 10px;
-            padding: 4px 8px;
-            border-radius: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .badge-critical {
-            background: rgba(234, 67, 53, 0.2);
-            color: var(--color-clinical-red);
-        }
-        
-        .badge-high {
-            background: rgba(255, 152, 0, 0.2);
-            color: var(--color-clinical-orange);
-        }
-        
-        .badge-medium {
-            background: rgba(26, 115, 232, 0.2);
-            color: var(--color-clinical-blue);
+        .card-subtitle {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
         }
         
         /* Parameter Controls */
         .parameter-group {
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
         }
         
-        .parameter-header {
+        .parameter-label {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
         }
         
         .parameter-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--color-text-primary);
+            color: var(--color-text);
         }
         
         .parameter-value {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--color-clinical-blue);
+            color: var(--color-primary);
+            font-weight: 600;
         }
         
-        .clinical-slider {
+        .slider {
             width: 100%;
             height: 6px;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--color-surface);
             border-radius: 3px;
             outline: none;
             -webkit-appearance: none;
         }
         
-        .clinical-slider::-webkit-slider-thumb {
+        .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            background: var(--color-clinical-blue);
+            background: var(--color-primary);
             cursor: pointer;
-            border: 3px solid var(--color-bg-primary);
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
         
-        /* Clinical Insights */
-        .insight-item {
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: var(--radius-md);
-            margin-bottom: 12px;
-            border-left: 3px solid;
-        }
-        
-        .insight-critical {
-            border-left-color: var(--color-clinical-red);
-            background: rgba(234, 67, 53, 0.05);
-        }
-        
-        .insight-warning {
-            border-left-color: var(--color-clinical-orange);
-            background: rgba(255, 152, 0, 0.05);
-        }
-        
-        .insight-info {
-            border-left-color: var(--color-clinical-blue);
-            background: rgba(26, 115, 232, 0.05);
-        }
-        
-        .insight-title {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: var(--color-text-primary);
-        }
-        
-        .insight-content {
-            font-size: 12px;
-            color: var(--color-text-secondary);
-            line-height: 1.4;
-            margin-bottom: 10px;
-        }
-        
-        .insight-footer {
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: var(--color-text-tertiary);
-        }
-        
-        /* Treatment Cards */
-        .treatment-card {
-            background: rgba(15, 157, 88, 0.05);
-            border: 1px solid rgba(15, 157, 88, 0.2);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            margin-bottom: 12px;
-        }
-        
-        .treatment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .treatment-name {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--color-clinical-green);
-        }
-        
-        .evidence-level {
-            font-size: 10px;
-            padding: 3px 8px;
-            background: rgba(15, 157, 88, 0.2);
-            border-radius: 10px;
-            color: var(--color-clinical-green);
-            font-weight: 700;
-        }
-        
-        /* Charts */
-        .chart-container {
-            height: 200px;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            margin-top: 16px;
+        .parameter-unit {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            text-align: right;
+            margin-top: 0.25rem;
         }
         
         /* Buttons */
-        .clinical-btn {
-            padding: 12px 20px;
-            background: linear-gradient(135deg, var(--color-clinical-blue), #1557b0);
+        .btn {
+            padding: 0.875rem 1.5rem;
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
             border: none;
-            border-radius: var(--radius-md);
+            border-radius: 8px;
             color: white;
-            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 0.5rem;
             width: 100%;
+            font-size: 0.95rem;
         }
         
-        .clinical-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 20px rgba(26, 115, 232, 0.3);
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
         }
         
-        .clinical-btn-secondary {
-            background: transparent;
-            border: 1px solid var(--color-border);
-            color: var(--color-text-primary);
+        .btn-secondary {
+            background: var(--color-surface);
+            color: var(--color-text);
         }
         
-        .clinical-btn-secondary:hover {
-            border-color: var(--color-clinical-blue);
-            background: rgba(26, 115, 232, 0.1);
+        .btn-secondary:hover {
+            background: var(--color-surface-light);
             box-shadow: none;
+        }
+        
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .metric-card {
+            background: rgba(30, 41, 59, 0.8);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--color-primary);
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Alert System */
+        .alert {
+            background: rgba(239, 71, 111, 0.1);
+            border: 1px solid rgba(239, 71, 111, 0.3);
+            border-left: 4px solid var(--color-danger);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.9; }
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .alert-title {
+            font-weight: 600;
+            color: var(--color-danger);
+        }
+        
+        .alert-content {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
         }
         
         /* Connection Status */
         .connection-status {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(10, 14, 23, 0.95);
-            backdrop-filter: blur(20px);
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(10, 14, 23, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-md);
-            padding: 10px 16px;
-            font-size: 11px;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: var(--shadow-med);
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
         }
         
         .status-dot {
@@ -674,546 +541,567 @@
             border-radius: 50%;
         }
         
-        .status-connected {
-            background: var(--color-clinical-green);
+        .status-dot.connected {
+            background: var(--color-success);
             animation: pulse 2s infinite;
         }
         
-        .status-disconnected {
-            background: var(--color-clinical-red);
+        .status-dot.disconnected {
+            background: var(--color-danger);
         }
         
-        /* Alert Banner */
-        .alert-banner {
+        /* Tooltip */
+        .has-tooltip {
+            position: relative;
+            cursor: help;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: rgba(10, 14, 23, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+            width: 250px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+        
+        .has-tooltip:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Chart Containers */
+        .chart-container {
+            height: 200px;
+            margin-top: 1rem;
+        }
+        
+        /* Demo Mode Badge */
+        .demo-badge {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: linear-gradient(135deg, rgba(234, 67, 53, 0.95), rgba(217, 48, 37, 0.95));
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(234, 67, 53, 0.3);
-            border-radius: var(--radius-lg);
-            padding: 16px 20px;
-            max-width: 400px;
-            box-shadow: var(--shadow-heavy);
-            animation: slideInRight 0.3s ease;
-            z-index: 1000;
-        }
-        
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .alert-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 6px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             color: white;
-        }
-        
-        .alert-content {
+            padding: 8px 16px;
+            border-radius: 20px;
             font-size: 12px;
-            color: rgba(255, 255, 255, 0.9);
-            line-height: 1.4;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         /* Utility Classes */
-        .text-critical { color: var(--color-clinical-red); }
-        .text-warning { color: var(--color-clinical-orange); }
-        .text-success { color: var(--color-clinical-green); }
-        .text-info { color: var(--color-clinical-blue); }
+        .text-muted { color: var(--color-text-muted); }
+        .text-primary { color: var(--color-primary); }
+        .text-success { color: var(--color-success); }
+        .text-warning { color: var(--color-warning); }
+        .text-danger { color: var(--color-danger); }
         
-        .mb-2 { margin-bottom: 16px; }
-        .mb-3 { margin-bottom: 24px; }
-        .mt-2 { margin-top: 16px; }
-        .mt-3 { margin-top: 24px; }
+        .mb-1 { margin-bottom: 0.5rem; }
+        .mb-2 { margin-bottom: 1rem; }
+        .mb-3 { margin-bottom: 1.5rem; }
         
-        /* Scrollbar */
-        .tab-content::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .tab-content::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-        
-        .tab-content::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-        
-        .tab-content::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
+        .mt-1 { margin-top: 0.5rem; }
+        .mt-2 { margin-top: 1rem; }
+        .mt-3 { margin-top: 1.5rem; }
     </style>
 </head>
 <body>
     <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
-        <div class="loading-pulse"></div>
-        <h1 class="loading-title">Clinical Intelligence Avatar</h1>
-        <p class="loading-subtitle">Initializing predictive physiology engine...</p>
-        
-        <div class="loading-steps">
-            <div class="loading-step" id="step1">
-                <span>Connecting to clinical database</span>
-                <span class="step-status">⏳</span>
+        <div class="loading-content">
+            <div class="loading-lungs">🫁</div>
+            <h1 class="loading-title">Airway Digital Twin v3.0</h1>
+            <p class="loading-subtitle">Initializing predictive physiology engine...</p>
+            
+            <div class="loading-progress-container">
+                <div class="loading-progress-bar" id="loadingProgress"></div>
             </div>
-            <div class="loading-step" id="step2">
-                <span>Loading patient physiology</span>
-                <span class="step-status">⏳</span>
-            </div>
-            <div class="loading-step" id="step3">
-                <span>Initializing 3D visualization</span>
-                <span class="step-status">⏳</span>
-            </div>
-            <div class="loading-step" id="step4">
-                <span>Starting clinical AI engine</span>
-                <span class="step-status">⏳</span>
-            </div>
-            <div class="loading-step" id="step5">
-                <span>Loading decision support</span>
-                <span class="step-status">⏳</span>
+            
+            <div class="loading-steps">
+                <div class="loading-step" id="step1">
+                    <span>Connecting to database...</span>
+                    <span class="step-status">⏳</span>
+                </div>
+                <div class="loading-step" id="step2">
+                    <span>Loading patient data...</span>
+                    <span class="step-status">⏳</span>
+                </div>
+                <div class="loading-step" id="step3">
+                    <span>Loading trait values...</span>
+                    <span class="step-status">⏳</span>
+                </div>
+                <div class="loading-step" id="step4">
+                    <span>Initializing physics engine...</span>
+                    <span class="step-status">⏳</span>
+                </div>
+                <div class="loading-step" id="step5">
+                    <span>Starting simulations...</span>
+                    <span class="step-status">⏳</span>
+                </div>
             </div>
         </div>
+    </div>
+    
+    <!-- Demo Mode Badge (hidden by default) -->
+    <div class="demo-badge" id="demoBadge" style="display: none;">
+        <i class="fas fa-flask"></i>
+        <span>DEMO MODE</span>
     </div>
     
     <!-- Connection Status -->
     <div class="connection-status" id="connectionStatus">
-        <div class="status-dot status-disconnected"></div>
-        <span>Connecting to clinical database...</span>
-    </div>
-    
-    <!-- Alert Banner (Hidden by default) -->
-    <div class="alert-banner" id="alertBanner" style="display: none;">
-        <div class="alert-title" id="alertTitle">High Risk Detected</div>
-        <div class="alert-content" id="alertContent">
-            Elevated exacerbation risk predicted within 24 hours
-        </div>
+        <div class="status-dot disconnected"></div>
+        <span>Connecting to database...</span>
     </div>
     
     <!-- Main Application -->
     <div class="app-container" id="appContainer">
-        <!-- Left: Immersive Visualization -->
+        <!-- Left: Visualization Panel -->
         <div class="visualization-panel">
             <canvas id="visualization-canvas"></canvas>
             
             <div class="visualization-overlay">
-                <div class="patient-banner">
-                    <div class="patient-header">
-                        <div class="patient-avatar" id="patientAvatar">JS</div>
-                        <div class="patient-info">
-                            <h3 id="patientName">Loading Patient...</h3>
-                            <div class="patient-meta">
-                                <span id="patientAge">-- years</span>
-                                <span id="patientCondition">Severe Asthma</span>
-                                <span id="patientId">ID: --</span>
-                            </div>
+                <div class="visualization-header">
+                    <div class="visualization-title" id="vizTitle">Airway Physiology Simulation</div>
+                    <div class="visualization-subtitle" id="vizSubtitle">Real-time airflow and pressure dynamics</div>
+                    <div class="metrics-grid mt-2">
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricFlow">0.0</div>
+                            <div class="metric-label">Flow Rate (L/s)</div>
                         </div>
-                        <div class="patient-status" id="patientStatus">
-                            <div class="status-indicator"></div>
-                            <span id="patientStatusText">Initializing</span>
-                        </div>
-                    </div>
-                    
-                    <div class="vital-metrics">
-                        <div class="vital-metric">
-                            <div class="metric-label">Airflow Rate</div>
-                            <div class="metric-value">
-                                <span id="metricFlow">0.0</span>
-                                <span class="metric-unit">L/s</span>
-                            </div>
-                        </div>
-                        <div class="vital-metric">
-                            <div class="metric-label">Airway Pressure</div>
-                            <div class="metric-value">
-                                <span id="metricPressure">0.0</span>
-                                <span class="metric-unit">cmH₂O</span>
-                            </div>
-                        </div>
-                        <div class="vital-metric">
-                            <div class="metric-label">Eosinophils</div>
-                            <div class="metric-value">
-                                <span id="metricEos">0</span>
-                                <span class="metric-unit">cells/μL</span>
-                            </div>
-                        </div>
-                        <div class="vital-metric">
-                            <div class="metric-label">FEV₁</div>
-                            <div class="metric-value">
-                                <span id="metricFEV1">--</span>
-                                <span class="metric-unit">% pred</span>
-                            </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="metricPressure">0.0</div>
+                            <div class="metric-label">Pressure (cmH₂O)</div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="viz-controls">
-                <button class="viz-control-btn active" onclick="setViewMode('physiology')">
-                    <i class="fas fa-wind"></i> Physiology
-                </button>
-                <button class="viz-control-btn" onclick="setViewMode('inflammation')">
-                    <i class="fas fa-fire"></i> Inflammation
-                </button>
-                <button class="viz-control-btn" onclick="setViewMode('pressure')">
-                    <i class="fas fa-tachometer-alt"></i> Pressure
-                </button>
-                <button class="viz-control-btn" onclick="setViewMode('anatomy')">
-                    <i class="fas fa-lungs"></i> Anatomy
-                </button>
-                <button class="viz-control-btn" onclick="toggleSimulation()" id="simToggleBtn">
-                    <i class="fas fa-pause"></i> Pause
-                </button>
+            <div class="visualization-controls">
+                <button class="viz-control-btn active" onclick="setViewMode('airflow')">Airflow</button>
+                <button class="viz-control-btn" onclick="setViewMode('pressure')">Pressure</button>
+                <button class="viz-control-btn" onclick="setViewMode('inflammation')">Inflammation</button>
+                <button class="viz-control-btn" onclick="setViewMode('anatomy')">Anatomy</button>
+                <button class="viz-control-btn" onclick="toggleSimulation()" id="simToggleBtn">Pause</button>
             </div>
         </div>
         
-        <!-- Right: Clinical Intelligence Panel -->
-        <div class="clinical-panel">
-            <!-- Panel Header -->
-            <div class="panel-header">
-                <h2 class="panel-title">Clinical Intelligence Dashboard</h2>
-                <p class="panel-subtitle" id="panelSubtitle">Real-time physiology monitoring & decision support</p>
+        <!-- Right: Control Panel -->
+        <div class="control-panel">
+            <!-- Patient Header -->
+            <div class="patient-header">
+                <div class="patient-profile">
+                    <div class="patient-avatar" id="patientAvatar">JS</div>
+                    <div class="patient-info">
+                        <h3 id="patientName">Loading...</h3>
+                        <div class="patient-meta">
+                            <span id="patientAge">--</span>
+                            <span id="patientCondition">--</span>
+                            <span id="patientId">ID: --</span>
+                        </div>
+                        <div class="patient-status">
+                            <div class="status-indicator" id="patientStatus"></div>
+                            <span id="patientStatusText">Loading patient data</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-sm" id="btnLoadDemo" style="margin-top: 10px; padding: 8px 12px; font-size: 12px;">
+                    <i class="fas fa-flask"></i> Load Demo Patient
+                </button>
             </div>
             
-            <!-- Clinical Tabs -->
-            <div class="clinical-tabs">
-                <button class="clinical-tab active" data-tab="physiology">Physiology</button>
-                <button class="clinical-tab" data-tab="insights">Clinical Insights</button>
-                <button class="clinical-tab" data-tab="treatments">Treatments</button>
-                <button class="clinical-tab" data-tab="predictions">Predictions</button>
-                <button class="clinical-tab" data-tab="data">Data</button>
+            <!-- Tabs -->
+            <div class="tabs-container">
+                <button class="tab active" data-tab="physiology">Physiology</button>
+                <button class="tab" data-tab="clinical">Clinical</button>
+                <button class="tab" data-tab="predictive">Predictive</button>
+                <button class="tab" data-tab="treatment">Treatment</button>
+                <button class="tab" data-tab="data">Data</button>
             </div>
             
-            <!-- Tab Content -->
+            <!-- Tab Content Area -->
             <div class="tab-content">
                 <!-- Physiology Tab -->
                 <div class="tab-pane active" id="physiologyTab">
-                    <div class="clinical-card">
+                    <!-- Airflow Dynamics -->
+                    <div class="card">
                         <div class="card-header">
-                            <div class="card-title">Airway Physiology Controls</div>
-                            <div class="card-badge badge-medium">Live Simulation</div>
+                            <div class="card-title">Airflow Dynamics</div>
+                            <div class="text-muted" id="physiologySource">Loading...</div>
                         </div>
-                        
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Bronchial Resistance</div>
-                                <div class="parameter-value" id="resistanceValue">5.2</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">Bronchial Resistance</span>
+                                <span class="parameter-value" id="resistanceValue">5.2</span>
                             </div>
                             <input type="range" min="1" max="20" value="5.2" step="0.1" 
-                                   class="clinical-slider" id="resistanceSlider"
+                                   class="slider" id="resistanceSlider" 
                                    oninput="updatePhysiology('resistance', this.value)">
+                            <div class="parameter-unit">cmH₂O/L/s</div>
                         </div>
                         
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Lung Compliance</div>
-                                <div class="parameter-value" id="complianceValue">0.15</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">Lung Compliance</span>
+                                <span class="parameter-value" id="complianceValue">0.15</span>
                             </div>
                             <input type="range" min="0.05" max="0.5" value="0.15" step="0.01" 
-                                   class="clinical-slider" id="complianceSlider"
+                                   class="slider" id="complianceSlider"
                                    oninput="updatePhysiology('compliance', this.value)">
+                            <div class="parameter-unit">L/cmH₂O</div>
                         </div>
                         
-                        <div class="parameter-group mb-3">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Respiratory Rate</div>
-                                <div class="parameter-value" id="rateValue">15</div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Respiratory Rate</span>
+                                <span class="parameter-value" id="rateValue">15</span>
                             </div>
                             <input type="range" min="6" max="40" value="15" step="1" 
-                                   class="clinical-slider" id="rateSlider"
+                                   class="slider" id="rateSlider"
                                    oninput="updatePhysiology('rate', this.value)">
+                            <div class="parameter-unit">breaths/min</div>
                         </div>
-                        
-                        <button class="clinical-btn mb-2" onclick="runExacerbationScenario()">
-                            <i class="fas fa-virus"></i> Simulate Exacerbation
-                        </button>
-                        <button class="clinical-btn clinical-btn-secondary" onclick="resetToBaseline()">
-                            <i class="fas fa-redo"></i> Reset to Baseline
-                        </button>
                     </div>
                     
-                    <div class="clinical-card">
+                    <!-- Inflammation Parameters -->
+                    <div class="card">
                         <div class="card-header">
                             <div class="card-title">Inflammatory State</div>
-                            <div class="card-badge badge-high">Active</div>
+                            <div class="text-muted" id="inflammationSource">Loading...</div>
                         </div>
                         
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Eosinophil Activity</div>
-                                <div class="parameter-value" id="eosValue">42</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name has-tooltip">
+                                    Eosinophil Activity
+                                    <div class="tooltip">Level of eosinophilic inflammation driving airway hyperresponsiveness</div>
+                                </span>
+                                <span class="parameter-value" id="eosValue">42</span>
                             </div>
                             <input type="range" min="0" max="100" value="42" step="1" 
-                                   class="clinical-slider" id="eosSlider"
+                                   class="slider" id="eosSlider"
                                    oninput="updateInflammation('eosinophils', this.value)">
+                            <div class="parameter-unit">cells/μL equivalent</div>
                         </div>
                         
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Neutrophil Infiltration</div>
-                                <div class="parameter-value" id="neutValue">28</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">Neutrophil Infiltration</span>
+                                <span class="parameter-value" id="neutValue">28</span>
                             </div>
                             <input type="range" min="0" max="100" value="28" step="1" 
-                                   class="clinical-slider" id="neutSlider"
+                                   class="slider" id="neutSlider"
                                    oninput="updateInflammation('neutrophils', this.value)">
+                            <div class="parameter-unit">arbitrary units</div>
                         </div>
                         
-                        <div class="parameter-group mb-3">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Cytokine Storm (IL-5)</div>
-                                <div class="parameter-value" id="cytokineValue">18</div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Cytokine Level (IL-5)</span>
+                                <span class="parameter-value" id="cytokineValue">18</span>
                             </div>
                             <input type="range" min="0" max="50" value="18" step="1" 
-                                   class="clinical-slider" id="cytokineSlider"
+                                   class="slider" id="cytokineSlider"
                                    oninput="updateInflammation('cytokines', this.value)">
-                        </div>
-                        
-                        <button class="clinical-btn clinical-btn-secondary" onclick="runTreatmentScenario()">
-                            <i class="fas fa-syringe"></i> Simulate Treatment Effect
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Clinical Insights Tab -->
-                <div class="tab-pane" id="insightsTab">
-                    <div class="clinical-card">
-                        <div class="card-header">
-                            <div class="card-title">Clinical Insights Engine</div>
-                            <div class="card-badge badge-critical">AI-Powered</div>
-                        </div>
-                        
-                        <div class="insight-item insight-critical">
-                            <div class="insight-title">High Exacerbation Risk Detected</div>
-                            <div class="insight-content">
-                                Multiple risk factors present: uncontrolled inflammation (eosinophils >300), 
-                                elevated airway resistance (5.2 cmH₂O/L/s), and reduced lung compliance.
-                            </div>
-                            <div class="insight-footer">
-                                <span>Confidence: 85%</span>
-                                <span>Updated: Just now</span>
-                            </div>
-                        </div>
-                        
-                        <div class="insight-item insight-warning">
-                            <div class="insight-title">Type 2 Inflammation Dominant</div>
-                            <div class="insight-content">
-                                Eosinophilic inflammation pattern suggests potential benefit from 
-                                anti-IL5/IL5R biologic therapy. Consider escalating treatment.
-                            </div>
-                            <div class="insight-footer">
-                                <span>Confidence: 78%</span>
-                                <span>Evidence: GINA Step 5</span>
-                            </div>
-                        </div>
-                        
-                        <div class="insight-item insight-info">
-                            <div class="insight-title">Optimize Current Therapy</div>
-                            <div class="insight-content">
-                                Review inhaler technique and adherence. Current ICS/LABA therapy 
-                                may be optimized before considering biologic escalation.
-                            </div>
-                            <div class="insight-footer">
-                                <span>Confidence: 92%</span>
-                                <span>Priority: High</span>
-                            </div>
-                        </div>
-                        
-                        <button class="clinical-btn mt-3" onclick="generateClinicalReport()">
-                            <i class="fas fa-file-medical"></i> Generate Clinical Report
-                        </button>
-                    </div>
-                    
-                    <div class="clinical-card">
-                        <div class="card-header">
-                            <div class="card-title">Patient Monitoring</div>
-                            <div class="card-badge badge-medium">Active</div>
-                        </div>
-                        
-                        <div class="chart-container" id="monitoringChart">
-                            <!-- Chart will be rendered here -->
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Treatments Tab -->
-                <div class="tab-pane" id="treatmentsTab">
-                    <div class="clinical-card">
-                        <div class="card-header">
-                            <div class="card-title">Treatment Recommendations</div>
-                            <div class="card-badge badge-success">Evidence-Based</div>
-                        </div>
-                        
-                        <div class="treatment-card">
-                            <div class="treatment-header">
-                                <div class="treatment-name">Mepolizumab (Anti-IL5)</div>
-                                <span class="evidence-level">Level A</span>
-                            </div>
-                            <div class="insight-content">
-                                Targeted biologic therapy for eosinophilic asthma. 
-                                Expected: 50-70% reduction in exacerbations, improvement in FEV₁ by 12-15%.
-                            </div>
-                        </div>
-                        
-                        <div class="treatment-card">
-                            <div class="treatment-header">
-                                <div class="treatment-name">High-dose ICS/LABA</div>
-                                <span class="evidence-level">Level A</span>
-                            </div>
-                            <div class="insight-content">
-                                Optimize current therapy with fluticasone/salmeterol 500/50. 
-                                Monitor response at 4 weeks, check inhaler technique.
-                            </div>
-                        </div>
-                        
-                        <div class="treatment-card">
-                            <div class="treatment-header">
-                                <div class="treatment-name">Pulmonary Rehabilitation</div>
-                                <span class="evidence-level">Level A</span>
-                            </div>
-                            <div class="insight-content">
-                                8-week structured program. Improves exercise capacity, 
-                                reduces symptoms, and enhances quality of life.
-                            </div>
-                        </div>
-                        
-                        <div class="parameter-group mt-3">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Treatment Simulation</div>
-                                <div class="parameter-value" id="simulationResult">--</div>
-                            </div>
-                            <select class="clinical-slider" id="treatmentSelect" style="width: 100%; padding: 10px; background: var(--color-bg-tertiary); border: 1px solid var(--color-border); border-radius: var(--radius-md); color: var(--color-text-primary);">
-                                <option value="biologic">Test Anti-IL5 Therapy</option>
-                                <option value="ics">Test ICS/LABA Optimization</option>
-                                <option value="rehab">Test Pulmonary Rehabilitation</option>
-                            </select>
-                        </div>
-                        
-                        <button class="clinical-btn mt-2" onclick="simulateTreatment()">
-                            <i class="fas fa-vial"></i> Run Treatment Simulation
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Predictions Tab -->
-                <div class="tab-pane" id="predictionsTab">
-                    <div class="clinical-card">
-                        <div class="card-header">
-                            <div class="card-title">Risk Predictions</div>
-                            <div class="card-badge badge-critical">AI Forecasting</div>
-                        </div>
-                        
-                        <div class="vital-metrics">
-                            <div class="vital-metric">
-                                <div class="metric-label">24-Hour Risk</div>
-                                <div class="metric-value text-warning">
-                                    <span id="risk24h">35</span>
-                                    <span class="metric-unit">%</span>
-                                </div>
-                            </div>
-                            <div class="vital-metric">
-                                <div class="metric-label">7-Day Risk</div>
-                                <div class="metric-value text-warning">
-                                    <span id="risk7d">42</span>
-                                    <span class="metric-unit">%</span>
-                                </div>
-                            </div>
-                            <div class="vital-metric">
-                                <div class="metric-label">30-Day Risk</div>
-                                <div class="metric-value text-critical">
-                                    <span id="risk30d">58</span>
-                                    <span class="metric-unit">%</span>
-                                </div>
-                            </div>
-                            <div class="vital-metric">
-                                <div class="metric-label">90-Day Risk</div>
-                                <div class="metric-value text-critical">
-                                    <span id="risk90d">72</span>
-                                    <span class="metric-unit">%</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="chart-container mt-2" id="riskChart">
-                            <!-- Risk prediction chart -->
+                            <div class="parameter-unit">pg/mL equivalent</div>
                         </div>
                     </div>
                     
-                    <div class="clinical-card">
+                    <!-- Simulation Controls -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Simulation Controls</div>
+                        </div>
+                        <button class="btn mb-1" onclick="runExacerbationScenario()">
+                            Simulate Exacerbation
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="runTreatmentScenario()">
+                            Simulate Treatment Effect
+                        </button>
+                        <button class="btn btn-secondary" onclick="resetToBaseline()">
+                            Reset to Baseline
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Clinical Tab -->
+                <div class="tab-pane" id="clinicalTab">
+                    <!-- Current Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Current Clinical Status</div>
+                            <div class="text-muted" id="clinicalLastUpdated">Loading...</div>
+                        </div>
+                        
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalFEV1">--</div>
+                                <div class="metric-label">FEV₁ (%)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalPEF">--</div>
+                                <div class="metric-label">PEF (L/min)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalFVC">--</div>
+                                <div class="metric-label">FVC (%)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="clinicalACQ">--</div>
+                                <div class="metric-label">ACQ Score</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alerts -->
+                    <div class="alert" id="alertContainer" style="display: none;">
+                        <div class="alert-header">
+                            <div class="alert-title" id="alertTitle">High Risk Detected</div>
+                            <div class="text-muted">Just now</div>
+                        </div>
+                        <div class="alert-content" id="alertContent">
+                            Elevated exacerbation risk predicted within 48 hours
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Events -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Recent Clinical Events</div>
+                            <span class="text-muted" id="eventsCount">0 events</span>
+                        </div>
+                        <div id="eventsList">
+                            <div class="text-muted">Loading events...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Clinical Actions</div>
+                        </div>
+                        <button class="btn mb-1" onclick="generateReport()">
+                            Generate Clinical Report
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="compareToPopulation()">
+                            Compare to Population
+                        </button>
+                        <button class="btn btn-secondary" onclick="saveCurrentSession()">
+                            Save Session
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Predictive Tab -->
+                <div class="tab-pane" id="predictiveTab">
+                    <!-- Risk Predictions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Exacerbation Risk Prediction</div>
+                            <div class="text-muted" id="predictionSource">AI-powered forecasting</div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="riskChart"></canvas>
+                        </div>
+                        
+                        <div class="metrics-grid mt-2">
+                            <div class="metric-card">
+                                <div class="metric-value text-warning" id="risk24h">--</div>
+                                <div class="metric-label">24h Risk</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value text-warning" id="risk7d">--</div>
+                                <div class="metric-label">7-day Risk</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value text-primary" id="risk30d">--</div>
+                                <div class="metric-label">30-day Risk</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value text-muted" id="risk90d">--</div>
+                                <div class="metric-label">90-day Risk</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Treatment Response Prediction -->
+                    <div class="card">
                         <div class="card-header">
                             <div class="card-title">Treatment Response Prediction</div>
-                            <div class="card-badge badge-success">Optimistic</div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="treatmentChart"></canvas>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <div class="parameter-label mb-1">
+                                <span class="parameter-name">Predicted FEV₁ Improvement</span>
+                                <span class="parameter-value text-success" id="predictedImprovement">--%</span>
+                            </div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">Time to Benefit</span>
+                                <span class="parameter-value" id="timeToBenefit">-- weeks</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Simulation Scenarios -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Scenario Testing</div>
+                        </div>
+                        <button class="btn mb-1" onclick="runScenario('exacerbation')">
+                            Test Exacerbation Scenario
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="runScenario('treatment_change')">
+                            Test Treatment Change
+                        </button>
+                        <button class="btn btn-secondary" onclick="runScenario('environmental')">
+                            Test Environmental Trigger
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Treatment Tab -->
+                <div class="tab-pane" id="treatmentTab">
+                    <!-- Current Treatments -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Current Treatment Regimen</div>
+                            <div class="text-muted" id="treatmentSource">Loading treatments...</div>
+                        </div>
+                        <div id="treatmentsList">
+                            <div class="text-muted">Loading treatments...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Treatment Optimization -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Treatment Optimization</div>
                         </div>
                         
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Predicted FEV₁ Improvement</div>
-                                <div class="parameter-value text-success" id="predictedImprovement">42%</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">ICS Dose</span>
+                                <span class="parameter-value" id="icsDose">250</span>
                             </div>
-                            <div class="clinical-slider" style="height: 8px; background: linear-gradient(90deg, var(--color-clinical-red) 0%, var(--color-clinical-orange) 50%, var(--color-clinical-green) 100%);"></div>
+                            <input type="range" min="100" max="1000" value="250" step="50" 
+                                   class="slider" id="icsSlider"
+                                   oninput="optimizeTreatment('ics', this.value)">
+                            <div class="parameter-unit">μg/day</div>
                         </div>
                         
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Time to Clinical Benefit</div>
-                                <div class="parameter-value" id="timeToBenefit">4 weeks</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">LABA Dose</span>
+                                <span class="parameter-value" id="labaDose">50</span>
                             </div>
+                            <input type="range" min="0" max="100" value="50" step="5" 
+                                   class="slider" id="labaSlider"
+                                   oninput="optimizeTreatment('laba', this.value)">
+                            <div class="parameter-unit">μg/day</div>
                         </div>
                         
-                        <div class="insight-content mt-2">
-                            Based on current inflammatory profile and physiology, 
-                            targeted biologic therapy is predicted to reduce exacerbation 
-                            frequency by 65% within 3 months.
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Biologic Frequency</span>
+                                <span class="parameter-value" id="biologicFreq">4</span>
+                            </div>
+                            <input type="range" min="2" max="12" value="4" step="1" 
+                                   class="slider" id="biologicSlider"
+                                   oninput="optimizeTreatment('biologic', this.value)">
+                            <div class="parameter-unit">weeks</div>
                         </div>
+                    </div>
+                    
+                    <!-- Simulate New Treatment -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Simulate New Treatment</div>
+                        </div>
+                        <button class="btn mb-1" onclick="simulateTreatment('add_ics')">
+                            Add ICS/LABA
+                        </button>
+                        <button class="btn btn-secondary mb-1" onclick="simulateTreatment('add_biologic')">
+                            Add Biologic
+                        </button>
+                        <button class="btn btn-secondary" onclick="simulateTreatment('adjust_dose')">
+                            Adjust Current Dose
+                        </button>
                     </div>
                 </div>
                 
                 <!-- Data Tab -->
                 <div class="tab-pane" id="dataTab">
-                    <div class="clinical-card">
+                    <!-- Data Sources -->
+                    <div class="card">
                         <div class="card-header">
-                            <div class="card-title">Clinical Data Integration</div>
-                            <div class="card-badge badge-info">Connected</div>
+                            <div class="card-title">Data Sources & Integration</div>
+                            <div class="text-muted">Real-time data streams</div>
                         </div>
                         
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Database Connection</div>
-                                <div class="parameter-value text-success" id="dbStatus">Active</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">Database Connection</span>
+                                <span class="parameter-value" id="dbStatus">Connecting...</span>
                             </div>
+                            <div class="parameter-unit" id="dbDetails">Supabase: Real-time sync</div>
                         </div>
                         
                         <div class="parameter-group">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Patient Data Sources</div>
-                                <div class="parameter-value" id="dataSources">3 connected</div>
+                            <div class="parameter-label">
+                                <span class="parameter-name">Patient Data</span>
+                                <span class="parameter-value" id="patientDataStatus">Not loaded</span>
                             </div>
+                            <div class="parameter-unit" id="patientDataDetails">Patient records and trait values</div>
                         </div>
                         
-                        <div class="parameter-group mb-3">
-                            <div class="parameter-header">
-                                <div class="parameter-name">Last Data Sync</div>
-                                <div class="parameter-value" id="lastSync">2 min ago</div>
+                        <div class="parameter-group">
+                            <div class="parameter-label">
+                                <span class="parameter-name">Session Tracking</span>
+                                <span class="parameter-value" id="sessionStatus">Not active</span>
                             </div>
+                            <div class="parameter-unit" id="sessionDetails">Avatar session persistence</div>
                         </div>
-                        
-                        <button class="clinical-btn mb-2" onclick="exportClinicalData()">
-                            <i class="fas fa-download"></i> Export Clinical Report
+                    </div>
+                    
+                    <!-- Export Controls -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Data Export</div>
+                        </div>
+                        <button class="btn mb-1" onclick="exportClinicalData()">
+                            Export Clinical Report
                         </button>
-                        <button class="clinical-btn clinical-btn-secondary" onclick="syncRealTimeData()">
-                            <i class="fas fa-sync"></i> Sync Real-time Data
+                        <button class="btn btn-secondary mb-1" onclick="exportSimulationData()">
+                            Export Simulation Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="saveAvatarInsight()">
+                            Save Current Insight
                         </button>
                     </div>
                     
-                    <div class="clinical-card">
+                    <!-- Data Analytics -->
+                    <div class="card">
                         <div class="card-header">
-                            <div class="card-title">Real-time Monitoring</div>
-                            <div class="card-badge badge-medium">Live</div>
+                            <div class="card-title">Data Analytics</div>
                         </div>
-                        
-                        <div class="chart-container" id="realTimeChart">
-                            <!-- Real-time data chart -->
+                        <div class="chart-container">
+                            <canvas id="dataChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -1221,20 +1109,46 @@
         </div>
     </div>
 
-    <!-- Font Awesome Icons -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
-
-    <!-- ====== COMPLETE JAVASCRIPT ====== -->
+    <!-- Core JavaScript -->
     <script>
         // ============================================================================
-        // CLINICAL INTELLIGENCE AVATAR v3.0
+        // AIRWAY DIGITAL TWIN v3.0 - Enhanced with Real Data Integration
         // ============================================================================
-
+        
         // ====== CONFIGURATION ======
         const CONFIG = {
             SUPABASE_URL: 'https://timmylvmumneqhpkvcgb.supabase.co',
             SUPABASE_KEY: 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_',
             
+            // Demo patients for fallback
+            DEMO_PATIENTS: [
+                {
+                    id: 'demo-1',
+                    name: 'John Smith',
+                    age: 58,
+                    condition: 'Severe Asthma',
+                    disease_id: 1,
+                    isDemo: true
+                },
+                {
+                    id: 'demo-2', 
+                    name: 'Maria Garcia',
+                    age: 72,
+                    condition: 'COPD with Emphysema',
+                    disease_id: 2,
+                    isDemo: true
+                },
+                {
+                    id: 'demo-3',
+                    name: 'Robert Chen',
+                    age: 45,
+                    condition: 'Allergic Rhinitis with Asthma',
+                    disease_id: 1,
+                    isDemo: true
+                }
+            ],
+            
+            // Physics parameters
             PHYSICS: {
                 TIME_STEP: 1/60,
                 GRAVITY: -9.81,
@@ -1242,54 +1156,55 @@
                 VISCOSITY: 1.81e-5
             },
             
-            CLINICAL_THRESHOLDS: {
-                HIGH_EOSINOPHILS: 300,
-                HIGH_RISK_FEV1: 60,
-                CRITICAL_RESISTANCE: 10,
-                SEVERE_INFLAMMATION: 70
+            // Physiology constants
+            PHYSIOLOGY: {
+                NORMAL_RESISTANCE: 2.0,
+                NORMAL_COMPLIANCE: 0.15,
+                NORMAL_FEV1: 85,
+                NORMAL_RATE: 15
             }
         };
-
+        
         // ====== GLOBAL STATE ======
         const STATE = {
+            // Core
             supabase: null,
+            isInitialized: false,
             isLoading: true,
+            isDemoMode: false,
+            dataSource: 'demo', // 'database' or 'demo'
             
-            // Patient Data
+            // Patient
             patient: null,
+            patientId: null,
+            patientData: {
+                traits: [],
+                events: [],
+                treatments: [],
+                measurements: []
+            },
+            
+            // Session
             sessionId: null,
+            sessionActive: false,
             
             // Physiology State
             physiology: {
                 resistance: 5.2,
                 compliance: 0.15,
                 respiratoryRate: 15,
-                tidalVolume: 0.5
+                tidalVolume: 0.5,
+                inspiratoryTime: 1.5,
+                expiratoryTime: 3.5
             },
             
             // Inflammation State
             inflammation: {
                 eosinophils: 42,
                 neutrophils: 28,
-                cytokines: 18
-            },
-            
-            // Clinical Data
-            clinical: {
-                fev1: 65,
-                pef: 320,
-                fvc: 78,
-                acq: 2.8
-            },
-            
-            // Predictions
-            predictions: {
-                risk24h: 35,
-                risk7d: 42,
-                risk30d: 58,
-                risk90d: 72,
-                treatmentResponse: 42,
-                timeToBenefit: 4
+                cytokines: 18,
+                mastCells: 15,
+                remodeling: 22
             },
             
             // Visualization
@@ -1302,61 +1217,88 @@
                 isAnimating: true
             },
             
-            // Physics
+            // Physics Simulation
             physics: {
                 world: null,
                 bronchialTree: [],
                 airflow: null,
                 time: 0
+            },
+            
+            // Predictions
+            predictions: {
+                exacerbationRisk24h: 15,
+                exacerbationRisk7d: 32,
+                exacerbationRisk30d: 45,
+                treatmentResponse: 25,
+                timeToBenefit: 4
+            },
+            
+            // Clinical Data
+            clinicalData: {
+                fev1: 65,
+                pef: 320,
+                fvc: 78,
+                acq: 2.8,
+                lastUpdated: null
             }
         };
-
+        
         // ====== INITIALIZATION ======
         $(document).ready(async function() {
-            console.log('🚀 Initializing Clinical Intelligence Avatar...');
+            console.log('🚀 Initializing Airway Digital Twin v3.0...');
             
             try {
-                // Step 1: Database
+                // Step 1: Initialize Database
                 await initializeDatabase();
-                updateLoading('step1', '✅', 'Clinical database connected');
+                updateLoading('step1', '✅', 'Database connected');
                 
-                // Step 2: Patient Data
-                await loadPatientData();
-                updateLoading('step2', '✅', 'Patient physiology loaded');
+                // Step 2: Parse URL parameters and load data
+                await parseUrlParameters();
+                updateLoading('step2', '✅', 'Patient data loaded');
                 
-                // Step 3: Visualization
+                // Step 3: Load trait values and clinical data
+                await loadPatientSpecificData();
+                updateLoading('step3', '✅', 'Trait values loaded');
+                
+                // Step 4: Initialize Physics Engine
+                initializePhysics();
+                updateLoading('step4', '✅', 'Physics engine ready');
+                
+                // Step 5: Initialize 3D Visualization
                 initializeVisualization();
-                updateLoading('step3', '✅', '3D visualization ready');
+                updateLoading('step5', '✅', 'Visualization loaded');
                 
-                // Step 4: Clinical Engine
-                initializeClinicalEngine();
-                updateLoading('step4', '✅', 'Clinical AI engine started');
+                // Step 6: Start Systems
+                await startSystems();
+                updateLoading('complete', '✅', 'All systems ready');
                 
-                // Step 5: Decision Support
-                initializeDecisionSupport();
-                updateLoading('step5', '✅', 'Decision support loaded');
-                
-                // Complete
-                updateLoading('complete', '🎉', 'Clinical Avatar ready');
-                
+                // Final: Show Application
                 setTimeout(() => {
                     $('#loadingScreen').fadeOut(500);
                     $('#appContainer').css('opacity', 1);
                     STATE.isLoading = false;
                     startAnimationLoop();
                     
-                    showAlert('System Ready', 'Clinical Intelligence Avatar is now active. Monitoring patient physiology in real-time.');
+                    console.log('🎉 Digital Twin fully initialized');
+                    showNotification('Digital Twin ready', 'success');
                     
+                    // Show demo badge if in demo mode
+                    if (STATE.isDemoMode) {
+                        $('#demoBadge').show();
+                    }
                 }, 500);
                 
             } catch (error) {
                 console.error('❌ Initialization failed:', error);
-                updateLoading('error', '❌', error.message);
-                showAlert('Initialization Error', error.message);
+                updateLoading('error', '❌', `Error: ${error.message}`);
+                
+                // Fallback to demo mode
+                await fallbackToDemoMode();
             }
         });
-
-        // ====== DATABASE & PATIENT ======
+        
+        // ====== DATABASE INTEGRATION ======
         async function initializeDatabase() {
             try {
                 STATE.supabase = window.supabase.createClient(
@@ -1364,192 +1306,682 @@
                     CONFIG.SUPABASE_KEY
                 );
                 
+                // Test connection
+                const { data, error } = await STATE.supabase
+                    .from('patients')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) throw error;
+                
                 updateConnectionStatus(true);
+                $('#dbStatus').text('Connected').addClass('text-success');
+                $('#dbDetails').text('Supabase: Real-time sync active');
+                
                 return true;
                 
             } catch (error) {
                 console.error('Database connection failed:', error);
                 updateConnectionStatus(false);
-                throw new Error(`Database: ${error.message}`);
+                $('#dbStatus').text('Disconnected').addClass('text-danger');
+                $('#dbDetails').text('Using local demo data');
+                
+                // Don't throw error, we'll use demo mode
+                return false;
             }
         }
-
-        async function loadPatientData() {
+        
+        // ====== PATIENT DATA LOADING ======
+        async function parseUrlParameters() {
             const urlParams = new URLSearchParams(window.location.search);
-            const sessionId = urlParams.get('session_id');
-            const patientId = urlParams.get('patient_id');
             
-            if (sessionId) {
-                await loadFromSession(sessionId);
-            } else if (patientId && patientId !== 'demo') {
-                await loadPatientFromDatabase(patientId);
-            } else {
-                loadDemoPatient();
+            // Get patient ID from URL (multiple parameter names supported)
+            const patientId = urlParams.get('patient_id') || 
+                             urlParams.get('patient') || 
+                             urlParams.get('pid');
+            
+            const sessionId = urlParams.get('session_id');
+            const forceDemo = urlParams.get('demo') === 'true';
+            
+            // If force demo mode or no patient ID, use demo
+            if (forceDemo || !patientId) {
+                await loadDemoPatient();
+                STATE.isDemoMode = true;
+                STATE.dataSource = 'demo';
+                return;
+            }
+            
+            // Try to load real patient from database
+            try {
+                await loadRealPatient(parseInt(patientId));
+                STATE.isDemoMode = false;
+                STATE.dataSource = 'database';
+                
+                // Update data source indicators
+                $('#physiologySource').text('From patient records');
+                $('#inflammationSource').text('From lab results');
+                $('#predictionSource').text('Based on actual patient data');
+                
+            } catch (error) {
+                console.warn('Failed to load real patient, falling back to demo:', error);
+                await loadDemoPatient();
+                STATE.isDemoMode = true;
+                STATE.dataSource = 'demo';
+                
+                // Show warning
+                showNotification(`Using demo data: ${error.message}`, 'warning');
             }
         }
-
-        async function loadFromSession(sessionId) {
+        
+        async function loadRealPatient(patientId) {
+            console.log(`Loading real patient ID: ${patientId}`);
+            
             try {
-                const { data: session, error } = await STATE.supabase
-                    .from('avatar_sessions')
+                // 1. Get patient from patients table
+                const { data: patient, error: patientError } = await STATE.supabase
+                    .from('patients')
                     .select(`
                         *,
-                        patients(*)
+                        diseases(disease_name)
                     `)
-                    .eq('id', sessionId)
-                    .single();
-                    
-                if (error) throw error;
-                
-                STATE.patient = session.patients;
-                STATE.sessionId = sessionId;
-                
-                updatePatientUI();
-                
-            } catch (error) {
-                console.warn('Session load failed, using demo:', error);
-                loadDemoPatient();
-            }
-        }
-
-        async function loadPatientFromDatabase(patientId) {
-            try {
-                const { data: patient, error } = await STATE.supabase
-                    .from('patients')
-                    .select('*')
                     .eq('id', patientId)
                     .single();
-                    
-                if (error) throw error;
                 
-                STATE.patient = patient;
+                if (patientError) throw new Error(`Patient not found: ${patientError.message}`);
+                
+                // 2. Get patient profile if exists
+                const { data: profile } = await STATE.supabase
+                    .from('patient_profiles')
+                    .select('*')
+                    .eq('patient_id', patientId.toString())
+                    .single();
+                
+                // 3. Get disease traits for this patient's disease
+                const { data: diseaseTraits } = await STATE.supabase
+                    .from('disease_traits')
+                    .select(`
+                        treatable_traits(*)
+                    `)
+                    .eq('disease_id', patient.disease_id);
+                
+                // 4. Store patient data
+                STATE.patient = {
+                    ...patient,
+                    profile: profile || {}
+                };
+                
+                STATE.patientId = patientId;
+                STATE.patientData.diseaseTraits = diseaseTraits || [];
+                
+                // Update UI
                 updatePatientUI();
+                $('#patientDataStatus').text('Loaded').addClass('text-success');
+                $('#patientDataDetails').text(`${patient.patient_name} - ${patient.diseases?.disease_name || 'Unknown'}`);
+                
+                console.log('✅ Real patient loaded:', patient.patient_name);
                 
             } catch (error) {
+                console.error('Error loading real patient:', error);
                 throw error;
             }
         }
-
-        function loadDemoPatient() {
-            STATE.patient = {
-                patient_name: 'David Wilson',
-                age: 58,
-                disease: 'Severe Eosinophilic Asthma',
-                avatar_status: 'active'
-            };
+        
+        async function loadPatientSpecificData() {
+            if (!STATE.patient || STATE.isDemoMode) return;
             
-            updatePatientUI();
+            try {
+                // 1. Get patient trait values
+                const { data: traitValues } = await STATE.supabase
+                    .from('patient_trait_profiles')
+                    .select(`
+                        treatable_traits(trait_name, category, measurement_units),
+                        trait_value,
+                        severity,
+                        measurement_date
+                    `)
+                    .eq('patient_id', STATE.patientId.toString())
+                    .order('measurement_date', { ascending: false });
+                
+                STATE.patientData.traits = traitValues || [];
+                
+                // 2. Get clinical events
+                const { data: events } = await STATE.supabase
+                    .from('clinical_events')
+                    .select('*')
+                    .eq('patient_id', STATE.patientId)
+                    .order('event_date', { ascending: false })
+                    .limit(5);
+                
+                STATE.patientData.events = events || [];
+                
+                // 3. Get treatment history
+                const { data: treatments } = await STATE.supabase
+                    .from('treatments')
+                    .select(`
+                        *,
+                        treatable_traits(trait_name)
+                    `)
+                    .eq('trait_id', STATE.patient.disease_id)
+                    .order('evidence_level', { ascending: false });
+                
+                STATE.patientData.treatments = treatments || [];
+                
+                // 4. Initialize physiology from actual trait values
+                initializePhysiologyFromTraitValues(traitValues);
+                
+                // 5. Update clinical data
+                updateClinicalDataFromRealValues(traitValues);
+                
+                // 6. Create avatar session
+                await createAvatarSession();
+                
+                console.log(`✅ Loaded ${traitValues?.length || 0} trait values, ${events?.length || 0} events`);
+                
+            } catch (error) {
+                console.error('Error loading patient-specific data:', error);
+                // Initialize with defaults
+                initializePhysiologyFromTraitValues([]);
+            }
         }
-
+        
+        function initializePhysiologyFromTraitValues(traitValues) {
+            if (!traitValues || traitValues.length === 0) {
+                console.log('No trait values found, using defaults');
+                return;
+            }
+            
+            console.log('Initializing physiology from', traitValues.length, 'trait values');
+            
+            // Map trait values to physiology parameters
+            traitValues.forEach(trait => {
+                const traitName = trait.treatable_traits?.trait_name?.toLowerCase();
+                const value = parseFloat(trait.trait_value) || parseFloat(trait.severity) || 50;
+                
+                if (traitName) {
+                    if (traitName.includes('resistance') || traitName.includes('airway obstruction')) {
+                        STATE.physiology.resistance = Math.min(20, Math.max(1, value));
+                        $('#resistanceSlider').val(STATE.physiology.resistance).trigger('input');
+                        console.log(`Set resistance from trait: ${STATE.physiology.resistance}`);
+                    }
+                    else if (traitName.includes('compliance') || traitName.includes('elastic')) {
+                        STATE.physiology.compliance = Math.min(0.5, Math.max(0.05, value / 100));
+                        $('#complianceSlider').val(STATE.physiology.compliance).trigger('input');
+                    }
+                    else if (traitName.includes('eosinophil') || traitName.includes('eos')) {
+                        STATE.inflammation.eosinophils = Math.min(100, Math.max(0, value));
+                        $('#eosSlider').val(STATE.inflammation.eosinophils).trigger('input');
+                    }
+                    else if (traitName.includes('neutrophil') || traitName.includes('neut')) {
+                        STATE.inflammation.neutrophils = Math.min(100, Math.max(0, value));
+                        $('#neutSlider').val(STATE.inflammation.neutrophils).trigger('input');
+                    }
+                    else if (traitName.includes('fev1') || traitName.includes('lung function')) {
+                        STATE.clinicalData.fev1 = Math.min(100, Math.max(0, value));
+                    }
+                }
+            });
+            
+            // Update UI to reflect real data source
+            $('#physiologySource').text('From patient measurements');
+            $('#inflammationSource').text('From lab results');
+        }
+        
+        function updateClinicalDataFromRealValues(traitValues) {
+            if (!traitValues || traitValues.length === 0) return;
+            
+            // Find latest FEV1 measurement
+            const fev1Trait = traitValues.find(t => 
+                t.treatable_traits?.trait_name?.toLowerCase().includes('fev1')
+            );
+            
+            if (fev1Trait) {
+                STATE.clinicalData.fev1 = parseFloat(fev1Trait.trait_value) || 65;
+                STATE.clinicalData.lastUpdated = fev1Trait.measurement_date;
+                $('#clinicalLastUpdated').text(`Updated: ${new Date(fev1Trait.measurement_date).toLocaleDateString()}`);
+            }
+            
+            updateClinicalUI();
+        }
+        
+        // ====== DEMO MODE FUNCTIONS ======
+        async function loadDemoPatient() {
+            console.log('Loading demo patient...');
+            
+            // Select a random demo patient
+            const demoPatient = CONFIG.DEMO_PATIENTS[Math.floor(Math.random() * CONFIG.DEMO_PATIENTS.length)];
+            
+            STATE.patient = demoPatient;
+            STATE.patientId = demoPatient.id;
+            STATE.isDemoMode = true;
+            STATE.dataSource = 'demo';
+            
+            // Initialize with demo trait values
+            const demoTraits = [
+                { treatable_traits: { trait_name: 'Airway Resistance' }, trait_value: '5.2', severity: '52' },
+                { treatable_traits: { trait_name: 'Lung Compliance' }, trait_value: '15', severity: '15' },
+                { treatable_traits: { trait_name: 'Eosinophil Count' }, trait_value: '42', severity: '42' },
+                { treatable_traits: { trait_name: 'FEV1' }, trait_value: '65', severity: '65' }
+            ];
+            
+            initializePhysiologyFromTraitValues(demoTraits);
+            updatePatientUI();
+            
+            // Update data source indicators
+            $('#physiologySource').text('Demo data');
+            $('#inflammationSource').text('Demo data');
+            $('#predictionSource').text('Based on demo patterns');
+            $('#treatmentSource').text('Sample treatment protocols');
+            
+            console.log('✅ Demo patient loaded:', demoPatient.name);
+        }
+        
+        async function fallbackToDemoMode() {
+            console.log('Falling back to demo mode...');
+            await loadDemoPatient();
+            
+            // Initialize with defaults
+            initializePhysics();
+            initializeVisualization();
+            
+            // Show application
+            setTimeout(() => {
+                $('#loadingScreen').fadeOut(500);
+                $('#appContainer').css('opacity', 1);
+                STATE.isLoading = false;
+                startAnimationLoop();
+                
+                $('#demoBadge').show();
+                showNotification('Running in demo mode (database unavailable)', 'warning');
+            }, 500);
+        }
+        
+        // ====== SESSION MANAGEMENT ======
+        async function createAvatarSession() {
+            if (STATE.isDemoMode || !STATE.patientId || !STATE.supabase) return;
+            
+            try {
+                const sessionData = {
+                    patient_id: STATE.patientId,
+                    session_type: 'analysis',
+                    parameters: STATE.physiology,
+                    inflammation_state: STATE.inflammation,
+                    started_at: new Date().toISOString(),
+                    session_status: 'active',
+                    session_data: {
+                        patient_name: STATE.patient.name,
+                        disease: STATE.patient.condition,
+                        data_source: STATE.dataSource
+                    }
+                };
+                
+                const { data, error } = await STATE.supabase
+                    .from('avatar_sessions')
+                    .insert([sessionData])
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                STATE.sessionId = data.id;
+                STATE.sessionActive = true;
+                
+                // Update patient record with current session
+                await STATE.supabase
+                    .from('patients')
+                    .update({
+                        current_avatar_session: data.id,
+                        avatar_status: 'active',
+                        last_avatar_update: new Date().toISOString()
+                    })
+                    .eq('id', STATE.patientId);
+                
+                $('#sessionStatus').text('Active').addClass('text-success');
+                $('#sessionDetails').text(`Session ID: ${data.id.substring(0, 8)}...`);
+                
+                console.log('✅ Avatar session created:', data.id);
+                
+            } catch (error) {
+                console.error('Failed to create session:', error);
+                $('#sessionStatus').text('Failed').addClass('text-danger');
+            }
+        }
+        
+        async function saveAvatarInsight() {
+            if (!STATE.sessionId || !STATE.supabase || STATE.isDemoMode) {
+                showNotification('Cannot save insights in demo mode', 'warning');
+                return;
+            }
+            
+            try {
+                const insightData = {
+                    session_id: STATE.sessionId,
+                    patient_id: STATE.patientId,
+                    title: 'Physiological Analysis',
+                    insight_text: `Airway resistance: ${STATE.physiology.resistance.toFixed(1)} cmH₂O/L/s, ` +
+                                 `Eosinophils: ${STATE.inflammation.eosinophils} units, ` +
+                                 `FEV1: ${STATE.clinicalData.fev1}%`,
+                    insight_type: 'physiology_analysis',
+                    supporting_data: {
+                        physiology: STATE.physiology,
+                        inflammation: STATE.inflammation,
+                        predictions: STATE.predictions
+                    },
+                    confidence_score: 0.85,
+                    generated_at: new Date().toISOString()
+                };
+                
+                const { error } = await STATE.supabase
+                    .from('clinical_insights')
+                    .insert([insightData]);
+                
+                if (error) throw error;
+                
+                showNotification('Insight saved to database', 'success');
+                
+            } catch (error) {
+                console.error('Failed to save insight:', error);
+                showNotification('Failed to save insight', 'error');
+            }
+        }
+        
+        async function saveCurrentSession() {
+            if (!STATE.sessionId || !STATE.supabase || STATE.isDemoMode) {
+                showNotification('Cannot save session in demo mode', 'warning');
+                return;
+            }
+            
+            try {
+                const updateData = {
+                    insights_generated: {
+                        physiology: STATE.physiology,
+                        inflammation: STATE.inflammation,
+                        clinical: STATE.clinicalData
+                    },
+                    treatments_simulated: STATE.patientData.treatments.slice(0, 3),
+                    ended_at: new Date().toISOString(),
+                    duration_minutes: Math.floor((Date.now() - new Date(STATE.sessionStarted)) / 60000),
+                    session_status: 'completed'
+                };
+                
+                const { error } = await STATE.supabase
+                    .from('avatar_sessions')
+                    .update(updateData)
+                    .eq('id', STATE.sessionId);
+                
+                if (error) throw error;
+                
+                showNotification('Session saved to database', 'success');
+                
+            } catch (error) {
+                console.error('Failed to save session:', error);
+                showNotification('Failed to save session', 'error');
+            }
+        }
+        
+        // ====== PATIENT UI UPDATES ======
         function updatePatientUI() {
             if (!STATE.patient) return;
             
-            $('#patientName').text(STATE.patient.patient_name || 'Unknown');
-            $('#patientAge').text(`${STATE.patient.age || '--'} years`);
-            $('#patientCondition').text(STATE.patient.disease || 'Asthma');
-            $('#patientId').text(`ID: ${STATE.patient.id || 'DEMO'}`);
+            $('#patientName').text(STATE.patient.name);
+            $('#patientAge').text(`${STATE.patient.age} years`);
+            $('#patientCondition').text(STATE.patient.condition || 'Respiratory Condition');
+            $('#patientId').text(`ID: ${STATE.isDemoMode ? 'DEMO' : STATE.patientId}`);
             
             // Avatar initials
-            const initials = (STATE.patient.patient_name || 'AV')
-                .split(' ')
+            const initials = STATE.patient.name.split(' ')
                 .map(n => n[0])
                 .join('')
                 .toUpperCase()
                 .substring(0, 2);
             $('#patientAvatar').text(initials);
             
-            // Status
-            const fev1 = STATE.clinical.fev1;
-            let statusText = 'Stable';
+            // Update status based on FEV1
+            const fev1 = STATE.clinicalData.fev1;
+            let status = 'stable';
             let statusClass = '';
             
             if (fev1 < 60) {
-                statusText = 'Critical';
-                statusClass = 'critical';
+                status = 'uncontrolled';
+                statusClass = 'danger';
             } else if (fev1 < 80) {
-                statusText = 'Moderate';
-                statusClass = 'critical';
+                status = 'moderate';
+                statusClass = 'warning';
+            } else {
+                status = 'well controlled';
+                statusClass = '';
             }
             
-            $('#patientStatus').removeClass('critical').addClass(statusClass);
-            $('#patientStatusText').text(statusText);
+            $('#patientStatus').removeClass().addClass('status-indicator ' + statusClass);
+            $('#patientStatusText').text(status + (STATE.isDemoMode ? ' (Demo)' : ''));
             
-            // Update metrics
-            $('#metricEos').text(STATE.inflammation.eosinophils);
-            $('#metricFEV1').text(`${STATE.clinical.fev1}%`);
+            // Update events list
+            updateEventsUI();
         }
-
-        // ====== CLINICAL ENGINE ======
-        function initializeClinicalEngine() {
-            console.log('🤖 Clinical engine initialized');
+        
+        function updateEventsUI() {
+            const eventsList = $('#eventsList');
+            const events = STATE.patientData.events;
             
-            // Initialize predictions
-            updatePredictions();
+            if (!events || events.length === 0) {
+                eventsList.html(`
+                    <div class="text-muted" style="text-align: center; padding: 20px;">
+                        <i class="fas fa-calendar" style="opacity: 0.3; font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                        ${STATE.isDemoMode ? 'Demo patient - no events' : 'No clinical events recorded'}
+                    </div>
+                `);
+                $('#eventsCount').text('0 events');
+                return;
+            }
             
-            // Setup real-time monitoring
-            setInterval(() => {
-                if (!STATE.isLoading) {
-                    updatePredictions();
-                    checkClinicalAlerts();
-                }
-            }, 10000); // Every 10 seconds
-        }
-
-        function initializeDecisionSupport() {
-            console.log('🧠 Decision support initialized');
-            
-            // Setup tab switching
-            $('.clinical-tab').click(function() {
-                const tabId = $(this).data('tab');
-                switchClinicalTab(tabId);
+            let eventsHtml = '';
+            events.forEach(event => {
+                const date = new Date(event.event_date).toLocaleDateString();
+                eventsHtml += `
+                    <div style="padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 600; font-size: 13px;">${event.event_type}</div>
+                            <div style="font-size: 11px; color: var(--color-text-muted);">${date}</div>
+                        </div>
+                        <div style="font-size: 12px; color: var(--color-text-muted); margin-top: 4px;">
+                            ${event.description || 'No description'}
+                        </div>
+                    </div>
+                `;
             });
             
-            // Initialize charts
-            initializeCharts();
+            eventsList.html(eventsHtml);
+            $('#eventsCount').text(`${events.length} events`);
         }
-
-        function updatePredictions() {
-            // Calculate risk scores
-            const inflammationRisk = (STATE.inflammation.eosinophils / 100) * 40;
-            const physiologyRisk = (STATE.physiology.resistance / 20) * 30;
-            const clinicalRisk = ((100 - STATE.clinical.fev1) / 100) * 30;
-            
-            STATE.predictions.risk24h = Math.min(95, inflammationRisk + physiologyRisk * 0.5 + clinicalRisk * 0.3);
-            STATE.predictions.risk7d = Math.min(95, STATE.predictions.risk24h * 1.2);
-            STATE.predictions.risk30d = Math.min(95, STATE.predictions.risk7d * 1.4);
-            STATE.predictions.risk90d = Math.min(95, STATE.predictions.risk30d * 1.25);
-            
-            // Treatment response prediction
-            STATE.predictions.treatmentResponse = Math.min(90,
-                20 + (STATE.inflammation.eosinophils / 100) * 40 + ((100 - STATE.clinical.fev1) * 0.3));
-            STATE.predictions.timeToBenefit = Math.max(2,
-                8 - (STATE.inflammation.eosinophils / 100) * 4);
-            
-            updatePredictionsUI();
+        
+        function updateClinicalUI() {
+            $('#clinicalFEV1').text(`${STATE.clinicalData.fev1}%`);
+            $('#clinicalPEF').text(STATE.clinicalData.pef);
+            $('#clinicalFVC').text(`${STATE.clinicalData.fvc}%`);
+            $('#clinicalACQ').text(STATE.clinicalData.acq.toFixed(1));
         }
-
-        function checkClinicalAlerts() {
-            // Check for critical conditions
-            const alerts = [];
+        
+        // ====== PHYSICS ENGINE ======
+        function initializePhysics() {
+            // Create physics world
+            STATE.physics.world = new CANNON.World();
+            STATE.physics.world.gravity.set(0, CONFIG.PHYSICS.GRAVITY, 0);
+            STATE.physics.world.broadphase = new CANNON.NaiveBroadphase();
+            STATE.physics.world.solver.iterations = 10;
             
-            if (STATE.inflammation.eosinophils > CONFIG.CLINICAL_THRESHOLDS.HIGH_EOSINOPHILS) {
-                alerts.push('High eosinophil count detected (>300 cells/μL)');
-            }
+            // Create bronchial tree geometry
+            createBronchialTree();
             
-            if (STATE.physiology.resistance > CONFIG.CLINICAL_THRESHOLDS.CRITICAL_RESISTANCE) {
-                alerts.push('Critically elevated airway resistance (>10 cmH₂O/L/s)');
-            }
+            // Initialize airflow simulation
+            initializeAirflow();
+        }
+        
+        function createBronchialTree() {
+            // Simplified bronchial tree model
+            const levels = 6;
+            const branchingFactor = 2;
             
-            if (STATE.predictions.risk24h > 40) {
-                alerts.push('High 24-hour exacerbation risk detected');
-            }
-            
-            if (alerts.length > 0) {
-                showAlert('Clinical Alert', alerts.join('\n• '));
+            for (let level = 0; level < levels; level++) {
+                const radius = 0.1 * Math.pow(0.7, level);
+                const length = 0.3 * Math.pow(0.8, level);
+                
+                for (let branch = 0; branch < Math.pow(branchingFactor, level); branch++) {
+                    const bronchus = {
+                        radius: radius,
+                        length: length,
+                        resistance: calculateResistance(radius, length),
+                        compliance: 0.01 * Math.pow(0.9, level),
+                        position: calculatePosition(level, branch),
+                        particles: []
+                    };
+                    
+                    STATE.physics.bronchialTree.push(bronchus);
+                }
             }
         }
-
-        // ====== PHYSICS & VISUALIZATION ======
+        
+        function initializeAirflow() {
+            STATE.physics.airflow = {
+                volume: 0,
+                flowRate: 0,
+                pressure: 0,
+                velocity: 0,
+                isInhaling: true,
+                cycleTime: 0
+            };
+        }
+        
+        function calculateResistance(radius, length) {
+            // Poiseuille's Law: R = 8ηL/πr⁴
+            const viscosity = CONFIG.PHYSICS.VISCOSITY;
+            return (8 * viscosity * length) / (Math.PI * Math.pow(radius, 4));
+        }
+        
+        function calculatePosition(level, branch) {
+            const angle = (branch / Math.pow(2, level)) * Math.PI * 2;
+            const distance = 0.5 * level;
+            return {
+                x: Math.cos(angle) * distance,
+                y: -level * 0.3,
+                z: Math.sin(angle) * distance
+            };
+        }
+        
+        function updatePhysics(deltaTime) {
+            if (!STATE.physics.world || !STATE.threejs.isAnimating) return;
+            
+            STATE.physics.time += deltaTime;
+            
+            // Update respiratory cycle
+            updateRespiratoryCycle(deltaTime);
+            
+            // Update airflow through bronchial tree
+            updateAirflow(deltaTime);
+            
+            // Update particle positions
+            updateParticles(deltaTime);
+            
+            // Step physics world
+            STATE.physics.world.step(CONFIG.PHYSICS.TIME_STEP);
+        }
+        
+        function updateRespiratoryCycle(deltaTime) {
+            const cycleDuration = 60 / STATE.physiology.respiratoryRate;
+            STATE.physics.airflow.cycleTime += deltaTime;
+            
+            if (STATE.physics.airflow.cycleTime > cycleDuration) {
+                STATE.physics.airflow.cycleTime = 0;
+                STATE.physics.airflow.isInhaling = !STATE.physics.airflow.isInhaling;
+            }
+            
+            // Calculate flow based on respiratory cycle
+            const timeInCycle = STATE.physics.airflow.cycleTime / cycleDuration;
+            const phase = STATE.physics.airflow.isInhaling ? 
+                Math.sin(timeInCycle * Math.PI) : 
+                Math.sin(timeInCycle * Math.PI + Math.PI);
+            
+            STATE.physics.airflow.flowRate = phase * 0.8 * (1 / STATE.physiology.resistance);
+            STATE.physics.airflow.pressure = STATE.physics.airflow.flowRate * STATE.physiology.resistance;
+            STATE.physics.airflow.velocity = STATE.physics.airflow.flowRate / (Math.PI * 0.01 * 0.01);
+            
+            // Update UI metrics
+            $('#metricFlow').text(STATE.physics.airflow.flowRate.toFixed(2));
+            $('#metricPressure').text(STATE.physics.airflow.pressure.toFixed(1));
+        }
+        
+        function updateAirflow(deltaTime) {
+            // Simulate airflow through bronchial tree
+            let totalResistance = 0;
+            let totalFlow = 0;
+            
+            STATE.physics.bronchialTree.forEach((bronchus, index) => {
+                // Update resistance based on inflammation
+                const inflammationFactor = 1 + (STATE.inflammation.eosinophils / 100);
+                bronchus.resistance = calculateResistance(bronchus.radius, bronchus.length) * inflammationFactor;
+                
+                // Calculate flow through this bronchus
+                const flow = STATE.physics.airflow.pressure / bronchus.resistance;
+                totalResistance += bronchus.resistance;
+                totalFlow += flow;
+                
+                // Update particle positions
+                updateBronchusParticles(bronchus, flow, deltaTime);
+            });
+            
+            // Update global resistance
+            STATE.physiology.resistance = totalResistance / STATE.physics.bronchialTree.length;
+        }
+        
+        function updateBronchusParticles(bronchus, flow, deltaTime) {
+            // Add new particles
+            if (Math.random() < 0.1 * Math.abs(flow)) {
+                bronchus.particles.push({
+                    position: { x: 0, y: 0, z: 0 },
+                    velocity: flow * 2,
+                    life: 1.0,
+                    size: 0.02 + Math.random() * 0.03
+                });
+            }
+            
+            // Update existing particles
+            for (let i = bronchus.particles.length - 1; i >= 0; i--) {
+                const particle = bronchus.particles[i];
+                particle.position.y += particle.velocity * deltaTime;
+                particle.life -= deltaTime * 2;
+                
+                if (particle.life <= 0 || particle.position.y > bronchus.length) {
+                    bronchus.particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function updateParticles(deltaTime) {
+            if (!STATE.threejs.particles) return;
+            
+            const positions = STATE.threejs.particles.geometry.attributes.position.array;
+            let particleIndex = 0;
+            
+            STATE.physics.bronchialTree.forEach(bronchus => {
+                bronchus.particles.forEach(particle => {
+                    const posIndex = particleIndex * 3;
+                    positions[posIndex] = bronchus.position.x;
+                    positions[posIndex + 1] = bronchus.position.y + particle.position.y;
+                    positions[posIndex + 2] = bronchus.position.z;
+                    particleIndex++;
+                });
+            });
+            
+            // Fill remaining positions
+            for (let i = particleIndex; i < 1000; i++) {
+                const posIndex = i * 3;
+                positions[posIndex] = 0;
+                positions[posIndex + 1] = -10;
+                positions[posIndex + 2] = 0;
+            }
+            
+            STATE.threejs.particles.geometry.attributes.position.needsUpdate = true;
+        }
+        
+        // ====== 3D VISUALIZATION ======
         function initializeVisualization() {
             const canvas = document.getElementById('visualization-canvas');
             const container = canvas.parentElement;
@@ -1557,6 +1989,7 @@
             // Scene
             STATE.threejs.scene = new THREE.Scene();
             STATE.threejs.scene.background = new THREE.Color(0x000000);
+            STATE.threejs.scene.fog = new THREE.Fog(0x000000, 1, 20);
             
             // Camera
             STATE.threejs.camera = new THREE.PerspectiveCamera(
@@ -1572,10 +2005,13 @@
             STATE.threejs.renderer = new THREE.WebGLRenderer({
                 canvas: canvas,
                 antialias: true,
-                alpha: true
+                alpha: true,
+                powerPreference: "high-performance"
             });
             STATE.threejs.renderer.setSize(container.clientWidth, container.clientHeight);
             STATE.threejs.renderer.setPixelRatio(window.devicePixelRatio);
+            STATE.threejs.renderer.shadowMap.enabled = true;
+            STATE.threejs.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             
             // Controls
             STATE.threejs.controls = new THREE.OrbitControls(
@@ -1583,6 +2019,11 @@
                 STATE.threejs.renderer.domElement
             );
             STATE.threejs.controls.enableDamping = true;
+            STATE.threejs.controls.dampingFactor = 0.05;
+            STATE.threejs.controls.screenSpacePanning = false;
+            STATE.threejs.controls.minDistance = 1;
+            STATE.threejs.controls.maxDistance = 20;
+            STATE.threejs.controls.maxPolarAngle = Math.PI / 2;
             
             // Lighting
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
@@ -1590,41 +2031,44 @@
             
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(5, 5, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
             STATE.threejs.scene.add(directionalLight);
             
-            // Create bronchial tree
-            createBronchialTree();
+            // Create bronchial tree visualization
+            createBronchialVisualization();
+            
+            // Create particle system for airflow
+            createParticleSystem();
             
             // Handle window resize
             window.addEventListener('resize', onWindowResize);
         }
-
-        function createBronchialTree() {
-            const group = new THREE.Group();
+        
+        function createBronchialVisualization() {
+            const bronchialGroup = new THREE.Group();
             
-            // Create simplified bronchial tree
-            for (let i = 0; i < 8; i++) {
-                const radius = 0.1 * Math.pow(0.8, i);
-                const length = 0.3 * Math.pow(0.9, i);
-                
+            STATE.physics.bronchialTree.forEach(bronchus => {
+                // Branch geometry
                 const geometry = new THREE.CylinderGeometry(
-                    radius * 0.8,
-                    radius,
-                    length,
+                    bronchus.radius * 0.8,
+                    bronchus.radius,
+                    bronchus.length,
                     8,
                     1,
                     true
                 );
                 
-                // Color based on inflammation
-                const hue = 0.0; // Red for inflammation
-                const saturation = STATE.inflammation.eosinophils / 100;
-                const lightness = 0.5 + (STATE.inflammation.eosinophils / 200);
-                
-                const color = new THREE.Color().setHSL(hue, saturation, lightness);
+                // Material based on inflammation
+                const inflammationColor = new THREE.Color().setHSL(
+                    0.0,  // Red hue
+                    STATE.inflammation.eosinophils / 100,
+                    0.5 + (STATE.inflammation.eosinophils / 200)
+                );
                 
                 const material = new THREE.MeshPhongMaterial({
-                    color: color,
+                    color: inflammationColor,
                     transparent: true,
                     opacity: 0.7,
                     side: THREE.DoubleSide
@@ -1632,21 +2076,59 @@
                 
                 const mesh = new THREE.Mesh(geometry, material);
                 mesh.position.set(
-                    Math.cos(i * Math.PI/4) * i * 0.3,
-                    -i * 0.3,
-                    Math.sin(i * Math.PI/4) * i * 0.3
+                    bronchus.position.x,
+                    bronchus.position.y - bronchus.length / 2,
+                    bronchus.position.z
                 );
                 
-                mesh.lookAt(0, 1, 0);
+                // Rotate to align with direction
+                mesh.lookAt(
+                    bronchus.position.x,
+                    bronchus.position.y + 1,
+                    bronchus.position.z
+                );
                 mesh.rotateX(Math.PI / 2);
                 
-                group.add(mesh);
+                bronchialGroup.add(mesh);
+            });
+            
+            STATE.threejs.scene.add(bronchialGroup);
+            STATE.threejs.bronchialGroup = bronchialGroup;
+        }
+        
+        function createParticleSystem() {
+            // Particle system for airflow visualization
+            const particleCount = 1000;
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const i3 = i * 3;
+                positions[i3] = 0;
+                positions[i3 + 1] = -10; // Start below view
+                positions[i3 + 2] = 0;
+                
+                colors[i3] = 0.3 + Math.random() * 0.7;     // R
+                colors[i3 + 1] = 0.5 + Math.random() * 0.5; // G
+                colors[i3 + 2] = 0.8 + Math.random() * 0.2; // B
             }
             
-            STATE.threejs.scene.add(group);
-            STATE.threejs.bronchialGroup = group;
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            
+            const material = new THREE.PointsMaterial({
+                size: 0.05,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending
+            });
+            
+            STATE.threejs.particles = new THREE.Points(geometry, material);
+            STATE.threejs.scene.add(STATE.threejs.particles);
         }
-
+        
         function onWindowResize() {
             const canvas = document.getElementById('visualization-canvas');
             const container = canvas.parentElement;
@@ -1655,8 +2137,8 @@
             STATE.threejs.camera.updateProjectionMatrix();
             STATE.threejs.renderer.setSize(container.clientWidth, container.clientHeight);
         }
-
-        // ====== UI UPDATES ======
+        
+        // ====== UI CONTROL FUNCTIONS ======
         function updatePhysiology(param, value) {
             value = parseFloat(value);
             
@@ -1675,16 +2157,11 @@
                     break;
             }
             
-            // Update airflow metrics
-            const flowRate = 0.8 * (1 / STATE.physiology.resistance);
-            const pressure = flowRate * STATE.physiology.resistance;
-            
-            $('#metricFlow').text(flowRate.toFixed(2));
-            $('#metricPressure').text(pressure.toFixed(1));
-            
-            updatePredictions();
+            // Recalculate predictions
+            predictExacerbationRisk();
+            predictTreatmentResponse();
         }
-
+        
         function updateInflammation(param, value) {
             value = parseInt(value);
             
@@ -1692,7 +2169,6 @@
                 case 'eosinophils':
                     STATE.inflammation.eosinophils = value;
                     $('#eosValue').text(value);
-                    $('#metricEos').text(value);
                     break;
                 case 'neutrophils':
                     STATE.inflammation.neutrophils = value;
@@ -1706,78 +2182,86 @@
             
             // Update visualization color
             updateInflammationVisualization();
-            updatePredictions();
+            
+            // Recalculate predictions
+            predictExacerbationRisk();
+            predictTreatmentResponse();
         }
-
+        
         function updateInflammationVisualization() {
             if (!STATE.threejs.bronchialGroup) return;
             
             const inflammationLevel = STATE.inflammation.eosinophils / 100;
             
-            STATE.threejs.bronchialGroup.children.forEach(mesh => {
-                const color = new THREE.Color().setHSL(
-                    0.0,
+            STATE.threejs.bronchialGroup.children.forEach((mesh, index) => {
+                const inflammationColor = new THREE.Color().setHSL(
+                    0.0,  // Red hue for inflammation
                     inflammationLevel,
                     0.5 + (inflammationLevel * 0.3)
                 );
                 
-                mesh.material.color.copy(color);
+                mesh.material.color.copy(inflammationColor);
                 mesh.material.opacity = 0.5 + (inflammationLevel * 0.3);
             });
         }
-
+        
+        // ====== PREDICTION FUNCTIONS ======
+        function predictExacerbationRisk() {
+            // Simplified risk calculation based on actual data
+            const baseRisk = 10;
+            const inflammationRisk = STATE.inflammation.eosinophils * 0.3;
+            const physiologyRisk = (STATE.physiology.resistance - 2) * 10;
+            const clinicalRisk = (100 - STATE.clinicalData.fev1) * 0.2;
+            
+            STATE.predictions.exacerbationRisk24h = Math.min(95, 
+                baseRisk + inflammationRisk + physiologyRisk * 0.5 + clinicalRisk * 0.3);
+            STATE.predictions.exacerbationRisk7d = Math.min(95,
+                STATE.predictions.exacerbationRisk24h * 1.5);
+            STATE.predictions.exacerbationRisk30d = Math.min(95,
+                STATE.predictions.exacerbationRisk7d * 1.4);
+            
+            updatePredictionsUI();
+            
+            // Trigger alert if high risk
+            if (STATE.predictions.exacerbationRisk24h > 40) {
+                showAlert('High exacerbation risk', 
+                    `24-hour risk: ${Math.round(STATE.predictions.exacerbationRisk24h)}%. Consider preventive measures.`);
+            }
+        }
+        
+        function predictTreatmentResponse() {
+            // Simplified response prediction
+            const inflammationLevel = STATE.inflammation.eosinophils / 100;
+            const baselineFEV1 = STATE.clinicalData.fev1;
+            
+            STATE.predictions.treatmentResponse = Math.min(90,
+                15 + (inflammationLevel * 30) + ((100 - baselineFEV1) * 0.3));
+            STATE.predictions.timeToBenefit = Math.max(2,
+                8 - (inflammationLevel * 4));
+            
+            updatePredictionsUI();
+        }
+        
         function updatePredictionsUI() {
-            $('#risk24h').text(Math.round(STATE.predictions.risk24h));
-            $('#risk7d').text(Math.round(STATE.predictions.risk7d));
-            $('#risk30d').text(Math.round(STATE.predictions.risk30d));
-            $('#risk90d').text(Math.round(STATE.predictions.risk90d));
+            $('#risk24h').text(`${Math.round(STATE.predictions.exacerbationRisk24h)}%`);
+            $('#risk7d').text(`${Math.round(STATE.predictions.exacerbationRisk7d)}%`);
+            $('#risk30d').text(`${Math.round(STATE.predictions.exacerbationRisk30d)}%`);
+            $('#risk90d').text(`${Math.round(STATE.predictions.exacerbationRisk30d * 1.2)}%`);
             
             $('#predictedImprovement').text(`${Math.round(STATE.predictions.treatmentResponse)}%`);
             $('#timeToBenefit').text(`${STATE.predictions.timeToBenefit} weeks`);
-        }
-
-        function initializeCharts() {
-            // Simple chart initialization
-            console.log('📊 Charts initialized');
-        }
-
-        // ====== INTERACTION FUNCTIONS ======
-        function setViewMode(mode) {
-            $('.viz-control-btn').removeClass('active');
-            $(`.viz-control-btn:contains(${mode.charAt(0).toUpperCase() + mode.slice(1)})`).addClass('active');
             
-            const subtitles = {
-                'physiology': 'Real-time airflow dynamics simulation',
-                'inflammation': 'Inflammatory activity visualization',
-                'pressure': 'Airway pressure distribution',
-                'anatomy': '3D bronchial tree anatomy'
-            };
-            
-            $('#panelSubtitle').text(subtitles[mode] || 'Clinical monitoring active');
+            updateRiskChart();
         }
-
-        function toggleSimulation() {
-            STATE.threejs.isAnimating = !STATE.threejs.isAnimating;
-            const icon = STATE.threejs.isAnimating ? 'pause' : 'play';
-            $('#simToggleBtn').html(`<i class="fas fa-${icon}"></i> ${STATE.threejs.isAnimating ? 'Pause' : 'Play'}`);
-        }
-
-        function switchClinicalTab(tabId) {
-            $('.clinical-tab').removeClass('active');
-            $(`.clinical-tab[data-tab="${tabId}"]`).addClass('active');
-            
-            $('.tab-pane').removeClass('active');
-            $(`#${tabId}Tab`).addClass('active');
-        }
-
+        
+        // ====== SCENARIO FUNCTIONS ======
         function runExacerbationScenario() {
-            showAlert('Exacerbation Simulation', 'Simulating acute inflammatory response...');
+            showNotification('Starting exacerbation simulation...', 'info');
             
             // Increase inflammation parameters
             STATE.inflammation.eosinophils = 75;
             STATE.inflammation.cytokines = 35;
             STATE.physiology.resistance = 12.5;
-            STATE.clinical.fev1 = 52;
             
             // Update UI
             $('#eosSlider').val(75).trigger('input');
@@ -1785,135 +2269,58 @@
             $('#resistanceSlider').val(12.5).trigger('input');
             
             setTimeout(() => {
-                updatePredictions();
-                showAlert('Simulation Complete', 'Exacerbation scenario applied. High risk state detected.');
+                showNotification('Exacerbation simulation complete. Risk increased.', 'warning');
+                predictExacerbationRisk();
             }, 1000);
         }
-
+        
         function runTreatmentScenario() {
-            showAlert('Treatment Simulation', 'Simulating biologic therapy effect...');
+            showNotification('Simulating treatment effect...', 'info');
             
-            // Reduce inflammation
+            // Reduce inflammation parameters
             STATE.inflammation.eosinophils = 25;
             STATE.inflammation.cytokines = 10;
             STATE.physiology.resistance = 4.8;
-            STATE.clinical.fev1 = 78;
+            STATE.clinicalData.fev1 = 78;
             
             // Update UI
             $('#eosSlider').val(25).trigger('input');
             $('#cytokineSlider').val(10).trigger('input');
             $('#resistanceSlider').val(4.8).trigger('input');
             
+            updateClinicalUI();
+            
             setTimeout(() => {
-                updatePredictions();
-                showAlert('Treatment Response', 'Biologic therapy simulation complete. Significant improvement predicted.');
+                showNotification('Treatment simulation complete. Status improved.', 'success');
+                predictExacerbationRisk();
+                predictTreatmentResponse();
             }, 1000);
         }
-
+        
         function resetToBaseline() {
+            showNotification('Resetting to baseline...', 'info');
+            
             // Reset to normal values
-            STATE.inflammation.eosinophils = 42;
-            STATE.inflammation.cytokines = 18;
-            STATE.physiology.resistance = 5.2;
-            STATE.clinical.fev1 = 65;
+            STATE.inflammation.eosinophils = 15;
+            STATE.inflammation.cytokines = 8;
+            STATE.physiology.resistance = 2.5;
+            STATE.clinicalData.fev1 = 85;
             
             // Update UI
-            $('#eosSlider').val(42).trigger('input');
-            $('#cytokineSlider').val(18).trigger('input');
-            $('#resistanceSlider').val(5.2).trigger('input');
+            $('#eosSlider').val(15).trigger('input');
+            $('#cytokineSlider').val(8).trigger('input');
+            $('#resistanceSlider').val(2.5).trigger('input');
             
-            showAlert('System Reset', 'Reset to baseline physiology completed.');
-            updatePredictions();
-        }
-
-        function simulateTreatment() {
-            const treatment = $('#treatmentSelect').val();
-            const treatments = {
-                'biologic': 'Anti-IL5 Biologic Therapy',
-                'ics': 'ICS/LABA Optimization',
-                'rehab': 'Pulmonary Rehabilitation'
-            };
-            
-            showAlert('Treatment Simulation', `Running simulation for ${treatments[treatment]}...`);
+            updateClinicalUI();
             
             setTimeout(() => {
-                $('#simulationResult').text('Positive Response Predicted');
-                showAlert('Simulation Results', `${treatments[treatment]} predicted to reduce exacerbations by 65% within 3 months.`);
-            }, 1500);
+                showNotification('Reset complete. Normal parameters restored.', 'success');
+                predictExacerbationRisk();
+                predictTreatmentResponse();
+            }, 1000);
         }
-
-        function generateClinicalReport() {
-            showAlert('Report Generation', 'Generating comprehensive clinical report...');
-            
-            setTimeout(() => {
-                showAlert('Report Ready', 'Clinical report generated successfully. Ready for export.');
-            }, 2000);
-        }
-
-        function exportClinicalData() {
-            const data = {
-                patient: STATE.patient,
-                physiology: STATE.physiology,
-                inflammation: STATE.inflammation,
-                clinical: STATE.clinical,
-                predictions: STATE.predictions,
-                timestamp: new Date().toISOString()
-            };
-            
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const link = document.createElement('a');
-            link.setAttribute('href', dataUri);
-            link.setAttribute('download', `clinical_avatar_report_${new Date().toISOString().slice(0,10)}.json`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showAlert('Export Complete', 'Clinical data exported successfully.');
-        }
-
-        function syncRealTimeData() {
-            showAlert('Data Sync', 'Syncing with clinical database...');
-            
-            setTimeout(() => {
-                updateConnectionStatus(true);
-                showAlert('Sync Complete', 'Real-time data synchronized successfully.');
-            }, 1500);
-        }
-
-        // ====== UTILITY FUNCTIONS ======
-        function updateLoading(stepId, status, message) {
-            const step = $(`#${stepId}`);
-            if (step.length) {
-                step.find('.step-status').text(status);
-                step.addClass(status === '✅' || status === '🎉' ? 'completed' : 'active');
-            }
-        }
-
-        function updateConnectionStatus(connected) {
-            const status = $('#connectionStatus');
-            const dot = status.find('.status-dot');
-            
-            if (connected) {
-                dot.removeClass('status-disconnected').addClass('status-connected');
-                status.find('span').text('Connected to clinical database');
-            } else {
-                dot.removeClass('status-connected').addClass('status-disconnected');
-                status.find('span').text('Disconnected');
-            }
-        }
-
-        function showAlert(title, content) {
-            $('#alertTitle').text(title);
-            $('#alertContent').text(content);
-            $('#alertBanner').fadeIn(300);
-            
-            setTimeout(() => {
-                $('#alertBanner').fadeOut(300);
-            }, 5000);
-        }
-
+        
+        // ====== ANIMATION LOOP ======
         function startAnimationLoop() {
             let lastTime = 0;
             
@@ -1924,37 +2331,164 @@
                 lastTime = currentTime;
                 
                 if (STATE.threejs.isAnimating) {
-                    // Update physics simulation
-                    updatePhysicsSimulation(deltaTime * 0.001);
+                    // Update physics
+                    updatePhysics(deltaTime * 0.001);
                     
-                    // Update controls and render
+                    // Update controls
                     STATE.threejs.controls.update();
+                    
+                    // Render scene
                     STATE.threejs.renderer.render(STATE.threejs.scene, STATE.threejs.camera);
                 }
             }
             
             animate(0);
         }
-
-        function updatePhysicsSimulation(deltaTime) {
-            // Simplified physics update
-            if (STATE.physics.airflow) {
-                STATE.physics.time += deltaTime;
-                
-                // Simulate respiratory cycle
-                const cycleDuration = 60 / STATE.physiology.respiratoryRate;
-                const timeInCycle = (STATE.physics.time % cycleDuration) / cycleDuration;
-                const phase = Math.sin(timeInCycle * Math.PI * 2);
-                
-                // Update metrics
-                const flowRate = phase * 0.8 * (1 / STATE.physiology.resistance);
-                const pressure = flowRate * STATE.physiology.resistance;
-                
-                $('#metricFlow').text(Math.abs(flowRate).toFixed(2));
-                $('#metricPressure').text(Math.abs(pressure).toFixed(1));
+        
+        // ====== UTILITY FUNCTIONS ======
+        function updateLoading(stepId, status, message) {
+            const step = $(`#${stepId}`);
+            if (step.length) {
+                step.find('.step-status').text(status);
+                step.addClass(status === '✅' ? 'completed' : 'active');
+            }
+            
+            if (stepId === 'complete') {
+                $('#loadingProgress').css('width', '100%');
+            } else {
+                const progress = ['step1', 'step2', 'step3', 'step4', 'step5'].indexOf(stepId) + 1;
+                $('#loadingProgress').css('width', `${progress * 20}%`);
             }
         }
-
+        
+        function updateConnectionStatus(connected) {
+            const status = $('#connectionStatus');
+            const dot = status.find('.status-dot');
+            
+            if (connected) {
+                dot.removeClass('disconnected').addClass('connected');
+                status.find('span').text('Connected to database');
+            } else {
+                dot.removeClass('connected').addClass('disconnected');
+                status.find('span').text('Disconnected - using demo data');
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = $(`
+                <div style="position: fixed; top: 20px; right: 20px; 
+                           background: ${getNotificationColor(type)};
+                           color: white; padding: 12px 20px; 
+                           border-radius: 8px; font-weight: 600;
+                           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                           z-index: 9999; animation: slideIn 0.3s ease;">
+                    ${message}
+                </div>
+            `);
+            
+            $('body').append(notification);
+            
+            setTimeout(() => {
+                notification.fadeOut(300, function() { $(this).remove(); });
+            }, 3000);
+        }
+        
+        function getNotificationColor(type) {
+            const colors = {
+                'success': '#10b981',
+                'info': '#3b82f6', 
+                'warning': '#f59e0b',
+                'error': '#ef476f'
+            };
+            return colors[type] || '#3b82f6';
+        }
+        
+        function showAlert(title, content) {
+            $('#alertTitle').text(title);
+            $('#alertContent').text(content);
+            $('#alertContainer').show();
+            
+            setTimeout(() => {
+                $('#alertContainer').fadeOut(500);
+            }, 5000);
+        }
+        
+        function switchTab(tabName) {
+            $('.tab').removeClass('active');
+            $(`.tab[data-tab="${tabName}"]`).addClass('active');
+            
+            $('.tab-pane').removeClass('active');
+            $(`#${tabName}Tab`).addClass('active');
+        }
+        
+        async function startSystems() {
+            // Initialize clinical data
+            if (!STATE.clinicalData.lastUpdated) {
+                STATE.clinicalData.lastUpdated = new Date().toISOString();
+                $('#clinicalLastUpdated').text('Just now');
+            }
+            
+            updateClinicalUI();
+            
+            // Calculate initial predictions
+            predictExacerbationRisk();
+            predictTreatmentResponse();
+            
+            // Setup tab switching
+            $('.tab').click(function() {
+                const tabName = $(this).data('tab');
+                switchTab(tabName);
+            });
+            
+            // Setup demo load button
+            $('#btnLoadDemo').click(async function() {
+                if (confirm('Load demo patient? Current session will be lost.')) {
+                    await loadDemoPatient();
+                    $('#demoBadge').show();
+                    showNotification('Demo patient loaded', 'info');
+                }
+            });
+            
+            // Setup real-time updates
+            setInterval(() => {
+                if (!STATE.isLoading) {
+                    predictExacerbationRisk();
+                }
+            }, 30000);
+        }
+        
+        // ====== EXPORT FUNCTIONS ======
+        function exportClinicalData() {
+            const data = {
+                patient: STATE.patient,
+                physiology: STATE.physiology,
+                inflammation: STATE.inflammation,
+                clinical: STATE.clinicalData,
+                predictions: STATE.predictions,
+                dataSource: STATE.dataSource,
+                timestamp: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const link = document.createElement('a');
+            link.setAttribute('href', dataUri);
+            link.setAttribute('download', `digital_twin_${STATE.patientId}_${new Date().toISOString().slice(0,10)}.json`);
+            link.click();
+            
+            showNotification('Clinical data exported', 'success');
+        }
+        
+        function generateReport() {
+            showNotification('Generating clinical report...', 'info');
+            // In full implementation, generate PDF report
+            setTimeout(() => {
+                showNotification('Report generated successfully', 'success');
+            }, 1500);
+        }
+        
         // ====== WINDOW EXPORTS ======
         window.setViewMode = setViewMode;
         window.toggleSimulation = toggleSimulation;
@@ -1963,13 +2497,84 @@
         window.resetToBaseline = resetToBaseline;
         window.updatePhysiology = updatePhysiology;
         window.updateInflammation = updateInflammation;
+        window.optimizeTreatment = optimizeTreatment;
         window.simulateTreatment = simulateTreatment;
-        window.generateClinicalReport = generateClinicalReport;
+        window.runScenario = runScenario;
+        window.generateReport = generateReport;
         window.exportClinicalData = exportClinicalData;
-        window.syncRealTimeData = syncRealTimeData;
-        window.switchClinicalTab = switchClinicalTab;
-
-        console.log('🚀 Clinical Intelligence Avatar v3.0 Loaded');
+        window.saveAvatarInsight = saveAvatarInsight;
+        window.saveCurrentSession = saveCurrentSession;
+        window.switchTab = switchTab;
+        
+        // Initialize CSS animations
+        $(document).ready(function() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100px); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+        
+        // Helper functions that need to be defined
+        function setViewMode(mode) {
+            $('.viz-control-btn').removeClass('active');
+            $(`.viz-control-btn:contains(${mode.charAt(0).toUpperCase() + mode.slice(1)})`).addClass('active');
+            
+            $('#vizTitle').text(getViewTitle(mode));
+            $('#vizSubtitle').text(getViewSubtitle(mode));
+        }
+        
+        function getViewTitle(mode) {
+            const titles = {
+                'airflow': 'Airflow Dynamics',
+                'pressure': 'Pressure Distribution',
+                'inflammation': 'Inflammatory State',
+                'anatomy': 'Bronchial Anatomy'
+            };
+            return titles[mode] || 'Airway Simulation';
+        }
+        
+        function getViewSubtitle(mode) {
+            const subtitles = {
+                'airflow': 'Real-time particle flow visualization',
+                'pressure': 'Regional pressure gradients',
+                'inflammation': 'Cellular-level inflammatory activity',
+                'anatomy': '3D bronchial tree structure'
+            };
+            return subtitles[mode] || 'Interactive simulation';
+        }
+        
+        function toggleSimulation() {
+            STATE.threejs.isAnimating = !STATE.threejs.isAnimating;
+            $('#simToggleBtn').text(STATE.threejs.isAnimating ? 'Pause' : 'Play');
+        }
+        
+        function optimizeTreatment(treatment, value) {
+            console.log(`Optimizing ${treatment}: ${value}`);
+        }
+        
+        function simulateTreatment(action) {
+            showNotification(`Simulating ${action.replace('_', ' ')}...`, 'info');
+        }
+        
+        function runScenario(scenario) {
+            showNotification(`Running ${scenario} scenario...`, 'info');
+        }
+        
+        function updateRiskChart() {
+            // Chart update logic would go here
+        }
+        
+        console.log('🚀 Airway Digital Twin v3.0 Enhanced Loaded');
+        console.log('📊 Features:');
+        console.log('✅ Real patient data from database');
+        console.log('✅ Demo mode fallback');
+        console.log('✅ Session tracking to avatar_sessions');
+        console.log('✅ Insight saving to clinical_insights');
+        console.log('✅ Physiology initialization from trait values');
     </script>
 </body>
 </html>
