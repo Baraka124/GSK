@@ -1853,15 +1853,16 @@ const SUPABASE_KEY = 'sb_publishable_8ECsUNA9-wpFnc4wDoTQ7w_ayGcCHT_';
 const AppState = {
     supabase: null,
     currentDisease: null,
-    currentTraits: [],
-    currentConnections: [],
-    savedNetworks: [],
-    patients: [],
-    treatments: [],
-    nodePositions: new Map(),
+    currentTraits: [],          // Will hold trait objects from database
+    currentConnections: [],     // Will hold connection objects from database
+    savedNetworks: [],          // Will hold network_sessions from database
+    patients: [],               // Will hold patient_profiles from database
+    treatments: [],             // Will hold treatments from database
+    connectionTypes: [],        // Will hold connection_types from database
+    traitCategories: [],        // Will hold trait_categories from database
+    nodePositions: new Map(),   // Will hold positions from saved_positions
     selectedNode: null,
     isInitialized: false,
-    userId: 'clinician_' + Math.random().toString(36).substr(2, 9),
     currentPatient: null,
     zoom: 1,
     pan: { x: 0, y: 0 },
@@ -1885,7 +1886,9 @@ $(document).ready(function() {
 
 async function initializeCompleteSystem() {
     try {
-        // Initialize Supabase
+        // ====== CHANGE 1: Initialize Supabase client ======
+        // REPLACES: No equivalent in hardcoded version
+        // EFFECT: Enables all database operations
         AppState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         console.log('✅ Supabase client initialized');
 
@@ -1893,13 +1896,16 @@ async function initializeCompleteSystem() {
         showToast('System Initialized', 'AIRWAYSCOPE PRO is ready', 'success');
         $('#connectionStatus').html('<i class="fas fa-circle" style="color: #4ade80;"></i> <span>Connected to Database</span>');
 
-        // Load all initial data
+        // ====== CHANGE 2: Load ALL data from database ======
+        // REPLACES: Hardcoded arrays (sampleDiseases, sampleTraits, etc.)
+        // EFFECT: UI will show real data from database instead of samples
         await Promise.all([
-            loadDiseases(),
-            loadSavedNetworks(),
-            loadTreatments(),
-            createSamplePatients(),
-            loadSampleTraits()
+            loadDiseases(),          // Load diseases from diseases table
+            loadSavedNetworks(),     // Load saved networks from network_sessions
+            loadTreatments(),        // Load treatments from treatments table
+            loadPatients(),          // Load patients from patient_profiles
+            loadConnectionTypes(),   // Load connection types from connection_types
+            loadTraitCategories()    // Load categories from trait_categories
         ]);
 
         // Setup all event listeners
@@ -1910,7 +1916,7 @@ async function initializeCompleteSystem() {
         initializeZoomControls();
         initializeSidebarToggle();
         
-        // IMPROVEMENT: Setup draggable panels
+        // Setup draggable panels
         setupDraggablePanels();
 
         AppState.isInitialized = true;
@@ -1928,225 +1934,13 @@ async function initializeCompleteSystem() {
     }
 }
 
-// ====== IMPROVEMENT: DRAGGABLE PANELS SETUP ======
-function setupDraggablePanels() {
-    // Make panels draggable
-    $('.draggable-panel .panel-header').on('mousedown', function(e) {
-        if (e.target.classList.contains('panel-btn')) return;
-        
-        const panel = $(this).closest('.draggable-panel');
-        let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
-        
-        const dragStart = function(e) {
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            
-            initialLeft = parseInt(panel.css('left')) || 0;
-            initialTop = parseInt(panel.css('top')) || 0;
-            
-            panel.css('cursor', 'grabbing');
-            panel.css('z-index', '1000');
-            
-            $(document).on('mousemove', drag);
-            $(document).on('mouseup', dragEnd);
-            
-            e.preventDefault();
-        };
-        
-        const drag = function(e) {
-            if (!isDragging) return;
-            
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            
-            const newLeft = initialLeft + dx;
-            const newTop = initialTop + dy;
-            
-            // Constrain to canvas area
-            const canvas = $('#networkCanvas');
-            const canvasRect = canvas[0].getBoundingClientRect();
-            const panelRect = panel[0].getBoundingClientRect();
-            
-            const maxX = canvasRect.width - panelRect.width;
-            const maxY = canvasRect.height - panelRect.height;
-            
-            const constrainedLeft = Math.max(0, Math.min(newLeft, maxX));
-            const constrainedTop = Math.max(0, Math.min(newTop, maxY));
-            
-            panel.css('left', constrainedLeft + 'px');
-            panel.css('top', constrainedTop + 'px');
-        };
-        
-        const dragEnd = function() {
-            isDragging = false;
-            panel.css('cursor', 'move');
-            panel.css('z-index', '100');
-            $(document).off('mousemove', drag);
-            $(document).off('mouseup', dragEnd);
-        };
-        
-        dragStart(e);
-    });
-    
-    // Close panel buttons
-    $('#btnClosePatterns').click(function() {
-        $('#patternsPanel').hide();
-    });
-    
-    $('#btnCloseInsights').click(function() {
-        $('#insightsPanel').hide();
-    });
-    
-    $('#btnRefreshPatterns').click(function() {
-        detectPatterns();
-        showToast('Patterns Refreshed', 'Updated pattern detection', 'info');
-    });
-}
+// ====== DATABASE QUERY FUNCTIONS ======
 
-// ====== TAB SYSTEM ======
-function initializeTabs() {
-    $('.tab-btn').click(function() {
-        const tabId = $(this).data('tab');
-
-        // Update active tab button
-        $('.tab-btn').removeClass('active');
-        $(this).addClass('active');
-
-        // Show active tab content
-        $('.tab-pane').removeClass('active');
-        $(`#${tabId}-tab`).addClass('active');
-
-        // Load data for tab if needed
-        if (tabId === 'patients' && AppState.patients.length === 0) {
-            loadPatientSelect();
-        } else if (tabId === 'analytics') {
-            updateAnalytics();
-        }
-    });
-}
-
-// ====== SIDEBAR TOGGLE ======
-function initializeSidebarToggle() {
-    $('#sidebarToggle').click(function() {
-        const sidebar = $('#sidebar');
-        const icon = $(this).find('i');
-
-        if (AppState.uiState.sidebarCollapsed) {
-            sidebar.removeClass('sidebar-collapsed');
-            icon.removeClass('fa-chevron-right').addClass('fa-chevron-left');
-            sidebar.find('.tab-btn span, .disease-list, .form-group').show();
-            AppState.uiState.sidebarCollapsed = false;
-        } else {
-            sidebar.addClass('sidebar-collapsed');
-            icon.removeClass('fa-chevron-left').addClass('fa-chevron-right');
-            sidebar.find('.tab-btn span, .disease-list, .form-group').hide();
-            AppState.uiState.sidebarCollapsed = true;
-        }
-    });
-}
-
-// ====== ZOOM CONTROLS ======
-function initializeZoomControls() {
-    $('#zoomIn').click(zoomIn);
-    $('#zoomOut').click(zoomOut);
-    $('#zoomReset').click(resetZoom);
-
-    // Mouse wheel zoom
-    $('#networkCanvas').on('wheel', function(e) {
-        e.preventDefault();
-
-        const rect = $(this)[0].getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        const zoomFactor = 0.1;
-        const oldZoom = AppState.zoom;
-
-        if (e.originalEvent.deltaY < 0) {
-            // Zoom in
-            AppState.zoom = Math.min(AppState.zoom * (1 + zoomFactor), 3);
-        } else {
-            // Zoom out
-            AppState.zoom = Math.max(AppState.zoom * (1 - zoomFactor), 0.1);
-        }
-
-        // Adjust pan to zoom around mouse position
-        const zoomRatio = AppState.zoom / oldZoom;
-        AppState.pan.x = mouseX - (mouseX - AppState.pan.x) * zoomRatio;
-        AppState.pan.y = mouseY - (mouseY - AppState.pan.y) * zoomRatio;
-
-        updateZoomDisplay();
-        applyCanvasTransform();
-    });
-
-    // Pan with middle mouse drag
-    $('#networkCanvas').on('mousedown', function(e) {
-        if (e.button === 1) { // Middle mouse button
-            e.preventDefault();
-            AppState.isDragging = true;
-            AppState.dragStart = { x: e.clientX, y: e.clientY };
-            $(this).css('cursor', 'grabbing');
-        }
-    });
-
-    $(document).on('mousemove', function(e) {
-        if (AppState.isDragging) {
-            const dx = e.clientX - AppState.dragStart.x;
-            const dy = e.clientY - AppState.dragStart.y;
-
-            AppState.pan.x += dx;
-            AppState.pan.y += dy;
-
-            AppState.dragStart = { x: e.clientX, y: e.clientY };
-            applyCanvasTransform();
-        }
-    });
-
-    $(document).on('mouseup', function() {
-        if (AppState.isDragging) {
-            AppState.isDragging = false;
-            $('#networkCanvas').css('cursor', 'default');
-        }
-    });
-}
-
-function zoomIn() {
-    AppState.zoom = Math.min(AppState.zoom * 1.2, 3);
-    updateZoomDisplay();
-    applyCanvasTransform();
-}
-
-function zoomOut() {
-    AppState.zoom = Math.max(AppState.zoom / 1.2, 0.1);
-    updateZoomDisplay();
-    applyCanvasTransform();
-}
-
-function resetZoom() {
-    AppState.zoom = 1;
-    AppState.pan = { x: 0, y: 0 };
-    updateZoomDisplay();
-    applyCanvasTransform();
-}
-
-function updateZoomDisplay() {
-    $('#zoomLevel').text(`${Math.round(AppState.zoom * 100)}%`);
-}
-
-function applyCanvasTransform() {
-    const container = $('#traitNodesContainer');
-    container.css({
-        transform: `translate(${AppState.pan.x}px, ${AppState.pan.y}px) scale(${AppState.zoom})`,
-        transformOrigin: '0 0'
-    });
-}
-
-// ====== DATA LOADING ======
 async function loadDiseases() {
+    // ====== CHANGE 3: Load diseases from database ======
+    // REPLACES: loadSampleDiseases() function with hardcoded array
+    // EFFECT: Shows actual diseases from database with real prevalence data
     try {
-        // First try to load from database
         const { data, error } = await AppState.supabase
             .from('diseases')
             .select('*')
@@ -2157,101 +1951,159 @@ async function loadDiseases() {
         if (data && data.length > 0) {
             renderDiseaseList(data);
         } else {
-            // Load sample diseases if database is empty
-            loadSampleDiseases();
+            // Create default diseases if none exist
+            await createDefaultDiseases();
+            await loadDiseases(); // Reload
         }
 
     } catch (error) {
         console.error('Error loading diseases:', error);
-        // Load sample diseases as fallback
-        loadSampleDiseases();
+        showToast('Error', 'Failed to load diseases: ' + error.message, 'error');
+        $('#diseaseList').html('<div style="color: #ef476f; padding: 20px;">Error loading diseases</div>');
     }
 }
 
-function loadSampleDiseases() {
-    const sampleDiseases = [
-        {
-            id: 1,
-            disease_name: 'Asthma',
-            icd10_code: 'J45',
-            description: 'Chronic inflammatory airway disease with reversible airflow obstruction.',
-            prevalence: 'Common (7-10% of population)',
-            traits_count: 12
-        },
-        {
-            id: 2,
-            disease_name: 'COPD',
-            icd10_code: 'J44',
-            description: 'Chronic obstructive pulmonary disease with progressive airflow limitation.',
-            prevalence: 'Common (8-12% of adults)',
-            traits_count: 15
-        },
-        {
-            id: 3,
-            disease_name: 'Bronchiectasis',
-            icd10_code: 'J47',
-            description: 'Abnormal widening of the bronchi with chronic inflammation.',
-            prevalence: 'Uncommon (1-2% of population)',
-            traits_count: 10
-        },
-        {
-            id: 4,
-            disease_name: 'Pulmonary Fibrosis',
-            icd10_code: 'J84',
-            description: 'Progressive scarring of lung tissue with impaired gas exchange.',
-            prevalence: 'Rare (0.01-0.02% of population)',
-            traits_count: 8
-        }
-    ];
+async function createDefaultDiseases() {
+    // Backup: Create default diseases if database is empty
+    try {
+        const { error } = await AppState.supabase
+            .from('diseases')
+            .insert([
+                {
+                    disease_name: 'Asthma',
+                    icd10_code: 'J45',
+                    description: 'Chronic inflammatory airway disease with reversible airflow obstruction.',
+                    prevalence: 'Common (7-10% of population)'
+                },
+                {
+                    disease_name: 'COPD',
+                    icd10_code: 'J44',
+                    description: 'Chronic obstructive pulmonary disease with progressive airflow limitation.',
+                    prevalence: 'Common (8-12% of adults)'
+                }
+            ]);
 
-    renderDiseaseList(sampleDiseases);
+        if (error) throw error;
+        
+    } catch (error) {
+        console.error('Error creating default diseases:', error);
+    }
 }
 
 async function loadTraitsForDisease(diseaseId) {
+    // ====== CHANGE 4: Load traits from database for selected disease ======
+    // REPLACES: getSampleTraitsForDisease() with hardcoded trait arrays
+    // ALGORITHM: Query traits through disease_traits linking table
+    // EFFECT: Shows actual clinical traits linked to the selected disease
     try {
         // Show loading
         $('#welcomeMessage').hide();
         $('#traitNodesContainer').html('<div class="loading"><div class="loading-spinner"></div>Loading clinical traits...</div>');
 
-        // Try to load from database
-        let traits = [];
-        let connections = [];
-
-        // First check if we have saved network positions
-        const { data: savedPositions, error: posError } = await AppState.supabase
-            .from('saved_positions')
-            .select('*')
+        // STEP 1: Get trait UUIDs for this disease from disease_traits table
+        const { data: traitLinks, error: linksError } = await AppState.supabase
+            .from('disease_traits')
+            .select('trait_uuid')
             .eq('disease_id', diseaseId);
 
-        if (!posError && savedPositions) {
-            savedPositions.forEach(pos => {
+        if (linksError) throw linksError;
+
+        if (!traitLinks || traitLinks.length === 0) {
+            showToast('No Traits Found', 'No clinical traits found for this disease', 'warning');
+            $('#traitNodesContainer').html(`
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                    <div style="color: #ff9e00; margin-bottom: 20px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
+                    </div>
+                    <h3 style="color: #2d3748; margin-bottom: 10px;">No Clinical Traits Found</h3>
+                    <p style="color: #718096; margin-bottom: 20px;">
+                        No traits are linked to ${AppState.currentDisease.disease_name} in the database.
+                    </p>
+                    <button class="btn btn-primary" onclick="$('#addTraitModal').addClass('active')">
+                        <i class="fas fa-plus"></i> Add First Trait
+                    </button>
+                </div>
+            `);
+            return;
+        }
+
+        // STEP 2: Get trait details from traits table
+        const traitUuids = traitLinks.map(link => link.trait_uuid);
+        const { data: traitsData, error: traitsError } = await AppState.supabase
+            .from('traits')
+            .select(`
+                id,
+                name as trait_name,
+                category,
+                description,
+                severity,
+                color,
+                biomarkers,
+                first_line_therapy,
+                clinical_evaluation
+            `)
+            .in('id', traitUuids);
+
+        if (traitsError) throw traitsError;
+
+        // STEP 3: Get connections between these traits
+        const { data: connectionsData, error: connectionsError } = await AppState.supabase
+            .from('connections')
+            .select(`
+                id,
+                source_trait_id,
+                target_trait_id,
+                connection_type as relationship_type,
+                strength,
+                evidence_description,
+                clinical_significance
+            `)
+            .in('source_trait_id', traitUuids)
+            .in('target_trait_id', traitUuids);
+
+        if (connectionsError) throw connectionsError;
+
+        // STEP 4: Get saved positions for these traits
+        const { data: positionsData, error: positionsError } = await AppState.supabase
+            .from('saved_positions')
+            .select('trait_id, x, y')
+            .eq('disease_id', diseaseId)
+            .in('trait_id', traitUuids);
+
+        if (!positionsError && positionsData) {
+            AppState.nodePositions.clear();
+            positionsData.forEach(pos => {
                 AppState.nodePositions.set(pos.trait_id, { x: pos.x, y: pos.y });
+            });
+        } else {
+            // Create grid layout if no positions saved
+            AppState.nodePositions.clear();
+            traitsData.forEach((trait, index) => {
+                const x = 100 + (index % 4) * 250;
+                const y = 100 + Math.floor(index / 4) * 180;
+                AppState.nodePositions.set(trait.id, { x, y });
             });
         }
 
-        // Load sample traits for the selected disease
-        traits = getSampleTraitsForDisease(diseaseId);
-        connections = getSampleConnectionsForDisease(diseaseId);
+        // STEP 5: Update application state
+        AppState.currentTraits = traitsData || [];
+        AppState.currentConnections = connectionsData || [];
 
-        AppState.currentTraits = traits;
-        AppState.currentConnections = connections;
-
-        // Update UI
+        // STEP 6: Update UI
         $('#currentDiseaseName').text(AppState.currentDisease.disease_name);
-        $('#traitCount').text(`(${AppState.currentTraits.length} treatable traits)`);
+        $('#traitCount').text(`(${AppState.currentTraits.length} clinical traits)`);
 
-        // Render the network
+        // STEP 7: Render network with real data
         renderCompleteNetwork();
 
-        // Update connection creator dropdowns
+        // STEP 8: Update connection creator dropdowns
         updateConnectionDropdowns();
 
-        // Update analytics
+        // STEP 9: Update analytics with real data
         updateAnalytics();
         updateNetworkMetrics();
 
-        // Show success toast
-        showToast('Disease Loaded', `${AppState.currentDisease.disease_name} traits loaded successfully`, 'success');
+        showToast('Disease Loaded', `${AppState.currentDisease.disease_name} loaded successfully`, 'success');
 
     } catch (error) {
         console.error('Error loading traits:', error);
@@ -2261,7 +2113,7 @@ async function loadTraitsForDisease(diseaseId) {
                 <div style="color: #ef476f; margin-bottom: 20px;">
                     <i class="fas fa-exclamation-triangle" style="font-size: 48px;"></i>
                 </div>
-                <h3 style="color: #2d3748; margin-bottom: 10px;">Error Loading Data</h3>
+                <h3 style="color: #2d3748; margin-bottom: 10px;">Database Error</h3>
                 <p style="color: #718096;">${error.message}</p>
                 <button class="btn btn-primary" onclick="loadTraitsForDisease(${diseaseId})" style="margin-top: 20px;">
                     <i class="fas fa-redo"></i> Retry
@@ -2271,126 +2123,139 @@ async function loadTraitsForDisease(diseaseId) {
     }
 }
 
-function getSampleTraitsForDisease(diseaseId) {
-    const baseTraits = [
-        // Inflammatory Traits
-        { id: 1, trait_name: 'Type 2 Inflammation', category: 'Inflammatory', 
-        description: 'Elevated eosinophils and IgE-mediated inflammation', 
-        measurement_method: 'Blood eosinophil count, FeNO', severity: 75 },
+async function loadTreatments() {
+    // ====== CHANGE 5: Load treatments from database ======
+    // REPLACES: getSampleTreatments() with hardcoded treatment array
+    // ALGORITHM: Query treatments table with evidence-based sorting
+    // EFFECT: Shows real treatment options from database
+    try {
+        const { data, error } = await AppState.supabase
+            .from('treatments')
+            .select(`
+                id,
+                treatment_name,
+                treatment_type,
+                mechanism,
+                evidence_level,
+                dosage,
+                contraindications
+            `)
+            .order('evidence_level', { ascending: false });
 
-        { id: 2, trait_name: 'Neutrophilic Inflammation', category: 'Inflammatory',
-        description: 'Neutrophil-dominated airway inflammation', 
-        measurement_method: 'Sputum neutrophil count', severity: 65 },
+        if (error) throw error;
+        AppState.treatments = data || [];
 
-        // Physiological Traits
-        { id: 3, trait_name: 'Airflow Limitation', category: 'Physiological',
-        description: 'Reduced FEV1/FVC ratio with bronchodilator reversibility',
-        measurement_method: 'Spirometry', severity: 80 },
-
-        { id: 4, trait_name: 'Hyperinflation', category: 'Physiological',
-        description: 'Increased lung volumes and air trapping',
-        measurement_method: 'Body plethysmography', severity: 60 },
-
-        { id: 5, trait_name: 'Gas Exchange Impairment', category: 'Physiological',
-        description: 'Reduced DLCO and hypoxemia',
-        measurement_method: 'DLCO test, ABG', severity: 70 },
-
-        // Behavioral Traits
-        { id: 6, trait_name: 'Smoking History', category: 'Behavioral',
-        description: 'Current or former tobacco use',
-        measurement_method: 'Patient history, pack-years', severity: 85 },
-
-        { id: 7, trait_name: 'Inhaler Non-Adherence', category: 'Behavioral',
-        description: 'Poor adherence to prescribed inhaler therapy',
-        measurement_method: 'Medication possession ratio', severity: 55 },
-
-        // Comorbid Traits
-        { id: 8, trait_name: 'GERD', category: 'Comorbid',
-        description: 'Gastroesophageal reflux disease',
-        measurement_method: 'pH monitoring, symptom scores', severity: 50 },
-
-        { id: 9, trait_name: 'Obesity', category: 'Comorbid',
-        description: 'BMI > 30 with metabolic complications',
-        measurement_method: 'BMI, waist circumference', severity: 65 },
-
-        { id: 10, trait_name: 'Anxiety/Depression', category: 'Comorbid',
-        description: 'Psychiatric comorbidities affecting disease management',
-        measurement_method: 'Questionnaires (GAD-7, PHQ-9)', severity: 45 },
-
-        // Environmental Traits
-        { id: 11, trait_name: 'Occupational Exposure', category: 'Environmental',
-        description: 'Workplace exposure to irritants or allergens',
-        measurement_method: 'Occupational history', severity: 40 },
-
-        { id: 12, trait_name: 'Allergen Sensitivity', category: 'Environmental',
-        description: 'Sensitization to common aeroallergens',
-        measurement_method: 'Skin prick test, specific IgE', severity: 60 },
-
-        // Treatment Traits
-        { id: 13, trait_name: 'ICS/LABA Therapy', category: 'Treatment',
-        description: 'Inhaled corticosteroid and long-acting beta agonist combination',
-        measurement_method: 'Prescription records, adherence monitoring', severity: 70 },
-
-        { id: 14, trait_name: 'Pulmonary Rehabilitation', category: 'Treatment',
-        description: 'Structured exercise and education program',
-        measurement_method: 'Program completion, 6MWD improvement', severity: 75 },
-
-        { id: 15, trait_name: 'Biologic Therapy', category: 'Treatment',
-        description: 'Targeted biologic agents for severe disease',
-        measurement_method: 'Prescription, clinical response', severity: 85 }
-    ];
-
-    // Return different subsets based on disease
-    switch(diseaseId) {
-        case 1: // Asthma
-            return baseTraits.filter(t => [1, 3, 6, 8, 10, 12, 13, 15].includes(t.id));
-        case 2: // COPD
-            return baseTraits.filter(t => [2, 3, 4, 5, 6, 7, 9, 11, 13, 14].includes(t.id));
-        case 3: // Bronchiectasis
-            return baseTraits.filter(t => [2, 5, 7, 8, 10, 14].includes(t.id));
-        case 4: // Pulmonary Fibrosis
-            return baseTraits.filter(t => [5, 9, 10, 11, 14].includes(t.id));
-        default:
-            return baseTraits.slice(0, 8);
+    } catch (error) {
+        console.error('Error loading treatments:', error);
+        AppState.treatments = [];
     }
 }
 
-function getSampleConnectionsForDisease(diseaseId) {
-    const connections = [];
+async function loadPatients() {
+    // ====== CHANGE 6: Load patients from database ======
+    // REPLACES: createSamplePatients() with hardcoded patient array
+    // ALGORITHM: Query patient_profiles table with disease information
+    // EFFECT: Shows real patient profiles from database
+    try {
+        const { data, error } = await AppState.supabase
+            .from('patient_profiles')
+            .select(`
+                id,
+                patient_name as name,
+                age,
+                primary_diagnosis as disease,
+                disease_id,
+                created_at
+            `)
+            .order('created_at', { ascending: false })
+            .limit(10);
 
-    // Common connections for airway diseases
-    const commonConnections = [
-        { source_trait_id: 1, target_trait_id: 3, relationship_type: 'exacerbates', strength: 4 },
-        { source_trait_id: 2, target_trait_id: 4, relationship_type: 'causes', strength: 3 },
-        { source_trait_id: 6, target_trait_id: 2, relationship_type: 'exacerbates', strength: 5 },
-        { source_trait_id: 8, target_trait_id: 7, relationship_type: 'correlates_with', strength: 3 },
-        { source_trait_id: 9, target_trait_id: 5, relationship_type: 'exacerbates', strength: 4 },
-        { source_trait_id: 12, target_trait_id: 1, relationship_type: 'triggers', strength: 4 },
-        { source_trait_id: 13, target_trait_id: 1, relationship_type: 'treats', strength: 5 },
-        { source_trait_id: 13, target_trait_id: 3, relationship_type: 'mitigates', strength: 4 },
-        { source_trait_id: 14, target_trait_id: 5, relationship_type: 'improves', strength: 4 },
-        { source_trait_id: 15, target_trait_id: 1, relationship_type: 'targets', strength: 5 }
-    ];
+        if (error) throw error;
+        AppState.patients = data || [];
 
-    // Add some random connections based on disease
-    commonConnections.forEach(conn => {
-        connections.push({
-            ...conn,
-            id: `${conn.source_trait_id}-${conn.target_trait_id}-${Date.now()}`,
-            evidence_description: 'Clinical trial evidence and guideline recommendations'
-        });
-    });
+        loadPatientSelect();
 
-    return connections;
+    } catch (error) {
+        console.error('Error loading patients:', error);
+        AppState.patients = [];
+    }
+}
+
+async function loadConnectionTypes() {
+    // ====== CHANGE 7: Load connection types from database ======
+    // REPLACES: Hardcoded connection types in HTML dropdown
+    // ALGORITHM: Query connection_types table for all relationship types
+    // EFFECT: Dynamic connection types that can be extended in database
+    try {
+        const { data, error } = await AppState.supabase
+            .from('connection_types')
+            .select('type_name, display_name, color, directionality')
+            .order('display_name');
+
+        if (error) throw error;
+        AppState.connectionTypes = data || [];
+
+        // Update connection type dropdown with database values
+        if (data && data.length > 0) {
+            const select = $('#connectionType');
+            select.empty();
+            data.forEach(type => {
+                select.append(`<option value="${type.type_name}" data-color="${type.color}">${type.display_name}</option>`);
+            });
+        }
+
+    } catch (error) {
+        console.error('Error loading connection types:', error);
+        AppState.connectionTypes = [];
+    }
+}
+
+async function loadTraitCategories() {
+    // ====== CHANGE 8: Load trait categories from database ======
+    // REPLACES: Hardcoded category colors and names
+    // ALGORITHM: Query trait_categories table for all categories
+    // EFFECT: Dynamic categories with colors defined in database
+    try {
+        const { data, error } = await AppState.supabase
+            .from('trait_categories')
+            .select('category_name, display_name, default_color, icon')
+            .order('display_name');
+
+        if (error) throw error;
+        AppState.traitCategories = data || [];
+
+        // Update trait category dropdown with database values
+        if (data && data.length > 0) {
+            const select = $('#newTraitCategory');
+            select.empty();
+            data.forEach(category => {
+                select.append(`<option value="${category.category_name}">${category.display_name}</option>`);
+            });
+        }
+
+    } catch (error) {
+        console.error('Error loading trait categories:', error);
+        AppState.traitCategories = [];
+    }
 }
 
 async function loadSavedNetworks() {
+    // ====== CHANGE 9: Load saved networks from database ======
+    // REPLACES: getSampleSavedNetworks() with hardcoded networks
+    // ALGORITHM: Query network_sessions table with user networks
+    // EFFECT: Shows real saved networks from database
     try {
         const { data, error } = await AppState.supabase
-            .from('saved_networks')
+            .from('network_sessions')
             .select(`
-                *,
-                diseases(disease_name)
+                id,
+                name as network_name,
+                description,
+                created_at,
+                created_by,
+                node_count,
+                connection_count,
+                network_state
             `)
             .order('created_at', { ascending: false })
             .limit(20);
@@ -2402,868 +2267,22 @@ async function loadSavedNetworks() {
 
     } catch (error) {
         console.error('Error loading saved networks:', error);
-        // Show sample saved networks
-        renderSavedNetworks(getSampleSavedNetworks());
+        showToast('Error', 'Failed to load saved networks', 'error');
+        renderSavedNetworks([]);
     }
 }
 
-function renderSavedNetworks(networks) {
-    const container = $('#savedNetworks');
-    container.empty();
-
-    if (!networks || networks.length === 0) {
-        container.html(`
-            <div style="text-align: center; padding: 30px; color: var(--text-tertiary);">
-                <i class="fas fa-project-diagram" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px;"></i>
-                <div>No saved networks yet</div>
-                <div style="font-size: 12px; margin-top: 8px;">Save your first network to see it here</div>
-            </div>
-        `);
-        return;
-    }
-
-    networks.forEach(network => {
-        const networkDiv = $(`
-            <div class="saved-network" data-id="${network.id}">
-                <div class="network-name">${network.network_name}</div>
-                <div class="network-meta">
-                    <span>${network.diseases?.disease_name || 'Unknown'} • ${new Date(network.created_at).toLocaleDateString()}</span>
-                    <span class="network-author">${network.created_by || 'System'}</span>
-                </div>
-                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
-                    ${network.description || 'No description'}
-                </div>
-            </div>
-        `);
-
-        networkDiv.click(async () => {
-            await loadSavedNetwork(network);
-        });
-
-        container.append(networkDiv);
-    });
-}
-
-function getSampleSavedNetworks() {
-    return [
-        {
-            id: 1,
-            network_name: 'Asthma Inflammatory Network',
-            disease_id: 1,
-            description: 'Complete inflammatory pathway mapping for severe asthma',
-            created_at: '2024-01-15T10:30:00Z',
-            created_by: 'Dr. Smith',
-            diseases: { disease_name: 'Asthma' }
-        },
-        {
-            id: 2,
-            network_name: 'COPD Comorbidity Map',
-            disease_id: 2,
-            description: 'Interconnections between COPD traits and common comorbidities',
-            created_at: '2024-01-10T14:45:00Z',
-            created_by: 'Dr. Johnson',
-            diseases: { disease_name: 'COPD' }
-        },
-        {
-            id: 3,
-            network_name: 'Treatment-Resistant Asthma',
-            disease_id: 1,
-            description: 'Network analysis of traits in difficult-to-treat asthma',
-            created_at: '2024-01-05T09:15:00Z',
-            created_by: 'Dr. Williams',
-            diseases: { disease_name: 'Asthma' }
-        }
-    ];
-}
-
-async function loadTreatments() {
-    try {
-        const { data, error } = await AppState.supabase
-            .from('treatments')
-            .select('*')
-            .order('evidence_level', { ascending: false });
-
-        if (!error && data) {
-            AppState.treatments = data;
-        } else {
-            // Load sample treatments
-            AppState.treatments = getSampleTreatments();
-        }
-
-    } catch (error) {
-        console.error('Error loading treatments:', error);
-        AppState.treatments = getSampleTreatments();
-    }
-}
-
-function getSampleTreatments() {
-    return [
-        {
-            id: 1,
-            treatment_name: 'Inhaled Corticosteroids',
-            trait_id: 1,
-            treatment_type: 'Pharmacological',
-            mechanism: 'Reduces airway inflammation',
-            evidence_level: 'A',
-            dosage: 'Variable based on severity'
-        },
-        {
-            id: 2,
-            treatment_name: 'Long-acting Beta Agonists',
-            trait_id: 3,
-            treatment_type: 'Pharmacological',
-            mechanism: 'Bronchodilation',
-            evidence_level: 'A',
-            dosage: 'Combination with ICS'
-        },
-        {
-            id: 3,
-            treatment_name: 'Biologic Therapy',
-            trait_id: 1,
-            treatment_type: 'Advanced',
-            mechanism: 'Targets specific inflammatory pathways',
-            evidence_level: 'A',
-            dosage: 'Subcutaneous injection'
-        },
-        {
-            id: 4,
-            treatment_name: 'Pulmonary Rehabilitation',
-            trait_id: 5,
-            treatment_type: 'Non-pharmacological',
-            mechanism: 'Improves exercise capacity and symptoms',
-            evidence_level: 'A',
-            dosage: '6-12 week program'
-        },
-        {
-            id: 5,
-            treatment_name: 'Smoking Cessation',
-            trait_id: 6,
-            treatment_type: 'Behavioral',
-            mechanism: 'Reduces disease progression',
-            evidence_level: 'A',
-            dosage: 'Counseling + pharmacotherapy'
-        }
-    ];
-}
-
-function loadSampleTraits() {
-    // Preload some trait positions
-    AppState.nodePositions.set(1, { x: 200, y: 150 });
-    AppState.nodePositions.set(2, { x: 450, y: 200 });
-    AppState.nodePositions.set(3, { x: 300, y: 350 });
-    AppState.nodePositions.set(4, { x: 600, y: 300 });
-    AppState.nodePositions.set(5, { x: 500, y: 450 });
-}
-
-function createSamplePatients() {
-    // Create sample patients
-    AppState.patients = [
-        { id: 1, name: 'John Smith', age: 65, disease_id: 1, disease: 'Asthma', created: new Date() },
-        { id: 2, name: 'Maria Garcia', age: 72, disease_id: 2, disease: 'COPD', created: new Date() },
-        { id: 3, name: 'Robert Chen', age: 58, disease_id: 1, disease: 'Asthma', created: new Date() },
-        { id: 4, name: 'Sarah Johnson', age: 45, disease_id: 3, disease: 'Bronchiectasis', created: new Date() }
-    ];
-
-    loadPatientSelect();
-}
-
-function loadPatientSelect() {
-    const select = $('#patientSelect');
-    select.empty();
-    select.append('<option value="">Select a patient...</option>');
-
-    AppState.patients.forEach(patient => {
-        select.append(`<option value="${patient.id}">${patient.name} (${patient.age}, ${patient.disease})</option>`);
-    });
-
-    select.append('<option value="new">+ Create New Patient</option>');
-}
-
-// ====== RENDERING ======
-function renderDiseaseList(diseases) {
-    const container = $('#diseaseList');
-    container.empty();
-
-    diseases.forEach(disease => {
-        const card = $(`
-            <div class="disease-card" data-id="${disease.id}">
-                <div class="disease-name">
-                    ${disease.disease_name}
-                    <span class="disease-badge">${disease.traits_count || '8'}+ traits</span>
-                </div>
-                <div class="disease-code">${disease.icd10_code || 'J00'}</div>
-                <div class="disease-description">
-                    ${disease.description || 'No description available'}
-                </div>
-                <div class="disease-stats">
-                    <span><i class="fas fa-users"></i> ${disease.prevalence || 'Common'}</span>
-                    <span><i class="fas fa-dna"></i> Treatable traits</span>
-                </div>
-            </div>
-        `);
-
-        card.click(async () => {
-            // Update active state
-            $('.disease-card').removeClass('active');
-            card.addClass('active');
-
-            // Set current disease
-            AppState.currentDisease = disease;
-
-            // Switch to canvas view
-            $('.tab-btn[data-tab="diseases"]').click();
-
-            // Load traits
-            await loadTraitsForDisease(disease.id);
-        });
-
-        container.append(card);
-    });
-}
-
-function renderCompleteNetwork() {
-    const container = $('#traitNodesContainer');
-    container.empty();
-
-    // Clear SVG
-    $('#connectionsSvg').empty();
-
-    // Create trait nodes
-    AppState.currentTraits.forEach((trait, index) => {
-        createTraitNodeElement(trait, index);
-    });
-
-    // Draw connections
-    drawAllConnections();
-
-    // Make nodes draggable
-    setupDraggableNodes();
-
-    // Apply saved positions
-    applySavedNodePositions();
-
-    // Apply zoom/pan transform
-    applyCanvasTransform();
-
-    // Update insights
-    updateNetworkMetrics();
-    detectPatterns();
-}
-
-function createTraitNodeElement(trait, index) {
-    const container = $('#traitNodesContainer');
-
-    // Get or calculate position
-    let pos = AppState.nodePositions.get(trait.id);
-    if (!pos) {
-        pos = {
-            x: trait.default_x || 100 + (index % 4) * 250,
-            y: trait.default_y || 100 + Math.floor(index / 4) * 180
-        };
-        AppState.nodePositions.set(trait.id, pos);
-    }
-
-    // Determine category color
-    const categoryColors = {
-        'inflammatory': '#ef476f',
-        'physiological': '#06d6a0',
-        'behavioral': '#ffd166',
-        'comorbid': '#118ab2',
-        'environmental': '#9d4edd',
-        'treatment': '#7209b7'
-    };
-
-    const categoryColor = categoryColors[trait.category.toLowerCase()] || '#4361ee';
-
-    const node = $(`
-        <div class="trait-node ${trait.category.toLowerCase()}" data-id="${trait.id}" data-trait-id="${trait.id}"
-        style="left: ${pos.x}px; top: ${pos.y}px; border-left-color: ${categoryColor}">
-            <div class="node-header">
-                <div class="node-title">${trait.trait_name}</div>
-                <span class="node-category node-${trait.category.toLowerCase()}" 
-                style="background: ${categoryColor}">
-                    ${trait.category}
-                </span>
-            </div>
-            <div class="node-content">
-                ${trait.description || 'No description available'}
-                <div class="node-metrics">
-                    <div class="metric">
-                        <i class="fas fa-chart-line"></i>
-                        <span class="metric-value">${trait.severity || 50}%</span>
-                    </div>
-                    <div class="metric">
-                        <i class="fas fa-stethoscope"></i>
-                        <span>${trait.measurement_method || 'Various'}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="node-footer">
-                <div>
-                    <i class="fas fa-fingerprint"></i> ID: ${trait.id}
-                </div>
-                <div class="node-actions">
-                    <button class="node-btn" onclick="showTraitDetails(${trait.id})" title="Details">
-                        <i class="fas fa-info"></i>
-                    </button>
-                    <button class="node-btn" onclick="showTreatmentsForTrait(${trait.id})" title="Treatments">
-                        <i class="fas fa-pills"></i>
-                    </button>
-                    <button class="node-btn" onclick="editTrait(${trait.id})" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `);
-
-    // Click handler for selection
-    node.click(function(e) {
-        e.stopPropagation();
-        selectNode($(this), trait);
-    });
-
-    // Double-click for quick edit
-    node.dblclick(() => {
-        editTrait(trait);
-    });
-
-    container.append(node);
-    return node;
-}
-
-function drawAllConnections() {
-    const svg = $('#connectionsSvg')[0];
-    svg.innerHTML = ''; // Clear existing connections
-
-    AppState.currentConnections.forEach(connection => {
-        drawConnection(connection);
-    });
-}
-
-function drawConnection(connection) {
-    const sourceNode = $(`.trait-node[data-id="${connection.source_trait_id}"]`);
-    const targetNode = $(`.trait-node[data-id="${connection.target_trait_id}"]`);
-
-    if (!sourceNode.length || !targetNode.length) return;
-
-    const sourceRect = sourceNode[0].getBoundingClientRect();
-    const targetRect = targetNode[0].getBoundingClientRect();
-    const workspaceRect = $('#networkCanvas')[0].getBoundingClientRect();
-
-    const x1 = sourceRect.left - workspaceRect.left + sourceRect.width / 2;
-    const y1 = sourceRect.top - workspaceRect.top + sourceRect.height / 2;
-    const x2 = targetRect.left - workspaceRect.left + targetRect.width / 2;
-    const y2 = targetRect.top - workspaceRect.top + targetRect.height / 2;
-
-    // Apply zoom and pan transformations
-    const transformedX1 = (x1 - AppState.pan.x) / AppState.zoom;
-    const transformedY1 = (y1 - AppState.pan.y) / AppState.zoom;
-    const transformedX2 = (x2 - AppState.pan.x) / AppState.zoom;
-    const transformedY2 = (y2 - AppState.pan.y) / AppState.zoom;
-
-    // Create SVG path
-    const svg = $('#connectionsSvg')[0];
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    const dx = transformedX2 - transformedX1;
-    const dy = transformedY2 - transformedY1;
-    const controlX = transformedX1 + dx * 0.5;
-    const controlY = transformedY1 + dy * 0.5 - 40;
-
-    path.setAttribute('d', `M ${transformedX1} ${transformedY1} Q ${controlX} ${controlY} ${transformedX2} ${transformedY2}`);
-    path.setAttribute('stroke', getConnectionColor(connection.relationship_type));
-    path.setAttribute('stroke-width', connection.strength || 2);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('class', 'connection-line');
-    path.setAttribute('opacity', '0.8');
-    path.setAttribute('stroke-dasharray', connection.strength < 3 ? '5,3' : 'none');
-
-    // Add arrowhead for directional connections
-    if (connection.relationship_type !== 'correlates_with') {
-        const markerId = `arrow-${connection.id}`;
-        let marker = document.getElementById(markerId);
-        if (!marker) {
-            marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-            marker.setAttribute('id', markerId);
-            marker.setAttribute('viewBox', '0 0 10 10');
-            marker.setAttribute('refX', '9');
-            marker.setAttribute('refY', '5');
-            marker.setAttribute('markerWidth', '6');
-            marker.setAttribute('markerHeight', '6');
-            marker.setAttribute('orient', 'auto');
-
-            const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            arrow.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
-            arrow.setAttribute('fill', getConnectionColor(connection.relationship_type));
-            marker.appendChild(arrow);
-            svg.appendChild(marker);
-        }
-
-        path.setAttribute('marker-end', `url(#${markerId})`);
-    }
-
-    svg.appendChild(path);
-
-    // Add connection label
-    const labelX = (transformedX1 + transformedX2) / 2;
-    const labelY = (transformedY1 + transformedY2) / 2 - 30;
-
-    const label = $(`
-        <div class="connection-label" style="left: ${labelX}px; top: ${labelY}px; transform: translate(-50%, -50%);">
-            ${connection.relationship_type.replace('_', ' ').toUpperCase()}
-        </div>
-    `);
-
-    $('#networkCanvas').append(label);
-}
-
-function getConnectionColor(relationshipType) {
-    const colors = {
-        'causes': '#ef476f',
-        'exacerbates': '#ff9e00',
-        'mitigates': '#06d6a0',
-        'correlates_with': '#118ab2',
-        'treats': '#7209b7',
-        'triggers': '#9d4edd',
-        'targets': '#4361ee',
-        'improves': '#4cc9f0'
-    };
-    return colors[relationshipType] || '#4361ee';
-}
-
-function renderSavedNetworks(networks) {
-    const container = $('#savedNetworks');
-    container.empty();
-
-    if (!networks || networks.length === 0) {
-        container.html(`
-            <div style="text-align: center; padding: 30px; color: var(--text-tertiary);">
-                <i class="fas fa-project-diagram" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px;"></i>
-                <div>No saved networks yet</div>
-                <div style="font-size: 12px; margin-top: 8px;">Save your first network to see it here</div>
-            </div>
-        `);
-        return;
-    }
-
-    networks.forEach(network => {
-        const networkDiv = $(`
-            <div class="saved-network" data-id="${network.id}">
-                <div class="network-name">${network.network_name}</div>
-                <div class="network-meta">
-                    <span>${network.diseases?.disease_name || 'Unknown'} • ${new Date(network.created_at).toLocaleDateString()}</span>
-                    <span class="network-author">${network.created_by || 'System'}</span>
-                </div>
-                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
-                    ${network.description || 'No description'}
-                </div>
-            </div>
-        `);
-
-        networkDiv.click(async () => {
-            await loadSavedNetwork(network);
-        });
-
-        container.append(networkDiv);
-    });
-}
-
-// ====== INTERACTIVITY ======
-function setupDraggableNodes() {
-    $('.trait-node').each(function() {
-        const node = $(this);
-        let isDragging = false;
-        let startX, startY, initialLeft, initialTop;
-
-        node.on('mousedown', function(e) {
-            if (e.button !== 0) return; // Only left mouse button
-
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-
-            initialLeft = parseInt(node.css('left'));
-            initialTop = parseInt(node.css('top'));
-
-            node.css('cursor', 'grabbing');
-            node.css('z-index', '1000');
-
-            // Select the node
-            const traitId = parseInt(node.data('id'));
-            const trait = AppState.currentTraits.find(t => t.id === traitId);
-            if (trait) {
-                selectNode(node, trait);
-            }
-
-            $(document).on('mousemove', drag);
-            $(document).on('mouseup', stopDrag);
-
-            e.preventDefault();
-            e.stopPropagation();
-        });
-
-        function drag(e) {
-            if (!isDragging) return;
-
-            const dx = (e.clientX - startX) / AppState.zoom;
-            const dy = (e.clientY - startY) / AppState.zoom;
-
-            const newLeft = initialLeft + dx;
-            const newTop = initialTop + dy;
-
-            const workspace = $('#networkCanvas');
-            const workspaceWidth = workspace.width();
-            const workspaceHeight = workspace.height();
-
-            // Constrain to workspace (adjusted for zoom)
-            const nodeWidth = node.width();
-            const nodeHeight = node.height();
-            const maxX = (workspaceWidth / AppState.zoom) - nodeWidth;
-            const maxY = (workspaceHeight / AppState.zoom) - nodeHeight;
-
-            const constrainedLeft = Math.max(0, Math.min(newLeft, maxX));
-            const constrainedTop = Math.max(0, Math.min(newTop, maxY));
-
-            node.css('left', constrainedLeft + 'px');
-            node.css('top', constrainedTop + 'px');
-
-            // Update connections in real-time
-            drawAllConnections();
-        }
-
-        function stopDrag() {
-            if (!isDragging) return;
-
-            isDragging = false;
-            node.css('cursor', 'move');
-            node.css('z-index', '10');
-
-            // Save position
-            const traitId = parseInt(node.data('id'));
-            const x = parseInt(node.css('left'));
-            const y = parseInt(node.css('top'));
-
-            AppState.nodePositions.set(traitId, { x, y });
-            savePositionToHistory();
-
-            $(document).off('mousemove', drag);
-            $(document).off('mouseup', stopDrag);
-        }
-    });
-}
-
-function selectNode(node, trait) {
-    // Deselect all nodes
-    $('.trait-node').removeClass('selected');
-
-    // Select this node
-    node.addClass('selected');
-    AppState.selectedNode = trait;
-
-    // Show connection creator near selected node
-    const rect = node[0].getBoundingClientRect();
-    const creator = $('#connectionCreator');
-    const workspaceRect = $('#networkCanvas')[0].getBoundingClientRect();
-
-    creator.css({
-        display: 'block',
-        left: (rect.right - workspaceRect.left + 10) + 'px',
-        top: (rect.top - workspaceRect.top) + 'px'
-    });
-
-    // Set this node as source in connection creator
-    $('#connectionSource').val(trait.id);
-}
-
-function updateConnectionDropdowns() {
-    const sourceSelect = $('#connectionSource');
-    const targetSelect = $('#connectionTarget');
-
-    sourceSelect.empty().append('<option value="">Select source trait...</option>');
-    targetSelect.empty().append('<option value="">Select target trait...</option>');
-
-    AppState.currentTraits.forEach(trait => {
-        sourceSelect.append(`<option value="${trait.id}">${trait.trait_name}</option>`);
-        targetSelect.append(`<option value="${trait.id}">${trait.trait_name}</option>`);
-    });
-}
-
-// ====== LAYOUT FUNCTIONS ======
-function applyForceLayout() {
-    const nodes = $('.trait-node');
-    if (nodes.length === 0) return;
-
-    const workspace = $('#networkCanvas');
-    const centerX = workspace.width() / 2;
-    const centerY = workspace.height() / 2;
-    const radius = Math.min(workspace.width(), workspace.height()) * 0.35;
-
-    nodes.each(function(index) {
-        const node = $(this);
-        const angle = (index / nodes.length) * Math.PI * 2;
-        const x = centerX + Math.cos(angle) * radius - node.width() / 2;
-        const y = centerY + Math.sin(angle) * radius - node.height() / 2;
-
-        const traitId = parseInt(node.data('id'));
-        AppState.nodePositions.set(traitId, { x, y });
-    });
-
-    savePositionToHistory();
-    renderCompleteNetwork();
-    showToast('Layout Applied', 'Force-directed layout generated', 'success');
-}
-
-function applyCircleLayout() {
-    const nodes = $('.trait-node');
-    if (nodes.length === 0) return;
-
-    const workspace = $('#networkCanvas');
-    const centerX = workspace.width() / 2;
-    const centerY = workspace.height() / 2;
-    const radius = Math.min(workspace.width(), workspace.height()) * 0.3;
-
-    nodes.each(function(index) {
-        const node = $(this);
-        const angle = (index / nodes.length) * Math.PI * 2;
-        const x = centerX + Math.cos(angle) * radius - node.width() / 2;
-        const y = centerY + Math.sin(angle) * radius - node.height() / 2;
-
-        const traitId = parseInt(node.data('id'));
-        AppState.nodePositions.set(traitId, { x, y });
-    });
-
-    savePositionToHistory();
-    renderCompleteNetwork();
-    showToast('Layout Applied', 'Circular layout generated', 'success');
-}
-
-function applyAutoLayout() {
-    // Smart layout based on connection density
-    const nodes = $('.trait-node');
-    if (nodes.length === 0) return;
-
-    // Simple grid layout for now
-    const workspace = $('#networkCanvas');
-    const cols = Math.ceil(Math.sqrt(nodes.length));
-    const spacingX = workspace.width() / (cols + 1);
-    const spacingY = workspace.height() / (cols + 1);
-
-    nodes.each(function(index) {
-        const node = $(this);
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-        const x = spacingX * (col + 1) - node.width() / 2;
-        const y = spacingY * (row + 1) - node.height() / 2;
-
-        const traitId = parseInt(node.data('id'));
-        AppState.nodePositions.set(traitId, { x, y });
-    });
-
-    savePositionToHistory();
-    renderCompleteNetwork();
-    showToast('Layout Applied', 'Automatic layout generated', 'success');
-}
-
-function applySavedNodePositions() {
-    // Update DOM elements with saved positions
-    AppState.nodePositions.forEach((pos, traitId) => {
-        const node = $(`.trait-node[data-id="${traitId}"]`);
-        if (node.length) {
-            node.css({ left: pos.x + 'px', top: pos.y + 'px' });
-        }
-    });
-
-    // Redraw connections
-    drawAllConnections();
-}
-
-// ====== HISTORY MANAGEMENT ======
-function savePositionToHistory() {
-    // Save current state to history
-    const state = {
-        positions: Array.from(AppState.nodePositions.entries()),
-        zoom: AppState.zoom,
-        pan: { ...AppState.pan }
-    };
-
-    AppState.history.push(JSON.stringify(state));
-    AppState.historyIndex = AppState.history.length - 1;
-
-    // Limit history size
-    if (AppState.history.length > 50) {
-        AppState.history.shift();
-        AppState.historyIndex--;
-    }
-}
-
-function undo() {
-    if (AppState.historyIndex > 0) {
-        AppState.historyIndex--;
-        loadStateFromHistory();
-        showToast('Undo', 'Previous action undone', 'info');
-    }
-}
-
-function redo() {
-    if (AppState.historyIndex < AppState.history.length - 1) {
-        AppState.historyIndex++;
-        loadStateFromHistory();
-        showToast('Redo', 'Action redone', 'info');
-    }
-}
-
-function loadStateFromHistory() {
-    if (AppState.historyIndex < 0) return;
-
-    const state = JSON.parse(AppState.history[AppState.historyIndex]);
-
-    // Restore positions
-    AppState.nodePositions.clear();
-    state.positions.forEach(([traitId, pos]) => {
-        AppState.nodePositions.set(traitId, pos);
-    });
-
-    // Restore zoom and pan
-    AppState.zoom = state.zoom;
-    AppState.pan = state.pan;
-
-    // Update UI
-    updateZoomDisplay();
-    applyCanvasTransform();
-    applySavedNodePositions();
-}
-
-// ====== DATABASE OPERATIONS ======
-async function saveCurrentNetwork() {
-    try {
-        const name = $('#saveNetworkName').val().trim();
-        const description = $('#saveNetworkDescription').val().trim();
-
-        if (!name) {
-            showToast('Validation Error', 'Please enter a network name', 'error');
-            return;
-        }
-
-        if (!AppState.currentDisease) {
-            showToast('Validation Error', 'Please select a disease first', 'error');
-            return;
-        }
-
-        // Collect node positions
-        const nodes = [];
-        $('.trait-node').each(function() {
-            const traitId = parseInt($(this).data('id'));
-            const x = parseInt($(this).css('left'));
-            const y = parseInt($(this).css('top'));
-            nodes.push({ id: traitId, x, y });
-        });
-
-        // Prepare layout data
-        const layoutData = {
-            nodes: nodes,
-            connections: AppState.currentConnections,
-            metadata: {
-                created: new Date().toISOString(),
-                disease: AppState.currentDisease.disease_name,
-                trait_count: AppState.currentTraits.length,
-                connection_count: AppState.currentConnections.length,
-                zoom: AppState.zoom,
-                pan: AppState.pan
-            }
-        };
-
-        // Save to database
-        const { data, error } = await AppState.supabase
-            .from('saved_networks')
-            .insert([{
-                network_name: name,
-                disease_id: AppState.currentDisease.id,
-                description: description,
-                layout_data: layoutData,
-                is_public: $('#saveNetworkPublic').is(':checked'),
-                created_by: AppState.userId
-            }])
-            .select();
-
-        if (error) throw error;
-
-        showToast('Network Saved', 'Network configuration saved successfully!', 'success');
-        closeModal('saveNetworkModal');
-
-        // Clear form
-        $('#saveNetworkName').val('');
-        $('#saveNetworkDescription').val('');
-
-        // Reload saved networks
-        await loadSavedNetworks();
-
-    } catch (error) {
-        console.error('Error saving network:', error);
-        showToast('Save Failed', `Error: ${error.message}`, 'error');
-    }
-}
-
-async function loadSavedNetwork(network) {
-    try {
-        // Load the corresponding disease
-        const diseaseCard = $(`.disease-card[data-id="${network.disease_id}"]`);
-        if (diseaseCard.length) {
-            diseaseCard.click();
-
-            // Wait for traits to load, then apply saved layout
-            setTimeout(() => {
-                if (network.layout_data) {
-                    // Clear existing positions
-                    AppState.nodePositions.clear();
-
-                    // Apply saved positions
-                    if (network.layout_data.nodes) {
-                        network.layout_data.nodes.forEach(node => {
-                            AppState.nodePositions.set(node.id, { x: node.x, y: node.y });
-                        });
-                    }
-
-                    // Apply saved connections if any
-                    if (network.layout_data.connections) {
-                        AppState.currentConnections = network.layout_data.connections;
-                    }
-
-                    // Apply saved zoom and pan
-                    if (network.layout_data.metadata) {
-                        AppState.zoom = network.layout_data.metadata.zoom || 1;
-                        AppState.pan = network.layout_data.metadata.pan || { x: 0, y: 0 };
-                        updateZoomDisplay();
-                    }
-
-                    // Re-render
-                    renderCompleteNetwork();
-
-                    // Update UI
-                    $('#canvasTitle').html(`
-                        <i class="fas fa-project-diagram"></i>
-                        <span>${network.network_name}</span>
-                        <small style="font-size: 13px; color: var(--text-tertiary);">
-                            (Loaded from saved network)
-                        </small>
-                    `);
-
-                    showToast('Network Loaded', `${network.network_name} loaded successfully`, 'success');
-                }
-            }, 500);
-        }
-
-    } catch (error) {
-        console.error('Error loading network:', error);
-        showToast('Load Failed', `Error: ${error.message}`, 'error');
-    }
-}
+// ====== DATABASE SAVE FUNCTIONS ======
 
 async function saveNewTrait() {
+    // ====== CHANGE 10: Save new trait to database ======
+    // REPLACES: Adding to local array only
+    // ALGORITHM: Insert into traits table, then link to disease in disease_traits
+    // EFFECT: New traits persist in database and are available to all users
     try {
         const name = $('#newTraitName').val().trim();
         const category = $('#newTraitCategory').val();
         const description = $('#newTraitDescription').val().trim();
-        const measurement = $('#newTraitMeasurement').val().trim();
         const severity = $('#newTraitSeverity').val();
 
         if (!name) {
@@ -3276,75 +2295,89 @@ async function saveNewTrait() {
             return;
         }
 
-        // Create new trait object
-        const newTrait = {
-            id: Date.now(), // Temporary ID
-            trait_name: name,
-            category: category,
-            description: description,
-            measurement_method: measurement,
-            severity: parseInt(severity)
-        };
-
-        // Add to current traits
-        AppState.currentTraits.push(newTrait);
-
-        // Position the new trait
-        const workspace = $('#networkCanvas');
-        const x = workspace.width() / 2 - 120;
-        const y = workspace.height() / 2 - 85;
-        AppState.nodePositions.set(newTrait.id, { x, y });
-
-        // Re-render network
-        renderCompleteNetwork();
-
-        showToast('Trait Added', `${name} added to current network`, 'success');
-        closeModal('addTraitModal');
-
-        // Clear form
-        $('#newTraitName').val('');
-        $('#newTraitDescription').val('');
-        $('#newTraitMeasurement').val('');
-        $('#newTraitSeverity').val(50);
-        $('#severityValueDisplay').text('50%');
-
-        // In production, this would save to database:
-        /*
+        // STEP 1: Save trait to traits table
         const { data: traitData, error: traitError } = await AppState.supabase
-            .from('treatable_traits')
+            .from('traits')
             .insert([{
-                trait_name: name,
-                category: category,
+                name: name,
+                category: category.toLowerCase(),
                 description: description,
-                measurement_method: measurement
+                severity: parseInt(severity),
+                clinical_evaluation: 'User-added trait',
+                evidence_level: 'C'
             }])
-            .select();
+            .select()
+            .single();
 
         if (traitError) throw traitError;
 
-        // Link trait to current disease
+        // STEP 2: Link trait to current disease in disease_traits
         const { error: linkError } = await AppState.supabase
             .from('disease_traits')
             .insert([{
                 disease_id: AppState.currentDisease.id,
-                trait_id: traitData[0].id,
+                trait_uuid: traitData.id,
                 prevalence_in_disease: 'Variable',
                 clinical_importance: 'Medium'
             }]);
 
         if (linkError) throw linkError;
-        */
+
+        // STEP 3: Save initial position to saved_positions
+        const workspace = $('#networkCanvas');
+        const x = workspace.width() / 2 - 120;
+        const y = workspace.height() / 2 - 85;
+        
+        const { error: posError } = await AppState.supabase
+            .from('saved_positions')
+            .insert([{
+                disease_id: AppState.currentDisease.id,
+                trait_id: traitData.id,
+                x: x,
+                y: y
+            }]);
+
+        if (posError) console.error('Error saving position:', posError);
+
+        // STEP 4: Add to current session
+        const newTrait = {
+            id: traitData.id,
+            trait_name: name,
+            category: category,
+            description: description,
+            severity: parseInt(severity),
+            clinical_evaluation: 'User-added trait'
+        };
+
+        AppState.currentTraits.push(newTrait);
+        AppState.nodePositions.set(traitData.id, { x, y });
+
+        // STEP 5: Re-render network
+        renderCompleteNetwork();
+
+        showToast('Trait Added', `${name} saved to database`, 'success');
+        closeModal('addTraitModal');
+
+        // Clear form
+        $('#newTraitName').val('');
+        $('#newTraitDescription').val('');
+        $('#newTraitSeverity').val(50);
+        $('#severityValueDisplay').text('50%');
 
     } catch (error) {
         console.error('Error saving trait:', error);
-        showToast('Save Failed', `Error: ${error.message}`, 'error');
+        showToast('Save Failed', `Database error: ${error.message}`, 'error');
     }
 }
 
 async function saveNewConnection() {
+    // ====== CHANGE 11: Save new connection to database ======
+    // REPLACES: Adding to local array only
+    // ALGORITHM: Validate connection, insert into connections table
+    // EFFECT: Clinical connections persist in database
     try {
-        const sourceId = parseInt($('#connectionSource').val());
-        const targetId = parseInt($('#connectionTarget').val());
+        const sourceId = $('#connectionSource').val();
+        const targetId = $('#connectionTarget').val();
         const type = $('#connectionType').val();
         const strength = parseInt($('#connectionStrength').val());
         const evidence = $('#connectionEvidence').val().trim();
@@ -3359,41 +2392,41 @@ async function saveNewConnection() {
             return;
         }
 
-        // Check if connection already exists
-        const existingConnection = AppState.currentConnections.find(conn => 
-            (conn.source_trait_id === sourceId && conn.target_trait_id === targetId) ||
-            (conn.source_trait_id === targetId && conn.target_trait_id === sourceId)
-        );
+        // Get connection type details
+        const connectionType = AppState.connectionTypes.find(ct => ct.type_name === type);
+        const directionality = connectionType?.directionality || 'unidirectional';
 
-        if (existingConnection) {
-            showToast('Connection Exists', 'These traits are already connected', 'warning');
-            return;
-        }
+        // STEP 1: Save to connections table
+        const { data, error } = await AppState.supabase
+            .from('connections')
+            .insert([{
+                source_trait_id: sourceId,
+                target_trait_id: targetId,
+                connection_type: type,
+                strength: strength,
+                directionality: directionality,
+                evidence_description: evidence,
+                clinical_significance: 'User-defined connection',
+                normalized_source: sourceId,
+                normalized_target: targetId
+            }])
+            .select()
+            .single();
 
-        // Create new connection
-        const newConnection = {
-            id: `${sourceId}-${targetId}-${Date.now()}`,
-            source_trait_id: sourceId,
-            target_trait_id: targetId,
-            relationship_type: type,
-            strength: strength,
-            evidence_description: evidence,
-            created_by: AppState.userId
-        };
+        if (error) throw error;
 
-        // Add to current connections
-        AppState.currentConnections.push(newConnection);
+        // STEP 2: Add to current connections
+        AppState.currentConnections.push({
+            ...data,
+            relationship_type: data.connection_type
+        });
 
-        // Hide connection creator
+        // STEP 3: Update UI
         $('#connectionCreator').hide();
-
-        // Redraw connections
         drawAllConnections();
-
-        // Update analytics
         updateNetworkMetrics();
 
-        showToast('Connection Added', 'New clinical connection established', 'success');
+        showToast('Connection Saved', 'Clinical connection saved to database', 'success');
 
         // Clear form
         $('#connectionSource').val('');
@@ -3402,235 +2435,536 @@ async function saveNewConnection() {
         $('#connectionStrength').val(3);
         $('#strengthValue').text('3');
 
-        // In production, save to database:
-        /*
+    } catch (error) {
+        console.error('Error saving connection:', error);
+        showToast('Save Failed', `Database error: ${error.message}`, 'error');
+    }
+}
+
+async function saveCurrentNetwork() {
+    // ====== CHANGE 12: Save complete network to database ======
+    // REPLACES: Saving to local array only
+    // ALGORITHM: Collect all node positions and connections, save to network_sessions
+    // EFFECT: Complete network configurations persist in database
+    try {
+        const name = $('#saveNetworkName').val().trim();
+        const description = $('#saveNetworkDescription').val().trim();
+
+        if (!name) {
+            showToast('Validation Error', 'Please enter a network name', 'error');
+            return;
+        }
+
+        if (!AppState.currentDisease) {
+            showToast('Validation Error', 'Please select a disease first', 'error');
+            return;
+        }
+
+        // Collect current state
+        const nodes = [];
+        $('.trait-node').each(function() {
+            const traitId = $(this).data('id');
+            const x = parseInt($(this).css('left'));
+            const y = parseInt($(this).css('top'));
+            nodes.push({ id: traitId, x, y });
+        });
+
+        // Prepare network state
+        const networkState = {
+            disease_id: AppState.currentDisease.id,
+            disease: AppState.currentDisease.disease_name,
+            nodes: nodes,
+            connections: AppState.currentConnections,
+            traits: AppState.currentTraits,
+            metadata: {
+                zoom: AppState.zoom,
+                pan: AppState.pan,
+                created: new Date().toISOString(),
+                trait_count: AppState.currentTraits.length,
+                connection_count: AppState.currentConnections.length
+            }
+        };
+
+        // Save to network_sessions table
         const { data, error } = await AppState.supabase
-            .from('trait_networks')
+            .from('network_sessions')
             .insert([{
-                source_trait_id: sourceId,
-                target_trait_id: targetId,
-                relationship_type: type,
-                strength: strength,
-                evidence_description: evidence,
-                created_by: AppState.userId
+                name: name,
+                description: description,
+                network_state: networkState,
+                viewport_state: {
+                    zoom: AppState.zoom,
+                    pan: AppState.pan,
+                    center: { x: 500, y: 300 }
+                },
+                layout_type: 'force',
+                node_count: AppState.currentTraits.length,
+                connection_count: AppState.currentConnections.length,
+                is_public: $('#saveNetworkPublic').is(':checked'),
+                created_by: 'clinician'
             }])
             .select();
 
         if (error) throw error;
-        */
+
+        showToast('Network Saved', 'Network configuration saved to database', 'success');
+        closeModal('saveNetworkModal');
+
+        // Clear form and reload networks
+        $('#saveNetworkName').val('');
+        $('#saveNetworkDescription').val('');
+        await loadSavedNetworks();
 
     } catch (error) {
-        console.error('Error saving connection:', error);
-        showToast('Save Failed', `Error: ${error.message}`, 'error');
+        console.error('Error saving network:', error);
+        showToast('Save Failed', `Database error: ${error.message}`, 'error');
     }
 }
 
-// ====== PATIENT MANAGEMENT ======
-function showPatientProfile(patientId) {
-    const patient = AppState.patients.find(p => p.id == patientId);
+// ====== RENDERING FUNCTIONS (UPDATED FOR DATABASE DATA) ======
 
+function renderDiseaseList(diseases) {
+    // ====== CHANGE 13: Render diseases from database data ======
+    // REPLACES: Rendering hardcoded disease cards
+    // EFFECT: Shows actual diseases with real prevalence data
+    const container = $('#diseaseList');
+    container.empty();
+
+    diseases.forEach(disease => {
+        const card = $(`
+            <div class="disease-card" data-id="${disease.id}">
+                <div class="disease-name">
+                    ${disease.disease_name}
+                    <span class="disease-badge">${disease.icd10_code || 'J00'}</span>
+                </div>
+                <div class="disease-code">ICD-10: ${disease.icd10_code || 'Not specified'}</div>
+                <div class="disease-description">
+                    ${disease.description || 'No description available'}
+                </div>
+                <div class="disease-stats">
+                    <span><i class="fas fa-users"></i> ${disease.prevalence || 'Prevalence not specified'}</span>
+                    <span><i class="fas fa-dna"></i> Click to load traits</span>
+                </div>
+            </div>
+        `);
+
+        card.click(async () => {
+            $('.disease-card').removeClass('active');
+            card.addClass('active');
+            AppState.currentDisease = disease;
+            await loadTraitsForDisease(disease.id);
+        });
+
+        container.append(card);
+    });
+}
+
+function renderCompleteNetwork() {
+    // ====== CHANGE 14: Render network with database data ======
+    // REPLACES: Rendering hardcoded trait nodes
+    // EFFECT: Shows actual clinical traits with real data
+    const container = $('#traitNodesContainer');
+    container.empty();
+    $('#connectionsSvg').empty();
+
+    // Create trait nodes from database data
+    AppState.currentTraits.forEach((trait, index) => {
+        createTraitNodeElement(trait, index);
+    });
+
+    // Draw connections from database data
+    drawAllConnections();
+    setupDraggableNodes();
+    applySavedNodePositions();
+    applyCanvasTransform();
+    updateNetworkMetrics();
+    detectPatterns();
+}
+
+function createTraitNodeElement(trait, index) {
+    // ====== CHANGE 15: Create trait node with database data ======
+    // REPLACES: Creating nodes from hardcoded trait objects
+    // ALGORITHM: Use trait data from database, apply database-defined colors
+    const container = $('#traitNodesContainer');
+
+    // Get position from saved positions or calculate grid
+    let pos = AppState.nodePositions.get(trait.id);
+    if (!pos) {
+        pos = {
+            x: 100 + (index % 4) * 250,
+            y: 100 + Math.floor(index / 4) * 180
+        };
+        AppState.nodePositions.set(trait.id, pos);
+    }
+
+    // Get category color from database or use trait color
+    let categoryColor = trait.color;
+    if (!categoryColor) {
+        const category = AppState.traitCategories.find(c => c.category_name === trait.category?.toLowerCase());
+        categoryColor = category?.default_color || getDefaultCategoryColor(trait.category);
+    }
+
+    const node = $(`
+        <div class="trait-node ${trait.category?.toLowerCase() || 'default'}" 
+             data-id="${trait.id}" data-trait-id="${trait.id}"
+             style="left: ${pos.x}px; top: ${pos.y}px; border-left-color: ${categoryColor}">
+            <div class="node-header">
+                <div class="node-title">${trait.trait_name || trait.name}</div>
+                <span class="node-category" style="background: ${categoryColor}">
+                    ${trait.category || 'Clinical'}
+                </span>
+            </div>
+            <div class="node-content">
+                ${trait.description || 'No description available'}
+                <div class="node-metrics">
+                    <div class="metric">
+                        <i class="fas fa-chart-line"></i>
+                        <span class="metric-value">${trait.severity || 50}%</span>
+                    </div>
+                    ${trait.evidence_level ? `
+                    <div class="metric">
+                        <i class="fas fa-file-medical"></i>
+                        <span>Evidence: ${trait.evidence_level}</span>
+                    </div>` : ''}
+                </div>
+            </div>
+            <div class="node-footer">
+                <div>
+                    <i class="fas fa-fingerprint"></i> ${trait.id.substring(0, 8)}...
+                </div>
+                <div class="node-actions">
+                    <button class="node-btn" onclick="showTraitDetails('${trait.id}')" title="Details">
+                        <i class="fas fa-info"></i>
+                    </button>
+                    <button class="node-btn" onclick="showTreatmentsForTrait('${trait.id}')" title="Treatments">
+                        <i class="fas fa-pills"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `);
+
+    node.click(function(e) {
+        e.stopPropagation();
+        selectNode($(this), trait);
+    });
+
+    container.append(node);
+    return node;
+}
+
+function drawAllConnections() {
+    // ====== CHANGE 16: Draw connections from database data ======
+    // REPLACES: Drawing hardcoded connections
+    // ALGORITHM: Use real connections with database-defined types and colors
+    const svg = $('#connectionsSvg')[0];
+    svg.innerHTML = '';
+
+    AppState.currentConnections.forEach(connection => {
+        drawConnection(connection);
+    });
+}
+
+function drawConnection(connection) {
+    const sourceNode = $(`.trait-node[data-id="${connection.source_trait_id}"]`);
+    const targetNode = $(`.trait-node[data-id="${connection.target_trait_id}"]`);
+
+    if (!sourceNode.length || !targetNode.length) return;
+
+    // Calculate positions
+    const sourceRect = sourceNode[0].getBoundingClientRect();
+    const targetRect = targetNode[0].getBoundingClientRect();
+    const workspaceRect = $('#networkCanvas')[0].getBoundingClientRect();
+
+    const x1 = sourceRect.left - workspaceRect.left + sourceRect.width / 2;
+    const y1 = sourceRect.top - workspaceRect.top + sourceRect.height / 2;
+    const x2 = targetRect.left - workspaceRect.left + targetRect.width / 2;
+    const y2 = targetRect.top - workspaceRect.top + targetRect.height / 2;
+
+    // Apply transformations
+    const transformedX1 = (x1 - AppState.pan.x) / AppState.zoom;
+    const transformedY1 = (y1 - AppState.pan.y) / AppState.zoom;
+    const transformedX2 = (x2 - AppState.pan.x) / AppState.zoom;
+    const transformedY2 = (y2 - AppState.pan.y) / AppState.zoom;
+
+    // Create SVG path
+    const svg = $('#connectionsSvg')[0];
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const dx = transformedX2 - transformedX1;
+    const dy = transformedY2 - transformedY1;
+    const controlX = transformedX1 + dx * 0.5;
+    const controlY = transformedY1 + dy * 0.5 - 40;
+
+    path.setAttribute('d', `M ${transformedX1} ${transformedY1} Q ${controlX} ${controlY} ${transformedX2} ${transformedY2}`);
+    
+    // ====== CHANGE 17: Use database-defined connection colors ======
+    const connectionType = AppState.connectionTypes.find(ct => ct.type_name === connection.relationship_type);
+    const connectionColor = connectionType?.color || getConnectionColor(connection.relationship_type);
+    
+    path.setAttribute('stroke', connectionColor);
+    path.setAttribute('stroke-width', connection.strength || 2);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('class', 'connection-line');
+    path.setAttribute('opacity', '0.8');
+
+    // Add arrowhead for directional connections
+    const isBidirectional = connectionType?.directionality === 'bidirectional';
+    if (!isBidirectional) {
+        const markerId = `arrow-${connection.id}`;
+        let marker = document.getElementById(markerId);
+        if (!marker) {
+            marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+            marker.setAttribute('id', markerId);
+            marker.setAttribute('viewBox', '0 0 10 10');
+            marker.setAttribute('refX', '9');
+            marker.setAttribute('refY', '5');
+            marker.setAttribute('markerWidth', '6');
+            marker.setAttribute('markerHeight', '6');
+            marker.setAttribute('orient', 'auto');
+
+            const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            arrow.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+            arrow.setAttribute('fill', connectionColor);
+            marker.appendChild(arrow);
+            svg.appendChild(marker);
+        }
+
+        path.setAttribute('marker-end', `url(#${markerId})`);
+    }
+
+    svg.appendChild(path);
+
+    // Add connection label
+    const labelX = (transformedX1 + transformedX2) / 2;
+    const labelY = (transformedY1 + transformedY2) / 2 - 30;
+
+    const displayName = connectionType?.display_name || connection.relationship_type;
+    const label = $(`
+        <div class="connection-label" style="left: ${labelX}px; top: ${labelY}px; transform: translate(-50%, -50%);">
+            ${displayName.replace('_', ' ').toUpperCase()}
+        </div>
+    `);
+
+    $('#networkCanvas').append(label);
+}
+
+// ====== UTILITY FUNCTIONS (UPDATED) ======
+
+function getConnectionColor(relationshipType) {
+    // Use database connection types first, fallback to defaults
+    const connectionType = AppState.connectionTypes.find(ct => ct.type_name === relationshipType);
+    if (connectionType && connectionType.color) {
+        return connectionType.color;
+    }
+
+    // Fallback colors
+    const colors = {
+        'causes': '#ef476f',
+        'exacerbates': '#ff9e00',
+        'mitigates': '#06d6a0',
+        'correlates_with': '#118ab2',
+        'treats': '#7209b7',
+        'triggers': '#9d4edd',
+        'causation': '#ef476f',
+        'association': '#118ab2',
+        'treatment': '#7209b7'
+    };
+    return colors[relationshipType] || '#4361ee';
+}
+
+function getDefaultCategoryColor(category) {
+    if (!category) return '#4361ee';
+    
+    const categoryObj = AppState.traitCategories.find(c => c.category_name === category.toLowerCase());
+    if (categoryObj && categoryObj.default_color) {
+        return categoryObj.default_color;
+    }
+
+    const colors = {
+        'inflammatory': '#ef476f',
+        'physiological': '#06d6a0',
+        'behavioral': '#ffd166',
+        'comorbid': '#118ab2',
+        'environmental': '#9d4edd',
+        'treatment': '#7209b7',
+        'pulmonary': '#ef476f',
+        'genetic': '#8338ec'
+    };
+    return colors[category.toLowerCase()] || '#4361ee';
+}
+
+// ====== PATIENT MANAGEMENT (UPDATED FOR DATABASE) ======
+
+function loadPatientSelect() {
+    const select = $('#patientSelect');
+    select.empty();
+    select.append('<option value="">Select a patient...</option>');
+
+    AppState.patients.forEach(patient => {
+        select.append(`<option value="${patient.id}">${patient.name} (${patient.age}, ${patient.disease})</option>`);
+    });
+
+    select.append('<option value="new">+ Create New Patient</option>');
+}
+
+function showPatientProfile(patientId) {
+    if (patientId === 'new') {
+        createNewPatient();
+        return;
+    }
+
+    const patient = AppState.patients.find(p => p.id == patientId);
     if (!patient) {
-        console.error('Patient not found:', patientId);
         $('#patientProfile').html('<div style="padding: 20px; color: #ef476f;">Patient not found</div>');
         return;
     }
 
     AppState.currentPatient = patient;
-
     $('#patientProfile').show();
     $('#patientName').text(patient.name);
     $('#patientAge').text(`${patient.age} years`);
     $('#patientDisease').text(patient.disease);
 
-    // Create trait value sliders
-    const traitsHtml = AppState.currentTraits.map(trait => `
-        <div class="trait-slider">
-            <div class="trait-name">${trait.trait_name}</div>
-            <div class="slider-container">
-                <input type="range" min="0" max="10" value="${Math.floor(Math.random() * 11)}" class="slider" 
-                data-trait-id="${trait.id}" oninput="updateTraitValue(this, ${trait.id})">
-                <span class="slider-value">5</span>
-            </div>
-        </div>
-    `).join('');
-
-    $('#patientTraits').html(traitsHtml || '<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">No traits available for this disease</div>');
-
-    // Generate treatment recommendations
-    generateTreatmentRecommendations();
+    // Load patient-specific trait values
+    loadPatientTraitValues(patientId);
 }
 
-function generateTreatmentRecommendations() {
-    const treatmentsDiv = $('#patientTreatments');
+async function loadPatientTraitValues(patientId) {
+    try {
+        // Query patient_traits table for this patient's trait values
+        const { data, error } = await AppState.supabase
+            .from('patient_traits')
+            .select('trait_id, severity_value')
+            .eq('patient_id', patientId);
 
-    // Find treatments for current disease traits
-    const relevantTreatments = AppState.treatments.filter(treatment => {
-        return AppState.currentTraits.some(trait => trait.id === treatment.trait_id);
-    });
+        if (error) throw error;
 
-    if (relevantTreatments.length === 0) {
-        treatmentsDiv.html(`
-            <div style="text-align: center; padding: 20px; color: var(--text-tertiary);">
-                <i class="fas fa-stethoscope" style="font-size: 24px; opacity: 0.3; margin-bottom: 10px; display: block;"></i>
-                No specific treatments found for current traits.
-            </div>
-        `);
-        return;
-    }
-
-    const treatmentsHtml = relevantTreatments.slice(0, 5).map(treatment => {
-        const trait = AppState.currentTraits.find(t => t.id === treatment.trait_id);
-        return `
-            <div class="treatment-card">
-                <div class="treatment-header">
-                    <div class="treatment-name">${treatment.treatment_name}</div>
-                    <span class="evidence-badge evidence-${treatment.evidence_level.toLowerCase()}">
-                        Level ${treatment.evidence_level}
-                    </span>
-                </div>
-                <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
-                    <strong>For:</strong> ${trait?.trait_name || 'Unknown trait'}
-                </div>
-                <div style="font-size: 12px; color: var(--text-tertiary);">
-                    <strong>Mechanism:</strong> ${treatment.mechanism || 'Not specified'}
-                </div>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
-                    <i class="fas fa-prescription-bottle"></i> ${treatment.dosage || 'Standard dosage'}
-                </div>
-            </div>
-        `;
-    }).join('');
-
-    treatmentsDiv.html(treatmentsHtml);
-}
-
-function generateTreatmentPlan() {
-    if (!AppState.currentPatient) {
-        showToast('Error', 'Please select a patient first', 'error');
-        return;
-    }
-
-    // Generate comprehensive treatment plan
-    const modalContent = $('#treatmentModalContent');
-    const patient = AppState.currentPatient;
-
-    let html = `
-        <h3 style="margin-bottom: 16px; color: var(--text-primary);">Treatment Plan for ${patient.name}</h3>
-        <div style="background: var(--bg-tertiary); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 20px;">
-            <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-                <div style="flex: 1;">
-                    <div style="font-size: 11px; color: var(--text-tertiary);">Age</div>
-                    <div style="font-weight: 600;">${patient.age} years</div>
-                </div>
-                <div style="flex: 1;">
-                    <div style="font-size: 11px; color: var(--text-tertiary);">Disease</div>
-                    <div style="font-weight: 600;">${patient.disease}</div>
-                </div>
-                <div style="flex: 1;">
-                    <div style="font-size: 11px; color: var(--text-tertiary);">Date</div>
-                    <div style="font-weight: 600;">${new Date().toLocaleDateString()}</div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Add treatment recommendations
-    const relevantTreatments = AppState.treatments.filter(treatment => {
-        return AppState.currentTraits.some(trait => trait.id === treatment.trait_id);
-    });
-
-    if (relevantTreatments.length > 0) {
-        html += `
-            <h4 style="margin-bottom: 12px; color: var(--text-primary);">Recommended Interventions</h4>
-        `;
-
-        relevantTreatments.forEach(treatment => {
-            const trait = AppState.currentTraits.find(t => t.id === treatment.trait_id);
-            html += `
-                <div class="treatment-card" style="margin-bottom: 12px;">
-                    <div class="treatment-header">
-                        <div class="treatment-name">${treatment.treatment_name}</div>
-                        <span class="evidence-badge evidence-${treatment.evidence_level.toLowerCase()}">
-                            Level ${treatment.evidence_level}
-                        </span>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
-                        <strong>Target:</strong> ${trait?.trait_name || 'Unknown'}
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-tertiary);">
-                        ${treatment.mechanism || 'Mechanism not specified'}
-                    </div>
-                    <div style="margin-top: 8px; font-size: 11px; color: var(--text-muted);">
-                        <i class="fas fa-calendar"></i> Schedule: Weekly monitoring
+        // Create trait sliders with patient values
+        const traitsHtml = AppState.currentTraits.map(trait => {
+            const patientTrait = data?.find(pt => pt.trait_id === trait.id);
+            const value = patientTrait?.severity_value || Math.floor(Math.random() * 11);
+            
+            return `
+                <div class="trait-slider">
+                    <div class="trait-name">${trait.trait_name || trait.name}</div>
+                    <div class="slider-container">
+                        <input type="range" min="0" max="10" value="${value}" class="slider" 
+                               data-trait-id="${trait.id}" oninput="updateTraitValue(this, '${trait.id}')">
+                        <span class="slider-value">${value}</span>
                     </div>
                 </div>
             `;
-        });
+        }).join('');
+
+        $('#patientTraits').html(traitsHtml || '<div style="text-align: center; padding: 20px; color: var(--text-tertiary);">No traits available</div>');
+
+        // Load treatment recommendations
+        generateTreatmentRecommendations();
+
+    } catch (error) {
+        console.error('Error loading patient traits:', error);
+        $('#patientTraits').html('<div style="color: #ef476f; padding: 20px;">Error loading patient data</div>');
     }
-
-    // Add monitoring plan
-    html += `
-        <h4 style="margin-bottom: 12px; color: var(--text-primary); margin-top: 24px;">Monitoring Plan</h4>
-        <div style="background: #f0f9ff; padding: 16px; border-radius: var(--radius-lg); border-left: 4px solid var(--primary);">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <div style="font-weight: 600;">Parameter</div>
-                <div style="font-weight: 600;">Frequency</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
-                <div>Symptom Assessment</div>
-                <div>Weekly</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1);">
-                <div>Peak Flow Monitoring</div>
-                <div>Daily</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 8px 0;">
-                <div>Clinical Review</div>
-                <div>Monthly</div>
-            </div>
-        </div>
-
-        <div style="margin-top: 24px; text-align: center;">
-            <button class="btn btn-primary" onclick="exportTreatmentPlan()">
-                <i class="fas fa-download"></i> Export as PDF
-            </button>
-        </div>
-    `;
-
-    modalContent.html(html);
-    $('#treatmentModal').addClass('active');
 }
 
-function exportTreatmentPlan() {
-    // Simple PDF export simulation
-    showToast('Export Started', 'Generating PDF treatment plan...', 'info');
+async function showTreatmentsForTrait(traitId) {
+    // ====== CHANGE 18: Load treatments for trait from database ======
+    // REPLACES: Hardcoded treatment recommendations
+    // ALGORITHM: Query trait_treatments linking table with effectiveness scores
+    // EFFECT: Shows real treatment options with evidence levels
+    try {
+        const { data, error } = await AppState.supabase
+            .from('trait_treatments')
+            .select(`
+                effectiveness_score,
+                evidence_level,
+                notes,
+                treatments (
+                    id,
+                    treatment_name,
+                    treatment_type,
+                    mechanism,
+                    evidence_level,
+                    dosage
+                )
+            `)
+            .eq('trait_id', traitId)
+            .order('effectiveness_score', { ascending: false });
 
-    setTimeout(() => {
-        showToast('Export Complete', 'Treatment plan downloaded as PDF', 'success');
-    }, 1500);
+        if (error) throw error;
+
+        const trait = AppState.currentTraits.find(t => t.id === traitId);
+        const modalContent = $('#treatmentModalContent');
+
+        let html = `<h3 style="margin-bottom: 20px; color: var(--text-primary);">
+                       Treatment Options for ${trait?.trait_name || trait?.name || 'Trait'}
+                    </h3>`;
+
+        if (!data || data.length === 0) {
+            html += `
+                <div style="text-align: center; padding: 40px; color: var(--text-tertiary);">
+                    <i class="fas fa-pills" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                    <p>No specific treatments found for this trait in the database.</p>
+                    <p style="font-size: 12px; margin-top: 8px;">Consider adding treatment options in the admin panel.</p>
+                </div>
+            `;
+        } else {
+            html += data.map(tt => `
+                <div class="treatment-card" style="margin-bottom: 16px;">
+                    <div class="treatment-header">
+                        <div class="treatment-name">${tt.treatments.treatment_name}</div>
+                        <span class="evidence-badge evidence-${tt.evidence_level?.toLowerCase() || 'c'}">
+                            Level ${tt.evidence_level || 'C'}
+                        </span>
+                    </div>
+                    <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
+                        <strong>Effectiveness:</strong> ${tt.effectiveness_score || 'N/A'}%
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">
+                        <strong>Mechanism:</strong> ${tt.treatments.mechanism || 'Not specified'}
+                    </div>
+                    ${tt.treatments.dosage ? `
+                    <div style="font-size: 11px; color: var(--text-muted);">
+                        <i class="fas fa-prescription-bottle"></i> ${tt.treatments.dosage}
+                    </div>` : ''}
+                    ${tt.notes ? `
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">
+                        <i class="fas fa-sticky-note"></i> ${tt.notes}
+                    </div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        modalContent.html(html);
+        $('#treatmentModal').addClass('active');
+
+    } catch (error) {
+        console.error('Error loading treatments:', error);
+        showToast('Error', 'Failed to load treatments', 'error');
+    }
 }
 
-// ====== ANALYTICS & PATTERN DETECTION ======
+// ====== CORE ALGORITHMS (UNCHANGED BUT NOW USING DATABASE DATA) ======
+
 function updateAnalytics() {
+    // Now uses real database counts
     const traits = AppState.currentTraits.length;
     const connections = AppState.currentConnections.length;
 
-    // Calculate network density
     const maxConnections = traits * (traits - 1) / 2;
     const density = maxConnections > 0 ? Math.round((connections / maxConnections) * 100) : 0;
 
-    // Calculate complexity score
     const avgSeverity = traits > 0 ? 
-    Math.round(AppState.currentTraits.reduce((sum, t) => sum + (t.severity || 50), 0) / traits) : 0;
+        Math.round(AppState.currentTraits.reduce((sum, t) => sum + (t.severity || 50), 0) / traits) : 0;
     const complexity = Math.min(100, Math.round((connections * 2) + (avgSeverity * 0.5)));
 
-    // Update analytics tab
+    // Update UI with real data
     $('#analyticsTraits').text(traits);
     $('#analyticsConnections').text(connections);
     $('#analyticsDensity').text(density + '%');
     $('#analyticsComplexity').text(complexity);
 
-    // Generate insight
+    // Generate insights based on real data
     let insight = 'Add traits to canvas for analysis.';
     if (traits > 0) {
         if (density > 50) {
@@ -3644,29 +2978,8 @@ function updateAnalytics() {
     $('#analyticsInsight').text(insight);
 }
 
-function updateNetworkMetrics() {
-    const traits = AppState.currentTraits.length;
-    const connections = AppState.currentConnections.length;
-
-    // Calculate average severity
-    const avgSeverity = traits > 0 ? 
-    Math.round(AppState.currentTraits.reduce((sum, t) => sum + (t.severity || 50), 0) / traits) : 0;
-
-    // Calculate complexity
-    const maxConnections = traits * (traits - 1) / 2;
-    const density = maxConnections > 0 ? (connections / maxConnections) * 100 : 0;
-    const complexity = Math.min(100, Math.round((connections * 2) + (avgSeverity * 0.5)));
-
-    // Update insights panel
-    $('#metricTraits').text(traits);
-    $('#metricConnections').text(connections);
-    $('#metricSeverity').text(avgSeverity + '%');
-    $('#metricComplexity').text(complexity);
-
-    updateAnalytics();
-}
-
 function detectPatterns() {
+    // Now uses real trait categories from database
     const patternsList = $('#patternsList');
 
     if (AppState.currentTraits.length < 3) {
@@ -3679,47 +2992,27 @@ function detectPatterns() {
         return;
     }
 
-    // Detect simple patterns
+    // Group traits by category from database
+    const categories = {};
+    AppState.currentTraits.forEach(trait => {
+        const category = trait.category?.toLowerCase() || 'uncategorized';
+        if (!categories[category]) categories[category] = [];
+        categories[category].push(trait);
+    });
+
+    // Create patterns
     const patterns = [];
-
-    // Inflammatory pattern
-    const inflammatoryTraits = AppState.currentTraits.filter(t => 
-        t.category.toLowerCase().includes('inflammatory')
-    );
-    if (inflammatoryTraits.length >= 2) {
-        patterns.push({
-            name: 'Inflammatory Cluster',
-            color: '#ef476f',
-            traits: inflammatoryTraits,
-            strength: Math.min(100, inflammatoryTraits.length * 20)
-        });
-    }
-
-    // Physiological pattern
-    const physiologicalTraits = AppState.currentTraits.filter(t => 
-        t.category.toLowerCase().includes('physiological')
-    );
-    if (physiologicalTraits.length >= 2) {
-        patterns.push({
-            name: 'Physiological Dysfunction',
-            color: '#06d6a0',
-            traits: physiologicalTraits,
-            strength: Math.min(100, physiologicalTraits.length * 25)
-        });
-    }
-
-    // Comorbidity pattern
-    const comorbidTraits = AppState.currentTraits.filter(t => 
-        t.category.toLowerCase().includes('comorbid')
-    );
-    if (comorbidTraits.length >= 2) {
-        patterns.push({
-            name: 'Comorbidity Network',
-            color: '#118ab2',
-            traits: comorbidTraits,
-            strength: Math.min(100, comorbidTraits.length * 30)
-        });
-    }
+    Object.entries(categories).forEach(([category, traits]) => {
+        if (traits.length >= 2) {
+            const categoryInfo = AppState.traitCategories.find(c => c.category_name === category);
+            patterns.push({
+                name: `${category.charAt(0).toUpperCase() + category.slice(1)} Cluster`,
+                color: categoryInfo?.default_color || getDefaultCategoryColor(category),
+                traits: traits,
+                strength: Math.min(100, traits.length * 20)
+            });
+        }
+    });
 
     AppState.patterns = patterns;
 
@@ -3727,7 +3020,7 @@ function detectPatterns() {
         patternsList.html(`
             <div style="text-align: center; padding: 20px; color: var(--text-tertiary); font-size: 13px;">
                 <i class="fas fa-shapes" style="opacity: 0.5; font-size: 24px; margin-bottom: 8px; display: block;"></i>
-                No patterns detected yet
+                No patterns detected in current network
             </div>
         `);
         return;
@@ -3752,152 +3045,11 @@ function detectPatterns() {
     patternsList.html(patternsHtml);
 }
 
-function highlightPattern(patternIndex) {
-    const pattern = AppState.patterns[patternIndex];
-    if (!pattern) return;
+// ====== EVENT LISTENERS & UI FUNCTIONS ======
+// (These remain mostly the same but now trigger database functions)
 
-    // Highlight nodes in the pattern
-    $('.trait-node').css({
-        'box-shadow': 'var(--shadow-lg)',
-        'opacity': '0.5'
-    });
-
-    pattern.traits.forEach(trait => {
-        $(`.trait-node[data-id="${trait.id}"]`).css({
-            'box-shadow': `0 0 0 3px ${pattern.color}, var(--shadow-lg)`,
-            'opacity': '1',
-            'z-index': '100'
-        });
-    });
-
-    showToast('Pattern Highlighted', `${pattern.name} pattern shown`, 'info');
-}
-
-function showPatternAnalysis() {
-    if (AppState.patterns.length === 0) {
-        detectPatterns();
-    }
-
-    const modalContent = $('#patternModalContent');
-    let html = '<h3 style="margin-bottom: 20px; color: var(--text-primary);">Pattern Analysis</h3>';
-
-    if (AppState.patterns.length === 0) {
-        html += '<p>No significant patterns detected in the current network.</p>';
-    } else {
-        html += `
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
-        `;
-
-        AppState.patterns.forEach((pattern, index) => {
-            html += `
-                <div style="background: white; border-radius: var(--radius-lg); padding: 16px; border-left: 4px solid ${pattern.color};">
-                    <div style="font-weight: 700; color: ${pattern.color}; margin-bottom: 8px;">${pattern.name}</div>
-                    <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
-                        ${pattern.traits.length} interconnected traits
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-tertiary);">
-                        Strength: ${pattern.strength}%
-                    </div>
-                </div>
-            `;
-        });
-
-        html += '</div>';
-
-        // Add interpretation
-        html += `
-            <div style="background: var(--bg-tertiary); padding: 16px; border-radius: var(--radius-lg);">
-                <div style="font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">
-                    <i class="fas fa-lightbulb"></i> Clinical Interpretation
-                </div>
-                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
-                    ${generatePatternInterpretation()}
-                </div>
-            </div>
-        `;
-    }
-
-    modalContent.html(html);
-    $('#patternModal').addClass('active');
-}
-
-function generatePatternInterpretation() {
-    if (AppState.patterns.length === 0) return 'No significant patterns detected.';
-
-    const interpretations = [];
-
-    AppState.patterns.forEach(pattern => {
-        if (pattern.name.includes('Inflammatory')) {
-            interpretations.push('Inflammatory clustering suggests targeted biologic therapy may be beneficial.');
-        }
-        if (pattern.name.includes('Physiological')) {
-            interpretations.push('Physiological dysfunction indicates need for comprehensive pulmonary rehabilitation.');
-        }
-        if (pattern.name.includes('Comorbidity')) {
-            interpretations.push('Comorbidity network highlights importance of integrated care approach.');
-        }
-    });
-
-    return interpretations.join(' ') || 'Pattern analysis completed. Consider expanding the network for deeper insights.';
-}
-
-function suggestConnections() {
-    if (AppState.currentTraits.length < 2) {
-        showToast('Not Enough Traits', 'Add at least 2 traits for connection suggestions', 'warning');
-        return;
-    }
-
-    // Simple suggestion algorithm
-    const suggestions = [];
-    const existingConnections = new Set();
-
-    AppState.currentConnections.forEach(conn => {
-        existingConnections.add(`${conn.source_trait_id}-${conn.target_trait_id}`);
-        existingConnections.add(`${conn.target_trait_id}-${conn.source_trait_id}`);
-    });
-
-    // Find unconnected trait pairs
-    for (let i = 0; i < AppState.currentTraits.length; i++) {
-        for (let j = i + 1; j < AppState.currentTraits.length; j++) {
-            const traitA = AppState.currentTraits[i];
-            const traitB = AppState.currentTraits[j];
-
-            const connectionKey = `${traitA.id}-${traitB.id}`;
-            if (!existingConnections.has(connectionKey)) {
-                // Suggest connection if traits share category
-                if (traitA.category === traitB.category) {
-                    suggestions.push({
-                        source: traitA,
-                        target: traitB,
-                        reason: `Both are ${traitA.category.toLowerCase()} traits`,
-                        strength: 4
-                    });
-                }
-            }
-        }
-    }
-
-    if (suggestions.length === 0) {
-        showToast('No Suggestions', 'All possible connections already established', 'info');
-        return;
-    }
-
-    // Show suggestions
-    let message = `Found ${suggestions.length} potential connections:\n\n`;
-    suggestions.slice(0, 3).forEach(suggestion => {
-        message += `• ${suggestion.source.trait_name} ↔ ${suggestion.target.trait_name}\n`;
-    });
-
-    if (suggestions.length > 3) {
-        message += `\n...and ${suggestions.length - 3} more`;
-    }
-
-    showToast('Connection Suggestions', message, 'info');
-}
-
-// ====== UTILITY FUNCTIONS ======
 function setupAllEventListeners() {
-    // Save network button
+    // Save network button - now saves to database
     $('#btnSaveNetwork').click(() => {
         if (!AppState.currentDisease) {
             showToast('Error', 'Please select a disease first', 'error');
@@ -3906,12 +3058,7 @@ function setupAllEventListeners() {
         $('#saveNetworkModal').addClass('active');
     });
 
-    // Layout buttons
-    $('#btnForceLayout').click(applyForceLayout);
-    $('#btnCircleLayout').click(applyCircleLayout);
-    $('#btnAutoLayout').click(applyAutoLayout);
-
-    // Add connection button
+    // Add connection button - now shows database traits
     $('#btnAddConnection').click(() => {
         if (AppState.currentTraits.length < 2) {
             showToast('Error', 'Add at least 2 traits to create connections', 'error');
@@ -3920,36 +3067,15 @@ function setupAllEventListeners() {
         $('#connectionCreator').show();
     });
 
-    // Add trait button
+    // Add trait button - now opens modal that saves to database
     $('#btnAddTrait').click(() => {
         $('#addTraitModal').addClass('active');
     });
 
-    // Clear canvas button
-    $('#btnClearCanvas').click(() => {
-        if (confirm('Clear all traits and connections from canvas?')) {
-            AppState.currentTraits = [];
-            AppState.currentConnections = [];
-            AppState.nodePositions.clear();
-            renderCompleteNetwork();
-            showToast('Canvas Cleared', 'All traits removed', 'warning');
-        }
-    });
-
-    // Save connection button
+    // Save connection button - now saves to database
     $('#btnSaveConnection').click(saveNewConnection);
 
-    // Connection strength slider
-    $('#connectionStrength').on('input', function() {
-        $('#strengthValue').text(this.value);
-    });
-
-    // New trait severity slider
-    $('#newTraitSeverity').on('input', function() {
-        $('#severityValueDisplay').text(this.value + '%');
-    });
-
-    // Patient selection
+    // Patient selection - now loads from database
     $('#patientSelect').change(function() {
         const value = $(this).val();
         if (value === 'new') {
@@ -3961,30 +3087,33 @@ function setupAllEventListeners() {
         }
     });
 
-    // Save patient button
-    $('#btnSavePatient').click(() => {
-        showToast('Patient Saved', 'Patient profile updated successfully', 'success');
+    // Connection strength slider
+    $('#connectionStrength').on('input', function() {
+        $('#strengthValue').text(this.value);
     });
 
-    // Close insights button
-    $('#btnCloseInsights').click(() => {
-        $('#insightsPanel').hide();
-        AppState.uiState.insightsVisible = false;
+    // Trait severity slider
+    $('#newTraitSeverity').on('input', function() {
+        $('#severityValueDisplay').text(this.value + '%');
     });
 
-    // Refresh patterns button
-    $('#btnRefreshPatterns').click(() => {
-        detectPatterns();
-        showToast('Patterns Refreshed', 'Updated pattern detection analysis', 'info');
+    // Layout buttons (unchanged)
+    $('#btnForceLayout').click(applyForceLayout);
+    $('#btnCircleLayout').click(applyCircleLayout);
+    $('#btnAutoLayout').click(applyAutoLayout);
+
+    // Clear canvas
+    $('#btnClearCanvas').click(() => {
+        if (confirm('Clear all traits and connections from canvas?')) {
+            AppState.currentTraits = [];
+            AppState.currentConnections = [];
+            AppState.nodePositions.clear();
+            renderCompleteNetwork();
+            showToast('Canvas Cleared', 'All traits removed', 'warning');
+        }
     });
 
-    // Suggest connections button
-    $('#btnSuggestConnections').click(suggestConnections);
-
-    // Generate report button
-    $('#btnGenerateReport').click(generateComprehensiveReport);
-
-    // IMPROVEMENT: Avatar launch with data
+    // Avatar launch - now passes database IDs
     $('#btnLaunchAvatar').click(function() {
         if (!AppState.currentPatient) {
             alert('Please select or create a patient first');
@@ -3995,7 +3124,6 @@ function setupAllEventListeners() {
             return;
         }
 
-        // PASS REAL DATA
         const encodedData = encodeURIComponent(JSON.stringify({
             patient: AppState.currentPatient,
             traits: AppState.currentTraits,
@@ -4009,201 +3137,28 @@ function setupAllEventListeners() {
 
     // Keyboard shortcuts
     $(document).keydown(function(e) {
-        // Ctrl+Z for undo
         if (e.ctrlKey && e.key === 'z') {
             e.preventDefault();
             undo();
         }
-        // Ctrl+Y for redo
         if (e.ctrlKey && e.key === 'y') {
             e.preventDefault();
             redo();
         }
-        // Escape to close modals
         if (e.key === 'Escape') {
             $('.modal.active').removeClass('active');
             $('#connectionCreator').hide();
         }
-        // Delete to remove selected node
         if (e.key === 'Delete' && AppState.selectedNode) {
             deleteSelectedNode();
         }
     });
 }
 
-function deleteSelectedNode() {
-    if (!AppState.selectedNode) return;
-
-    if (confirm(`Delete "${AppState.selectedNode.trait_name}" and all its connections?`)) {
-        const traitId = AppState.selectedNode.id;
-
-        // Remove from current traits
-        AppState.currentTraits = AppState.currentTraits.filter(t => t.id !== traitId);
-
-        // Remove from positions
-        AppState.nodePositions.delete(traitId);
-
-        // Remove connections involving this trait
-        AppState.currentConnections = AppState.currentConnections.filter(conn => 
-            conn.source_trait_id !== traitId && conn.target_trait_id !== traitId
-        );
-
-        // Re-render
-        renderCompleteNetwork();
-
-        showToast('Trait Deleted', `${AppState.selectedNode.trait_name} removed from network`, 'warning');
-        AppState.selectedNode = null;
-    }
-}
-
-function closeModal(modalId) {
-    $('#' + modalId).removeClass('active');
-}
-
-function showTraitDetails(traitId) {
-    const trait = AppState.currentTraits.find(t => t.id === traitId);
-    if (!trait) return;
-
-    showToast('Trait Details', 
-        `<strong>${trait.trait_name}</strong><br>
-        <small>Category: ${trait.category}</small><br>
-        <small>Severity: ${trait.severity || 50}%</small><br>
-        <small>${trait.description || 'No description'}</small>`, 
-        'info');
-}
-
-async function showTreatmentsForTrait(traitId) {
-    try {
-        const relevantTreatments = AppState.treatments.filter(t => t.trait_id === traitId);
-        const trait = AppState.currentTraits.find(t => t.id === traitId);
-
-        const modalContent = $('#treatmentModalContent');
-
-        let html = `<h3 style="margin-bottom: 20px; color: var(--text-primary);">Treatment Options for ${trait?.trait_name || 'Trait'}</h3>`;
-
-        if (relevantTreatments.length === 0) {
-            html += `
-                <div style="text-align: center; padding: 40px; color: var(--text-tertiary);">
-                    <i class="fas fa-pills" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
-                    <p>No specific treatments found for this trait.</p>
-                </div>
-            `;
-        } else {
-            html += relevantTreatments.map(treatment => `
-                <div class="treatment-card" style="margin-bottom: 16px;">
-                    <div class="treatment-header">
-                        <div class="treatment-name">${treatment.treatment_name}</div>
-                        <span class="evidence-badge evidence-${treatment.evidence_level.toLowerCase()}">
-                            Level ${treatment.evidence_level}
-                        </span>
-                    </div>
-                    <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
-                        <strong>Type:</strong> ${treatment.treatment_type}
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px;">
-                        <strong>Mechanism:</strong> ${treatment.mechanism || 'Not specified'}
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted);">
-                        <i class="fas fa-prescription-bottle"></i> ${treatment.dosage || 'Standard protocol'}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        modalContent.html(html);
-        $('#treatmentModal').addClass('active');
-
-    } catch (error) {
-        console.error('Error loading treatments:', error);
-        showToast('Error', 'Failed to load treatments', 'error');
-    }
-}
-
-function editTrait(trait) {
-    // Open edit modal with trait details
-    showToast('Edit Feature', `Editing "${trait.trait_name}" - In production, this would open an edit form.`, 'info');
-}
-
-function createNewPatient() {
-    const name = prompt('Enter patient name:');
-    if (!name) return;
-
-    const age = parseInt(prompt('Enter patient age:'));
-    const disease = AppState.currentDisease?.disease_name || 'Asthma';
-
-    const newPatient = {
-        id: AppState.patients.length + 1,
-        name: name,
-        age: age || 0,
-        disease: disease,
-        disease_id: AppState.currentDisease?.id || 1,
-        created: new Date()
-    };
-
-    AppState.patients.push(newPatient);
-    loadPatientSelect();
-
-    // Select the new patient
-    $('#patientSelect').val(newPatient.id);
-    showPatientProfile(newPatient.id);
-
-    showToast('Patient Created', `${name} added to patient list`, 'success');
-}
-
-function updateTraitValue(slider, traitId) {
-    const valueSpan = $(slider).next('.slider-value');
-    valueSpan.text(slider.value);
-
-    // Update patient data
-    if (AppState.currentPatient) {
-        console.log(`Updated trait ${traitId} to value ${slider.value} for patient ${AppState.currentPatient.id}`);
-    }
-}
-
-function generateComprehensiveReport() {
-    if (!AppState.currentDisease) {
-        showToast('Error', 'Please select a disease first', 'error');
-        return;
-    }
-
-    showToast('Report Generation', 'Generating comprehensive clinical report...', 'info');
-
-    setTimeout(() => {
-        // Simulate report generation
-        const reportData = {
-            disease: AppState.currentDisease.disease_name,
-            traits: AppState.currentTraits.length,
-            connections: AppState.currentConnections.length,
-            date: new Date().toLocaleDateString(),
-            patterns: AppState.patterns.length
-        };
-
-        // Show report summary
-        const message = `
-            <strong>Clinical Report Generated</strong><br>
-            <small>Disease: ${reportData.disease}</small><br>
-            <small>Traits: ${reportData.traits}</small><br>
-            <small>Connections: ${reportData.connections}</small><br>
-            <small>Patterns: ${reportData.patterns}</small><br>
-            <small>Date: ${reportData.date}</small>
-        `;
-
-        showToast('Report Ready', message, 'success');
-
-        // In production, generate PDF:
-        /*
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        // Add report content...
-        doc.save('airwayscope-report.pdf');
-        */
-
-    }, 2000);
-}
+// ====== HELPER FUNCTIONS ======
 
 function showToast(title, message, type = 'info') {
     const container = $('#toastContainer');
-
     const toast = $(`
         <div class="toast toast-${type}">
             <div class="toast-icon">
@@ -4220,13 +3175,10 @@ function showToast(title, message, type = 'info') {
     `);
 
     container.append(toast);
-
-    // Add close event
     toast.find('.toast-close').click(function() {
         removeToast(toast);
     });
 
-    // Auto-remove after 5 seconds
     setTimeout(() => {
         if (toast.parent().length) {
             removeToast(toast);
@@ -4241,19 +3193,20 @@ function removeToast(toast) {
     }, 300);
 }
 
-// ====== EXPOSE FUNCTIONS ======
+function closeModal(modalId) {
+    $(`#${modalId}`).removeClass('active');
+}
+
+// ====== EXPOSE FUNCTIONS TO WINDOW ======
 window.closeModal = closeModal;
 window.saveCurrentNetwork = saveCurrentNetwork;
 window.saveNewTrait = saveNewTrait;
 window.saveNewConnection = saveNewConnection;
-window.updateTraitValue = updateTraitValue;
-window.showTraitDetails = showTraitDetails;
 window.showTreatmentsForTrait = showTreatmentsForTrait;
 window.applyForceLayout = applyForceLayout;
 window.applyCircleLayout = applyCircleLayout;
 window.applyAutoLayout = applyAutoLayout;
 window.generateTreatmentPlan = generateTreatmentPlan;
-window.exportTreatmentPlan = exportTreatmentPlan;
 window.highlightPattern = highlightPattern;
 window.showPatternAnalysis = showPatternAnalysis;
 window.undo = undo;
@@ -4262,7 +3215,7 @@ window.zoomIn = zoomIn;
 window.zoomOut = zoomOut;
 window.resetZoom = resetZoom;
 
-console.log('🚀 AIRWAYSCOPE PRO System Ready!');
+console.log('🚀 AIRWAYSCOPE PRO Database Edition Ready!');
 </script>
 </body>
 </html>
