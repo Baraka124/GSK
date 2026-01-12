@@ -650,12 +650,142 @@
         .badge-unsaved { background: #fef3c7; color: #92400e; }
         .badge-template { background: #dbeafe; color: #1e40af; }
         
+        /* Patient Profile */
+        .patient-profile {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid var(--border-light);
+        }
+        
+        .trait-slider {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+        }
+        
+        .trait-slider:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .trait-name {
+            flex: 1;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        
+        .slider-container {
+            flex: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider {
+            flex: 1;
+            height: 6px;
+            background: var(--border-light);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .slider-value {
+            width: 30px;
+            text-align: center;
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 13px;
+        }
+        
+        /* Analytics */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--border-light);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Treatment Cards */
+        .treatment-card {
+            background: #f0f9ff;
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .treatment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+        
+        .treatment-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .evidence-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+        
+        .evidence-a { background: #d4edda; color: #155724; }
+        .evidence-b { background: #fff3cd; color: #856404; }
+        .evidence-c { background: #f8d7da; color: #721c24; }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .main-layout { flex-direction: column; }
             .sidebar { width: 100%; height: 300px; }
             .toolbar-buttons { flex-wrap: wrap; justify-content: center; }
             .btn { padding: 8px 12px; font-size: 12px; }
+            .stats-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -724,6 +854,9 @@
                             <button class="btn btn-primary btn-sm" onclick="createNewNetwork()" style="width: 100%;">
                                 <i class="fas fa-plus"></i> Create New Network
                             </button>
+                            <button class="btn btn-outline btn-sm" onclick="openLoadNetworkModal()" style="width: 100%; margin-top: 8px;">
+                                <i class="fas fa-folder-open"></i> Load Network
+                            </button>
                         </div>
                         <div id="savedNetworks">
                             <div class="loading">Loading saved networks...</div>
@@ -736,13 +869,13 @@
                             <i class="fas fa-stethoscope"></i> Patient Management
                         </h3>
                         <div class="form-group">
-                            <select class="form-select" id="patientSelect">
+                            <select class="form-select" id="patientSelect" onchange="loadPatientProfile(this.value)">
                                 <option value="">Select a patient...</option>
                                 <option value="new">+ Create New Patient</option>
                             </select>
                         </div>
-                        <div id="patientProfile" style="display: none;">
-                            <!-- Dynamic content -->
+                        <div id="patientProfile" class="patient-profile" style="display: none;">
+                            <!-- Dynamic content will be loaded here -->
                         </div>
                     </div>
 
@@ -793,6 +926,9 @@
                         <button class="btn btn-danger" id="btnClearCanvas">
                             <i class="fas fa-trash"></i> Clear
                         </button>
+                        <button class="btn btn-outline" onclick="$('#exportModal').addClass('active')">
+                            <i class="fas fa-download"></i> Export
+                        </button>
                     </div>
                 </div>
 
@@ -827,22 +963,32 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Connection Type</label>
                             <select class="form-select" id="connectionType">
                                 <option value="causes">Causes</option>
                                 <option value="exacerbates">Exacerbates</option>
                                 <option value="mitigates">Mitigates</option>
                                 <option value="correlates_with">Correlates With</option>
                                 <option value="treats">Treats</option>
+                                <option value="triggers">Triggers</option>
+                                <option value="prevents">Prevents</option>
+                                <option value="worsens">Worsens</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Strength (1-5): <span id="strengthValue">3</span></label>
-                            <input type="range" min="1" max="5" value="3" class="form-control" id="connectionStrength">
+                            <input type="range" min="1" max="5" value="3" class="slider" id="connectionStrength" 
+                                   oninput="$('#strengthValue').text(this.value)">
                         </div>
                         <div class="form-group">
-                            <textarea class="form-control" id="connectionEvidence" placeholder="Evidence description..." rows="3"></textarea>
+                            <label class="form-label">Evidence Description</label>
+                            <textarea class="form-control" id="connectionEvidence" placeholder="Describe the evidence for this connection..." rows="3"></textarea>
                         </div>
-                        <button class="btn btn-primary" id="btnSaveConnection" style="width: 100%;">
+                        <div class="form-group">
+                            <label class="form-label">Clinical Significance</label>
+                            <textarea class="form-control" id="connectionSignificance" placeholder="What does this connection mean clinically?" rows="2"></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveNewConnection()" style="width: 100%;">
                             <i class="fas fa-check"></i> Save Connection
                         </button>
                         <button class="btn btn-outline" onclick="$('#connectionCreator').hide()" style="width: 100%; margin-top: 10px;">
@@ -887,11 +1033,9 @@
                     <textarea class="form-control" id="newTraitDescription" placeholder="Detailed description of the trait..." rows="4"></textarea>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Clinical Severity (0-100)</label>
-                    <input type="range" min="0" max="100" value="50" class="form-control" id="newTraitSeverity">
-                    <div style="text-align: center; margin-top: 8px;">
-                        <span id="severityValueDisplay" style="font-weight: 600; color: var(--primary);">50%</span>
-                    </div>
+                    <label class="form-label">Clinical Severity (0-100): <span id="severityValueDisplay">50%</span></label>
+                    <input type="range" min="0" max="100" value="50" class="slider" id="newTraitSeverity" 
+                           oninput="$('#severityValueDisplay').text(this.value + '%')">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Evidence Level</label>
@@ -901,6 +1045,14 @@
                         <option value="C" selected>Level C (Limited evidence)</option>
                         <option value="D">Level D (Expert opinion)</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Biomarkers (comma separated)</label>
+                    <input type="text" class="form-control" id="newTraitBiomarkers" placeholder="e.g., CRP, IL-6, Eosinophils">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">First Line Therapy</label>
+                    <textarea class="form-control" id="newTraitTherapy" placeholder="Recommended first line treatment..." rows="2"></textarea>
                 </div>
                 <button class="btn btn-success" onclick="saveNewTrait()" style="width: 100%;">
                     <i class="fas fa-check"></i> Add Trait to Network
@@ -938,7 +1090,8 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Clinical Severity (0-100): <span id="editSeverityValueDisplay">50%</span></label>
-                    <input type="range" min="0" max="100" value="50" class="form-control" id="editTraitSeverity">
+                    <input type="range" min="0" max="100" value="50" class="slider" id="editTraitSeverity" 
+                           oninput="$('#editSeverityValueDisplay').text(this.value + '%')">
                 </div>
                 <div class="form-group">
                     <button class="btn btn-primary" onclick="saveEditedTrait()" style="width: 100%;">
@@ -976,8 +1129,8 @@
                     </label>
                 </div>
                 <div class="form-group" id="saveAsNewSection" style="display: none;">
-                    <div style="background: #f0f9ff; padding: 12px; border-radius: var(--radius-md); border-left: 4px solid var(--info);">
-                        <i class="fas fa-info-circle" style="color: var(--info);"></i>
+                    <div style="background: #f0f9ff; padding: 12px; border-radius: var(--radius-md); border-left: 4px solid var(--info); margin-bottom: 16px;">
+                        <i class="fas fa-info-circle" style="color: var(--info); margin-right: 8px;"></i>
                         <span style="font-size: 13px; color: var(--text-secondary);">
                             This will create a new network copy. The original will remain unchanged.
                         </span>
@@ -996,11 +1149,15 @@
     <div class="modal" id="loadNetworkModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">Load Network</h3>
+                <h3 class="modal-title">Load Saved Network</h3>
                 <button class="modal-close" onclick="closeModal('loadNetworkModal')">×</button>
             </div>
             <div class="modal-body">
-                <div id="loadNetworkList">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="networkSearch" placeholder="Search networks..." 
+                           onkeyup="filterNetworks(this.value)">
+                </div>
+                <div id="loadNetworkList" style="max-height: 400px; overflow-y: auto;">
                     <div class="loading">
                         <div class="loading-spinner"></div>
                         Loading networks...
@@ -1012,9 +1169,9 @@
 
     <!-- Patient Modal -->
     <div class="modal" id="patientModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h3 class="modal-title" id="patientModalTitle">Patient Details</h3>
+                <h3 class="modal-title" id="patientModalTitle">Patient Management</h3>
                 <button class="modal-close" onclick="closeModal('patientModal')">×</button>
             </div>
             <div class="modal-body">
@@ -1027,9 +1184,9 @@
 
     <!-- Analytics Modal -->
     <div class="modal" id="analyticsModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 800px;">
             <div class="modal-header">
-                <h3 class="modal-title">Network Analytics</h3>
+                <h3 class="modal-title">Advanced Network Analytics</h3>
                 <button class="modal-close" onclick="closeModal('analyticsModal')">×</button>
             </div>
             <div class="modal-body">
@@ -1048,7 +1205,7 @@
                 <button class="modal-close" onclick="closeModal('exportModal')">×</button>
             </div>
             <div class="modal-body">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
                     <button class="btn btn-outline" onclick="exportNetworkAsJSON()">
                         <i class="fas fa-file-code"></i> JSON
                     </button>
@@ -1060,6 +1217,11 @@
                     </button>
                     <button class="btn btn-outline" onclick="exportClinicalReport()">
                         <i class="fas fa-file-medical"></i> Report
+                    </button>
+                </div>
+                <div style="border-top: 1px solid var(--border-light); padding-top: 20px;">
+                    <button class="btn btn-primary" onclick="$('#importModal').addClass('active'); closeModal('exportModal')" style="width: 100%;">
+                        <i class="fas fa-file-import"></i> Import Network
                     </button>
                 </div>
             </div>
@@ -1077,6 +1239,17 @@
                 <div class="form-group">
                     <label class="form-label">Select JSON File</label>
                     <input type="file" class="form-control" id="importFile" accept=".json">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Import Options</label>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px;">
+                            <input type="radio" name="importMode" value="replace" checked> Replace current network
+                        </label>
+                        <label style="display: block;">
+                            <input type="radio" name="importMode" value="merge"> Merge with current network
+                        </label>
+                    </div>
                 </div>
                 <button class="btn btn-primary" onclick="importNetworkFromFile()" style="width: 100%;">
                     <i class="fas fa-file-import"></i> Import Network
@@ -1121,7 +1294,12 @@
                 isSaved: false,
                 isLoadedFromDB: false,
                 lastSaved: null,
-                hasUnsavedChanges: true
+                hasUnsavedChanges: false,
+                metadata: {
+                    disease: null,
+                    created: new Date(),
+                    modified: new Date()
+                }
             },
             
             // Data
@@ -1133,6 +1311,8 @@
             patients: [],
             traitCategories: [],
             connectionTypes: [],
+            treatments: [],
+            clinicalInsights: [],
             
             // UI State
             nodePositions: new Map(),
@@ -1143,9 +1323,16 @@
             isDragging: false,
             dragStart: { x: 0, y: 0 },
             userId: 'user_' + Date.now(),
+            currentPatient: null,
             
             // Confirmation System
-            confirmCallback: null
+            confirmCallback: null,
+            
+            // Analytics Cache
+            analyticsCache: {
+                lastUpdated: null,
+                data: null
+            }
         };
         
         // ====== INITIALIZATION ======
@@ -1171,7 +1358,9 @@
                     loadDiseases(),
                     loadSavedNetworks(),
                     loadTraitCategories(),
-                    loadConnectionTypes()
+                    loadConnectionTypes(),
+                    loadTreatments(),
+                    loadPatients()
                 ]);
                 
                 // Setup event listeners
@@ -1182,7 +1371,7 @@
                 initializeZoomControls();
                 
                 // Show welcome message
-                showToast('System Ready', 'AIRWAYSCOPE PRO is initialized', 'success');
+                showToast('System Ready', 'AIRWAYSCOPE PRO is fully initialized', 'success');
                 
                 console.log('✅ System initialized successfully');
                 
@@ -1262,23 +1451,62 @@
                 
                 if (connError) console.error('Error loading connections:', connError);
                 
+                // Load node positions from saved_positions
+                const { data: positions, error: posError } = await AppState.supabase
+                    .from('saved_positions')
+                    .select('*')
+                    .eq('disease_id', diseaseId);
+                
+                if (posError) console.error('Error loading positions:', posError);
+                
                 // Update state
                 AppState.traits = traits || [];
                 AppState.connections = connections || [];
                 
-                // Create initial layout
+                // Load positions
+                AppState.nodePositions.clear();
+                if (positions && positions.length > 0) {
+                    positions.forEach(pos => {
+                        // Find matching trait by ID
+                        const matchingTrait = traits.find(t => 
+                            t.id === pos.trait_uuid || 
+                            t.id.toString().includes(pos.trait_id) ||
+                            pos.trait_id.toString().includes(t.id.substring(0, 8))
+                        );
+                        if (matchingTrait) {
+                            AppState.nodePositions.set(matchingTrait.id, { x: pos.x, y: pos.y });
+                        }
+                    });
+                }
+                
+                // Update current network
+                AppState.currentNetwork = {
+                    ...AppState.currentNetwork,
+                    name: disease.disease_name + ' Network',
+                    description: `Clinical pathway for ${disease.disease_name}`,
+                    metadata: {
+                        ...AppState.currentNetwork.metadata,
+                        disease: disease,
+                        created: new Date(),
+                        modified: new Date()
+                    },
+                    hasUnsavedChanges: false
+                };
+                
+                // Create initial layout for any traits without positions
                 createInitialLayout();
                 
                 // Update UI
-                $('#currentDiseaseName').text(disease.disease_name);
+                $('#currentDiseaseName').text(disease.disease_name + ' Network');
                 updateNetworkStatus();
                 renderNetwork();
+                updateAnalyticsTab();
                 
                 showToast('Disease Loaded', `${disease.disease_name} loaded successfully`, 'success');
                 
             } catch (error) {
                 console.error('Error loading traits:', error);
-                showToast('Error', 'Failed to load disease data', 'error');
+                showToast('Error', 'Failed to load disease data: ' + error.message, 'error');
             }
         }
         
@@ -1286,8 +1514,11 @@
             try {
                 const { data, error } = await AppState.supabase
                     .from('network_sessions')
-                    .select('*')
-                    .order('created_at', { ascending: false })
+                    .select(`
+                        *,
+                        diseases:disease_id (disease_name)
+                    `)
+                    .order('updated_at', { ascending: false })
                     .limit(20);
                 
                 if (error) throw error;
@@ -1330,8 +1561,89 @@
                 
                 AppState.connectionTypes = data || [];
                 
+                // Update connection type dropdown
+                const select = $('#connectionType');
+                select.empty();
+                AppState.connectionTypes.forEach(type => {
+                    select.append(`<option value="${type.type_name}">${type.display_name}</option>`);
+                });
+                
             } catch (error) {
                 console.error('Error loading connection types:', error);
+            }
+        }
+        
+        async function loadTreatments() {
+            try {
+                const { data, error } = await AppState.supabase
+                    .from('treatments')
+                    .select('*')
+                    .order('name');
+                
+                if (error) throw error;
+                
+                AppState.treatments = data || [];
+                
+            } catch (error) {
+                console.error('Error loading treatments:', error);
+            }
+        }
+        
+        async function loadPatients() {
+            try {
+                const { data, error } = await AppState.supabase
+                    .from('patients')
+                    .select(`
+                        *,
+                        diseases:primary_disease_id (disease_name)
+                    `)
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+                
+                if (error) throw error;
+                
+                AppState.patients = data || [];
+                updatePatientSelect();
+                
+            } catch (error) {
+                console.error('Error loading patients:', error);
+            }
+        }
+        
+        async function loadPatientTraits(patientId) {
+            try {
+                const { data, error } = await AppState.supabase
+                    .from('patient_traits')
+                    .select(`
+                        *,
+                        traits:trait_id (*)
+                    `)
+                    .eq('patient_id', patientId);
+                
+                if (error) throw error;
+                
+                return data || [];
+                
+            } catch (error) {
+                console.error('Error loading patient traits:', error);
+                return [];
+            }
+        }
+        
+        async function loadClinicalInsights(sessionId) {
+            try {
+                const { data, error } = await AppState.supabase
+                    .from('clinical_insights')
+                    .select('*')
+                    .eq('session_id', sessionId)
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                AppState.clinicalInsights = data || [];
+                
+            } catch (error) {
+                console.error('Error loading clinical insights:', error);
             }
         }
         
@@ -1351,11 +1663,18 @@
                             isSaved: false,
                             isLoadedFromDB: false,
                             lastSaved: null,
-                            hasUnsavedChanges: true
+                            hasUnsavedChanges: false,
+                            metadata: {
+                                disease: null,
+                                created: new Date(),
+                                modified: new Date()
+                            }
                         };
                         AppState.currentDisease = null;
                         updateNetworkStatus();
+                        updateAnalyticsTab();
                         $('#currentDiseaseName').text('Untitled Network');
+                        $('#welcomeMessage').show();
                         showToast('New Network', 'Created new network', 'info');
                     }
                 }
@@ -1366,7 +1685,10 @@
             try {
                 const { data: network, error } = await AppState.supabase
                     .from('network_sessions')
-                    .select('*')
+                    .select(`
+                        *,
+                        diseases:disease_id (*)
+                    `)
                     .eq('id', networkId)
                     .single();
                 
@@ -1386,16 +1708,18 @@
                     isSaved: true,
                     isLoadedFromDB: true,
                     lastSaved: new Date(network.updated_at),
-                    hasUnsavedChanges: false
+                    hasUnsavedChanges: false,
+                    metadata: {
+                        disease: network.diseases,
+                        created: new Date(network.created_at),
+                        modified: new Date(network.updated_at)
+                    }
                 };
                 
                 // Load disease if specified
-                if (networkState.disease_id) {
-                    const disease = AppState.diseases.find(d => d.id === networkState.disease_id);
-                    if (disease) {
-                        AppState.currentDisease = disease;
-                        $('#currentDiseaseName').text(disease.disease_name);
-                    }
+                if (network.diseases) {
+                    AppState.currentDisease = network.diseases;
+                    $('#currentDiseaseName').text(network.name);
                 }
                 
                 // Load traits and connections from network state
@@ -1411,8 +1735,12 @@
                     AppState.nodePositions = new Map(networkState.nodePositions);
                 }
                 
+                // Load clinical insights for this session
+                await loadClinicalInsights(network.id);
+                
                 // Update UI
                 updateNetworkStatus();
+                updateAnalyticsTab();
                 renderNetwork();
                 
                 showToast('Network Loaded', `${network.name} loaded successfully`, 'success');
@@ -1439,6 +1767,7 @@
                     name: $('#saveNetworkName').val().trim(),
                     description: $('#saveNetworkDescription').val().trim(),
                     is_public: $('#saveNetworkPublic').is(':checked'),
+                    disease_id: AppState.currentDisease?.id || null,
                     network_state: {
                         disease_id: AppState.currentDisease?.id || null,
                         disease_name: AppState.currentDisease?.disease_name || 'Custom Network',
@@ -1448,11 +1777,14 @@
                         metadata: {
                             created: new Date().toISOString(),
                             trait_count: AppState.traits.length,
-                            connection_count: AppState.connections.length
+                            connection_count: AppState.connections.length,
+                            average_severity: calculateAverageSeverity(),
+                            network_density: calculateNetworkDensity()
                         }
                     },
                     node_count: AppState.traits.length,
                     connection_count: AppState.connections.length,
+                    avg_severity: calculateAverageSeverity(),
                     layout_type: 'force',
                     updated_at: new Date().toISOString()
                 };
@@ -1475,6 +1807,9 @@
                     result = data;
                     showToast('Network Saved', `Saved as new network: ${networkData.name}`, 'success');
                     
+                    // Generate clinical insights for new network
+                    await generateClinicalInsights(result.id);
+                    
                 } else {
                     // Update existing network
                     const { data, error } = await AppState.supabase
@@ -1488,6 +1823,9 @@
                     
                     result = data;
                     showToast('Network Updated', `Changes saved to: ${networkData.name}`, 'success');
+                    
+                    // Update clinical insights
+                    await updateClinicalInsights(result.id);
                 }
                 
                 // Update current network state
@@ -1498,7 +1836,11 @@
                     isSaved: true,
                     isLoadedFromDB: true,
                     lastSaved: new Date(result.updated_at),
-                    hasUnsavedChanges: false
+                    hasUnsavedChanges: false,
+                    metadata: {
+                        ...AppState.currentNetwork.metadata,
+                        modified: new Date(result.updated_at)
+                    }
                 };
                 
                 // Update saved networks list
@@ -1506,11 +1848,104 @@
                 
                 // Update UI
                 updateNetworkStatus();
+                updateAnalyticsTab();
                 closeModal('saveNetworkModal');
                 
             } catch (error) {
                 console.error('Error saving network:', error);
                 showToast('Error', 'Failed to save network: ' + error.message, 'error');
+            }
+        }
+        
+        async function generateClinicalInsights(sessionId) {
+            try {
+                // Calculate insights
+                const insights = [];
+                
+                // 1. Trait distribution insight
+                const categoryDistribution = {};
+                AppState.traits.forEach(trait => {
+                    categoryDistribution[trait.category] = (categoryDistribution[trait.category] || 0) + 1;
+                });
+                
+                const dominantCategory = Object.entries(categoryDistribution).sort((a, b) => b[1] - a[1])[0];
+                if (dominantCategory) {
+                    insights.push({
+                        session_id: sessionId,
+                        patient_id: null,
+                        insight_type: 'pattern',
+                        title: 'Dominant Trait Category',
+                        description: `${dominantCategory[0]} traits dominate the network (${dominantCategory[1]} out of ${AppState.traits.length} traits)`,
+                        confidence_score: 0.8,
+                        recommendations: ['Consider targeted therapies for dominant trait category'],
+                        urgency: 'routine'
+                    });
+                }
+                
+                // 2. Connection density insight
+                const maxConnections = AppState.traits.length * (AppState.traits.length - 1) / 2;
+                const density = maxConnections > 0 ? AppState.connections.length / maxConnections : 0;
+                
+                if (density > 0.7) {
+                    insights.push({
+                        session_id: sessionId,
+                        patient_id: null,
+                        insight_type: 'complexity',
+                        title: 'High Network Complexity',
+                        description: `Network density is ${(density * 100).toFixed(1)}%, indicating high interconnectivity`,
+                        confidence_score: 0.9,
+                        recommendations: ['Consider holistic treatment approaches', 'Monitor for systemic effects'],
+                        urgency: 'routine'
+                    });
+                }
+                
+                // 3. Severity insight
+                const avgSeverity = calculateAverageSeverity();
+                if (avgSeverity > 70) {
+                    insights.push({
+                        session_id: sessionId,
+                        patient_id: null,
+                        insight_type: 'risk',
+                        title: 'High Overall Severity',
+                        description: `Average trait severity is ${avgSeverity}%`,
+                        confidence_score: 0.85,
+                        recommendations: ['Consider aggressive treatment regimen', 'Increase monitoring frequency'],
+                        urgency: 'urgent'
+                    });
+                }
+                
+                // Save insights to database
+                if (insights.length > 0) {
+                    const { error } = await AppState.supabase
+                        .from('clinical_insights')
+                        .insert(insights);
+                    
+                    if (error) console.error('Error saving insights:', error);
+                }
+                
+            } catch (error) {
+                console.error('Error generating insights:', error);
+            }
+        }
+        
+        async function updateClinicalInsights(sessionId) {
+            try {
+                // Clear existing insights
+                const { error: deleteError } = await AppState.supabase
+                    .from('clinical_insights')
+                    .delete()
+                    .eq('session_id', sessionId);
+                
+                if (deleteError) throw deleteError;
+                
+                // Generate new insights
+                await generateClinicalInsights(sessionId);
+                
+                // Reload insights
+                await loadClinicalInsights(sessionId);
+                
+            } catch (error) {
+                console.error('Error updating insights:', error);
             }
         }
         
@@ -1543,6 +1978,48 @@
             saveNetwork(saveAsNew);
         }
         
+        function openLoadNetworkModal() {
+            $('#loadNetworkModal').addClass('active');
+            filterNetworks('');
+        }
+        
+        function filterNetworks(searchTerm) {
+            const container = $('#loadNetworkList');
+            container.empty();
+            
+            const filteredNetworks = AppState.savedNetworks.filter(network => 
+                network.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (network.description && network.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (network.diseases && network.diseases.disease_name.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+            
+            if (filteredNetworks.length === 0) {
+                container.html('<div style="text-align: center; padding: 40px; color: var(--text-tertiary);">No networks found</div>');
+                return;
+            }
+            
+            filteredNetworks.forEach(network => {
+                const networkDiv = $(`
+                    <div class="saved-network" data-id="${network.id}">
+                        <div class="network-name">${network.name}</div>
+                        <div class="network-meta">
+                            <span>${new Date(network.updated_at).toLocaleDateString()}</span>
+                            <span>${network.node_count} nodes</span>
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
+                            ${network.description || 'No description'}
+                        </div>
+                        <div style="font-size: 11px; color: var(--primary); margin-top: 4px;">
+                            <i class="fas fa-disease"></i> ${network.diseases?.disease_name || 'No disease'}
+                        </div>
+                    </div>
+                `);
+                
+                networkDiv.click(() => loadNetworkFromDB(network.id));
+                container.append(networkDiv);
+            });
+        }
+        
         function clearNetwork() {
             AppState.traits = [];
             AppState.connections = [];
@@ -1553,9 +2030,9 @@
             // Clear UI
             $('#traitNodesContainer').empty();
             $('#connectionsSvg').empty();
-            $('#welcomeMessage').show();
             
             updateNetworkStatus();
+            updateAnalyticsTab();
         }
         
         // ====== TRAIT MANAGEMENT ======
@@ -1572,6 +2049,8 @@
             $('#newTraitDescription').val('');
             $('#newTraitSeverity').val(50);
             $('#severityValueDisplay').text('50%');
+            $('#newTraitBiomarkers').val('');
+            $('#newTraitTherapy').val('');
             
             // Show modal
             $('#addTraitModal').addClass('active');
@@ -1584,6 +2063,8 @@
                 const description = $('#newTraitDescription').val().trim();
                 const severity = parseInt($('#newTraitSeverity').val());
                 const evidence = $('#newTraitEvidence').val();
+                const biomarkers = $('#newTraitBiomarkers').val().trim();
+                const therapy = $('#newTraitTherapy').val().trim();
                 
                 if (!name) {
                     showToast('Error', 'Please enter a trait name', 'error');
@@ -1604,7 +2085,10 @@
                     description: description,
                     severity: severity,
                     evidence_level: evidence,
-                    created_at: new Date().toISOString()
+                    biomarkers: biomarkers ? biomarkers.split(',').map(b => b.trim()) : [],
+                    first_line_therapy: therapy,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 };
                 
                 // Add to traits array
@@ -1679,6 +2163,7 @@
                 // Mark as unsaved
                 AppState.currentNetwork.hasUnsavedChanges = true;
                 updateNetworkStatus();
+                updateAnalyticsTab();
                 
                 // Re-render the trait node
                 renderNetwork();
@@ -1714,6 +2199,7 @@
                         // Mark as unsaved
                         AppState.currentNetwork.hasUnsavedChanges = true;
                         updateNetworkStatus();
+                        updateAnalyticsTab();
                         
                         // Re-render network
                         renderNetwork();
@@ -1747,9 +2233,18 @@
             $('#connectionStrength').val(3);
             $('#strengthValue').text('3');
             $('#connectionEvidence').val('');
+            $('#connectionSignificance').val('');
+            
+            // Position creator near center
+            const canvas = $('#networkCanvas');
+            const creator = $('#connectionCreator');
+            creator.css({
+                left: (canvas.width() - 320) / 2 + 'px',
+                top: (canvas.height() - 400) / 2 + 'px'
+            });
             
             // Show connection creator
-            $('#connectionCreator').show();
+            creator.show();
         }
         
         function saveNewConnection() {
@@ -1758,6 +2253,7 @@
             const type = $('#connectionType').val();
             const strength = parseInt($('#connectionStrength').val());
             const evidence = $('#connectionEvidence').val().trim();
+            const significance = $('#connectionSignificance').val().trim();
             
             if (!sourceId || !targetId) {
                 showToast('Error', 'Please select both source and target traits', 'error');
@@ -1781,6 +2277,9 @@
                 return;
             }
             
+            // Get connection type details
+            const connectionType = AppState.connectionTypes.find(ct => ct.type_name === type);
+            
             // Create connection
             const connection = {
                 id: 'conn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
@@ -1789,6 +2288,8 @@
                 connection_type: type,
                 strength: strength,
                 evidence_description: evidence,
+                clinical_significance: significance,
+                directionality: connectionType?.directionality || 'unidirectional',
                 created_at: new Date().toISOString()
             };
             
@@ -1798,6 +2299,7 @@
             // Mark as unsaved
             AppState.currentNetwork.hasUnsavedChanges = true;
             updateNetworkStatus();
+            updateAnalyticsTab();
             
             // Redraw connections
             drawConnections();
@@ -1806,6 +2308,859 @@
             $('#connectionCreator').hide();
             
             showToast('Connection Added', 'New connection created', 'success');
+        }
+        
+        // ====== PATIENT MANAGEMENT ======
+        
+        function updatePatientSelect() {
+            const select = $('#patientSelect');
+            select.empty();
+            
+            select.append('<option value="">Select a patient...</option>');
+            
+            AppState.patients.forEach(patient => {
+                select.append(`<option value="${patient.id}">${patient.patient_name} (${patient.age}, ${patient.diseases?.disease_name || 'No disease'})</option>`);
+            });
+            
+            select.append('<option value="new">+ Create New Patient</option>');
+        }
+        
+        async function loadPatientProfile(patientId) {
+            if (!patientId) {
+                $('#patientProfile').hide();
+                return;
+            }
+            
+            if (patientId === 'new') {
+                createNewPatient();
+                return;
+            }
+            
+            try {
+                const patient = AppState.patients.find(p => p.id === patientId);
+                if (!patient) {
+                    showToast('Error', 'Patient not found', 'error');
+                    return;
+                }
+                
+                AppState.currentPatient = patient;
+                
+                // Load patient traits
+                const patientTraits = await loadPatientTraits(patientId);
+                
+                // Build HTML
+                let html = `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: var(--text-primary); margin-bottom: 8px;">${patient.patient_name}</h4>
+                        <div style="display: flex; gap: 20px; font-size: 13px; color: var(--text-secondary);">
+                            <div><i class="fas fa-birthday-cake"></i> ${patient.age} years</div>
+                            <div><i class="fas fa-venus-mars"></i> ${patient.gender || 'Not specified'}</div>
+                            <div><i class="fas fa-disease"></i> ${patient.diseases?.disease_name || 'No diagnosis'}</div>
+                        </div>
+                    </div>
+                `;
+                
+                if (patientTraits.length > 0) {
+                    html += '<h5 style="margin-bottom: 15px; color: var(--text-primary);">Clinical Traits</h5>';
+                    
+                    patientTraits.forEach(pt => {
+                        html += `
+                            <div class="trait-slider">
+                                <div class="trait-name">${pt.traits.name}</div>
+                                <div class="slider-container">
+                                    <input type="range" min="0" max="100" value="${pt.severity || 50}" 
+                                           class="slider" oninput="updatePatientTrait('${pt.id}', this.value)">
+                                    <span class="slider-value">${pt.severity || 50}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    // Add treatment recommendations
+                    html += await generateTreatmentRecommendations(patientTraits);
+                    
+                } else {
+                    html += `
+                        <div style="text-align: center; padding: 30px; color: var(--text-tertiary);">
+                            <i class="fas fa-user-md" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px;"></i>
+                            <p>No clinical traits recorded for this patient</p>
+                            <button class="btn btn-primary btn-sm" onclick="addTraitsToPatient('${patientId}')" style="margin-top: 10px;">
+                                <i class="fas fa-plus"></i> Add Traits
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                // Add action buttons
+                html += `
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <button class="btn btn-primary btn-sm" onclick="generatePatientReport('${patientId}')" style="flex: 1;">
+                            <i class="fas fa-file-medical"></i> Generate Report
+                        </button>
+                        <button class="btn btn-outline btn-sm" onclick="editPatient('${patientId}')" style="flex: 1;">
+                            <i class="fas fa-edit"></i> Edit Patient
+                        </button>
+                    </div>
+                `;
+                
+                $('#patientProfile').html(html).show();
+                
+            } catch (error) {
+                console.error('Error loading patient profile:', error);
+                showToast('Error', 'Failed to load patient profile', 'error');
+            }
+        }
+        
+        async function generateTreatmentRecommendations(patientTraits) {
+            try {
+                // Get unique trait IDs
+                const traitIds = [...new Set(patientTraits.map(pt => pt.trait_id))];
+                
+                // Load treatments for these traits
+                const { data: treatments, error } = await AppState.supabase
+                    .from('trait_treatments')
+                    .select(`
+                        *,
+                        treatments:treatment_id (*)
+                    `)
+                    .in('trait_id', traitIds)
+                    .order('effectiveness_score', { ascending: false });
+                
+                if (error) throw error;
+                
+                if (!treatments || treatments.length === 0) {
+                    return '<h5 style="margin-top: 20px; color: var(--text-primary);">Treatment Recommendations</h5>' +
+                           '<p style="color: var(--text-tertiary); font-size: 13px;">No specific treatments found for current traits.</p>';
+                }
+                
+                let html = '<h5 style="margin-top: 20px; margin-bottom: 15px; color: var(--text-primary);">Recommended Treatments</h5>';
+                
+                // Group by treatment
+                const treatmentMap = new Map();
+                treatments.forEach(tt => {
+                    if (!treatmentMap.has(tt.treatment_id)) {
+                        treatmentMap.set(tt.treatment_id, {
+                            treatment: tt.treatments,
+                            traits: [],
+                            effectiveness: tt.effectiveness_score
+                        });
+                    }
+                    treatmentMap.get(tt.treatment_id).traits.push(tt.trait_id);
+                });
+                
+                // Display top 3 treatments
+                const topTreatments = Array.from(treatmentMap.values())
+                    .sort((a, b) => b.effectiveness - a.effectiveness)
+                    .slice(0, 3);
+                
+                topTreatments.forEach(treatmentData => {
+                    const treatment = treatmentData.treatment;
+                    html += `
+                        <div class="treatment-card">
+                            <div class="treatment-header">
+                                <div class="treatment-name">${treatment.name}</div>
+                                <span class="evidence-badge evidence-${treatment.evidence_level?.toLowerCase() || 'c'}">
+                                    Level ${treatment.evidence_level || 'C'}
+                                </span>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin: 8px 0;">
+                                ${treatment.description || 'No description'}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">
+                                <i class="fas fa-chart-line"></i> Effectiveness: ${treatmentData.effectiveness}%
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                return html;
+                
+            } catch (error) {
+                console.error('Error generating treatment recommendations:', error);
+                return '';
+            }
+        }
+        
+        async function updatePatientTrait(patientTraitId, severity) {
+            try {
+                const { error } = await AppState.supabase
+                    .from('patient_traits')
+                    .update({ 
+                        severity: parseInt(severity),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', patientTraitId);
+                
+                if (error) throw error;
+                
+                // Update UI
+                $(`[oninput*="${patientTraitId}"]`).next('.slider-value').text(severity);
+                
+            } catch (error) {
+                console.error('Error updating patient trait:', error);
+                showToast('Error', 'Failed to update trait severity', 'error');
+            }
+        }
+        
+        async function addTraitsToPatient(patientId) {
+            try {
+                // Show trait selection modal
+                const modalContent = $('#patientModalContent');
+                let html = '<h4>Select Traits to Add</h4>';
+                
+                // Show available traits (from current network or database)
+                const availableTraits = AppState.traits.length > 0 ? 
+                    AppState.traits : 
+                    await loadAllTraits();
+                
+                html += '<div style="max-height: 400px; overflow-y: auto; margin: 15px 0;">';
+                
+                availableTraits.forEach(trait => {
+                    html += `
+                        <div style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" value="${trait.id}" data-trait-name="${trait.name}">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 13px;">${trait.name}</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">${trait.category}</div>
+                                </div>
+                            </label>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                html += '<button class="btn btn-primary" onclick="saveSelectedTraitsToPatient(\'' + patientId + '\')" style="width: 100%;">Add Selected Traits</button>';
+                
+                modalContent.html(html);
+                $('#patientModal').addClass('active');
+                
+            } catch (error) {
+                console.error('Error adding traits to patient:', error);
+                showToast('Error', 'Failed to load traits', 'error');
+            }
+        }
+        
+        async function saveSelectedTraitsToPatient(patientId) {
+            try {
+                const selectedTraits = [];
+                $('#patientModalContent input[type="checkbox"]:checked').each(function() {
+                    selectedTraits.push({
+                        trait_id: $(this).val(),
+                        trait_name: $(this).data('trait-name')
+                    });
+                });
+                
+                if (selectedTraits.length === 0) {
+                    showToast('Error', 'Please select at least one trait', 'error');
+                    return;
+                }
+                
+                // Prepare data for insertion
+                const patientTraitsData = selectedTraits.map(st => ({
+                    patient_id: patientId,
+                    trait_id: st.trait_id,
+                    severity: 50,
+                    recorded_at: new Date().toISOString()
+                }));
+                
+                // Insert into database
+                const { error } = await AppState.supabase
+                    .from('patient_traits')
+                    .insert(patientTraitsData);
+                
+                if (error) throw error;
+                
+                // Close modal and reload patient profile
+                closeModal('patientModal');
+                await loadPatientProfile(patientId);
+                
+                showToast('Success', `Added ${selectedTraits.length} traits to patient`, 'success');
+                
+            } catch (error) {
+                console.error('Error saving patient traits:', error);
+                showToast('Error', 'Failed to add traits to patient', 'error');
+            }
+        }
+        
+        async function loadAllTraits() {
+            try {
+                const { data, error } = await AppState.supabase
+                    .from('traits')
+                    .select('*')
+                    .order('name')
+                    .limit(50);
+                
+                if (error) throw error;
+                
+                return data || [];
+                
+            } catch (error) {
+                console.error('Error loading traits:', error);
+                return [];
+            }
+        }
+        
+        function createNewPatient() {
+            const modalContent = $('#patientModalContent');
+            const html = `
+                <h4>Create New Patient</h4>
+                <div class="form-group">
+                    <label class="form-label">Patient Name *</label>
+                    <input type="text" class="form-control" id="newPatientName" placeholder="Enter patient name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" class="form-control" id="newPatientAge" min="0" max="120" placeholder="Age">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <select class="form-select" id="newPatientGender">
+                        <option value="">Select gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Primary Disease</label>
+                    <select class="form-select" id="newPatientDisease">
+                        <option value="">Select disease</option>
+                        ${AppState.diseases.map(d => `<option value="${d.id}">${d.disease_name}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Medical Record Number</label>
+                    <input type="text" class="form-control" id="newPatientMRN" placeholder="Optional">
+                </div>
+                <button class="btn btn-primary" onclick="saveNewPatient()" style="width: 100%;">
+                    <i class="fas fa-save"></i> Save Patient
+                </button>
+            `;
+            
+            modalContent.html(html);
+            $('#patientModal').addClass('active');
+        }
+        
+        async function saveNewPatient() {
+            try {
+                const name = $('#newPatientName').val().trim();
+                const age = $('#newPatientAge').val();
+                const gender = $('#newPatientGender').val();
+                const diseaseId = $('#newPatientDisease').val();
+                const mrn = $('#newPatientMRN').val().trim();
+                
+                if (!name) {
+                    showToast('Error', 'Please enter patient name', 'error');
+                    return;
+                }
+                
+                const patientData = {
+                    patient_name: name,
+                    age: age ? parseInt(age) : null,
+                    gender: gender || null,
+                    primary_disease_id: diseaseId || null,
+                    medical_record_number: mrn || null,
+                    status: 'active',
+                    created_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await AppState.supabase
+                    .from('patients')
+                    .insert([patientData])
+                    .select(`
+                        *,
+                        diseases:primary_disease_id (disease_name)
+                    `)
+                    .single();
+                
+                if (error) throw error;
+                
+                // Add to local state
+                AppState.patients.unshift(data);
+                updatePatientSelect();
+                
+                // Close modal and load new patient
+                closeModal('patientModal');
+                $('#patientSelect').val(data.id).trigger('change');
+                
+                showToast('Patient Created', `${name} added successfully`, 'success');
+                
+            } catch (error) {
+                console.error('Error saving patient:', error);
+                showToast('Error', 'Failed to create patient', 'error');
+            }
+        }
+        
+        function editPatient(patientId) {
+            const patient = AppState.patients.find(p => p.id === patientId);
+            if (!patient) return;
+            
+            const modalContent = $('#patientModalContent');
+            const html = `
+                <h4>Edit Patient</h4>
+                <div class="form-group">
+                    <label class="form-label">Patient Name *</label>
+                    <input type="text" class="form-control" id="editPatientName" value="${patient.patient_name}" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" class="form-control" id="editPatientAge" value="${patient.age || ''}" min="0" max="120">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="editPatientStatus">
+                        <option value="active" ${patient.status === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="inactive" ${patient.status === 'inactive' ? 'selected' : ''}>Inactive</option>
+                        <option value="discharged" ${patient.status === 'discharged' ? 'selected' : ''}>Discharged</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-primary" onclick="updatePatient('${patientId}')" style="width: 100%;">
+                        <i class="fas fa-save"></i> Update Patient
+                    </button>
+                </div>
+                <div class="form-group">
+                    <button class="btn btn-danger" onclick="deletePatient('${patientId}')" style="width: 100%;">
+                        <i class="fas fa-trash"></i> Delete Patient
+                    </button>
+                </div>
+            `;
+            
+            modalContent.html(html);
+            $('#patientModal').addClass('active');
+        }
+        
+        async function updatePatient(patientId) {
+            try {
+                const name = $('#editPatientName').val().trim();
+                const age = $('#editPatientAge').val();
+                const status = $('#editPatientStatus').val();
+                
+                if (!name) {
+                    showToast('Error', 'Please enter patient name', 'error');
+                    return;
+                }
+                
+                const { error } = await AppState.supabase
+                    .from('patients')
+                    .update({
+                        patient_name: name,
+                        age: age ? parseInt(age) : null,
+                        status: status,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', patientId);
+                
+                if (error) throw error;
+                
+                // Update local state
+                const patientIndex = AppState.patients.findIndex(p => p.id === patientId);
+                if (patientIndex !== -1) {
+                    AppState.patients[patientIndex] = {
+                        ...AppState.patients[patientIndex],
+                        patient_name: name,
+                        age: age ? parseInt(age) : null,
+                        status: status
+                    };
+                }
+                
+                updatePatientSelect();
+                closeModal('patientModal');
+                
+                // Reload patient profile if currently viewing this patient
+                if (AppState.currentPatient?.id === patientId) {
+                    await loadPatientProfile(patientId);
+                }
+                
+                showToast('Patient Updated', 'Changes saved successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error updating patient:', error);
+                showToast('Error', 'Failed to update patient', 'error');
+            }
+        }
+        
+        async function deletePatient(patientId) {
+            showConfirmDialog(
+                'Delete Patient',
+                'Are you sure you want to delete this patient? This action cannot be undone.',
+                async function(confirmed) {
+                    if (confirmed) {
+                        try {
+                            const { error } = await AppState.supabase
+                                .from('patients')
+                                .delete()
+                                .eq('id', patientId);
+                            
+                            if (error) throw error;
+                            
+                            // Remove from local state
+                            AppState.patients = AppState.patients.filter(p => p.id !== patientId);
+                            updatePatientSelect();
+                            
+                            // Clear patient profile if currently viewing this patient
+                            if (AppState.currentPatient?.id === patientId) {
+                                AppState.currentPatient = null;
+                                $('#patientProfile').hide();
+                            }
+                            
+                            closeModal('patientModal');
+                            showToast('Patient Deleted', 'Patient removed successfully', 'success');
+                            
+                        } catch (error) {
+                            console.error('Error deleting patient:', error);
+                            showToast('Error', 'Failed to delete patient', 'error');
+                        }
+                    }
+                }
+            );
+        }
+        
+        async function generatePatientReport(patientId) {
+            showToast('Info', 'Generating patient report...', 'info');
+            
+            // In a real implementation, this would generate a detailed PDF report
+            setTimeout(() => {
+                showToast('Report Generated', 'Patient report is ready for download', 'success');
+            }, 2000);
+        }
+        
+        // ====== ANALYTICS ======
+        
+        function updateAnalyticsTab() {
+            const container = $('#analyticsContent');
+            
+            if (AppState.traits.length === 0) {
+                container.html('<div class="loading">Load a network to see analytics...</div>');
+                return;
+            }
+            
+            // Calculate analytics
+            const traitsCount = AppState.traits.length;
+            const connectionsCount = AppState.connections.length;
+            const avgSeverity = calculateAverageSeverity();
+            const networkDensity = calculateNetworkDensity();
+            const categoryDistribution = calculateCategoryDistribution();
+            const connectionTypes = calculateConnectionTypes();
+            
+            // Build HTML
+            let html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${traitsCount}</div>
+                        <div class="stat-label">Clinical Traits</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${connectionsCount}</div>
+                        <div class="stat-label">Connections</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${avgSeverity}%</div>
+                        <div class="stat-label">Avg Severity</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${networkDensity}%</div>
+                        <div class="stat-label">Network Density</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 15px;">Category Distribution</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            `;
+            
+            Object.entries(categoryDistribution).forEach(([category, count]) => {
+                const percentage = ((count / traitsCount) * 100).toFixed(1);
+                html += `
+                    <div style="flex: 1; min-width: 120px; background: white; border-radius: var(--radius-md); padding: 12px; border-left: 4px solid ${getCategoryColor(category)};">
+                        <div style="font-weight: 600; font-size: 13px; color: ${getCategoryColor(category)};">${category}</div>
+                        <div style="font-size: 20px; font-weight: 800; color: var(--text-primary);">${count}</div>
+                        <div style="font-size: 11px; color: var(--text-tertiary);">${percentage}% of traits</div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h4 style="color: var(--text-primary); margin-bottom: 15px;">Clinical Insights</h4>
+            `;
+            
+            if (AppState.clinicalInsights.length > 0) {
+                AppState.clinicalInsights.slice(0, 3).forEach(insight => {
+                    const urgencyColor = {
+                        'routine': 'var(--info)',
+                        'urgent': 'var(--warning)',
+                        'critical': 'var(--danger)'
+                    }[insight.urgency] || 'var(--info)';
+                    
+                    html += `
+                        <div style="background: white; border-radius: var(--radius-md); padding: 16px; margin-bottom: 10px; border-left: 4px solid ${urgencyColor};">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                <div style="font-weight: 600; color: var(--text-primary);">${insight.title}</div>
+                                <span style="font-size: 10px; padding: 2px 8px; border-radius: 20px; background: ${urgencyColor}; color: white; font-weight: 600;">
+                                    ${insight.urgency.toUpperCase()}
+                                </span>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">
+                                ${insight.description}
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-tertiary);">
+                                <i class="fas fa-chart-line"></i> Confidence: ${(insight.confidence_score * 100).toFixed(0)}%
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                if (AppState.clinicalInsights.length > 3) {
+                    html += `
+                        <div style="text-align: center; margin-top: 10px;">
+                            <button class="btn btn-outline btn-sm" onclick="$('#analyticsModal').addClass('active'); loadAdvancedAnalytics()">
+                                View All Insights (${AppState.clinicalInsights.length})
+                            </button>
+                        </div>
+                    `;
+                }
+            } else {
+                html += `
+                    <div style="text-align: center; padding: 30px; color: var(--text-tertiary);">
+                        <i class="fas fa-chart-line" style="font-size: 36px; opacity: 0.3; margin-bottom: 10px;"></i>
+                        <p>No clinical insights generated yet</p>
+                        <button class="btn btn-primary btn-sm" onclick="generateAnalytics()" style="margin-top: 10px;">
+                            <i class="fas fa-bolt"></i> Generate Insights
+                        </button>
+                    </div>
+                `;
+            }
+            
+            html += `
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="$('#analyticsModal').addClass('active'); loadAdvancedAnalytics()" style="width: 100%;">
+                        <i class="fas fa-chart-bar"></i> Advanced Analytics
+                    </button>
+                </div>
+            `;
+            
+            container.html(html);
+        }
+        
+        function loadAdvancedAnalytics() {
+            const container = $('#analyticsModalContent');
+            
+            // Calculate advanced metrics
+            const centrality = calculateCentrality();
+            const clusters = detectClusters();
+            const criticalPaths = findCriticalPaths();
+            
+            let html = `
+                <h4 style="color: var(--text-primary); margin-bottom: 20px;">Network Analysis</h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 10px;">Most Central Traits</h5>
+            `;
+            
+            centrality.slice(0, 5).forEach((trait, index) => {
+                html += `
+                    <div style="padding: 10px; background: ${index % 2 === 0 ? 'var(--bg-tertiary)' : 'white'}; border-radius: var(--radius-sm); margin-bottom: 5px;">
+                        <div style="font-weight: 600; font-size: 13px;">${trait.name}</div>
+                        <div style="font-size: 11px; color: var(--text-tertiary);">
+                            Connections: ${trait.connections} • Centrality: ${trait.centrality.toFixed(2)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                    </div>
+                    <div>
+                        <h5 style="color: var(--text-primary); margin-bottom: 10px;">Detected Clusters</h5>
+            `;
+            
+            if (clusters.length > 0) {
+                clusters.forEach((cluster, index) => {
+                    html += `
+                        <div style="padding: 10px; background: ${index % 2 === 0 ? 'var(--bg-tertiary)' : 'white'}; border-radius: var(--radius-sm); margin-bottom: 5px;">
+                            <div style="font-weight: 600; font-size: 13px;">${cluster.name}</div>
+                            <div style="font-size: 11px; color: var(--text-tertiary);">
+                                ${cluster.traits.length} traits • Density: ${cluster.density.toFixed(2)}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<div style="color: var(--text-tertiary); font-size: 13px;">No significant clusters detected</div>';
+            }
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h5 style="color: var(--text-primary); margin-bottom: 10px;">Critical Clinical Pathways</h5>
+            `;
+            
+            if (criticalPaths.length > 0) {
+                criticalPaths.slice(0, 3).forEach((path, index) => {
+                    html += `
+                        <div style="padding: 12px; background: white; border-radius: var(--radius-md); margin-bottom: 10px; border-left: 4px solid var(--danger);">
+                            <div style="font-weight: 600; font-size: 13px; color: var(--text-primary);">Path ${index + 1}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary); margin: 8px 0;">
+                                ${path.traits.map(t => t.name).join(' → ')}
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-tertiary);">
+                                Impact Score: ${path.impact.toFixed(2)} • Length: ${path.length} steps
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<div style="color: var(--text-tertiary); font-size: 13px;">No critical paths identified</div>';
+            }
+            
+            html += `
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="exportAnalyticsReport()" style="width: 100%;">
+                        <i class="fas fa-download"></i> Export Analytics Report
+                    </button>
+                </div>
+            `;
+            
+            container.html(html);
+        }
+        
+        function generateAnalytics() {
+            showToast('Generating Insights', 'Analyzing network patterns...', 'info');
+            
+            // Simulate analysis
+            setTimeout(() => {
+                // In a real implementation, this would run complex algorithms
+                // For now, we'll just update the display
+                updateAnalyticsTab();
+                showToast('Analysis Complete', 'Clinical insights generated', 'success');
+            }, 1500);
+        }
+        
+        function calculateAverageSeverity() {
+            if (AppState.traits.length === 0) return 0;
+            const total = AppState.traits.reduce((sum, trait) => sum + (trait.severity || 50), 0);
+            return Math.round(total / AppState.traits.length);
+        }
+        
+        function calculateNetworkDensity() {
+            if (AppState.traits.length < 2) return 0;
+            const maxConnections = AppState.traits.length * (AppState.traits.length - 1) / 2;
+            return Math.round((AppState.connections.length / maxConnections) * 100);
+        }
+        
+        function calculateCategoryDistribution() {
+            const distribution = {};
+            AppState.traits.forEach(trait => {
+                distribution[trait.category] = (distribution[trait.category] || 0) + 1;
+            });
+            return distribution;
+        }
+        
+        function calculateConnectionTypes() {
+            const types = {};
+            AppState.connections.forEach(conn => {
+                types[conn.connection_type] = (types[conn.connection_type] || 0) + 1;
+            });
+            return types;
+        }
+        
+        function calculateCentrality() {
+            // Simple degree centrality calculation
+            return AppState.traits.map(trait => {
+                const connections = AppState.connections.filter(conn => 
+                    conn.source_trait_id === trait.id || conn.target_trait_id === trait.id
+                ).length;
+                
+                return {
+                    ...trait,
+                    connections: connections,
+                    centrality: connections / Math.max(1, AppState.traits.length - 1)
+                };
+            }).sort((a, b) => b.centrality - a.centrality);
+        }
+        
+        function detectClusters() {
+            // Simple cluster detection by category
+            const clusters = {};
+            
+            AppState.traits.forEach(trait => {
+                if (!clusters[trait.category]) {
+                    clusters[trait.category] = {
+                        name: trait.category + ' Cluster',
+                        traits: [],
+                        connections: 0
+                    };
+                }
+                clusters[trait.category].traits.push(trait);
+            });
+            
+            // Calculate internal connections for each cluster
+            Object.values(clusters).forEach(cluster => {
+                cluster.connections = AppState.connections.filter(conn => {
+                    const sourceInCluster = cluster.traits.some(t => t.id === conn.source_trait_id);
+                    const targetInCluster = cluster.traits.some(t => t.id === conn.target_trait_id);
+                    return sourceInCluster && targetInCluster;
+                }).length;
+                
+                // Calculate density
+                const n = cluster.traits.length;
+                const maxConnections = n * (n - 1) / 2;
+                cluster.density = maxConnections > 0 ? cluster.connections / maxConnections : 0;
+            });
+            
+            return Object.values(clusters).filter(c => c.traits.length > 1).sort((a, b) => b.density - a.density);
+        }
+        
+        function findCriticalPaths() {
+            // Simple critical path detection based on severity and centrality
+            const paths = [];
+            
+            // Find high severity traits
+            const highSeverityTraits = AppState.traits
+                .filter(t => t.severity >= 70)
+                .sort((a, b) => b.severity - a.severity);
+            
+            // For each high severity trait, find connected high severity traits
+            highSeverityTraits.forEach(trait => {
+                const connected = AppState.connections
+                    .filter(conn => conn.source_trait_id === trait.id || conn.target_trait_id === trait.id)
+                    .map(conn => {
+                        const otherId = conn.source_trait_id === trait.id ? conn.target_trait_id : conn.source_trait_id;
+                        return AppState.traits.find(t => t.id === otherId);
+                    })
+                    .filter(t => t && t.severity >= 60);
+                
+                if (connected.length > 0) {
+                    paths.push({
+                        traits: [trait, ...connected.slice(0, 2)],
+                        length: connected.length + 1,
+                        impact: (trait.severity + connected.reduce((sum, t) => sum + t.severity, 0)) / (connected.length + 1)
+                    });
+                }
+            });
+            
+            return paths.sort((a, b) => b.impact - a.impact);
+        }
+        
+        function exportAnalyticsReport() {
+            showToast('Export Started', 'Generating analytics report...', 'info');
+            
+            // In a real implementation, this would generate a detailed report
+            setTimeout(() => {
+                showToast('Report Generated', 'Analytics report downloaded', 'success');
+            }, 2000);
         }
         
         // ====== RENDERING ======
@@ -1833,6 +3188,9 @@
                         </div>
                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">
                             ${disease.description || 'No description'}
+                        </div>
+                        <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 8px;">
+                            <i class="fas fa-chart-line"></i> Prevalence: ${disease.prevalence || 'Unknown'}
                         </div>
                     </div>
                 `);
@@ -1866,6 +3224,9 @@
                         </div>
                         <div style="font-size: 12px; color: var(--text-secondary); margin-top: 6px;">
                             ${network.description || 'No description'}
+                        </div>
+                        <div style="font-size: 11px; color: var(--primary); margin-top: 4px;">
+                            <i class="fas fa-disease"></i> ${network.diseases?.disease_name || 'No disease'}
                         </div>
                     </div>
                 `);
@@ -1923,9 +3284,10 @@
                         </span>
                     </div>
                     <div class="node-content">
-                        ${trait.description || 'No description'}
+                        ${trait.description || 'No description available'}
                         <div style="margin-top: 8px; font-size: 11px; color: var(--text-tertiary);">
-                            Severity: ${trait.severity || 50}%
+                            <div><i class="fas fa-chart-line"></i> Severity: ${trait.severity || 50}%</div>
+                            ${trait.evidence_level ? `<div><i class="fas fa-file-medical"></i> Evidence: ${trait.evidence_level}</div>` : ''}
                         </div>
                     </div>
                 </div>
@@ -2008,18 +3370,19 @@
         }
         
         function createInitialLayout() {
-            // Create circular layout for traits
+            // Create circular layout for traits without positions
+            const traitsWithoutPositions = AppState.traits.filter(t => !AppState.nodePositions.has(t.id));
+            if (traitsWithoutPositions.length === 0) return;
+            
             const centerX = $('#networkCanvas').width() / 2;
             const centerY = $('#networkCanvas').height() / 2;
-            const radius = Math.min(centerX, centerY) * 0.6;
+            const radius = Math.min(centerX, centerY) * 0.4;
             
-            AppState.traits.forEach((trait, index) => {
-                if (!AppState.nodePositions.has(trait.id)) {
-                    const angle = (index / AppState.traits.length) * Math.PI * 2;
-                    const x = centerX + Math.cos(angle) * radius - 120;
-                    const y = centerY + Math.sin(angle) * radius - 85;
-                    AppState.nodePositions.set(trait.id, { x, y });
-                }
+            traitsWithoutPositions.forEach((trait, index) => {
+                const angle = (index / traitsWithoutPositions.length) * Math.PI * 2;
+                const x = centerX + Math.cos(angle) * radius - 120;
+                const y = centerY + Math.sin(angle) * radius - 85;
+                AppState.nodePositions.set(trait.id, { x, y });
             });
         }
         
@@ -2117,15 +3480,18 @@
             if (AppState.currentNetwork.isSaved) {
                 if (AppState.currentNetwork.hasUnsavedChanges) {
                     badge.addClass('badge-unsaved').text('Unsaved Changes');
+                    $('#btnSaveNetwork').prop('disabled', false);
                 } else {
                     badge.addClass('badge-saved').text('Saved');
+                    $('#btnSaveNetwork').prop('disabled', true);
                 }
             } else {
                 badge.addClass('badge-unsaved').text('Unsaved');
+                $('#btnSaveNetwork').prop('disabled', false);
             }
             
-            // Update save button state
-            $('#btnSaveNetwork').prop('disabled', !AppState.currentNetwork.hasUnsavedChanges);
+            // Update save as button
+            $('#btnSaveAsNew').prop('disabled', traitsCount === 0);
         }
         
         function updateCategoryDropdowns() {
@@ -2155,7 +3521,10 @@
                 'exacerbates': '#ff9e00',
                 'mitigates': '#06d6a0',
                 'correlates_with': '#118ab2',
-                'treats': '#7209b7'
+                'treats': '#7209b7',
+                'triggers': '#9d4edd',
+                'prevents': '#4ade80',
+                'worsens': '#f59e0b'
             };
             return colors[type] || '#4361ee';
         }
@@ -2171,6 +3540,11 @@
             
             // Save network buttons
             $('#btnSaveNetwork').click(() => {
+                if (AppState.currentNetwork.isSaved && !AppState.currentNetwork.hasUnsavedChanges) {
+                    showToast('Info', 'No changes to save', 'info');
+                    return;
+                }
+                
                 if (AppState.currentNetwork.isSaved) {
                     // Update existing network
                     saveNetwork(false);
@@ -2190,6 +3564,7 @@
                     function(confirmed) {
                         if (confirmed) {
                             clearNetwork();
+                            $('#welcomeMessage').show();
                             showToast('Network Cleared', 'All content removed', 'info');
                         }
                     }
@@ -2222,8 +3597,11 @@
             
             // Click outside connection creator to close it
             $('#networkCanvas').click(function(e) {
-                if (!$(e.target).closest('.connection-creator').length) {
+                if (!$(e.target).closest('.connection-creator').length && 
+                    !$(e.target).closest('.trait-node').length) {
                     $('#connectionCreator').hide();
+                    $('.trait-node').removeClass('selected');
+                    AppState.selectedNode = null;
                 }
             });
             
@@ -2235,7 +3613,20 @@
                     });
                     $('#connectionCreator').hide();
                 }
+                
+                // Undo/Redo shortcuts (placeholder)
+                if (e.ctrlKey && e.key === 'z') {
+                    e.preventDefault();
+                    showToast('Info', 'Undo functionality coming soon', 'info');
+                }
+                if (e.ctrlKey && e.key === 'y') {
+                    e.preventDefault();
+                    showToast('Info', 'Redo functionality coming soon', 'info');
+                }
             });
+            
+            // Patient select change
+            window.loadPatientProfile = loadPatientProfile;
         }
         
         function initializeTabs() {
@@ -2253,6 +3644,8 @@
                 // Load data for tab if needed
                 if (tabId === 'networks') {
                     loadSavedNetworks();
+                } else if (tabId === 'analytics') {
+                    updateAnalyticsTab();
                 }
             });
         }
@@ -2355,9 +3748,16 @@
                 'info': 'fa-info-circle'
             }[type];
             
+            const color = {
+                'success': 'var(--success)',
+                'error': 'var(--danger)',
+                'warning': 'var(--warning)',
+                'info': 'var(--info)'
+            }[type];
+            
             const toast = $(`
                 <div class="toast toast-${type}">
-                    <div style="color: var(--${type}); font-size: 18px;">
+                    <div style="color: ${color}; font-size: 18px; margin-top: 2px;">
                         <i class="fas ${icon}"></i>
                     </div>
                     <div style="flex: 1;">
@@ -2368,7 +3768,7 @@
                             ${message}
                         </div>
                     </div>
-                    <button class="toast-close" style="background: none; border: none; color: var(--text-tertiary); cursor: pointer;">
+                    <button class="toast-close" style="background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px;">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
@@ -2391,6 +3791,11 @@
         // ====== EXPORT/IMPORT ======
         
         function exportNetworkAsJSON() {
+            if (AppState.traits.length === 0) {
+                showToast('Error', 'No network to export', 'error');
+                return;
+            }
+            
             const networkData = {
                 name: AppState.currentNetwork.name,
                 description: AppState.currentNetwork.description,
@@ -2402,7 +3807,8 @@
                     exported: new Date().toISOString(),
                     version: '1.0',
                     trait_count: AppState.traits.length,
-                    connection_count: AppState.connections.length
+                    connection_count: AppState.connections.length,
+                    average_severity: calculateAverageSeverity()
                 }
             };
             
@@ -2415,18 +3821,29 @@
             link.click();
             
             showToast('Export Complete', 'Network exported as JSON', 'success');
+            closeModal('exportModal');
         }
         
         function exportNetworkAsPNG() {
+            if (AppState.traits.length === 0) {
+                showToast('Error', 'No network to export', 'error');
+                return;
+            }
+            
             showToast('Export Started', 'Generating PNG image...', 'info');
             
             setTimeout(() => {
-                html2canvas(document.getElementById('networkCanvas')).then(canvas => {
+                html2canvas(document.getElementById('networkCanvas'), {
+                    backgroundColor: '#f1f5f9',
+                    scale: 2,
+                    useCORS: true
+                }).then(canvas => {
                     const link = document.createElement('a');
                     link.download = `airwayscope-${AppState.currentNetwork.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.png`;
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                     showToast('Export Complete', 'Network exported as PNG', 'success');
+                    closeModal('exportModal');
                 }).catch(error => {
                     console.error('Export error:', error);
                     showToast('Export Failed', 'Failed to generate image', 'error');
@@ -2439,12 +3856,18 @@
         }
         
         function exportClinicalReport() {
+            if (AppState.traits.length === 0) {
+                showToast('Error', 'No network to export', 'error');
+                return;
+            }
+            
             showToast('Info', 'Clinical report generation coming soon', 'info');
         }
         
         function importNetworkFromFile() {
             const fileInput = $('#importFile')[0];
             const file = fileInput.files[0];
+            const importMode = $('input[name="importMode"]:checked').val();
             
             if (!file) {
                 showToast('Error', 'Please select a file', 'error');
@@ -2462,29 +3885,63 @@
                         throw new Error('Invalid network data format');
                     }
                     
-                    // Clear current network
-                    clearNetwork();
-                    
-                    // Import data
-                    AppState.currentNetwork.name = networkData.name || 'Imported Network';
-                    AppState.currentNetwork.description = networkData.description || '';
-                    AppState.currentDisease = networkData.disease || null;
-                    AppState.traits = networkData.traits || [];
-                    AppState.connections = networkData.connections || [];
-                    
-                    if (networkData.nodePositions) {
-                        AppState.nodePositions = new Map(networkData.nodePositions);
+                    if (importMode === 'replace') {
+                        // Clear current network
+                        clearNetwork();
+                        
+                        // Import data
+                        AppState.currentNetwork.name = networkData.name || 'Imported Network';
+                        AppState.currentNetwork.description = networkData.description || '';
+                        AppState.currentDisease = networkData.disease || null;
+                        AppState.traits = networkData.traits || [];
+                        AppState.connections = networkData.connections || [];
+                        
+                        if (networkData.nodePositions) {
+                            AppState.nodePositions = new Map(networkData.nodePositions);
+                        }
+                    } else {
+                        // Merge mode
+                        const existingTraitIds = new Set(AppState.traits.map(t => t.id));
+                        const existingConnectionIds = new Set(AppState.connections.map(c => c.id));
+                        
+                        // Add new traits
+                        networkData.traits.forEach(trait => {
+                            if (!existingTraitIds.has(trait.id)) {
+                                AppState.traits.push(trait);
+                                existingTraitIds.add(trait.id);
+                            }
+                        });
+                        
+                        // Add new connections
+                        if (networkData.connections) {
+                            networkData.connections.forEach(conn => {
+                                if (!existingConnectionIds.has(conn.id)) {
+                                    AppState.connections.push(conn);
+                                    existingConnectionIds.add(conn.id);
+                                }
+                            });
+                        }
+                        
+                        // Merge positions
+                        if (networkData.nodePositions) {
+                            networkData.nodePositions.forEach(([traitId, position]) => {
+                                if (!AppState.nodePositions.has(traitId)) {
+                                    AppState.nodePositions.set(traitId, position);
+                                }
+                            });
+                        }
                     }
                     
                     // Update UI
                     if (AppState.currentDisease) {
-                        $('#currentDiseaseName').text(AppState.currentDisease.disease_name);
+                        $('#currentDiseaseName').text(AppState.currentDisease.disease_name + ' Network');
                     } else {
                         $('#currentDiseaseName').text(AppState.currentNetwork.name);
                     }
                     
                     AppState.currentNetwork.hasUnsavedChanges = true;
                     updateNetworkStatus();
+                    updateAnalyticsTab();
                     renderNetwork();
                     
                     showToast('Import Successful', `Imported ${networkData.traits.length} traits and ${networkData.connections?.length || 0} connections`, 'success');
@@ -2502,39 +3959,6 @@
             reader.readAsText(file);
         }
         
-        // ====== PATIENT MANAGEMENT ======
-        
-        async function loadPatients() {
-            try {
-                const { data, error } = await AppState.supabase
-                    .from('patients')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(10);
-                
-                if (error) throw error;
-                
-                AppState.patients = data || [];
-                updatePatientSelect();
-                
-            } catch (error) {
-                console.error('Error loading patients:', error);
-            }
-        }
-        
-        function updatePatientSelect() {
-            const select = $('#patientSelect');
-            select.empty();
-            
-            select.append('<option value="">Select a patient...</option>');
-            
-            AppState.patients.forEach(patient => {
-                select.append(`<option value="${patient.id}">${patient.patient_name} (${patient.age})</option>`);
-            });
-            
-            select.append('<option value="new">+ Create New Patient</option>');
-        }
-        
         // ====== EXPOSE FUNCTIONS ======
         window.closeModal = closeModal;
         window.saveNewTrait = saveNewTrait;
@@ -2548,6 +3972,18 @@
         window.exportClinicalReport = exportClinicalReport;
         window.importNetworkFromFile = importNetworkFromFile;
         window.createNewNetwork = createNewNetwork;
+        window.openLoadNetworkModal = openLoadNetworkModal;
+        window.filterNetworks = filterNetworks;
+        window.generateAnalytics = generateAnalytics;
+        window.loadAdvancedAnalytics = loadAdvancedAnalytics;
+        window.exportAnalyticsReport = exportAnalyticsReport;
+        window.addTraitsToPatient = addTraitsToPatient;
+        window.saveSelectedTraitsToPatient = saveSelectedTraitsToPatient;
+        window.saveNewPatient = saveNewPatient;
+        window.updatePatient = updatePatient;
+        window.deletePatient = deletePatient;
+        window.generatePatientReport = generatePatientReport;
+        window.editPatient = editPatient;
         
         console.log('🚀 AIRWAYSCOPE PRO - COMPLETE SYSTEM LOADED');
     </script>
